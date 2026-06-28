@@ -39,17 +39,61 @@ add_subdirectory(cmake/stm32cubemx)
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined library search paths
+# Add user defined library search paths
 )
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/mui.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/mui_u8g2.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_arc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_bitmap.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_box.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_buffer.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_button.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_circle.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_cleardisplay.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_d_memory.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_d_setup.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_font.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_fonts.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_hvline.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_input_value.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_intersection.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_kerning.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_line.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_ll_hvline.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_message.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_polygon.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_selection_list.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8g2_setup.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8log.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8log_u8g2.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8log_u8x8.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_8x8.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_byte.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_cad.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_capture.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_d_st7565.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_debounce.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_display.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_fonts.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_gpio.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_input_value.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_message.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_selection_list.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_setup.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_string.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_u16toa.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_u8toa.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/
 )
 
 # Add project symbols (macros)
