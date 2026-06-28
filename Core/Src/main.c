@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "u8g2.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,6 +44,8 @@
 
 SD_HandleTypeDef hsd1;
 
+SPI_HandleTypeDef hspi2;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -53,12 +55,104 @@ void SystemClock_Config(void);
 static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SDMMC1_SD_Init(void);
+static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static u8g2_t lcd;
+
+static void GMG12864_DelayCycles(volatile uint32_t cycles) {
+  while (cycles-- > 0U) {
+    __NOP();
+  }
+}
+
+static uint8_t GMG12864_U8x8ByteHwSpi(u8x8_t* u8x8, uint8_t msg,
+                                      uint8_t arg_int, void* arg_ptr) {
+  (void)u8x8;
+
+  switch (msg) {
+    case U8X8_MSG_BYTE_INIT:
+      break;
+
+    case U8X8_MSG_BYTE_SEND:
+      if (HAL_SPI_Transmit(&hspi2, (uint8_t*)arg_ptr, arg_int, HAL_MAX_DELAY) !=
+          HAL_OK) {
+        Error_Handler();
+      }
+      break;
+
+    case U8X8_MSG_BYTE_SET_DC:
+      HAL_GPIO_WritePin(GMG12864_DC_GPIO_Port, GMG12864_DC_Pin,
+                        arg_int != 0U ? GPIO_PIN_SET : GPIO_PIN_RESET);
+      break;
+
+    case U8X8_MSG_BYTE_START_TRANSFER:
+      HAL_GPIO_WritePin(GMG12864_CS_GPIO_Port, GMG12864_CS_Pin, GPIO_PIN_RESET);
+      break;
+
+    case U8X8_MSG_BYTE_END_TRANSFER:
+      HAL_GPIO_WritePin(GMG12864_CS_GPIO_Port, GMG12864_CS_Pin, GPIO_PIN_SET);
+      break;
+
+    default:
+      return 0;
+  }
+
+  return 1;
+}
+
+static uint8_t GMG12864_U8x8GpioDelay(u8x8_t* u8x8, uint8_t msg,
+                                      uint8_t arg_int, void* arg_ptr) {
+  (void)u8x8;
+  (void)arg_ptr;
+
+  switch (msg) {
+    case U8X8_MSG_GPIO_AND_DELAY_INIT:
+      HAL_GPIO_WritePin(GMG12864_CS_GPIO_Port, GMG12864_CS_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GMG12864_RST_GPIO_Port, GMG12864_RST_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GMG12864_DC_GPIO_Port, GMG12864_DC_Pin, GPIO_PIN_RESET);
+      break;
+
+    case U8X8_MSG_DELAY_MILLI:
+      HAL_Delay(arg_int);
+      break;
+
+    case U8X8_MSG_DELAY_10MICRO:
+      GMG12864_DelayCycles((uint32_t)arg_int * 1600U);
+      break;
+
+    case U8X8_MSG_DELAY_100NANO:
+      GMG12864_DelayCycles((uint32_t)arg_int * 16U);
+      break;
+
+    case U8X8_MSG_DELAY_NANO:
+      break;
+
+    case U8X8_MSG_GPIO_RESET:
+      HAL_GPIO_WritePin(GMG12864_RST_GPIO_Port, GMG12864_RST_Pin,
+                        arg_int != 0U ? GPIO_PIN_SET : GPIO_PIN_RESET);
+      break;
+
+    case U8X8_MSG_GPIO_CS:
+      HAL_GPIO_WritePin(GMG12864_CS_GPIO_Port, GMG12864_CS_Pin,
+                        arg_int != 0U ? GPIO_PIN_SET : GPIO_PIN_RESET);
+      break;
+
+    case U8X8_MSG_GPIO_DC:
+      HAL_GPIO_WritePin(GMG12864_DC_GPIO_Port, GMG12864_DC_Pin,
+                        arg_int != 0U ? GPIO_PIN_SET : GPIO_PIN_RESET);
+      break;
+
+    default:
+      return 0;
+  }
+
+  return 1;
+}
 
 /* USER CODE END 0 */
 
@@ -96,14 +190,26 @@ int main(void)
   MX_GPIO_Init();
   MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
+  MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
+
+  u8g2_Setup_st7565_erc12864_alt_f(&lcd, U8G2_R0, GMG12864_U8x8ByteHwSpi,
+                                   GMG12864_U8x8GpioDelay);
+  u8g2_InitDisplay(&lcd);
+  u8g2_SetPowerSave(&lcd, 0);
+  u8g2_SetContrast(&lcd, 80);
+
+  u8g2_ClearBuffer(&lcd);
+  u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
+  u8g2_DrawStr(&lcd, 0, 12, "Hello");
+  u8g2_DrawStr(&lcd, 0, 28, "Loopstation");
+  u8g2_SendBuffer(&lcd);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  while (1) {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -141,7 +247,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 4;
   RCC_OscInitStruct.PLL.PLLN = 60;
   RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
+  RCC_OscInitStruct.PLL.PLLQ = 5;
   RCC_OscInitStruct.PLL.PLLR = 42;
   RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
@@ -202,6 +308,54 @@ static void MX_SDMMC1_SD_Init(void)
 }
 
 /**
+  * @brief SPI2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI2_Init(void)
+{
+
+  /* USER CODE BEGIN SPI2_Init 0 */
+
+  /* USER CODE END SPI2_Init 0 */
+
+  /* USER CODE BEGIN SPI2_Init 1 */
+
+  /* USER CODE END SPI2_Init 1 */
+  /* SPI2 parameter configuration*/
+  hspi2.Instance = SPI2;
+  hspi2.Init.Mode = SPI_MODE_MASTER;
+  hspi2.Init.Direction = SPI_DIRECTION_2LINES_TXONLY;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi2.Init.CRCPolynomial = 0x0;
+  hspi2.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  hspi2.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
+  hspi2.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
+  hspi2.Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi2.Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi2.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
+  hspi2.Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
+  hspi2.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
+  hspi2.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
+  hspi2.Init.IOSwap = SPI_IO_SWAP_DISABLE;
+  if (HAL_SPI_Init(&hspi2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI2_Init 2 */
+
+  /* USER CODE END SPI2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -215,8 +369,20 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, GMG12864_CS_Pin|GMG12864_RST_Pin|GMG12864_DC_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : GMG12864_CS_Pin GMG12864_RST_Pin GMG12864_DC_Pin */
+  GPIO_InitStruct.Pin = GMG12864_CS_Pin|GMG12864_RST_Pin|GMG12864_DC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SDMMC_Detect_Pin */
   GPIO_InitStruct.Pin = SDMMC_Detect_Pin;
@@ -271,8 +437,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  while (1)
-  {
+  while (1) {
   }
   /* USER CODE END Error_Handler_Debug */
 }
@@ -287,8 +452,9 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* User can add his own implementation to report the file name and line
+     number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
+     line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

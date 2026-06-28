@@ -1,164 +1,207 @@
-# Peripheral connection plan
+# 주변장치 연결 계획
 
-이 문서는 STM32H743VIT6(LQFP100) 보드에 모듈을 바로 납땜/장착하기 전에 브레드보드에서 검증할 1차 배선 계획이다.
+이 문서는 STM32H743VIT6, LQFP100 패키지 기준의 1차 배선 계획이다. 이전 문서의 STM32 연결 컬럼은 잘못된 핀아웃을 바탕으로 작성되었으므로 사용하지 않는다. 아래 연결은 `docs/stm32h743vi.pdf`의 STM32H742/H743 데이터시트 DS12110 Rev 11, Table 9 pin/ball definition과 Table 10 alternate functions를 기준으로 다시 정리했다.
 
-현재 `rtos-loopstation.ioc`에서 이미 사용하는 핀은 다음과 같으므로 아래 배선에서는 제외했다.
+## 선택 규칙
 
-| 용도 | STM32 핀 |
-| --- | --- |
-| SWD 디버그 | PA13, PA14 |
-| SDMMC1 | PC8, PC9, PC10, PC11, PC12, PD2 |
-| SD 카드 detect | PD4 |
+- 현재 `.ioc`에서 이미 사용하는 `SDMMC1`, `SWD`, SD detect 핀은 고정한다.
+- 루프스테이션의 핵심 기능인 오디오 입출력은 `SAI1`으로 먼저 확보한다.
+- LCD는 ST7565R 계열 쓰기 전용 SPI 장치로 보고 `MISO`를 쓰지 않는다.
+- 외부 SPI ADC는 이번 배선 계획에서 제외한다.
+- 버튼/LED 확장은 `I2C1` 기반 MCP23017로 묶어 GPIO 소모를 줄인다.
+- GPIO 제어선은 가능하면 전용 고속 주변장치와 충돌이 적은 핀을 고른다.
 
-## Peripheral summary
+## 현재 IOC에서 이미 고정된 핀
 
-| 용도 | STM32 peripheral | STM32 핀 |
+| 용도 | 주변장치 | STM32H743VI 핀 |
 | --- | --- | --- |
-| GMG12864-06D LCD | GPIO software SPI | PE7(CS), PE8(RSE), PE9(RS), PE10(SCL), PE11(SI) |
-| MCP23017 x2 | I2C1 | PB6(SCL), PB7(SDA) |
-| PCM5102 출력, INMP441 입력 | SAI1 | PE4(FS/LRCK/WS), PE5(SCK/BCLK), PE6(SD_A), PE3(SD_B) |
-| KY-040 encoder | GPIO/EXTI | PB12, PB13, PB14 |
-| 보조 GPIO | GPIO | PE12, PC0, PC1, PA0, PA1 |
+| SWDIO | SWD | PA13 |
+| SWCLK | SWD | PA14 |
+| SD 데이터 0 | SDMMC1_D0 | PC8 |
+| SD 데이터 1 | SDMMC1_D1 | PC9 |
+| SD 데이터 2 | SDMMC1_D2 | PC10 |
+| SD 데이터 3 | SDMMC1_D3 | PC11 |
+| SD 클럭 | SDMMC1_CK | PC12 |
+| SD 명령 | SDMMC1_CMD | PD2 |
+| SD 카드 감지 | GPIO 입력 | PD4 |
+
+## 주변장치 요약
+
+| 모듈 | 사용할 주변장치 | STM32H743VI 핀 | 결정 |
+| --- | --- | --- | --- |
+| GMG12864-06D LCD, ST7565R | SPI2 송신 전용 + GPIO | PB10, PB15, PE7, PE8, PE9, PE10 | 사용 |
+| MCP23017 x2 | I2C1 | PB6, PB7 | 사용 |
+| PCM5102 DAC + INMP441 마이크 | SAI1 Block A/B | PE3, PE4, PE5, PE6, 선택적으로 PE2 | 사용 |
+| KY-040 엔코더 | GPIO/EXTI | PB12, PB13, PB14 | 사용 |
+| MCP23017 인터럽트 라인 | GPIO/EXTI | PC0, PC1 | 선택 사항 |
+
+## LCD용 SPI 선택
+
+LCD는 `SPI2`를 송신 전용 마스터 모드로 사용한다.
+
+| LCD 신호 | STM32H743VI 핀 | STM32 기능 |
+| --- | --- | --- |
+| LCD SCL / SCK | PB10 | SPI2_SCK |
+| LCD SI / MOSI | PB15 | SPI2_MOSI |
+| LCD SO / MISO | 연결하지 않음 | ST7565R LCD 표시에 읽기 기능은 필요하지 않음 |
+
+다른 SPI를 선택하지 않은 이유는 다음과 같다.
+
+| SPI | 제외 이유 |
+| --- | --- |
+| SPI1 | 사용 가능하지만 LCD에 쓰면 PA5/PA6/PA7을 묶어 쓰게 된다. 현재 계획에서는 SPI2가 더 독립적으로 배치된다. |
+| SPI3 | LQFP100에서 흔한 핀 조합인 PC10/PC11/PC12가 현재 `SDMMC1`과 충돌한다. |
+| SPI4 | PE2/PE4/PE5/PE6 조합은 `SAI1` 오디오 핀과 충돌한다. PE11/PE12/PE13/PE14 조합도 Port E의 연속 핀을 크게 점유한다. |
+| SPI6 | PA5/PA6/PA7 조합을 쓰기 쉬워 SPI1과 같은 핀 그룹을 점유한다. |
 
 ## GMG12864-06D LCD
 
-GMG12864-06D 모듈은 ST7565 계열 128x64 LCD로 보고 4-wire software SPI 방식으로 연결한다. 사용자가 확인한 모듈 핀 순서는 `CS, RSE, RS, SCL, SI, VDD, VSS, A, K, IC_SCL, IC_CS, IC_SO, IC_SI`이다.
+GMG12864-06D 모듈은 ST7565R 호환 128x64 LCD로 보고, 4선식 SPI와 리셋, 데이터/명령 선택 GPIO를 사용한다.
 
-CubeMX에서는 아래 STM32 핀을 모두 `GPIO_Output`으로 등록한다. `PE7~PE12`는 현재 계획의 SDMMC, SWD, I2C1, SAI1 오디오 핀과 겹치지 않고 한 포트에 모여 있어 LCD용으로 관리하기 쉽다.
-
-| 순서 | GMG12864-06D 핀 | STM32 연결 | STM32 기능 | 비고 |
-| ---: | --- | --- | --- | --- |
-| 1 | CS | PE7 | GPIO_Output | LCD chip select |
-| 2 | RSE | PE8 | GPIO_Output | reset |
-| 3 | RS | PE9 | GPIO_Output | command/data 선택 |
-| 4 | SCL | PE10 | GPIO_Output | software SPI clock |
-| 5 | SI | PE11 | GPIO_Output | software SPI data, STM32 -> LCD |
-| 6 | VDD | 3.3V | 전원 | 3.3 V 로직 기준 |
-| 7 | VSS | GND | 접지 | 공통 접지 |
-| 8 | A | 3.3V 또는 PE12 경유 | backlight anode | 저항 또는 트랜지스터 사용 권장 |
-| 9 | K | GND | backlight cathode | 모듈 회로 확인 |
-| 10 | IC_SCL | 미연결 | - | 부가 IC 인터페이스로 추정, LCD 표시 검증 단계에서는 사용하지 않음 |
-| 11 | IC_CS | 미연결 | - | 부가 IC 인터페이스로 추정 |
-| 12 | IC_SO | 미연결 | - | 부가 IC 인터페이스로 추정 |
-| 13 | IC_SI | 미연결 | - | 부가 IC 인터페이스로 추정 |
-
-## MCP23017 x2
-
-두 MCP23017은 같은 I2C 버스를 공유하고, `A0~A2` 주소 핀만 다르게 묶는다. 모듈에 `NC/CS`, `NC/SO` 핀이 있으면 SPI형 MCP23S17 겸용 보드의 핀으로 보고, MCP23017 I2C 사용 시에는 연결하지 않는다.
-
-| MCP23017 모듈 핀 | STM32 연결 | STM32 기능 | 비고 |
+| GMG12864-06D 핀 | STM32H743VI 연결 | STM32 기능 | 비고 |
 | --- | --- | --- | --- |
-| VDD | 3.3V | 전원 | STM32와 같은 전압 |
+| CS | PE7 | GPIO_Output | LCD 칩 선택, 소프트웨어로 제어 |
+| RSE / RST | PE8 | GPIO_Output | LCD 리셋 |
+| RS / DC | PE9 | GPIO_Output | 명령/데이터 선택 |
+| SCL | PB10 | SPI2_SCK | SPI 클럭 |
+| SI | PB15 | SPI2_MOSI | STM32에서 LCD로 전송 |
+| VDD | 3.3 V | 전원 | 3.3 V 로직 사용 |
+| VSS | GND | 접지 | 공통 접지 |
+| A | 3.3 V 또는 PE10 경유 | 백라이트 양극 | 모듈 회로에 맞춰 저항/트랜지스터 사용 |
+| K | GND | 백라이트 음극 | 모듈 회로 확인 |
+| IC_SCL | 연결하지 않음 | - | 부가 인터페이스로 보고 1차 표시 검증에서는 사용하지 않음 |
+| IC_CS | 연결하지 않음 | - | 부가 인터페이스 |
+| IC_SO | 연결하지 않음 | - | 부가 인터페이스 |
+| IC_SI | 연결하지 않음 | - | 부가 인터페이스 |
+
+CubeMX 설정 시작점은 다음과 같다.
+
+| 항목 | 설정 |
+| --- | --- |
+| SPI2 모드 | 마스터, 송신 전용 |
+| NSS | Software |
+| 데이터 크기 | 8-bit |
+| CPOL/CPHA | 우선 mode 0으로 시작하고, 표시가 깨지면 모듈 동작에 맞춰 조정 |
+| GPIO | PE7, PE8, PE9를 output으로 설정 |
+
+## MCP23017 GPIO 확장
+
+두 개의 MCP23017은 같은 I2C 버스를 공유한다. 주소 핀 `A0~A2`를 다르게 묶어 두 장치를 구분한다.
+
+| MCP23017 핀 | STM32H743VI 연결 | STM32 기능 | 비고 |
+| --- | --- | --- | --- |
+| VDD | 3.3 V | 전원 | MCU와 같은 로직 전압 |
 | VSS / GND | GND | 접지 | 공통 접지 |
-| SCL | PB6 | I2C1_SCL | 4.7 kOhm 정도 pull-up 권장 |
-| SDA | PB7 | I2C1_SDA | 4.7 kOhm 정도 pull-up 권장 |
-| NC/CS | 미연결 | - | MCP23017 I2C 모드에서는 chip select를 사용하지 않음 |
-| NC/SO | 미연결 | - | MCP23017 I2C 모드에서는 SPI serial out을 사용하지 않음 |
-| RESET | 3.3V | reset 비활성 | 10 kOhm pull-up 권장, 필요 시 GPIO로 변경 |
-| A0/A1/A2 - U1 | GND/GND/GND | 주소 설정 | 7-bit I2C 주소 `0x20` |
-| A0/A1/A2 - U2 | 3.3V/GND/GND | 주소 설정 | 7-bit I2C 주소 `0x21` |
-| INTA/INTB - U1 | PC0 / PC1 | GPIO_EXTI 입력 | 선택 사항 |
-| INTA/INTB - U2 | PA0 / PA1 | GPIO_EXTI 입력 | 선택 사항 |
-| GPA0~GPB7 | 버튼/LED 등 | 확장 GPIO | 입력은 pull-up 정책 별도 결정 |
+| SCL | PB6 | I2C1_SCL | 3.3 V pull-up 필요 |
+| SDA | PB7 | I2C1_SDA | 3.3 V pull-up 필요 |
+| RESET | 3.3 V 또는 예비 GPIO | 리셋 | 10 kOhm 정도 pull-up 권장 |
+| A0/A1/A2, U1 | GND/GND/GND | 주소 설정 | 7-bit 주소 `0x20` |
+| A0/A1/A2, U2 | 3.3 V/GND/GND | 주소 설정 | 7-bit 주소 `0x21` |
+| INTA/INTB, 선택 사항 | PC0 / PC1 | GPIO_EXTI | 인터럽트 기반 입력 처리가 필요할 때만 사용 |
 
-## MCP3008 ADC
+MCP23017 모듈 보드에 `CS`, `SO`처럼 SPI용으로 보이는 핀이 있어도, I2C 모드에서는 연결하지 않는다.
 
-MCP3008을 계속 사용한다면 별도 SPI peripheral 또는 STM32 내장 ADC 사용을 다시 검토한다. LCD는 GPIO software SPI로 분리했으므로 SPI1을 LCD가 점유하지 않는다.
+## PCM5102 DAC 및 INMP441 마이크
 
-| MCP3008 핀 | STM32 연결 | STM32 기능 | 비고 |
+오디오는 `SAI1`을 사용한다. DAC 출력과 마이크 입력을 하나의 오디오 주변장치 그룹에 묶어 LCD/SPI 선택이 오디오 핀을 침범하지 않도록 한다.
+
+| 오디오 신호 | STM32H743VI 연결 | STM32 기능 | 연결 모듈 |
 | --- | --- | --- | --- |
-| VDD | 3.3V | 전원 | 입력 범위도 3.3 V 이하 |
-| VREF | 3.3V | ADC 기준전압 | 더 낮은 기준전압을 쓰면 입력 범위도 낮아짐 |
-| AGND | GND | 아날로그 접지 | DGND와 공통 접지 |
-| DGND | GND | 디지털 접지 | AGND와 공통 접지 |
-| CLK | PA5 | SPI1_SCK | LCD와 분리됨, MCP3008을 유지할 때만 사용 |
-| DOUT | PA6 | SPI1_MISO | ADC -> STM32 |
-| DIN | PA7 | SPI1_MOSI | STM32 -> ADC |
-| CS / SHDN | PB0 | GPIO_Output | ADC chip select |
-| CH0~CH7 | 아날로그 입력 | ADC 입력 | 노브/센서 출력은 0~3.3 V 범위로 제한 |
+| BCLK / SCK | PE5 | SAI1_SCK_A | PCM5102와 INMP441 공유 |
+| LRCK / WS / FS | PE4 | SAI1_FS_A | PCM5102와 INMP441 공유 |
+| DAC 데이터 출력 | PE6 | SAI1_SD_A | STM32에서 PCM5102 DIN으로 출력 |
+| 마이크 데이터 입력 | PE3 | SAI1_SD_B | INMP441 SD에서 STM32로 입력 |
+| MCLK, 선택 사항 | PE2 | SAI1_MCLK_A | 대부분의 PCM5102 모듈에서는 필요하지 않음 |
 
-## KY-040 rotary encoder
+권장 SAI 구성은 다음과 같다.
 
-KY-040 보드에 이미 pull-up 저항이 있는 경우가 많지만, 모듈별 차이가 있으므로 STM32 내부 pull-up도 켜는 쪽으로 시작한다.
+| 블록 | 역할 |
+| --- | --- |
+| SAI1 Block A | PCM5102용 마스터 송신 |
+| SAI1 Block B | INMP441용 동기 수신 |
 
-| KY-040 핀 | STM32 연결 | STM32 기능 | 비고 |
+PCM5102 모듈 연결:
+
+| PCM5102 핀 | 연결 | 비고 |
+| --- | --- | --- |
+| VIN / VCC | 3.3 V 또는 모듈 지원 전원 | 모듈 보드에 레귤레이터가 있는지 확인 |
+| GND | GND | 공통 접지 |
+| BCK / BCLK | PE5 | SAI1_SCK_A |
+| LCK / LRCK / WS | PE4 | SAI1_FS_A |
+| DIN | PE6 | SAI1_SD_A |
+| SCK | 연결하지 않음 또는 필요 시 PE2 | 대부분의 PCM5102 보드는 외부 MCLK 없이 동작 가능 |
+| XSMT | 3.3 V | 음소거 해제 |
+| FMT / FLT / DMP | 모듈 기본값 또는 고정 연결 | 모듈 보드 기본 설정 확인 |
+
+INMP441 모듈 연결:
+
+| INMP441 핀 | 연결 | 비고 |
+| --- | --- | --- |
+| VDD | 3.3 V | 3.3 V 사용 |
+| GND | GND | 공통 접지 |
+| SCK / BCLK | PE5 | 오디오 bit clock 공유 |
+| WS / LRCK | PE4 | 오디오 frame sync 공유 |
+| SD | PE3 | SAI1_SD_B |
+| L/R | GND 또는 3.3 V | 좌/우 채널 선택 |
+
+## KY-040 로터리 엔코더
+
+엔코더는 GPIO EXTI로 처리한다. 아래 핀들은 SDMMC, SWD, SAI1, I2C1, LCD SPI2 SCK/MOSI와 겹치지 않는다.
+
+| KY-040 핀 | STM32H743VI 연결 | STM32 기능 | 비고 |
 | --- | --- | --- | --- |
-| + | 3.3V | 전원 | 5 V 대신 3.3 V 사용 |
+| + | 3.3 V | 전원 | 3.3 V 사용 |
 | GND | GND | 접지 | 공통 접지 |
-| CLK / A | PB12 | GPIO_EXTI 입력 | 내부 pull-up |
-| DT / B | PB13 | GPIO_EXTI 입력 | 내부 pull-up |
-| SW | PB14 | GPIO_EXTI 입력 | 내부 pull-up |
+| CLK / A | PB12 | GPIO_EXTI | pull-up |
+| DT / B | PB13 | GPIO_EXTI | pull-up |
+| SW | PB14 | GPIO_EXTI | pull-up |
 
-## PCM5102 DAC
+PB13/PB14에도 SPI2 alternate function이 있지만, 이 설계에서는 LCD에 `PB10`, `PB15`만 사용하므로 활성 충돌은 없다.
 
-PCM5102는 I2S 형식의 오디오 DAC이다. STM32 쪽은 SAI1 Block A를 master transmit로 쓰는 구성이 적합하다.
+## 핀 할당 요약
 
-| PCM5102 모듈 핀 | STM32 연결 | STM32 기능 | 비고 |
-| --- | --- | --- | --- |
-| VIN / VCC | 3.3V | 전원 | 모듈이 5 V 입력 레귤레이터형인지 확인 |
-| GND | GND | 접지 | 공통 접지 |
-| BCK / BCLK | PE5 | SAI1_SCK_A | INMP441와 clock 공유 |
-| LCK / LRCK / WS | PE4 | SAI1_FS_A | INMP441와 frame sync 공유 |
-| DIN | PE6 | SAI1_SD_A | STM32 -> DAC |
-| SCK | 미연결 | - | 대부분 PCM5102 모듈은 system clock 없이 동작 가능 |
-| XSMT | 3.3V | mute 해제 | 10 kOhm pull-up 권장 |
-| FLT | GND 또는 3.3V | 필터 선택 | 모듈 기본값 우선 |
-| DMP | GND 또는 3.3V | de-emphasis | 보통 GND |
-| FMT | GND 또는 3.3V | I2S format | 모듈 기본 I2S 설정 확인 |
+| STM32H743VI 핀 | 할당 용도 |
+| --- | --- |
+| PA13 | SWDIO |
+| PA14 | SWCLK |
+| PB6 | I2C1_SCL |
+| PB7 | I2C1_SDA |
+| PB10 | LCD SPI2_SCK |
+| PB12 | 엔코더 A |
+| PB13 | 엔코더 B |
+| PB14 | 엔코더 스위치 |
+| PB15 | LCD SPI2_MOSI |
+| PC0 | MCP23017 인터럽트, 선택 사항 |
+| PC1 | MCP23017 인터럽트, 선택 사항 |
+| PC8 | SDMMC1_D0 |
+| PC9 | SDMMC1_D1 |
+| PC10 | SDMMC1_D2 |
+| PC11 | SDMMC1_D3 |
+| PC12 | SDMMC1_CK |
+| PD2 | SDMMC1_CMD |
+| PD4 | SD 카드 감지 |
+| PE2 | SAI1_MCLK_A, 선택 사항 |
+| PE3 | INMP441 데이터, SAI1_SD_B |
+| PE4 | 오디오 LRCK/WS, SAI1_FS_A |
+| PE5 | 오디오 BCLK, SAI1_SCK_A |
+| PE6 | PCM5102 데이터, SAI1_SD_A |
+| PE7 | LCD CS |
+| PE8 | LCD 리셋 |
+| PE9 | LCD RS/DC |
+| PE10 | LCD 백라이트 제어, 선택 사항 |
 
-## INMP441 MEMS microphone
+## 배선 전 확인 사항
 
-INMP441은 I2S 출력 마이크이다. PCM5102와 같은 SAI1 clock/frame을 공유하고, SAI1 Block B를 synchronous receive로 둔다.
+- 모든 모듈의 GND는 STM32 보드 GND와 공통으로 묶는다.
+- GPIO, I2C, SPI 신호는 3.3 V 로직으로 운용한다.
+- 5 V pull-up이 걸린 모듈은 STM32 핀에 직접 연결하지 않는다.
+- I2C pull-up은 3.3 V에 연결한다.
+- 여러 I2C 모듈에 pull-up이 이미 달려 있으면 전체 등가 저항이 너무 낮아질 수 있으므로 확인한다.
+- LCD `CS`는 하드웨어 NSS가 아니라 GPIO로 직접 제어한다.
+- `SPI4`는 LCD에 사용하지 않는다. LQFP100에서 `SPI4`의 유효 핀들이 선택한 `SAI1` 오디오 핀 그룹과 겹치거나 Port E를 크게 점유한다.
+- 이후 다른 SPI 모듈을 추가할 때는 해당 모듈이 `MISO`를 요구하는지 먼저 확인한다. 쓰기 전용 디스플레이와 읽기/쓰기 센서는 버스 제약이 다르다.
 
-| INMP441 모듈 핀 | STM32 연결 | STM32 기능 | 비고 |
-| --- | --- | --- | --- |
-| VDD | 3.3V | 전원 | 3.3 V 사용 |
-| GND | GND | 접지 | 공통 접지 |
-| SCK / BCLK | PE5 | SAI1_SCK_A 공유 | STM32 master clock |
-| WS / LRCK | PE4 | SAI1_FS_A 공유 | frame sync |
-| SD | PE3 | SAI1_SD_B | mic -> STM32 |
-| L/R | GND 또는 3.3V | 채널 선택 | GND=left, 3.3V=right로 시작 |
+## 참고 자료
 
-## LQFP100 package pin cross-reference
-
-실제 개발보드 커넥터 실크가 MCU 핀명을 그대로 노출하지 않을 수 있으므로, 보드 회로도에서 아래 MCU 핀명과 커넥터 위치를 다시 대조한다.
-
-| STM32 핀 | LQFP100 핀 번호 | 이번 계획의 용도 |
-| --- | ---: | --- |
-| PE2 | 1 | 예비: SAI1_MCLK_A 가능 |
-| PE3 | 2 | INMP441 SD, SAI1_SD_B |
-| PE4 | 3 | SAI1_FS_A |
-| PE5 | 4 | SAI1_SCK_A |
-| PE6 | 5 | PCM5102 DIN, SAI1_SD_A |
-| PC0 | 15 | MCP23017 U1 INTA |
-| PC1 | 16 | MCP23017 U1 INTB |
-| PA0 | 22 | MCP23017 U2 INTA |
-| PA1 | 23 | MCP23017 U2 INTB |
-| PA5 | 29 | SPI1_SCK |
-| PA6 | 30 | SPI1_MISO |
-| PA7 | 31 | SPI1_MOSI |
-| PB0 | 34 | MCP3008 CS |
-| PE7 | 38 | GMG12864-06D CS |
-| PE8 | 39 | GMG12864-06D RSE |
-| PE9 | 40 | GMG12864-06D RS |
-| PE10 | 41 | GMG12864-06D SCL |
-| PE11 | 42 | GMG12864-06D SI |
-| PE12 | 43 | GMG12864-06D backlight control 예비 |
-| PB12 | 51 | KY-040 CLK |
-| PB13 | 52 | KY-040 DT |
-| PB14 | 53 | KY-040 SW |
-| PB6 | 92 | I2C1_SCL |
-| PB7 | 93 | I2C1_SDA |
-
-## Notes before wiring
-
-- 모든 모듈의 GND는 STM32 보드 GND와 반드시 공통으로 묶는다.
-- STM32H743의 I/O는 3.3 V 기준으로 운용한다. 5 V 출력 모듈이나 5 V pull-up이 걸린 I2C/SPI 모듈은 그대로 연결하지 않는다.
-- I2C pull-up은 3.3 V에 연결한다. 모듈에 이미 pull-up이 여러 개 달려 있으면 전체 등가 저항이 너무 낮아질 수 있으므로 확인한다.
-- GMG12864-06D LCD는 GPIO software SPI로 시작한다. 나중에 LCD 갱신 속도가 부족하면 hardware SPI 전환을 검토한다.
-- 오디오 clock은 PCM5102와 INMP441이 공유하므로 SAI1 설정에서 Block A를 master transmit, Block B를 synchronous slave receive로 시작한다.
-
-## References
-
-- STMicroelectronics, `STM32H742xI/G STM32H743xI/G` datasheet DS12110 Rev 11, January 2026: https://www.st.com/resource/en/datasheet/stm32h743vi.pdf
-- 현재 CubeMX 설정: `rtos-loopstation.ioc`
+- STMicroelectronics, `STM32H742xI/G STM32H743xI/G` datasheet DS12110 Rev 11, January 2026: `docs/stm32h743vi.pdf`
+- 현재 CubeMX 프로젝트: `rtos-loopstation.ioc`
