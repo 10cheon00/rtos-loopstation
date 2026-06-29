@@ -22,7 +22,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdbool.h>
 #include <stdio.h>
 #include "u8g2.h"
 /* USER CODE END Includes */
@@ -34,33 +33,13 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MCP23017_BASE_ADDR 0x20U
-#define MCP23017_ADDR_A2A1A0_100 (MCP23017_BASE_ADDR | 0x04U)
-#define MCP23017_ADDR_A2A1A0_101 (MCP23017_BASE_ADDR | 0x05U)
+#define ENCODER_DISPLAY_INTERVAL_MS 50U
+#define MCP23017_ADDR_A2A1A0_100 0x24U
 #define MCP23017_HAL_ADDR(addr7) ((uint16_t)((addr7) << 1))
-
-#define MCP23017_REG_IODIRA 0x00U
 #define MCP23017_REG_IODIRB 0x01U
-#define MCP23017_REG_GPPUA 0x0CU
 #define MCP23017_REG_GPPUB 0x0DU
 #define MCP23017_REG_GPIOB 0x13U
-#define MCP23017_REG_OLATB 0x15U
-
-#define MCP23017_100_B4_INPUT GPIO_PIN_4
-#define MCP23017_100_B5_OUTPUT GPIO_PIN_5
-#define MCP23017_100_STATELESS_MASK (GPIO_PIN_6 | GPIO_PIN_7)
-#define MCP23017_100_INPUT_MASK \
-  (MCP23017_100_B4_INPUT | MCP23017_100_STATELESS_MASK)
-
-#define MCP23017_101_B7_INPUT GPIO_PIN_7
-#define MCP23017_101_B6_OUTPUT GPIO_PIN_6
-#define MCP23017_101_STATELESS_MASK \
-  (GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5)
-#define MCP23017_101_INPUT_MASK \
-  (MCP23017_101_B7_INPUT | MCP23017_101_STATELESS_MASK)
-
-#define MCP23017_POLL_INTERVAL_MS 20U
-#define MCP23017_DEBOUNCE_MS 40U
+#define ENCODER_SW_MCP23017_B3 GPIO_PIN_3
 
 /* USER CODE END PD */
 
@@ -77,6 +56,8 @@ SD_HandleTypeDef hsd1;
 
 SPI_HandleTypeDef hspi2;
 
+TIM_HandleTypeDef htim4;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -88,28 +69,19 @@ static void MX_GPIO_Init(void);
 static void MX_SDMMC1_SD_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-typedef struct {
-  bool stable_pressed;
-  bool last_raw_pressed;
-  uint32_t last_change_ms;
-} ButtonDebounce;
-
 static u8g2_t lcd;
-static ButtonDebounce mcp100_b4_button;
-static ButtonDebounce mcp101_b7_button;
-static bool mcp100_b5_state;
-static bool mcp101_b6_state;
-static uint8_t mcp100_olatb;
-static uint8_t mcp101_olatb;
-static uint8_t mcp100_last_stateless = 0xffU;
-static uint8_t mcp101_last_stateless = 0xffU;
-static bool mcp23017_ready;
+static int32_t encoder_position;
+static uint16_t encoder_last_count;
+static int16_t encoder_last_delta;
+static uint8_t encoder_switch_ready;
+static uint8_t encoder_switch_pressed;
 
 static void GMG12864_DelayCycles(volatile uint32_t cycles) {
   while (cycles-- > 0U) {
@@ -213,217 +185,113 @@ static HAL_StatusTypeDef MCP23017_ReadReg(uint8_t addr7, uint8_t reg,
                           I2C_MEMADD_SIZE_8BIT, value, 1, HAL_MAX_DELAY);
 }
 
-static HAL_StatusTypeDef MCP23017_SetBOutput(uint8_t addr7, uint8_t* olatb,
-                                             uint8_t mask, bool on) {
-  if (on) {
-    *olatb |= mask;
-  } else {
-    *olatb &= (uint8_t)~mask;
+static HAL_StatusTypeDef EncoderSwitch_Init(void) {
+  uint8_t value;
+
+  if (MCP23017_ReadReg(MCP23017_ADDR_A2A1A0_100, MCP23017_REG_IODIRB,
+                       &value) != HAL_OK) {
+    return HAL_ERROR;
+  }
+  value |= ENCODER_SW_MCP23017_B3;
+  if (MCP23017_WriteReg(MCP23017_ADDR_A2A1A0_100, MCP23017_REG_IODIRB,
+                        value) != HAL_OK) {
+    return HAL_ERROR;
   }
 
-  return MCP23017_WriteReg(addr7, MCP23017_REG_OLATB, *olatb);
-}
-
-static HAL_StatusTypeDef MCP23017_InitDevice(uint8_t addr7, uint8_t iodirb,
-                                             uint8_t gppub, uint8_t* olatb) {
-  *olatb = 0U;
-
-  if (MCP23017_WriteReg(addr7, MCP23017_REG_IODIRA, 0xffU) != HAL_OK) {
+  if (MCP23017_ReadReg(MCP23017_ADDR_A2A1A0_100, MCP23017_REG_GPPUB,
+                       &value) != HAL_OK) {
     return HAL_ERROR;
   }
-  if (MCP23017_WriteReg(addr7, MCP23017_REG_GPPUA, 0x00U) != HAL_OK) {
-    return HAL_ERROR;
-  }
-  if (MCP23017_WriteReg(addr7, MCP23017_REG_OLATB, *olatb) != HAL_OK) {
-    return HAL_ERROR;
-  }
-  if (MCP23017_WriteReg(addr7, MCP23017_REG_IODIRB, iodirb) != HAL_OK) {
-    return HAL_ERROR;
-  }
-  if (MCP23017_WriteReg(addr7, MCP23017_REG_GPPUB, gppub) != HAL_OK) {
+  value |= ENCODER_SW_MCP23017_B3;
+  if (MCP23017_WriteReg(MCP23017_ADDR_A2A1A0_100, MCP23017_REG_GPPUB,
+                        value) != HAL_OK) {
     return HAL_ERROR;
   }
 
   return HAL_OK;
 }
 
-static HAL_StatusTypeDef MCP23017_InitAll(void) {
-  mcp100_b5_state = false;
-  mcp101_b6_state = false;
+static void EncoderSwitch_Poll(void) {
+  uint8_t gpio_b;
 
-  if (MCP23017_InitDevice(MCP23017_ADDR_A2A1A0_100, MCP23017_100_INPUT_MASK,
-                          MCP23017_100_INPUT_MASK, &mcp100_olatb) != HAL_OK) {
-    return HAL_ERROR;
-  }
-
-  if (MCP23017_InitDevice(MCP23017_ADDR_A2A1A0_101, MCP23017_101_INPUT_MASK,
-                          MCP23017_101_INPUT_MASK, &mcp101_olatb) != HAL_OK) {
-    return HAL_ERROR;
-  }
-
-  mcp100_b4_button.last_raw_pressed = false;
-  mcp100_b4_button.stable_pressed = false;
-  mcp100_b4_button.last_change_ms = HAL_GetTick();
-  mcp101_b7_button.last_raw_pressed = false;
-  mcp101_b7_button.stable_pressed = false;
-  mcp101_b7_button.last_change_ms = HAL_GetTick();
-
-  return HAL_OK;
-}
-
-static bool MCP23017_DebouncePressedEdge(ButtonDebounce* button,
-                                         bool raw_pressed, uint32_t now_ms) {
-  if (raw_pressed != button->last_raw_pressed) {
-    button->last_raw_pressed = raw_pressed;
-    button->last_change_ms = now_ms;
-  }
-
-  if ((raw_pressed != button->stable_pressed) &&
-      ((now_ms - button->last_change_ms) >= MCP23017_DEBOUNCE_MS)) {
-    button->stable_pressed = raw_pressed;
-    return raw_pressed;
-  }
-
-  return false;
-}
-
-static bool MCP23017_IsPressed(uint8_t gpio_value, uint8_t mask) {
-  return (gpio_value & mask) == 0U;
-}
-
-static void MCP23017_BuildPressedLine(char* line, size_t line_size,
-                                      const char* prefix, uint8_t pressed_mask,
-                                      const uint8_t* pins, size_t pin_count) {
-  int written = snprintf(line, line_size, "%s:", prefix);
-  bool any_pressed = false;
-
-  if (written < 0) {
-    return;
-  }
-
-  for (size_t i = 0; i < pin_count; i++) {
-    uint8_t pin = pins[i];
-
-    if ((pressed_mask & (uint8_t)(1U << pin)) != 0U) {
-      int remain = (int)line_size - written;
-
-      if (remain > 0) {
-        written += snprintf(&line[written], (size_t)remain, " B%u", pin);
-      }
-      any_pressed = true;
-    }
-  }
-
-  if (!any_pressed && written < (int)line_size) {
-    (void)snprintf(&line[written], line_size - (size_t)written, " none");
-  }
-}
-
-static void LCD_DrawMCP23017Status(uint8_t mcp100_stateless,
-                                   uint8_t mcp101_stateless) {
-  static const uint8_t mcp100_pins[] = {6U, 7U};
-  static const uint8_t mcp101_pins[] = {2U, 3U, 4U, 5U};
-  char line1[22];
-  char line2[22];
-  char line3[22];
-
-  MCP23017_BuildPressedLine(line1, sizeof(line1), "100", mcp100_stateless,
-                            mcp100_pins, sizeof(mcp100_pins));
-  MCP23017_BuildPressedLine(line2, sizeof(line2), "101", mcp101_stateless,
-                            mcp101_pins, sizeof(mcp101_pins));
-  (void)snprintf(line3, sizeof(line3), "T 100B5=%u 101B6=%u",
-                 mcp100_b5_state ? 1U : 0U, mcp101_b6_state ? 1U : 0U);
-
-  u8g2_ClearBuffer(&lcd);
-  u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
-  u8g2_DrawStr(&lcd, 0, 10, "MCP23017 polling");
-  u8g2_DrawStr(&lcd, 0, 24, line1);
-  u8g2_DrawStr(&lcd, 0, 38, line2);
-  u8g2_DrawStr(&lcd, 0, 52, line3);
-  u8g2_SendBuffer(&lcd);
-}
-
-static void LCD_DrawMCP23017Error(const char* message) {
-  u8g2_ClearBuffer(&lcd);
-  u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
-  u8g2_DrawStr(&lcd, 0, 12, "MCP23017 error");
-  u8g2_DrawStr(&lcd, 0, 28, message);
-  u8g2_SendBuffer(&lcd);
-}
-
-static void MCP23017_Poll(void) {
-  static uint32_t last_poll_ms;
-  uint32_t now_ms = HAL_GetTick();
-  uint8_t gpio100 = 0xffU;
-  uint8_t gpio101 = 0xffU;
-  uint8_t mcp100_stateless;
-  uint8_t mcp101_stateless;
-  bool should_redraw = false;
-
-  if ((now_ms - last_poll_ms) < MCP23017_POLL_INTERVAL_MS) {
-    return;
-  }
-  last_poll_ms = now_ms;
-
-  if (!mcp23017_ready) {
+  if (!encoder_switch_ready) {
     return;
   }
 
   if (MCP23017_ReadReg(MCP23017_ADDR_A2A1A0_100, MCP23017_REG_GPIOB,
-                       &gpio100) != HAL_OK) {
-    mcp23017_ready = false;
-    LCD_DrawMCP23017Error("read 0x24 failed");
+                       &gpio_b) != HAL_OK) {
+    encoder_switch_ready = 0U;
+    encoder_switch_pressed = 0U;
     return;
   }
 
-  if (MCP23017_ReadReg(MCP23017_ADDR_A2A1A0_101, MCP23017_REG_GPIOB,
-                       &gpio101) != HAL_OK) {
-    mcp23017_ready = false;
-    LCD_DrawMCP23017Error("read 0x25 failed");
+  encoder_switch_pressed =
+      (gpio_b & ENCODER_SW_MCP23017_B3) == 0U ? 1U : 0U;
+}
+
+static void LCD_DrawEncoderStatus(void) {
+  char line1[22];
+  char line2[22];
+  char line3[22];
+  char line4[22];
+  const char* direction = "STOP";
+
+  if (encoder_last_delta > 0) {
+    direction = "CW";
+  } else if (encoder_last_delta < 0) {
+    direction = "CCW";
+  }
+
+  (void)snprintf(line1, sizeof(line1), "CNT: %5u",
+                 (unsigned int)__HAL_TIM_GET_COUNTER(&htim4));
+  (void)snprintf(line2, sizeof(line2), "POS: %ld", (long)encoder_position);
+  (void)snprintf(line3, sizeof(line3), "DIR: %s d=%d", direction,
+                 (int)encoder_last_delta);
+  if (encoder_switch_ready) {
+    (void)snprintf(line4, sizeof(line4), "SW : %s",
+                   encoder_switch_pressed ? "PUSH" : "OPEN");
+  } else {
+    (void)snprintf(line4, sizeof(line4), "SW : MCP ERR");
+  }
+
+  u8g2_ClearBuffer(&lcd);
+  u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
+  u8g2_DrawStr(&lcd, 0, 10, "TIM4 encoder test");
+  u8g2_DrawStr(&lcd, 0, 22, line1);
+  u8g2_DrawStr(&lcd, 0, 34, line2);
+  u8g2_DrawStr(&lcd, 0, 46, line3);
+  u8g2_DrawStr(&lcd, 0, 58, line4);
+  u8g2_SendBuffer(&lcd);
+}
+
+static void LCD_DrawEncoderError(const char* message) {
+  u8g2_ClearBuffer(&lcd);
+  u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
+  u8g2_DrawStr(&lcd, 0, 12, "Encoder error");
+  u8g2_DrawStr(&lcd, 0, 28, message);
+  u8g2_SendBuffer(&lcd);
+}
+
+static void Encoder_Poll(void) {
+  static uint32_t last_display_ms;
+  uint32_t now_ms = HAL_GetTick();
+  uint16_t count = (uint16_t)__HAL_TIM_GET_COUNTER(&htim4);
+  int16_t delta = (int16_t)(count - encoder_last_count);
+
+  encoder_last_count = count;
+
+  if (delta != 0) {
+    encoder_last_delta = delta;
+    encoder_position += delta;
+  }
+
+  if ((now_ms - last_display_ms) < ENCODER_DISPLAY_INTERVAL_MS) {
     return;
   }
+  last_display_ms = now_ms;
 
-  if (MCP23017_DebouncePressedEdge(
-          &mcp100_b4_button,
-          MCP23017_IsPressed(gpio100, MCP23017_100_B4_INPUT), now_ms)) {
-    mcp100_b5_state = !mcp100_b5_state;
-    if (MCP23017_SetBOutput(MCP23017_ADDR_A2A1A0_100, &mcp100_olatb,
-                            MCP23017_100_B5_OUTPUT,
-                            mcp100_b5_state) != HAL_OK) {
-      mcp23017_ready = false;
-      LCD_DrawMCP23017Error("write 0x24 failed");
-      return;
-    }
-    should_redraw = true;
-  }
-
-  if (MCP23017_DebouncePressedEdge(
-          &mcp101_b7_button,
-          MCP23017_IsPressed(gpio101, MCP23017_101_B7_INPUT), now_ms)) {
-    mcp101_b6_state = !mcp101_b6_state;
-    if (MCP23017_SetBOutput(MCP23017_ADDR_A2A1A0_101, &mcp101_olatb,
-                            MCP23017_101_B6_OUTPUT,
-                            mcp101_b6_state) != HAL_OK) {
-      mcp23017_ready = false;
-      LCD_DrawMCP23017Error("write 0x25 failed");
-      return;
-    }
-    should_redraw = true;
-  }
-
-  mcp100_stateless = (uint8_t)(~gpio100) & MCP23017_100_STATELESS_MASK;
-  mcp101_stateless = (uint8_t)(~gpio101) & MCP23017_101_STATELESS_MASK;
-
-  if ((mcp100_stateless != mcp100_last_stateless) ||
-      (mcp101_stateless != mcp101_last_stateless)) {
-    mcp100_last_stateless = mcp100_stateless;
-    mcp101_last_stateless = mcp101_stateless;
-    should_redraw = true;
-  }
-
-  if (should_redraw) {
-    LCD_DrawMCP23017Status(mcp100_stateless, mcp101_stateless);
-  }
+  EncoderSwitch_Poll();
+  LCD_DrawEncoderStatus();
 }
 
 /* USER CODE END 0 */
@@ -464,6 +332,7 @@ int main(void)
   MX_FATFS_Init();
   MX_SPI2_Init();
   MX_I2C1_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
   u8g2_Setup_st7565_erc12864_alt_f(&lcd, U8G2_R0, GMG12864_U8x8ByteHwSpi,
@@ -472,19 +341,17 @@ int main(void)
   u8g2_SetPowerSave(&lcd, 0);
   u8g2_SetContrast(&lcd, 80);
 
-  u8g2_ClearBuffer(&lcd);
-  u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
-  u8g2_DrawStr(&lcd, 0, 12, "Hello");
-  u8g2_DrawStr(&lcd, 0, 28, "Loopstation");
-  u8g2_SendBuffer(&lcd);
-
-  if (MCP23017_InitAll() == HAL_OK) {
-    mcp23017_ready = true;
-    LCD_DrawMCP23017Status(0U, 0U);
-  } else {
-    mcp23017_ready = false;
-    LCD_DrawMCP23017Error("init failed");
+  if (HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL) != HAL_OK) {
+    LCD_DrawEncoderError("TIM4 start failed");
+    Error_Handler();
   }
+  __HAL_TIM_SET_COUNTER(&htim4, 0U);
+  encoder_last_count = 0U;
+  encoder_last_delta = 0;
+  encoder_position = 0;
+  encoder_switch_ready = EncoderSwitch_Init() == HAL_OK ? 1U : 0U;
+  EncoderSwitch_Poll();
+  LCD_DrawEncoderStatus();
 
   /* USER CODE END 2 */
 
@@ -494,7 +361,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    MCP23017_Poll();
+    Encoder_Poll();
   }
   /* USER CODE END 3 */
 }
@@ -686,6 +553,55 @@ static void MX_SPI2_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_Encoder_InitTypeDef sConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 0;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 65535;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC1Filter = 0;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC2Filter = 0;
+  if (HAL_TIM_Encoder_Init(&htim4, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -701,8 +617,8 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, GMG12864_CS_Pin|GMG12864_RST_Pin|GMG12864_DC_Pin, GPIO_PIN_RESET);
