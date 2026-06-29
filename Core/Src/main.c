@@ -35,7 +35,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define AUDIO_DISPLAY_INTERVAL_MS 100U
-#define SINE_TABLE_SIZE 48U
+#define MIC_SLOT_INDEX 0U
 
 /* USER CODE END PD */
 
@@ -80,16 +80,10 @@ static void MX_SAI1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 static u8g2_t lcd;
-static const int16_t sine_table[SINE_TABLE_SIZE] = {
-    0,      1566,   3106,   4592,   6000,   7305,   8485,   9526,
-    10392,  11087,  11591,  11897,  12000,  11897,  11591,  11087,
-    10392,  9526,   8485,   7305,   6000,   4592,   3106,   1566,
-    0,      -1566,  -3106,  -4592,  -6000,  -7305,  -8485,  -9526,
-    -10392, -11087, -11591, -11897, -12000, -11897, -11591, -11087,
-    -10392, -9526,  -8485,  -7305,  -6000,  -4592,  -3106,  -1566};
-static uint32_t sine_index;
-static int16_t last_audio_sample;
-static int32_t last_audio_word;
+static int32_t mic_rx_frame[2];
+static int32_t dac_tx_frame[2];
+static int32_t last_mic_word;
+static int32_t last_mic_sample;
 
 static void GMG12864_DelayCycles(volatile uint32_t cycles) {
   while (cycles-- > 0U) {
@@ -186,14 +180,16 @@ static void LCD_DrawAudioStatus(void) {
   char line2[22];
   char line3[22];
 
-  (void)snprintf(line1, sizeof(line1), "idx : %2lu", (unsigned long)sine_index);
-  (void)snprintf(line2, sizeof(line2), "pcm : %6d", (int)last_audio_sample);
+  (void)snprintf(line1, sizeof(line1), "slot: %lu",
+                 (unsigned long)MIC_SLOT_INDEX);
+  (void)snprintf(line2, sizeof(line2), "mic : %7ld",
+                 (long)last_mic_sample);
   (void)snprintf(line3, sizeof(line3), "word: %08lX",
-                 (unsigned long)((uint32_t)last_audio_word));
+                 (unsigned long)((uint32_t)last_mic_word));
 
   u8g2_ClearBuffer(&lcd);
   u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
-  u8g2_DrawStr(&lcd, 0, 10, "SAI1 A sine out");
+  u8g2_DrawStr(&lcd, 0, 10, "INMP441 passthru");
   u8g2_DrawStr(&lcd, 0, 26, line1);
   u8g2_DrawStr(&lcd, 0, 40, line2);
   u8g2_DrawStr(&lcd, 0, 54, line3);
@@ -208,22 +204,28 @@ static void LCD_DrawAudioError(const char* message) {
   u8g2_SendBuffer(&lcd);
 }
 
-static HAL_StatusTypeDef Audio_SendNextSample(void) {
-  int32_t sample_word;
-  int32_t stereo_frame[2];
+static void Audio_UpdateMicSample(void) {
+  last_mic_word = mic_rx_frame[MIC_SLOT_INDEX];
+  last_mic_sample = last_mic_word >> 8;
+  dac_tx_frame[0] = last_mic_word;
+  dac_tx_frame[1] = last_mic_word;
+}
 
-  last_audio_sample = sine_table[sine_index];
-  sample_word = ((int32_t)last_audio_sample) << 8;
-  last_audio_word = sample_word;
-  stereo_frame[0] = sample_word;
-  stereo_frame[1] = sample_word;
+static HAL_StatusTypeDef Audio_PassthroughPoll(void) {
+  HAL_StatusTypeDef status;
 
-  sine_index++;
-  if (sine_index >= SINE_TABLE_SIZE) {
-    sine_index = 0U;
+  status = HAL_SAI_Transmit(&hsai_BlockA1, (uint8_t*)dac_tx_frame, 2U, 10U);
+  if (status != HAL_OK) {
+    return status;
   }
 
-  return HAL_SAI_Transmit(&hsai_BlockA1, (uint8_t*)stereo_frame, 2U, 10U);
+  status = HAL_SAI_Receive(&hsai_BlockB1, (uint8_t*)mic_rx_frame, 2U, 10U);
+  if (status != HAL_OK) {
+    return status;
+  }
+
+  Audio_UpdateMicSample();
+  return HAL_OK;
 }
 
 static void Audio_UpdateDisplay(void) {
@@ -290,6 +292,7 @@ int main(void)
   u8g2_SetPowerSave(&lcd, 0);
   u8g2_SetContrast(&lcd, 80);
 
+  __HAL_SAI_ENABLE(&hsai_BlockB1);
   LCD_DrawAudioStatus();
 
   /* USER CODE END 2 */
@@ -300,8 +303,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    if (Audio_SendNextSample() != HAL_OK) {
-      LCD_DrawAudioError("tx failed");
+    if (Audio_PassthroughPoll() != HAL_OK) {
+      LCD_DrawAudioError("audio failed");
       Error_Handler();
     }
     Audio_UpdateDisplay();
@@ -529,7 +532,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.Instance = SAI1_Block_A;
   hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_TX;
   hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
-  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_ENABLE;
   hsai_BlockA1.Init.NoDivider = SAI_MCK_OVERSAMPLING_DISABLE;
   hsai_BlockA1.Init.MckOverSampling = SAI_MCK_OVERSAMPLING_DISABLE;
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
@@ -552,7 +555,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
   hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2) != HAL_OK)
+  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
   {
     Error_Handler();
   }
