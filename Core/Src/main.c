@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+
 #include "u8g2.h"
 /* USER CODE END Includes */
 
@@ -33,8 +34,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ADC_DISPLAY_INTERVAL_MS 100U
-#define ADC_INPUT_COUNT 3U
+#define AUDIO_DISPLAY_INTERVAL_MS 100U
+#define SINE_TABLE_SIZE 48U
 
 /* USER CODE END PD */
 
@@ -44,14 +45,18 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
 ADC_HandleTypeDef hadc1;
 
 I2C_HandleTypeDef hi2c1;
 
+SAI_HandleTypeDef hsai_BlockA1;
+SAI_HandleTypeDef hsai_BlockB1;
+
 SD_HandleTypeDef hsd1;
 
 SPI_HandleTypeDef hspi2;
+
+TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
 
@@ -59,12 +64,15 @@ SPI_HandleTypeDef hspi2;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void PeriphCommonClock_Config(void);
 static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SDMMC1_SD_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_TIM4_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_SAI1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -72,7 +80,16 @@ static void MX_ADC1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 static u8g2_t lcd;
-static uint16_t adc_values[ADC_INPUT_COUNT];
+static const int16_t sine_table[SINE_TABLE_SIZE] = {
+    0,      1566,   3106,   4592,   6000,   7305,   8485,   9526,
+    10392,  11087,  11591,  11897,  12000,  11897,  11591,  11087,
+    10392,  9526,   8485,   7305,   6000,   4592,   3106,   1566,
+    0,      -1566,  -3106,  -4592,  -6000,  -7305,  -8485,  -9526,
+    -10392, -11087, -11591, -11897, -12000, -11897, -11591, -11087,
+    -10392, -9526,  -8485,  -7305,  -6000,  -4592,  -3106,  -1566};
+static uint32_t sine_index;
+static int16_t last_audio_sample;
+static int32_t last_audio_word;
 
 static void GMG12864_DelayCycles(volatile uint32_t cycles) {
   while (cycles-- > 0U) {
@@ -164,86 +181,61 @@ static uint8_t GMG12864_U8x8GpioDelay(u8x8_t* u8x8, uint8_t msg,
   return 1;
 }
 
-static HAL_StatusTypeDef ADC_ReadChannel(uint32_t channel, uint16_t* value) {
-  ADC_ChannelConfTypeDef sConfig = {0};
-
-  sConfig.Channel = channel;
-  sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_64CYCLES_5;
-  sConfig.SingleDiff = ADC_SINGLE_ENDED;
-  sConfig.OffsetNumber = ADC_OFFSET_NONE;
-  sConfig.Offset = 0;
-
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
-    return HAL_ERROR;
-  }
-  if (HAL_ADC_Start(&hadc1) != HAL_OK) {
-    return HAL_ERROR;
-  }
-  if (HAL_ADC_PollForConversion(&hadc1, 10U) != HAL_OK) {
-    (void)HAL_ADC_Stop(&hadc1);
-    return HAL_ERROR;
-  }
-
-  *value = (uint16_t)HAL_ADC_GetValue(&hadc1);
-  return HAL_ADC_Stop(&hadc1);
-}
-
-static HAL_StatusTypeDef ADC_ReadAll(void) {
-  if (ADC_ReadChannel(ADC_CHANNEL_16, &adc_values[0]) != HAL_OK) {
-    return HAL_ERROR;
-  }
-  if (ADC_ReadChannel(ADC_CHANNEL_17, &adc_values[1]) != HAL_OK) {
-    return HAL_ERROR;
-  }
-  if (ADC_ReadChannel(ADC_CHANNEL_14, &adc_values[2]) != HAL_OK) {
-    return HAL_ERROR;
-  }
-
-  return HAL_OK;
-}
-
-static void LCD_DrawADCStatus(void) {
+static void LCD_DrawAudioStatus(void) {
   char line1[22];
   char line2[22];
   char line3[22];
 
-  (void)snprintf(line1, sizeof(line1), "CH16: %5u", adc_values[0]);
-  (void)snprintf(line2, sizeof(line2), "CH17: %5u", adc_values[1]);
-  (void)snprintf(line3, sizeof(line3), "CH14: %5u", adc_values[2]);
+  (void)snprintf(line1, sizeof(line1), "idx : %2lu", (unsigned long)sine_index);
+  (void)snprintf(line2, sizeof(line2), "pcm : %6d", (int)last_audio_sample);
+  (void)snprintf(line3, sizeof(line3), "word: %08lX",
+                 (unsigned long)((uint32_t)last_audio_word));
 
   u8g2_ClearBuffer(&lcd);
   u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
-  u8g2_DrawStr(&lcd, 0, 10, "ADC1 values");
+  u8g2_DrawStr(&lcd, 0, 10, "SAI1 A sine out");
   u8g2_DrawStr(&lcd, 0, 26, line1);
   u8g2_DrawStr(&lcd, 0, 40, line2);
   u8g2_DrawStr(&lcd, 0, 54, line3);
   u8g2_SendBuffer(&lcd);
 }
 
-static void LCD_DrawADCError(const char* message) {
+static void LCD_DrawAudioError(const char* message) {
   u8g2_ClearBuffer(&lcd);
   u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
-  u8g2_DrawStr(&lcd, 0, 12, "ADC error");
+  u8g2_DrawStr(&lcd, 0, 12, "SAI error");
   u8g2_DrawStr(&lcd, 0, 28, message);
   u8g2_SendBuffer(&lcd);
 }
 
-static void ADC_Poll(void) {
+static HAL_StatusTypeDef Audio_SendNextSample(void) {
+  int32_t sample_word;
+  int32_t stereo_frame[2];
+
+  last_audio_sample = sine_table[sine_index];
+  sample_word = ((int32_t)last_audio_sample) << 8;
+  last_audio_word = sample_word;
+  stereo_frame[0] = sample_word;
+  stereo_frame[1] = sample_word;
+
+  sine_index++;
+  if (sine_index >= SINE_TABLE_SIZE) {
+    sine_index = 0U;
+  }
+
+  return HAL_SAI_Transmit(&hsai_BlockA1, (uint8_t*)stereo_frame, 2U, 10U);
+}
+
+static void Audio_UpdateDisplay(void) {
   static uint32_t last_display_ms;
   uint32_t now_ms = HAL_GetTick();
 
-  if ((now_ms - last_display_ms) < ADC_DISPLAY_INTERVAL_MS) {
+  if ((now_ms - last_display_ms) < AUDIO_DISPLAY_INTERVAL_MS) {
     return;
   }
   last_display_ms = now_ms;
 
-  if (ADC_ReadAll() != HAL_OK) {
-    LCD_DrawADCError("read failed");
-    return;
-  }
-
-  LCD_DrawADCStatus();
+  LCD_DrawAudioStatus();
 }
 
 /* USER CODE END 0 */
@@ -274,6 +266,9 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
+  /* Configure the peripherals common clocks */
+  PeriphCommonClock_Config();
+
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -284,7 +279,9 @@ int main(void)
   MX_FATFS_Init();
   MX_SPI2_Init();
   MX_I2C1_Init();
+  MX_TIM4_Init();
   MX_ADC1_Init();
+  MX_SAI1_Init();
   /* USER CODE BEGIN 2 */
 
   u8g2_Setup_st7565_erc12864_alt_f(&lcd, U8G2_R0, GMG12864_U8x8ByteHwSpi,
@@ -293,17 +290,7 @@ int main(void)
   u8g2_SetPowerSave(&lcd, 0);
   u8g2_SetContrast(&lcd, 80);
 
-  if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_CALIB_OFFSET_LINEARITY,
-                                  ADC_SINGLE_ENDED) != HAL_OK) {
-    LCD_DrawADCError("cal failed");
-    Error_Handler();
-  }
-
-  if (ADC_ReadAll() != HAL_OK) {
-    LCD_DrawADCError("read failed");
-  } else {
-    LCD_DrawADCStatus();
-  }
+  LCD_DrawAudioStatus();
 
   /* USER CODE END 2 */
 
@@ -313,7 +300,11 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    ADC_Poll();
+    if (Audio_SendNextSample() != HAL_OK) {
+      LCD_DrawAudioError("tx failed");
+      Error_Handler();
+    }
+    Audio_UpdateDisplay();
   }
   /* USER CODE END 3 */
 }
@@ -333,7 +324,7 @@ void SystemClock_Config(void)
 
   /** Configure the main internal regulator output voltage
   */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
 
   while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
 
@@ -346,9 +337,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 60;
+  RCC_OscInitStruct.PLL.PLLN = 12;
   RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 5;
+  RCC_OscInitStruct.PLL.PLLQ = 15;
   RCC_OscInitStruct.PLL.PLLR = 42;
   RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
@@ -365,13 +356,39 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV2;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
-  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV1;
+  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief Peripherals Common Clock Configuration
+  * @retval None
+  */
+void PeriphCommonClock_Config(void)
+{
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+
+  /** Initializes the peripherals clock
+  */
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SAI1;
+  PeriphClkInitStruct.PLL3.PLL3M = 25;
+  PeriphClkInitStruct.PLL3.PLL3N = 192;
+  PeriphClkInitStruct.PLL3.PLL3P = 40;
+  PeriphClkInitStruct.PLL3.PLL3Q = 2;
+  PeriphClkInitStruct.PLL3.PLL3R = 2;
+  PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_1;
+  PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
+  PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
+  PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL3;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
@@ -389,26 +406,54 @@ static void MX_ADC1_Init(void)
 
   /* USER CODE END ADC1_Init 0 */
 
+  ADC_MultiModeTypeDef multimode = {0};
+  ADC_ChannelConfTypeDef sConfig = {0};
+
   /* USER CODE BEGIN ADC1_Init 1 */
 
   /* USER CODE END ADC1_Init 1 */
+
+  /** Common config
+  */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV2;
   hadc1.Init.Resolution = ADC_RESOLUTION_16B;
-  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.NbrOfConversion = 1;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.NbrOfDiscConversion = 1;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
-  hadc1.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
+  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
   hadc1.Init.OversamplingMode = DISABLE;
+  hadc1.Init.Oversampling.Ratio = 1;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure the ADC multi-mode
+  */
+  multimode.Mode = ADC_MODE_INDEPENDENT;
+  if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_16;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  sConfig.OffsetSignedSaturation = DISABLE;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
@@ -434,7 +479,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x307075B1;
+  hi2c1.Init.Timing = 0x20303E5D;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -463,6 +508,57 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief SAI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SAI1_Init(void)
+{
+
+  /* USER CODE BEGIN SAI1_Init 0 */
+
+  /* USER CODE END SAI1_Init 0 */
+
+  /* USER CODE BEGIN SAI1_Init 1 */
+
+  /* USER CODE END SAI1_Init 1 */
+  hsai_BlockA1.Instance = SAI1_Block_A;
+  hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_TX;
+  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
+  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockA1.Init.NoDivider = SAI_MCK_OVERSAMPLING_DISABLE;
+  hsai_BlockA1.Init.MckOverSampling = SAI_MCK_OVERSAMPLING_DISABLE;
+  hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockA1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_48K;
+  hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  hsai_BlockB1.Instance = SAI1_Block_B;
+  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
+  hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
+  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockB1.Init.MckOverSampling = SAI_MCK_OVERSAMPLING_DISABLE;
+  hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SAI1_Init 2 */
+
+  /* USER CODE END SAI1_Init 2 */
 
 }
 
@@ -546,6 +642,55 @@ static void MX_SPI2_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_Encoder_InitTypeDef sConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 0;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 65535;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC1Filter = 0;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC2Filter = 0;
+  if (HAL_TIM_Encoder_Init(&htim4, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -558,11 +703,11 @@ static void MX_GPIO_Init(void)
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, GMG12864_CS_Pin|GMG12864_RST_Pin|GMG12864_DC_Pin, GPIO_PIN_RESET);
