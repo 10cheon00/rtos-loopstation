@@ -33,13 +33,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ENCODER_DISPLAY_INTERVAL_MS 50U
-#define MCP23017_ADDR_A2A1A0_100 0x24U
-#define MCP23017_HAL_ADDR(addr7) ((uint16_t)((addr7) << 1))
-#define MCP23017_REG_IODIRB 0x01U
-#define MCP23017_REG_GPPUB 0x0DU
-#define MCP23017_REG_GPIOB 0x13U
-#define ENCODER_SW_MCP23017_B3 GPIO_PIN_3
+#define ADC_DISPLAY_INTERVAL_MS 100U
+#define ADC_INPUT_COUNT 3U
 
 /* USER CODE END PD */
 
@@ -50,13 +45,13 @@
 
 /* Private variables ---------------------------------------------------------*/
 
+ADC_HandleTypeDef hadc1;
+
 I2C_HandleTypeDef hi2c1;
 
 SD_HandleTypeDef hsd1;
 
 SPI_HandleTypeDef hspi2;
-
-TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
 
@@ -69,7 +64,7 @@ static void MX_GPIO_Init(void);
 static void MX_SDMMC1_SD_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_TIM4_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -77,11 +72,7 @@ static void MX_TIM4_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 static u8g2_t lcd;
-static int32_t encoder_position;
-static uint16_t encoder_last_count;
-static int16_t encoder_last_delta;
-static uint8_t encoder_switch_ready;
-static uint8_t encoder_switch_pressed;
+static uint16_t adc_values[ADC_INPUT_COUNT];
 
 static void GMG12864_DelayCycles(volatile uint32_t cycles) {
   while (cycles-- > 0U) {
@@ -173,125 +164,86 @@ static uint8_t GMG12864_U8x8GpioDelay(u8x8_t* u8x8, uint8_t msg,
   return 1;
 }
 
-static HAL_StatusTypeDef MCP23017_WriteReg(uint8_t addr7, uint8_t reg,
-                                           uint8_t value) {
-  return HAL_I2C_Mem_Write(&hi2c1, MCP23017_HAL_ADDR(addr7), reg,
-                           I2C_MEMADD_SIZE_8BIT, &value, 1, HAL_MAX_DELAY);
+static HAL_StatusTypeDef ADC_ReadChannel(uint32_t channel, uint16_t* value) {
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  sConfig.Channel = channel;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_64CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
+    return HAL_ERROR;
+  }
+  if (HAL_ADC_Start(&hadc1) != HAL_OK) {
+    return HAL_ERROR;
+  }
+  if (HAL_ADC_PollForConversion(&hadc1, 10U) != HAL_OK) {
+    (void)HAL_ADC_Stop(&hadc1);
+    return HAL_ERROR;
+  }
+
+  *value = (uint16_t)HAL_ADC_GetValue(&hadc1);
+  return HAL_ADC_Stop(&hadc1);
 }
 
-static HAL_StatusTypeDef MCP23017_ReadReg(uint8_t addr7, uint8_t reg,
-                                          uint8_t* value) {
-  return HAL_I2C_Mem_Read(&hi2c1, MCP23017_HAL_ADDR(addr7), reg,
-                          I2C_MEMADD_SIZE_8BIT, value, 1, HAL_MAX_DELAY);
-}
-
-static HAL_StatusTypeDef EncoderSwitch_Init(void) {
-  uint8_t value;
-
-  if (MCP23017_ReadReg(MCP23017_ADDR_A2A1A0_100, MCP23017_REG_IODIRB,
-                       &value) != HAL_OK) {
+static HAL_StatusTypeDef ADC_ReadAll(void) {
+  if (ADC_ReadChannel(ADC_CHANNEL_16, &adc_values[0]) != HAL_OK) {
     return HAL_ERROR;
   }
-  value |= ENCODER_SW_MCP23017_B3;
-  if (MCP23017_WriteReg(MCP23017_ADDR_A2A1A0_100, MCP23017_REG_IODIRB,
-                        value) != HAL_OK) {
+  if (ADC_ReadChannel(ADC_CHANNEL_17, &adc_values[1]) != HAL_OK) {
     return HAL_ERROR;
   }
-
-  if (MCP23017_ReadReg(MCP23017_ADDR_A2A1A0_100, MCP23017_REG_GPPUB,
-                       &value) != HAL_OK) {
-    return HAL_ERROR;
-  }
-  value |= ENCODER_SW_MCP23017_B3;
-  if (MCP23017_WriteReg(MCP23017_ADDR_A2A1A0_100, MCP23017_REG_GPPUB,
-                        value) != HAL_OK) {
+  if (ADC_ReadChannel(ADC_CHANNEL_14, &adc_values[2]) != HAL_OK) {
     return HAL_ERROR;
   }
 
   return HAL_OK;
 }
 
-static void EncoderSwitch_Poll(void) {
-  uint8_t gpio_b;
-
-  if (!encoder_switch_ready) {
-    return;
-  }
-
-  if (MCP23017_ReadReg(MCP23017_ADDR_A2A1A0_100, MCP23017_REG_GPIOB,
-                       &gpio_b) != HAL_OK) {
-    encoder_switch_ready = 0U;
-    encoder_switch_pressed = 0U;
-    return;
-  }
-
-  encoder_switch_pressed =
-      (gpio_b & ENCODER_SW_MCP23017_B3) == 0U ? 1U : 0U;
-}
-
-static void LCD_DrawEncoderStatus(void) {
+static void LCD_DrawADCStatus(void) {
   char line1[22];
   char line2[22];
   char line3[22];
-  char line4[22];
-  const char* direction = "STOP";
 
-  if (encoder_last_delta > 0) {
-    direction = "CW";
-  } else if (encoder_last_delta < 0) {
-    direction = "CCW";
-  }
-
-  (void)snprintf(line1, sizeof(line1), "CNT: %5u",
-                 (unsigned int)__HAL_TIM_GET_COUNTER(&htim4));
-  (void)snprintf(line2, sizeof(line2), "POS: %ld", (long)encoder_position);
-  (void)snprintf(line3, sizeof(line3), "DIR: %s d=%d", direction,
-                 (int)encoder_last_delta);
-  if (encoder_switch_ready) {
-    (void)snprintf(line4, sizeof(line4), "SW : %s",
-                   encoder_switch_pressed ? "PUSH" : "OPEN");
-  } else {
-    (void)snprintf(line4, sizeof(line4), "SW : MCP ERR");
-  }
+  (void)snprintf(line1, sizeof(line1), "CH16: %5u", adc_values[0]);
+  (void)snprintf(line2, sizeof(line2), "CH17: %5u", adc_values[1]);
+  (void)snprintf(line3, sizeof(line3), "CH14: %5u", adc_values[2]);
 
   u8g2_ClearBuffer(&lcd);
   u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
-  u8g2_DrawStr(&lcd, 0, 10, "TIM4 encoder test");
-  u8g2_DrawStr(&lcd, 0, 22, line1);
-  u8g2_DrawStr(&lcd, 0, 34, line2);
-  u8g2_DrawStr(&lcd, 0, 46, line3);
-  u8g2_DrawStr(&lcd, 0, 58, line4);
+  u8g2_DrawStr(&lcd, 0, 10, "ADC1 values");
+  u8g2_DrawStr(&lcd, 0, 26, line1);
+  u8g2_DrawStr(&lcd, 0, 40, line2);
+  u8g2_DrawStr(&lcd, 0, 54, line3);
   u8g2_SendBuffer(&lcd);
 }
 
-static void LCD_DrawEncoderError(const char* message) {
+static void LCD_DrawADCError(const char* message) {
   u8g2_ClearBuffer(&lcd);
   u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
-  u8g2_DrawStr(&lcd, 0, 12, "Encoder error");
+  u8g2_DrawStr(&lcd, 0, 12, "ADC error");
   u8g2_DrawStr(&lcd, 0, 28, message);
   u8g2_SendBuffer(&lcd);
 }
 
-static void Encoder_Poll(void) {
+static void ADC_Poll(void) {
   static uint32_t last_display_ms;
   uint32_t now_ms = HAL_GetTick();
-  uint16_t count = (uint16_t)__HAL_TIM_GET_COUNTER(&htim4);
-  int16_t delta = (int16_t)(count - encoder_last_count);
 
-  encoder_last_count = count;
-
-  if (delta != 0) {
-    encoder_last_delta = delta;
-    encoder_position += delta;
-  }
-
-  if ((now_ms - last_display_ms) < ENCODER_DISPLAY_INTERVAL_MS) {
+  if ((now_ms - last_display_ms) < ADC_DISPLAY_INTERVAL_MS) {
     return;
   }
   last_display_ms = now_ms;
 
-  EncoderSwitch_Poll();
-  LCD_DrawEncoderStatus();
+  if (ADC_ReadAll() != HAL_OK) {
+    LCD_DrawADCError("read failed");
+    return;
+  }
+
+  LCD_DrawADCStatus();
 }
 
 /* USER CODE END 0 */
@@ -332,7 +284,7 @@ int main(void)
   MX_FATFS_Init();
   MX_SPI2_Init();
   MX_I2C1_Init();
-  MX_TIM4_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
   u8g2_Setup_st7565_erc12864_alt_f(&lcd, U8G2_R0, GMG12864_U8x8ByteHwSpi,
@@ -341,17 +293,17 @@ int main(void)
   u8g2_SetPowerSave(&lcd, 0);
   u8g2_SetContrast(&lcd, 80);
 
-  if (HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL) != HAL_OK) {
-    LCD_DrawEncoderError("TIM4 start failed");
+  if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_CALIB_OFFSET_LINEARITY,
+                                  ADC_SINGLE_ENDED) != HAL_OK) {
+    LCD_DrawADCError("cal failed");
     Error_Handler();
   }
-  __HAL_TIM_SET_COUNTER(&htim4, 0U);
-  encoder_last_count = 0U;
-  encoder_last_delta = 0;
-  encoder_position = 0;
-  encoder_switch_ready = EncoderSwitch_Init() == HAL_OK ? 1U : 0U;
-  EncoderSwitch_Poll();
-  LCD_DrawEncoderStatus();
+
+  if (ADC_ReadAll() != HAL_OK) {
+    LCD_DrawADCError("read failed");
+  } else {
+    LCD_DrawADCStatus();
+  }
 
   /* USER CODE END 2 */
 
@@ -361,7 +313,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    Encoder_Poll();
+    ADC_Poll();
   }
   /* USER CODE END 3 */
 }
@@ -423,6 +375,47 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV2;
+  hadc1.Init.Resolution = ADC_RESOLUTION_16B;
+  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.LowPowerAutoWait = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.NbrOfDiscConversion = 1;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
+  hadc1.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
+  hadc1.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
+  hadc1.Init.OversamplingMode = DISABLE;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
@@ -549,55 +542,6 @@ static void MX_SPI2_Init(void)
   /* USER CODE BEGIN SPI2_Init 2 */
 
   /* USER CODE END SPI2_Init 2 */
-
-}
-
-/**
-  * @brief TIM4 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM4_Init(void)
-{
-
-  /* USER CODE BEGIN TIM4_Init 0 */
-
-  /* USER CODE END TIM4_Init 0 */
-
-  TIM_Encoder_InitTypeDef sConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM4_Init 1 */
-
-  /* USER CODE END TIM4_Init 1 */
-  htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 0;
-  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 65535;
-  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
-  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
-  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
-  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 0;
-  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
-  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
-  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 0;
-  if (HAL_TIM_Encoder_Init(&htim4, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM4_Init 2 */
-
-  /* USER CODE END TIM4_Init 2 */
 
 }
 
