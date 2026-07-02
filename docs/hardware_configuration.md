@@ -71,6 +71,8 @@
 | CMD | PD2 / SDMMC1_CMD |
 | Detect | PD4 / GPIO input |
 
+SD카드 모듈은 보드에 내장된 모듈을 사용한다.
+
 ### 3.5 KY-040
 
 | KY-040 신호 | 연결 |
@@ -128,5 +130,4 @@ PCM5102A:
 ## 5. 미정 사항
 
 - TODO: 최종 DAC 모듈 선정
-- TODO: SD 카드 모듈 전원 및 레벨 변환 회로 확정
 - TODO: 최종 PCB 또는 커넥터 핀맵
