@@ -45,7 +45,7 @@
 
 | ID | 요구사항 | 근거 |
 | --- | --- | --- |
-| FR-INPUT-001 | 시스템은 MCP23017에 연결된 버튼 입력을 처리할 수 있어야 한다. | `hardware_wiring.md` |
+| FR-INPUT-001 | 시스템은 MCP23017에 연결된 버튼 입력, LED 출력을 처리할 수 있어야 한다. | `hardware_wiring.md` |
 | FR-INPUT-002 | 시스템은 KY-040 로터리 엔코더의 CW/CCW 회전을 처리할 수 있어야 한다. | `hardware_wiring.md` |
 | FR-INPUT-003 | 시스템은 KY-040 푸시 스위치를 MCP23017 입력으로 처리할 수 있어야 한다. | `hardware_wiring.md` |
 | FR-INPUT-004 | 시스템은 ADC1에 연결된 포텐셔미터 값을 읽을 수 있어야 한다. | `hardware_wiring.md` |
@@ -57,6 +57,7 @@
 | FR-UI-001 | 시스템은 LCD에 현재 상태와 설정 정보를 표시할 수 있어야 한다. | `project_summary.md` |
 | FR-UI-002 | 시스템은 홈, 트랙, FX, 설정 패널을 제공해야 한다. | `software_design.md` |
 | FR-UI-003 | 시스템은 LED로 IFX, TFX, 트랙 상태를 표시해야 한다. | `project_summary.md` |
+| FR-UI-004 | 시스템은 사용자 조작에 의한 설정값의 변경을 표시해야 한다. | `project_summary.md` |
 
 ## 2. 비기능 요구사항
 
@@ -78,15 +79,18 @@
 | HR-002 | LCD는 GMG12864-06D를 SPI2로 연결한다. |
 | HR-003 | 버튼/LED 확장은 MCP23017 두 개를 I2C1에 연결한다. |
 | HR-004 | 오디오 입출력은 SAI1 Block A/B를 사용한다. |
-| HR-005 | 저장장치는 SDMMC1 기반 SD 카드를 사용한다. |
-| HR-006 | 로터리 엔코더는 TIM4 encoder mode를 사용한다. |
-| HR-007 | 포텐셔미터는 ADC1에 연결한다. |
+| HR-005 | 저장장치는 SDMMC1 기반 SD 카드를 사용하고 보드에 내장된 SD카드 모듈을 사용해 인식한다. |
+| HR-006 | 로터리 엔코더는 KY-040을 사용하고 TIM4 encoder mode를 사용한다. |
+| HR-007 | 포텐셔미터들은 ADC1에 연결한다. |
 
 ## 4. 미정 사항
 
+### 4.1 RTOS 종류 및 구체 설정
+
+RTOS는 STM32CubeMX에서 선택 가능한 FreeRTOS를 선택한다.
+
 - TODO: 최종 DAC를 UDA1334A로 유지할지 PCM5102A로 변경할지 결정
 - TODO: 최종 트랙 파일 포맷
-- TODO: RTOS 종류 및 구체 설정
 - TODO: 오디오 버퍼 크기
 - TODO: FX별 파라미터 목록
 - TODO: UI 최종 화면 레이아웃
