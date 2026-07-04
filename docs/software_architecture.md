@@ -172,4 +172,4 @@ FX는 입력용 IFX와 출력용 TFX로 구분한다.
 - Chorus
 - Delay
 
-TODO: 각 FX 알고리즘과 파라미터 정의
+각 FX의 설명과 파라미터는 [fx_design.md](./fx_design.md)를 기준으로 한다.
