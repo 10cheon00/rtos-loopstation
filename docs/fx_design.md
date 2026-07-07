@@ -2,7 +2,7 @@
 
 이 문서는 Loop Station 프로젝트에서 구현할 FX의 설명과 파라미터를 정리한다.
 
-기준 자료는 `docs/RC-505_e02_W.pdf`의 20쪽 `Input FX/Track FX settings`와 21쪽 `FX Parameters`이다. 기존 기획 문서에서 필수 FX로 정한 항목은 `LPF`, `HPF`, `EQ`, `Reverb`이며, 이후 추가 후보는 `Flanger`, `Phaser`, `Chorus`, `Delay`이다.
+기준 자료는 `docs/references/RC-505_e02_W.pdf`의 20쪽 `Input FX/Track FX settings`와 21쪽 `FX Parameters`이다. 기존 기획 문서에서 필수 FX로 정한 항목은 `LPF`, `HPF`, `EQ`, `Reverb`이며, 이후 추가 후보는 `Flanger`, `Phaser`, `Chorus`, `Delay`이다.
 
 RC-505 매뉴얼에서는 `LPF`와 `HPF`를 독립 FX 타입이 아니라 `FILTER` FX의 `Type` 파라미터 값으로 다룬다. 이 프로젝트에서는 조작 편의를 위해 사용자에게는 `LPF`, `HPF`를 각각 별도 FX처럼 노출하되, 내부 구현은 하나의 filter 계열 알고리즘으로 묶을 수 있다.
 

@@ -1,6 +1,6 @@
 # 주변장치 연결 계획
 
-이 문서는 STM32H743VIT6, LQFP100 패키지 기준의 1차 배선 계획이다. 이전 문서의 STM32 연결 컬럼은 잘못된 핀아웃을 바탕으로 작성되었으므로 사용하지 않는다. 아래 연결은 `docs/stm32h743vi.pdf`의 STM32H742/H743 데이터시트 DS12110 Rev 11, Table 9 pin/ball definition과 Table 10 alternate functions를 기준으로 다시 정리했다.
+이 문서는 STM32H743VIT6, LQFP100 패키지 기준의 1차 배선 계획이다. 이전 문서의 STM32 연결 컬럼은 잘못된 핀아웃을 바탕으로 작성되었으므로 사용하지 않는다. 아래 연결은 `docs/references/stm32h743vi.pdf`의 STM32H742/H743 데이터시트 DS12110 Rev 11, Table 9 pin/ball definition과 Table 10 alternate functions를 기준으로 다시 정리했다.
 
 ## 선택 규칙
 
@@ -271,6 +271,6 @@ PD12/PD13은 현재 `SDMMC1`, `SWD`, `I2C1`, `SPI2`, LCD GPIO와 겹치지 않�
 
 ## 참고 자료
 
-- STMicroelectronics, `STM32H742xI/G STM32H743xI/G` datasheet DS12110 Rev 11, January 2026: `docs/stm32h743vi.pdf`
+- STMicroelectronics, `STM32H742xI/G STM32H743xI/G` datasheet DS12110 Rev 11, January 2026: `docs/references/stm32h743vi.pdf`
 - STM32CubeMX MCU database: `STM32H743VITx.xml`
 - 현재 CubeMX 프로젝트: `rtos-loopstation.ioc`
