@@ -14,30 +14,99 @@
 
 ## 2. 전체 파이프라인
 
+루프스테이션의 오디오 처리는 실시간 입력 경로, 트랙 반복 재생 경로, 최종 출력 경로가 믹서에서 만나는 구조로 본다. 녹음은 입력 경로에서 저장장치로 분기되는 별도 경로이며, 반복 재생은 트랙 경로의 반복 재생 처리에서 담당한다.
+
+### 2.1 전체 오디오 경로 개요
+
 ```mermaid
-flowchart TB
-    MIC([마이크])
-    SPEAKER([출력 장치])
-
-    subgraph LOOP["Loop Station"]
-        INPUT["오디오 입력부"]
+flowchart LR
+    subgraph INPUT["실시간 입력 경로"]
+        INPUT_AUDIO["외부 오디오 입력"]
         IFX["IFX"]
-        ROUTER["녹음 대상 트랙 선택"]
-        TRACK["트랙"]
-        MIXER["트랙 믹서"]
-        TFX["TFX"]
-        OUTPUT["오디오 출력부"]
-
-        INPUT --> IFX
-        IFX --> ROUTER
-        ROUTER --> TRACK
-        TRACK --> TFX
-        TFX --> MIXER
-        MIXER --> OUTPUT
+        PASSTHROUGH["입력 패스스루"]
+        RECORD["녹음"]
+        INPUT_AUDIO --> IFX
+        IFX --> PASSTHROUGH
+        IFX --> RECORD
     end
 
-    MIC --> INPUT
-    OUTPUT --> SPEAKER
+    subgraph TRACK["트랙 반복 재생 경로"]
+        TRACK_DATA["저장된 트랙"]
+        LOOP["반복 재생 처리"]
+        TFX["TFX"]
+        TGAIN["트랙 음량"]
+        TRACK_DATA --> LOOP --> TFX --> TGAIN
+        LOOP -. "끝에 도달하면 처음으로 이동" .-> LOOP
+    end
+
+    subgraph OUTPUT["출력 경로"]
+        MIXER["믹싱"]
+        MASTER["마스터 음량"]
+        LIMIT["최종 출력 제한"]
+        OUT["오디오 출력"]
+        MIXER --> MASTER --> LIMIT --> OUT
+    end
+
+    PASSTHROUGH --> MIXER
+    TGAIN --> MIXER
+    RECORD --> TRACK_DATA
+```
+
+### 2.2 입력 처리
+
+입력 처리는 외부에서 들어온 실시간 오디오에 IFX를 적용한다. IFX 이후의 신호는 녹음 여부와 입력 패스스루 설정을 각각 독립적으로 검사해 녹음 경로와 믹싱 경로로 분기한다.
+
+```mermaid
+flowchart LR
+    INPUT_AUDIO["외부 오디오 입력"]
+    IFX["IFX"]
+    RECORD_STATE{"RECORDING 또는 OVERDUBBING 상태?"}
+    PASSTHROUGH{"입력 패스스루 사용?"}
+    RECORD["녹음"]
+    MIX["믹싱"]
+
+    INPUT_AUDIO --> IFX
+    IFX --> RECORD_STATE
+    IFX --> PASSTHROUGH
+    RECORD_STATE -->|예| RECORD
+    PASSTHROUGH -->|예| MIX
+```
+
+### 2.3 트랙 반복 재생
+
+트랙 반복 재생은 저장된 트랙을 현재 재생 위치부터 읽고, 트랙 끝에 도달하면 다시 처음부터 읽는다. 트랙별 FX와 음량을 적용한 뒤 믹서로 전달한다.
+
+```mermaid
+flowchart LR
+    TRACK["저장된 트랙"]
+    LOOP["반복 재생 처리"]
+    END{"트랙 끝인가?"}
+    TFX["TFX"]
+    TGAIN["트랙 음량"]
+    MIX["믹싱"]
+
+    TRACK --> LOOP --> END
+    END -->|아니오| TFX
+    END -->|예: 처음으로 이동| LOOP
+    TFX --> TGAIN --> MIX
+```
+
+### 2.4 출력 처리
+
+출력 처리는 입력 패스스루 경로와 트랙 반복 재생 경로에서 전달된 오디오를 합산하고, 마스터 음량과 최종 출력 제한을 적용한 뒤 출력 장치로 전달한다.
+
+```mermaid
+flowchart LR
+    INPUT_SRC["입력 패스스루 신호"]
+    TRACK_SRC["트랙 재생 신호"]
+    MIX["믹싱"]
+    MASTER["마스터 음량"]
+    LIMIT["최종 출력 제한"]
+    OUT["오디오 출력"]
+
+    INPUT_SRC --> MIX
+    TRACK_SRC --> MIX
+    MIX --> MASTER --> LIMIT --> OUT
 ```
 
 ## 3. RTOS 태스크 구성
@@ -118,21 +187,7 @@ graph TD
 - SAI 입출력 포맷과 sample rate는 [audio_data_format.md의 4. SAI 입출력 변환 정책](../audio/audio_data_format.md#4-sai-입출력-변환-정책)을 기준으로 한다.
 - 현재 테스트 코드는 polling 기반 passthrough
 
-목표 구조:
-
-```mermaid
-flowchart LR
-    MIC["INMP441"]
-    RX["SAI1B RX"]
-    IFX["IFX"]
-    TRACK["Track Recorder/Player"]
-    MIX["Mixer"]
-    TFX["TFX"]
-    TX["SAI1A TX"]
-    DAC["DAC"]
-
-    MIC --> RX --> IFX --> TRACK --> TFX --> MIX -->  TX --> DAC
-```
+목표 오디오 파이프라인은 [2. 전체 파이프라인](#2-전체-파이프라인)을 기준으로 한다.
 
 DMA circular buffer 구조와 오디오 버퍼 크기는 [audio_data_format.md의 6. 버퍼 단위](../audio/audio_data_format.md#6-버퍼-단위)를 기준으로 한다.
 
