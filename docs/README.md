@@ -11,6 +11,7 @@
 | [user_scenarios.md](./user_scenarios.md) | 사용자가 시스템을 조작하는 주요 흐름을 정리한다. |
 | [ui_design.md](./ui_design.md) | LCD 패널, 버튼, 엔코더, LED 표시 정책을 정리한다. |
 | [fx_design.md](./fx_design.md) | 필수 FX와 추후 FX 후보의 설명 및 파라미터를 정리한다. |
+| [audio_data_format.md](./audio_data_format.md) | 저장/처리/입출력에 사용할 오디오 데이터 포맷 기준을 정리한다. |
 | [software_architecture.md](./software_architecture.md) | RTOS 태스크, 상태 머신, 오디오 처리 구조를 정리한다. |
 | [layered_architecture.md](./layered_architecture.md) | 사용자 이벤트와 하드웨어 데이터가 시스템 계층을 통과하는 책임 경계를 정리한다. |
 | [hardware_configuration.md](./hardware_configuration.md) | 현재 검증된 모듈과 STM32 결선을 정리한다. |
