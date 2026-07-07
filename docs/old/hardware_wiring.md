@@ -12,8 +12,7 @@
 | SD 카드 | 저장장치 | SDMMC1 + FatFs + GPIO | 카드 인식 및 파일 입출력 확인 |
 | KY-040 | 로터리 엔코더 | TIM4 encoder mode + MCP23017 GPIO | CW/CCW 회전 인식 확인 |
 | INMP441 | I2S 디지털 마이크 | SAI1 Block B | SAI 수신 입력으로 사용 |
-| UDA1334A | I2S DAC 출력 | SAI1 Block A | INMP441 입력 passthrough 확인 |
-| PCM5102A | I2S DAC 출력 후보 | SAI1 Block A | XSMT high 조건에서 출력 확인, 향후 UDA1334A 대체 후보 |
+| PCM5102A | I2S DAC 출력 | SAI1 Block A | 최종 DAC, XSMT high 조건에서 출력 확인 |
 
 ## MCP23017 GPIO 확장
 
@@ -115,7 +114,7 @@ KY-040의 A/B 회전 신호는 `TIM4` encoder mode로 처리한다. 푸시 스�
 | --- | --- | --- | --- |
 | BCK / SCK | PE5 | SAI1_SCK_A | INMP441 SCK, DAC BCK |
 | LCK / LRCK / WS | PE4 | SAI1_FS_A | INMP441 WS, DAC LCK/LRCK |
-| DAC data | PE6 | SAI1_SD_A | UDA1334A DIN 또는 PCM5102A DIN |
+| DAC data | PE6 | SAI1_SD_A | PCM5102A DIN |
 | MIC data | PE3 | SAI1_SD_B | INMP441 SD |
 
 `.ioc` 기준 SAI1 clock은 PLL3에서 공급하고, `SAI1 RealAudioFreq`는 48.0 kHz로 맞춘다. 현재 MCLK는 사용하지 않는다.
@@ -131,21 +130,9 @@ KY-040의 A/B 회전 신호는 `TIM4` encoder mode로 처리한다. 푸시 스�
 | SD | PE3 / SAI1_SD_B | mic data |
 | L/R | GND 또는 3.3 V | GND: left slot, 3.3 V: right slot |
 
-### UDA1334A 연결
-
-UDA1334A는 현재 정상 출력이 확인된 DAC 모듈이다.
-
-| UDA1334A 핀 | 연결 | 비고 |
-| --- | --- | --- |
-| VIN | 3.3 V 또는 모듈 지원 전원 | 모듈 사양 확인 |
-| GND | GND | 공통 접지 |
-| BCK | PE5 / SAI1_SCK_A | bit clock |
-| LCK | PE4 / SAI1_FS_A | LR clock |
-| DIN | PE6 / SAI1_SD_A | DAC data |
-
 ### PCM5102A 연결
 
-PCM5102A는 UDA1334A 대체 후보로 테스트했다. `XSMT`를 3.3 V에 연결해야 출력이 나온다.
+PCM5102A는 최종 DAC 모듈이다. `XSMT`를 3.3 V에 연결해야 출력이 나온다.
 
 | PCM5102A 핀 | 연결 | 비고 |
 | --- | --- | --- |

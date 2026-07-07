@@ -89,7 +89,6 @@
 
 RTOS는 STM32CubeMX에서 선택 가능한 FreeRTOS를 선택한다.
 
-- TODO: 최종 DAC를 UDA1334A로 유지할지 PCM5102A로 변경할지 결정
 - TODO: 최종 트랙 파일 포맷
 - TODO: 오디오 버퍼 크기
 - FX별 파라미터 목록은 [fx_design.md](./fx_design.md)를 기준으로 한다.

@@ -114,8 +114,7 @@ graph TD
 현재 하드웨어 테스트에서는 다음 구성이 확인되었다.
 
 - `SAI1 Block B`: INMP441 입력 수신
-- `SAI1 Block A`: UDA1334A 또는 PCM5102A 출력 송신
-- sample rate: 48 kHz 설정
+- `SAI1 Block A`: PCM5102A 출력 송신
 - 현재 테스트 코드는 polling 기반 passthrough
 
 목표 구조:

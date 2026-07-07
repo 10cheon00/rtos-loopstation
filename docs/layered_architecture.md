@@ -28,7 +28,7 @@
 | 데이터 | 입력 또는 출력 경로 | 설명 |
 | --- | --- | --- |
 | 마이크 오디오 입력 | INMP441, SAI1 Block B | 실시간 오디오 프레임으로 수신한다. |
-| DAC 오디오 출력 | UDA1334A 또는 PCM5102A, SAI1 Block A | 처리된 오디오 프레임을 출력한다. |
+| DAC 오디오 출력 | PCM5102A, SAI1 Block A | 처리된 오디오 프레임을 출력한다. |
 | 트랙 파일 데이터 | SD 카드, SDMMC1, FatFs | 녹음된 오디오를 저장하고 반복 재생 시 읽는다. |
 | LCD 표시 데이터 | GMG12864-06D, SPI2, u8g2 | 시스템 상태, 트랙 상태, FX 상태를 표시한다. |
 | LED 출력 데이터 | MCP23017 GPIO | 트랙 상태, IFX/TFX 활성화 상태를 표시한다. |
@@ -45,7 +45,7 @@
 | SD 카드 | SDMMC1 + GPIO | 트랙 파일 저장 및 읽기 |
 | KY-040 | TIM4 + MCP23017 | 회전 입력과 push 입력 |
 | INMP441 | SAI1 Block B | 오디오 입력 |
-| UDA1334A 또는 PCM5102A | SAI1 Block A | 오디오 출력 |
+| PCM5102A | SAI1 Block A | 오디오 출력 |
 
 ## 3. 계층 정의
 

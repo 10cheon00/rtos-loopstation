@@ -12,8 +12,7 @@
 | SD 카드 | SDMMC1 + GPIO | PC8~PC12, PD2, PD4 | FatFs 파일 입출력 확인 |
 | KY-040 | TIM4 + MCP23017 | PD12, PD13, MCP23017 GPIOB3 | 회전 인식 확인 |
 | INMP441 | SAI1 Block B | PE3, PE4, PE5 | 마이크 입력 |
-| UDA1334A | SAI1 Block A | PE4, PE5, PE6 | 출력 확인 |
-| PCM5102A | SAI1 Block A | PE4, PE5, PE6, XSMT | XSMT high 조건에서 출력 확인 |
+| PCM5102A | SAI1 Block A | PE4, PE5, PE6, XSMT | 최종 DAC, XSMT high 조건에서 출력 확인 |
 
 ## 2. Peripheral 사용 현황
 
@@ -85,9 +84,9 @@ SD카드 모듈은 보드에 내장된 모듈을 사용한다.
 
 | 오디오 신호 | STM32 연결 | 연결 대상 |
 | --- | --- | --- |
-| BCK / SCK | PE5 / SAI1_SCK_A | INMP441, DAC |
-| LCK / WS | PE4 / SAI1_FS_A | INMP441, DAC |
-| DAC data | PE6 / SAI1_SD_A | UDA1334A DIN 또는 PCM5102A DIN |
+| BCK / SCK | PE5 / SAI1_SCK_A | INMP441, PCM5102A |
+| LCK / WS | PE4 / SAI1_FS_A | INMP441, PCM5102A |
+| DAC data | PE6 / SAI1_SD_A | PCM5102A DIN |
 | MIC data | PE3 / SAI1_SD_B | INMP441 SD |
 
 INMP441:
@@ -98,14 +97,6 @@ INMP441:
 | WS | PE4 |
 | SD | PE3 |
 | L/R | GND 또는 3.3 V |
-
-UDA1334A:
-
-| UDA1334A 핀 | 연결 |
-| --- | --- |
-| BCK | PE5 |
-| LCK | PE4 |
-| DIN | PE6 |
 
 PCM5102A:
 
@@ -129,5 +120,4 @@ PCM5102A:
 
 ## 5. 미정 사항
 
-- TODO: 최종 DAC 모듈 선정
 - TODO: 최종 PCB 또는 커넥터 핀맵
