@@ -8,10 +8,10 @@
 
 | 자료 | 확인할 내용 |
 | --- | --- |
-| `docs/references/RC-505_e02_W.pdf` | 상용 루프스테이션의 일반적인 WAV 저장 포맷 참고 |
+| `../references/RC-505_e02_W.pdf` | 상용 루프스테이션의 일반적인 WAV 저장 포맷 참고 |
 | `rtos-loopstation.ioc` | 현재 SAI1, SDMMC1, clock 설정 |
-| [hardware_configuration.md](./hardware_configuration.md) | 오디오 입출력 모듈과 peripheral 연결 |
-| [software_architecture.md](./software_architecture.md) | 오디오 처리 태스크, 버퍼, 저장장치 입출력 구조 |
+| [hardware_configuration.md](../hardware/hardware_configuration.md) | 오디오 입출력 모듈과 peripheral 연결 |
+| [software_architecture.md](../architecture/software_architecture.md) | 오디오 처리 태스크, 버퍼, 저장장치 입출력 구조 |
 | [fx_design.md](./fx_design.md) | FX 처리에서 요구하는 내부 sample 표현 |
 
 # 2. 목표 포맷

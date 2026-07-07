@@ -59,7 +59,7 @@ Loop Station 프로젝트는 임베디드 환경에서 동작하는 루프스테
 
 ### 4.2 멀티 트랙 확장 여부와 시점
 
-프로토타입이 완성되고 [test_plan.md](./test_plan.md)에 작성된 테스트를 모두 통과할 때 멀티 트랙 확장을 시도한다.
+프로토타입이 완성되고 [test_plan.md](../verification/test_plan.md)에 작성된 테스트를 모두 통과할 때 멀티 트랙 확장을 시도한다.
 
 초기에는 2개의 트랙으로 테스트를 진행하고, 테스트를 모두 통과하는 경우 5개까지 늘려 테스트를 진행한다. 확장 과정에서 기능이 추가되거나 기존 기능들이 수정되어야 한다면 이를 문서에 먼저 갱신한 후 기능을 수정한다.
 
@@ -121,7 +121,7 @@ Loop Station 프로젝트는 임베디드 환경에서 동작하는 루프스테
 
 - [requirements.md](./requirements.md)
 - [user_scenarios.md](./user_scenarios.md)
-- [ui_design.md](./ui_design.md)
-- [software_architecture.md](./software_architecture.md)
-- [hardware_configuration.md](./hardware_configuration.md)
-- [test_plan.md](./test_plan.md)
+- [ui_design.md](../ui/ui_design.md)
+- [software_architecture.md](../architecture/software_architecture.md)
+- [hardware_configuration.md](../hardware/hardware_configuration.md)
+- [test_plan.md](../verification/test_plan.md)

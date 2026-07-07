@@ -108,7 +108,7 @@ TODO: SD 카드가 없거나 마운트 실패했을 때의 사용자 표시와 �
 4. 사용자가 노브 또는 엔코더로 FX 파라미터를 조절한다.
 5. 시스템은 입력 또는 출력 오디오에 해당 FX를 적용한다.
 
-FX별 파라미터와 노브 조작 대상은 [fx_design.md](./fx_design.md)를 기준으로 한다.
+FX별 파라미터와 노브 조작 대상은 [fx_design.md](../audio/fx_design.md)를 기준으로 한다.
 
 ## 9. UI 탐색
 
@@ -119,4 +119,4 @@ FX별 파라미터와 노브 조작 대상은 [fx_design.md](./fx_design.md)를 
 3. 사용자는 Enter 버튼으로 하위 패널에 진입한다.
 4. 사용자는 Exit 버튼으로 상위 패널로 이동한다.
 
-패널 계층은 [ui_design.md](./ui_design.md)를 따른다.
+패널 계층은 [ui_design.md](../ui/ui_design.md)를 따른다.

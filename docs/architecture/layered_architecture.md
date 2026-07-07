@@ -35,7 +35,7 @@
 
 ## 2. 하드웨어 경계
 
-하드웨어 구성은 [hardware_configuration.md](./hardware_configuration.md)를 기준으로 한다.
+하드웨어 구성은 [hardware_configuration.md](../hardware/hardware_configuration.md)를 기준으로 한다.
 
 | 하드웨어 | 연결 peripheral | 시스템에서의 역할 |
 | --- | --- | --- |
