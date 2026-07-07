@@ -31,9 +31,9 @@ flowchart TB
         INPUT --> IFX
         IFX --> ROUTER
         ROUTER --> TRACK
-        TRACK --> MIXER
-        MIXER --> TFX
-        TFX --> OUTPUT
+        TRACK --> TFX
+        TFX --> MIXER
+        MIXER --> OUTPUT
     end
 
     MIC --> INPUT
@@ -131,7 +131,7 @@ flowchart LR
     TX["SAI1A TX"]
     DAC["DAC"]
 
-    MIC --> RX --> IFX --> TRACK --> MIX --> TFX --> TX --> DAC
+    MIC --> RX --> IFX --> TRACK --> TFX --> MIX -->  TX --> DAC
 ```
 
 TODO: DMA circular buffer 구조
