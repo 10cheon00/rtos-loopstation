@@ -82,6 +82,8 @@ SD카드 모듈은 보드에 내장된 모듈을 사용한다.
 
 ### 3.6 SAI1 오디오
 
+SAI1의 sample rate, slot width, 내부 sample 변환 정책은 [audio_data_format.md의 4. SAI 입출력 변환 정책](./audio_data_format.md#4-sai-입출력-변환-정책)을 기준으로 한다. 이 절은 물리 결선만 정리한다.
+
 | 오디오 신호 | STM32 연결 | 연결 대상 |
 | --- | --- | --- |
 | BCK / SCK | PE5 / SAI1_SCK_A | INMP441, PCM5102A |

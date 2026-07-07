@@ -115,7 +115,7 @@ graph TD
 
 - `SAI1 Block B`: INMP441 입력 수신
 - `SAI1 Block A`: PCM5102A 출력 송신
-- sample rate: 44.1 kHz 설정
+- SAI 입출력 포맷과 sample rate는 [audio_data_format.md의 4. SAI 입출력 변환 정책](./audio_data_format.md#4-sai-입출력-변환-정책)을 기준으로 한다.
 - 현재 테스트 코드는 polling 기반 passthrough
 
 목표 구조:
@@ -134,13 +134,11 @@ flowchart LR
     MIC --> RX --> IFX --> TRACK --> TFX --> MIX -->  TX --> DAC
 ```
 
-TODO: DMA circular buffer 구조
+DMA circular buffer 구조와 오디오 버퍼 크기는 [audio_data_format.md의 6. 버퍼 단위](./audio_data_format.md#6-버퍼-단위)를 기준으로 한다.
 
-TODO: 오디오 버퍼 크기
+샘플 포맷과 fixed/floating point 처리 방식은 [audio_data_format.md의 3. 내부 처리 포맷](./audio_data_format.md#3-내부-처리-포맷)을 기준으로 한다.
 
-TODO: 샘플 포맷과 fixed/floating point 처리 방식
-
-TODO: mixing gain 정책
+mixing gain 정책은 [audio_data_format.md의 7. FX 및 믹싱과의 관계](./audio_data_format.md#7-fx-및-믹싱과의-관계)를 기준으로 한다.
 
 ## 7. 저장 장치 입출력 구조
 

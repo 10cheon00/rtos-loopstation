@@ -36,8 +36,8 @@
 
 파일 형식:
 
-- 트랙 오디오 파일 형식: WAV
-- 샘플 포맷: PCM linear, 44.1 kHz, 16-bit, stereo
+- 트랙 오디오 파일 형식과 샘플 포맷은 [audio_data_format.md의 2. 목표 포맷](./audio_data_format.md#2-목표-포맷)을 기준으로 한다.
+- WAV header와 저장 byte layout은 [audio_data_format.md의 5. WAV 저장 포맷](./audio_data_format.md#5-wav-저장-포맷)을 기준으로 한다.
 - TODO: 파일명 규칙
 - TODO: 메타데이터 저장 방식
 
@@ -89,7 +89,7 @@
 
 RTOS는 STM32CubeMX에서 선택 가능한 FreeRTOS를 선택한다.
 
-- TODO: 최종 트랙 파일 포맷
-- TODO: 오디오 버퍼 크기
+- 최종 트랙 파일 포맷은 [audio_data_format.md의 2. 목표 포맷](./audio_data_format.md#2-목표-포맷)을 기준으로 한다.
+- 오디오 버퍼 크기는 [audio_data_format.md의 6. 버퍼 단위](./audio_data_format.md#6-버퍼-단위)를 기준으로 한다.
 - FX별 파라미터 목록은 [fx_design.md](./fx_design.md)를 기준으로 한다.
 - TODO: UI 최종 화면 레이아웃
