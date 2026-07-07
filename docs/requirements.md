@@ -36,8 +36,8 @@
 
 파일 형식:
 
-- TODO: 트랙 오디오 파일 형식
-- TODO: 샘플 포맷
+- 트랙 오디오 파일 형식: WAV
+- 샘플 포맷: PCM linear, 44.1 kHz, 16-bit, stereo
 - TODO: 파일명 규칙
 - TODO: 메타데이터 저장 방식
 

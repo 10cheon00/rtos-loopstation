@@ -29,6 +29,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+extern const uint8_t u8g2_font_ref4x5_prop_v4_tr[];
 
 /* USER CODE END PTD */
 
@@ -36,7 +37,7 @@
 /* USER CODE BEGIN PD */
 #define AUDIO_DISPLAY_INTERVAL_MS 100U
 #define MIC_SLOT_INDEX 0U
-
+#define FONT u8g2_font_ref4x5_prop_v4_tr
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -188,7 +189,7 @@ static void LCD_DrawAudioStatus(void) {
                  (unsigned long)((uint32_t)last_mic_word));
 
   u8g2_ClearBuffer(&lcd);
-  u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
+  u8g2_SetFont(&lcd, FONT);
   u8g2_DrawStr(&lcd, 0, 10, "INMP441 passthru");
   u8g2_DrawStr(&lcd, 0, 26, line1);
   u8g2_DrawStr(&lcd, 0, 40, line2);
@@ -198,7 +199,7 @@ static void LCD_DrawAudioStatus(void) {
 
 static void LCD_DrawAudioError(const char* message) {
   u8g2_ClearBuffer(&lcd);
-  u8g2_SetFont(&lcd, u8g2_font_6x10_tf);
+  u8g2_SetFont(&lcd, FONT);
   u8g2_DrawStr(&lcd, 0, 12, "SAI error");
   u8g2_DrawStr(&lcd, 0, 28, message);
   u8g2_SendBuffer(&lcd);
@@ -383,13 +384,13 @@ void PeriphCommonClock_Config(void)
   */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SAI1;
   PeriphClkInitStruct.PLL3.PLL3M = 25;
-  PeriphClkInitStruct.PLL3.PLL3N = 192;
+  PeriphClkInitStruct.PLL3.PLL3N = 176;
   PeriphClkInitStruct.PLL3.PLL3P = 40;
   PeriphClkInitStruct.PLL3.PLL3Q = 2;
   PeriphClkInitStruct.PLL3.PLL3R = 2;
   PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_1;
   PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
-  PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
+  PeriphClkInitStruct.PLL3.PLL3FRACN = 3277;
   PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL3;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
@@ -532,11 +533,11 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.Instance = SAI1_Block_A;
   hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_TX;
   hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
-  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_ENABLE;
+  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockA1.Init.NoDivider = SAI_MCK_OVERSAMPLING_DISABLE;
   hsai_BlockA1.Init.MckOverSampling = SAI_MCK_OVERSAMPLING_DISABLE;
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
-  hsai_BlockA1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_48K;
+  hsai_BlockA1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_44K;
   hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
   hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
@@ -555,7 +556,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
   hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_32BIT, 2) != HAL_OK)
   {
     Error_Handler();
   }

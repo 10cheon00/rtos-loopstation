@@ -117,7 +117,7 @@ KY-040의 A/B 회전 신호는 `TIM4` encoder mode로 처리한다. 푸시 스�
 | DAC data | PE6 | SAI1_SD_A | PCM5102A DIN |
 | MIC data | PE3 | SAI1_SD_B | INMP441 SD |
 
-`.ioc` 기준 SAI1 clock은 PLL3에서 공급하고, `SAI1 RealAudioFreq`는 48.0 kHz로 맞춘다. 현재 MCLK는 사용하지 않는다.
+`.ioc` 기준 SAI1 clock은 PLL3에서 공급하고, `SAI1 RealAudioFreq`는 44.1 kHz로 맞춘다. 현재 MCLK는 사용하지 않는다.
 
 ### INMP441 연결
 

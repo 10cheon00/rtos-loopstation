@@ -115,6 +115,7 @@ graph TD
 
 - `SAI1 Block B`: INMP441 입력 수신
 - `SAI1 Block A`: PCM5102A 출력 송신
+- sample rate: 44.1 kHz 설정
 - 현재 테스트 코드는 polling 기반 passthrough
 
 목표 구조:

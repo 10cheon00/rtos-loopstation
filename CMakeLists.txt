@@ -88,6 +88,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_string.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_u16toa.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/csrc/u8x8_u8toa.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/Third_Party/u8g2/fonts/u8g2_font_ref4x5_prop_v4_tr.c
 )
 
 # Add include paths
