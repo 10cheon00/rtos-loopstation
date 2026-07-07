@@ -17,9 +17,18 @@
 | [hardware_configuration.md](./hardware_configuration.md) | 현재 검증된 모듈과 STM32 결선을 정리한다. |
 | [test_plan.md](./test_plan.md) | 모듈 테스트와 통합 테스트 계획을 정리한다. |
 
+## 폴더 목록
+
+| 폴더 | 목적 |
+| --- | --- |
+| [images](./images/) | UI 설계 문서에서 참조하는 화면 이미지와 보조 그림을 보관한다. |
+| [references](./references/) | 데이터시트, 매뉴얼처럼 문서 작성 시 참고하는 원본 PDF를 보관한다. |
+| [old](./old/) | 개발 과정에서 작성한 이전 버전 문서와 기록성 문서를 보관한다. 현재 기준 문서는 상위 `docs` 문서를 우선한다. |
+
 ## 작성 원칙
 
 - 기존 문서에서 확인할 수 있는 내용만 확정 사항으로 적는다.
 - 확인되지 않은 세부 사항은 `TODO:`로 남긴다.
-- 실제 결선 기준은 `docs/hardware_wiring.md`를 우선 참고한다.
-- 개발 중 의사결정 기록은 `docs/peripheral_connections.md`를 참고한다.
+- 실제 결선 기준은 [hardware_configuration.md](./hardware_configuration.md)를 우선 참고한다.
+- 오디오 포맷 기준은 [audio_data_format.md](./audio_data_format.md)를 우선 참고한다.
+- 개발 중 의사결정 기록이나 과거 배선 계획은 [old](./old/) 폴더를 참고한다.
