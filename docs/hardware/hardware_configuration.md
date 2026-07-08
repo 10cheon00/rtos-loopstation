@@ -1,3 +1,24 @@
+---
+title: 하드웨어 구성 문서
+version: 0.3.2
+change_history:
+  - date: 2026-07-02
+    version: 0.1.0
+    summary: 하드웨어 구성 문서를 생성하고 검증된 모듈과 STM32 연결 정보를 정리함
+  - date: 2026-07-02
+    version: 0.2.0
+    summary: 테스트 계획 구체화에 맞춰 하드웨어 검증 관련 내용을 보강함
+  - date: 2026-07-07
+    version: 0.3.0
+    summary: PCM5102A를 DAC 모듈로 선택하면서 UDA1334 관련 내용을 제거함
+  - date: 2026-07-07
+    version: 0.3.1
+    summary: 오디오 포맷 문서와의 참조 링크를 추가함
+  - date: 2026-07-07
+    version: 0.3.2
+    summary: docs 폴더 재구성에 따라 문서 위치와 내부 링크를 갱신함
+---
+
 # 하드웨어 구성 문서
 
 이 문서는 현재 프로젝트에서 검증한 하드웨어 모듈과 STM32H743VIT6 peripheral 연결을 기획 문서 관점에서 요약한다. 상세 결선은 [hardware_wiring.md](../old/hardware_wiring.md)를 기준으로 한다.

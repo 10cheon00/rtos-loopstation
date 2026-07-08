@@ -1,3 +1,33 @@
+---
+title: 소프트웨어 아키텍처
+version: 0.5.0
+change_history:
+  - date: 2026-07-02
+    version: 0.1.0
+    summary: 소프트웨어 아키텍처 문서를 생성하고 RTOS 태스크, 상태 머신, 오디오 처리 구조를 분리해 정리함
+  - date: 2026-07-04
+    version: 0.2.0
+    summary: 레이어드 아키텍처 정리에 맞춰 소프트웨어 구조 설명을 보강함
+  - date: 2026-07-07
+    version: 0.2.1
+    summary: 트랙별 TFX 적용 후 믹싱하도록 오디오 처리 다이어그램을 수정함
+  - date: 2026-07-07
+    version: 0.3.0
+    summary: PCM5102A를 DAC 모듈로 선택하면서 UDA1334 관련 내용을 제거함
+  - date: 2026-07-07
+    version: 0.4.0
+    summary: 오디오 포맷을 44.1 kHz, 16-bit, stereo 기준으로 반영함
+  - date: 2026-07-07
+    version: 0.4.1
+    summary: 오디오 포맷 문서와의 참조 링크를 추가함
+  - date: 2026-07-07
+    version: 0.4.2
+    summary: docs 폴더 재구성에 따라 문서 위치와 내부 링크를 갱신함
+  - date: 2026-07-07
+    version: 0.5.0
+    summary: 전체 파이프라인 설명을 위해 입력, 처리, 저장, 재생 경로별 플로우차트를 분리함
+---
+
 # 소프트웨어 아키텍처
 
 ## 1. 설계 원칙

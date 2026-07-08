@@ -1,3 +1,27 @@
+---
+title: Loop Station 기획 문서
+version: 0.5.0
+change_history:
+  - date: 2026-07-02
+    version: 0.1.0
+    summary: docs 문서 묶음의 README를 생성하고 주요 기획 문서 목록을 정리함
+  - date: 2026-07-04
+    version: 0.2.0
+    summary: FX 설계 문서와 계층 분리 설계 문서를 문서 목록에 추가함
+  - date: 2026-07-07
+    version: 0.3.0
+    summary: 오디오 데이터 포맷 문서를 문서 목록에 추가함
+  - date: 2026-07-07
+    version: 0.4.0
+    summary: docs 하위 폴더 구조와 각 폴더의 목적을 명시함
+  - date: 2026-07-07
+    version: 0.4.1
+    summary: docs 폴더 재구성에 따라 문서 링크를 갱신함
+  - date: 2026-07-08
+    version: 0.5.0
+    summary: 태스크 메시지 설계 문서를 문서 목록에 추가함
+---
+
 # Loop Station 기획 문서
 
 이 폴더는 Loop Station 프로젝트를 기획, 설계, 검증 관점에서 읽기 좋게 정리한 문서 묶음이다. 기존 `docs/old/project_summary.md`, `docs/old/software_design.md`, `docs/old/hardware_wiring.md`, `docs/old/peripheral_connections.md`에 흩어져 있던 내용을 문서 목적별로 다시 나누었다.
@@ -14,6 +38,7 @@
 | [audio_data_format.md](./audio/audio_data_format.md) | 저장/처리/입출력에 사용할 오디오 데이터 포맷 기준을 정리한다. |
 | [software_architecture.md](./architecture/software_architecture.md) | RTOS 태스크, 상태 머신, 오디오 처리 구조를 정리한다. |
 | [layered_architecture.md](./architecture/layered_architecture.md) | 사용자 이벤트와 하드웨어 데이터가 시스템 계층을 통과하는 책임 경계를 정리한다. |
+| [task_message_design.md](./architecture/task_message_design.md) | RTOS 태스크 사이에서 오갈 수 있는 메시지 후보를 정리한다. |
 | [hardware_configuration.md](./hardware/hardware_configuration.md) | 현재 검증된 모듈과 STM32 결선을 정리한다. |
 | [test_plan.md](./verification/test_plan.md) | 모듈 테스트와 통합 테스트 계획을 정리한다. |
 

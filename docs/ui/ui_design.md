@@ -1,3 +1,27 @@
+---
+title: UI 설계 문서
+version: 0.4.1
+change_history:
+  - date: 2026-07-02
+    version: 0.1.0
+    summary: UI 설계 문서를 생성하고 LCD, 버튼, 엔코더, LED 표시 정책을 분리해 정리함
+  - date: 2026-07-02
+    version: 0.1.1
+    summary: 기획 문서 TODO 항목을 정리함
+  - date: 2026-07-03
+    version: 0.2.0
+    summary: 폰트, 이미지, 에셋 관련 내용을 추가하고 문서 TODO를 정리함
+  - date: 2026-07-03
+    version: 0.3.0
+    summary: UI 예시 이미지를 추가하고 화면 설명을 보강함
+  - date: 2026-07-04
+    version: 0.4.0
+    summary: 레이어드 아키텍처와 FX 설계 정리에 맞춰 UI 설명을 보강함
+  - date: 2026-07-07
+    version: 0.4.1
+    summary: docs 폴더 재구성에 따라 문서 위치와 내부 링크를 갱신함
+---
+
 # UI 설계 문서
 
 ## 1. UI 구성 요소

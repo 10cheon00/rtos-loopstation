@@ -1,3 +1,24 @@
+---
+title: 사용자 시나리오
+version: 0.3.1
+change_history:
+  - date: 2026-07-02
+    version: 0.1.0
+    summary: 사용자 시나리오 문서를 생성하고 주요 조작 흐름을 시나리오 형태로 분리함
+  - date: 2026-07-02
+    version: 0.1.1
+    summary: 기획 문서 TODO 정리에 맞춰 시나리오 항목을 보정함
+  - date: 2026-07-04
+    version: 0.2.0
+    summary: 레이어드 아키텍처 정리에 맞춰 사용자 흐름 설명을 보강함
+  - date: 2026-07-07
+    version: 0.3.0
+    summary: PCM5102A를 DAC 모듈로 선택하면서 UDA1334 관련 내용을 제거함
+  - date: 2026-07-07
+    version: 0.3.1
+    summary: docs 폴더 재구성에 따라 문서 위치와 내부 링크를 갱신함
+---
+
 # 사용자 시나리오
 
 ## 1. 기본 전원 인가 및 시작

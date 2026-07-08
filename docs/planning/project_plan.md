@@ -1,3 +1,21 @@
+---
+title: 프로젝트 기획서
+version: 0.2.1
+change_history:
+  - date: 2026-07-02
+    version: 0.1.0
+    summary: 프로젝트 기획서를 생성하고 목표, 범위, 성공 기준을 분리해 정리함
+  - date: 2026-07-02
+    version: 0.1.1
+    summary: 기획 문서 TODO 항목을 정리함
+  - date: 2026-07-07
+    version: 0.2.0
+    summary: PCM5102A를 DAC 모듈로 선택하면서 UDA1334 관련 내용을 제거함
+  - date: 2026-07-07
+    version: 0.2.1
+    summary: docs 폴더 재구성에 따라 문서 위치와 내부 링크를 갱신함
+---
+
 # 프로젝트 기획서
 
 ## 1. 프로젝트 개요

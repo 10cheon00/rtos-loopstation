@@ -1,3 +1,30 @@
+---
+title: 요구사항 정의서
+version: 0.4.2
+change_history:
+  - date: 2026-07-02
+    version: 0.1.0
+    summary: 요구사항 정의서를 생성하고 기능, 비기능, 하드웨어 요구사항을 분리해 정리함
+  - date: 2026-07-02
+    version: 0.1.1
+    summary: 기획 문서 TODO 항목을 정리함
+  - date: 2026-07-04
+    version: 0.2.0
+    summary: 레이어드 아키텍처와 FX 설계 정리에 맞춰 요구사항을 보강함
+  - date: 2026-07-07
+    version: 0.3.0
+    summary: PCM5102A를 DAC 모듈로 선택하면서 UDA1334 관련 내용을 제거함
+  - date: 2026-07-07
+    version: 0.4.0
+    summary: 오디오 포맷을 44.1 kHz, 16-bit, stereo 기준으로 반영함
+  - date: 2026-07-07
+    version: 0.4.1
+    summary: 오디오 포맷 문서와의 참조 링크를 추가함
+  - date: 2026-07-07
+    version: 0.4.2
+    summary: docs 폴더 재구성에 따라 문서 위치와 내부 링크를 갱신함
+---
+
 # 요구사항 정의서
 
 ## 1. 기능 요구사항

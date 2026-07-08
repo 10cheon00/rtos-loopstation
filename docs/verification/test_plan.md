@@ -1,3 +1,21 @@
+---
+title: 테스트 계획
+version: 0.2.2
+change_history:
+  - date: 2026-07-02
+    version: 0.1.0
+    summary: 테스트 계획 문서를 생성하고 모듈 테스트와 통합 테스트 기준을 정리함
+  - date: 2026-07-02
+    version: 0.2.0
+    summary: 테스트 날짜 컬럼을 추가하고 문서 목적을 구체화함
+  - date: 2026-07-02
+    version: 0.2.1
+    summary: 기획 문서 TODO 정리에 맞춰 테스트 계획 항목을 보정함
+  - date: 2026-07-07
+    version: 0.2.2
+    summary: docs 폴더 재구성에 따라 문서 위치와 내부 링크를 갱신함
+---
+
 # 테스트 계획
 
 ## 1. 테스트 목적

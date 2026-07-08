@@ -1,3 +1,18 @@
+---
+title: FX 설계 문서
+version: 0.1.2
+change_history:
+  - date: 2026-07-04
+    version: 0.1.0
+    summary: FX 설계 문서를 생성하고 필수 FX와 추가 후보 FX 기준을 정리함
+  - date: 2026-07-07
+    version: 0.1.1
+    summary: 폴더 구조 개선에 맞춰 참조 문서 경로를 수정함
+  - date: 2026-07-07
+    version: 0.1.2
+    summary: docs 폴더 재구성에 따라 문서 위치와 내부 링크를 갱신함
+---
+
 # FX 설계 문서
 
 이 문서는 Loop Station 프로젝트에서 구현할 FX의 설명과 파라미터를 정리한다.
