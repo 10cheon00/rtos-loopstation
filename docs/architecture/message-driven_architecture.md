@@ -115,53 +115,51 @@ actor model의 핵심은 각 actor가 자기 상태를 소유하고, 다른 acto
 ```mermaid
 flowchart LR
     subgraph external_input["외부 입력 대상"]
-        direction TB
+        direction LR
         user_io["사용자 조작\n버튼/엔코더/노브"]
         audio_input["오디오 입력\nINMP441"]
         storage_input["저장장치 입력\nSD 카드 read"]
     end
 
     subgraph external_output["외부 출력 대상"]
-        direction TB
+        direction LR
         audio_output["오디오 출력\nPCM5102A DAC"]
         storage_output["저장장치 출력\nSD 카드 write"]
         display_output["표시 출력\nLCD/LED"]
     end
 
-    subgraph tasks["RTOS 태스크"]
-        direction TB
+    subgraph control_task["사용자 컨트롤 처리 태스크"]
+        direction LR
+        control_in["사용자 입력 이벤트"]
+        gpio["버튼 입력 처리"]
+        rotary_encoder["로터리 엔코더 입력 처리"]
+        potentiometer["노브, 슬라이더 입력 처리"]
+    end
 
-        subgraph control_task["사용자 컨트롤 처리 태스크"]
-            direction LR
-            control_in["사용자 입력 이벤트"]
-            gpio["버튼 입력 처리"]
-            rotary_encoder["로터리 엔코더 입력 처리"]
-            potentiometer["노브, 슬라이더 입력 처리"]
-        end
+    subgraph state_task["루프스테이션 상태 관리 태스크"]
+        direction LR
+        state_model["시스템/트랙/FX/UI 상태"]
+        transition["상태 전이 판단"]
+    end
 
-        subgraph state_task["루프스테이션 상태 관리 태스크"]
-            direction TB
-            state_model["시스템/트랙/FX/UI 상태"]
-            transition["상태 전이 판단"]
-        end
+    subgraph audio_task["오디오 처리 태스크"]
+        direction LR
+        sai_io["SAI 입출력"]
+        fx_logic["FX 처리"]
+        track_mix["트랙 녹음/재생/믹싱"]
+    end
 
-        subgraph audio_task["오디오 처리 태스크"]
-            direction TB
-            sai_io["SAI 입출력"]
-            fx_logic["FX 처리"]
-            track_mix["트랙 녹음/재생/믹싱"]
-        end
+    subgraph io_task["저장 장치 입출력 태스크\nFatFs/SDMMC"]
+        direction LR
+        save["녹음 데이터 저장"]
+        read["트랙 데이터 읽기"]
+    end
 
-        subgraph io_task["저장 장치 입출력 태스크\nFatFs/SDMMC"]
-            save["녹음 데이터 저장"]
-            read["트랙 데이터 읽기"]
-        end
-
-        subgraph display_task["LED/디스플레이 출력 태스크\nu8g2/SPI"]
-            track_led["트랙 상태 표시"]
-            fx_led["IFX/TFX 상태 표시"]
-            ui_lcd["패널 출력"]
-        end
+    subgraph display_task["LED/디스플레이 출력 태스크\nu8g2/SPI"]
+        direction LR
+        track_led["트랙 상태 표시"]
+        fx_led["IFX/TFX 상태 표시"]
+        ui_lcd["패널 출력"]
     end
 
     user_io --> control_in
@@ -192,10 +190,10 @@ flowchart LR
 
     style external_input rx:15px,ry:15px
     style external_output rx:15px,ry:15px
-    style tasks fill:#3eb422,color:white
 
     style state_task rx:15px,ry:15px,font-weight:bold
     style audio_task rx:15px,ry:15px,font-weight:bold
     style io_task rx:15px,ry:15px,font-weight:bold
     style control_task rx:15px,ry:15px,font-weight:bold
     style display_task rx:15px,ry:15px,font-weight:bold
+```
