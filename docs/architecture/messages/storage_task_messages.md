@@ -1,10 +1,16 @@
 ---
 title: 저장 장치 입출력 태스크 수신 메시지 스키마
-version: 0.1.0
+version: 0.3.0
 change_history:
   - date: 2026-07-08
     version: 0.1.0
     summary: 저장 장치 입출력 태스크가 수신하는 파일 및 chunk 요청 메시지 스키마를 정리함
+  - date: 2026-07-10
+    version: 0.2.0
+    summary: 트랙 파일 열기 요청을 read-write 모드 단일 메시지로 통합함
+  - date: 2026-07-10
+    version: 0.3.0
+    summary: 파일 포인터 이동 전용 요청 메시지를 제거하고 chunk offset 기반 I/O로 정리함
 ---
 
 # 저장 장치 입출력 태스크 수신 메시지 스키마
@@ -15,7 +21,7 @@ change_history:
 
 | Queue | 수신 방식 | 설명 |
 | --- | --- | --- |
-| `storage_request_queue` | 일반 queue | 파일 open/read/write/close/reset/seek 요청을 수신한다. |
+| `storage_request_queue` | 일반 queue | 파일 open/read/write/close/reset 요청과 chunk read/write 요청을 수신한다. 트랙 오디오 파일 open은 read-write 모드를 기본으로 한다. |
 
 ## 2. 공통 envelope
 
@@ -29,9 +35,7 @@ typedef struct {
         TrackFileOpenPayload open;
         TrackFileClosePayload close;
         TrackFileResetPayload reset;
-        TrackFileSeekPayload seek;
         StorageChunkRequestPayload chunk;
-        StorageLoopRewindPayload rewind;
     } payload;
 } StorageRequestMessage;
 ```
@@ -40,14 +44,11 @@ typedef struct {
 
 | 메시지 종류 | 송신 태스크 | 메시지 타입 | Payload | 간단한 설명 |
 | --- | --- | --- | --- | --- |
-| 쓰기 파일 열기 | 오디오 처리 태스크 | `TRACK_FILE_OPEN_WRITE` | `TrackFileOpenPayload` | 녹음 또는 오버더빙 결과를 저장할 트랙 파일을 연다. |
-| 읽기 파일 열기 | 오디오 처리 태스크 | `TRACK_FILE_OPEN_READ` | `TrackFileOpenPayload` | 반복 재생할 트랙 파일을 연다. |
+| 트랙 파일 열기 | 오디오 처리 태스크 | `TRACK_FILE_OPEN_RW` | `TrackFileOpenPayload` | 녹음, 재생, 오버더빙에 사용할 트랙 오디오 파일을 read-write 모드로 연다. |
 | 파일 닫기 | 오디오 처리 태스크 | `TRACK_FILE_CLOSE` | `TrackFileClosePayload` | 트랙 파일을 닫고 필요하면 WAV header 정보를 갱신한다. |
 | 트랙 파일 초기화 | 루프스테이션 상태 관리 태스크 | `TRACK_FILE_RESET` | `TrackFileResetPayload` | 트랙 파일은 유지하고 내부 음원 데이터를 초기화한다. |
-| 파일 위치 이동 | 오디오 처리 태스크 | `TRACK_FILE_SEEK` | `TrackFileSeekPayload` | 파일 읽기 위치를 특정 frame으로 이동한다. |
 | storage chunk 쓰기 요청 | 오디오 처리 태스크 | `STORAGE_WRITE_CHUNK_REQ` | `StorageChunkRequestPayload` | PCM storage chunk를 SD 카드에 쓴다. |
 | storage chunk 읽기 요청 | 오디오 처리 태스크 | `STORAGE_READ_CHUNK_REQ` | `StorageChunkRequestPayload` | 재생 또는 오버더빙에 필요한 트랙 데이터를 읽는다. |
-| loop rewind 요청 | 오디오 처리 태스크 | `STORAGE_LOOP_REWIND_REQ` | `StorageLoopRewindPayload` | 반복 재생 중 read pointer를 loop 시작점으로 되돌린다. |
 
 ## 4. Payload 스키마
 
@@ -56,9 +57,10 @@ typedef struct {
 | 필드 | 타입 | 설명 |
 | --- | --- | --- |
 | `track_id` | `uint8_t` | 대상 트랙 |
-| `mode` | `TrackFileOpenMode` | read 또는 write |
 | `create_if_missing` | `bool` | 파일이 없으면 생성할지 여부 |
 | `truncate_audio_data` | `bool` | 기존 파일은 유지하되 audio data 영역을 초기화할지 여부 |
+
+트랙 오디오 파일은 항상 read-write 모드로 연다. FatFs 기준으로 `FA_READ | FA_WRITE`는 open 시 접근 권한과 읽기 전용 속성 위반 여부를 확인하는 의미가 크며, 이후 chunk read/write의 주된 비용은 SD 카드 접근, seek, cluster allocation, dirty sector write-back에서 발생한다. 따라서 read 전용/쓰기 전용 메시지를 나누기보다 단일 read-write open 요청으로 통합한다.
 
 ### 4.2 `TrackFileClosePayload`
 
@@ -79,15 +81,7 @@ typedef struct {
 
 파일 자체를 삭제하지 않는다.
 
-### 4.4 `TrackFileSeekPayload`
-
-| 필드 | 타입 | 설명 |
-| --- | --- | --- |
-| `track_id` | `uint8_t` | 대상 트랙 |
-| `file_handle_id` | `uint16_t` | seek 대상 파일 핸들 |
-| `target_frame` | `uint32_t` | 이동할 frame 위치 |
-
-### 4.5 `StorageChunkRequestPayload`
+### 4.4 `StorageChunkRequestPayload`
 
 | 필드 | 타입 | 설명 |
 | --- | --- | --- |
@@ -99,10 +93,4 @@ typedef struct {
 | `file_frame_offset` | `uint32_t` | 파일 기준 frame offset |
 | `direction` | `StorageChunkDirection` | read 또는 write |
 
-### 4.6 `StorageLoopRewindPayload`
-
-| 필드 | 타입 | 설명 |
-| --- | --- | --- |
-| `track_id` | `uint8_t` | 대상 트랙 |
-| `file_handle_id` | `uint16_t` | rewind 대상 파일 핸들 |
-| `loop_start_frame` | `uint32_t` | 되돌릴 loop 시작 frame |
+오디오 처리 태스크는 파일 포인터 이동을 별도 명령으로 요청하지 않는다. 반복 재생에서 loop 시작점으로 돌아가야 하거나, 오버더빙에서 같은 offset에 다시 써야 하는 경우에도 다음 chunk 요청의 `file_frame_offset`에 대상 위치를 담는다. 저장 장치 입출력 태스크는 이 offset을 기준으로 내부에서 필요한 `f_lseek()` 여부를 판단한다.

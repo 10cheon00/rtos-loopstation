@@ -1,10 +1,22 @@
 ---
 title: 녹음 후 재생 전환 정책 TBA
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-07
     version: 0.1.0
     summary: 녹음 후 재생 전환 정책을 나중에 확정하기 위한 참고 문서를 생성함
+  - date: 2026-07-10
+    version: 0.1.1
+    summary: 트랙 상태 표시 메시지를 전체 snapshot 전달 방식으로 갱신함
+  - date: 2026-07-10
+    version: 0.1.2
+    summary: 트랙 파일 열기 예시를 read-write 모드 단일 메시지로 갱신함
+  - date: 2026-07-10
+    version: 0.1.3
+    summary: read-write 파일 handle 유지 정책을 확정된 전제로 정리함
+  - date: 2026-07-10
+    version: 0.2.0
+    summary: undo/redo 도입을 위한 비파괴 오버더빙 저장 정책 검토 항목을 추가함
 ---
 
 # 녹음 후 재생 전환 정책 TBA
@@ -41,10 +53,10 @@ sequenceDiagram
     participant DISPLAY as LED/디스플레이 처리 태스크
 
     UI->>STATE: CONTROL_BUTTON<br/>녹음/재생 버튼
-    STATE->>STORAGE: TRACK_FILE_OPEN_WRITE(track_id, file_path)
+    STATE->>STORAGE: TRACK_FILE_OPEN_RW(track_id, file_path)
     STORAGE-->>STATE: STORAGE_FILE_STATUS(open_write, ok)
     STATE->>AUDIO: TRACK_RECORD_START(track_id, start_position_frame=0)
-    STATE->>DISPLAY: TRACK_STATE_RENDER(RECORDING)
+    STATE->>DISPLAY: TRACK_STATE_SNAPSHOT_RENDER(all tracks)
 
     loop 녹음 진행 중
         AUDIO->>AUDIO: 입력 audio block 수신 및 IFX 처리
@@ -61,12 +73,12 @@ sequenceDiagram
 
     STATE->>STORAGE: TRACK_FILE_FINISH_WRITE(track_id)
     STORAGE-->>STATE: TRACK_FILE_WRITE_FINISHED(track_id)
-    STATE->>STORAGE: TRACK_FILE_OPEN_READ(track_id, file_path)
+    STATE->>STORAGE: TRACK_FILE_OPEN_RW(track_id, file_path)
     STORAGE-->>AUDIO: STORAGE_READ_CHUNK_READY(track_id, first_chunk)
     STORAGE-->>STATE: TRACK_FILE_READ_READY(track_id)
 
     STATE->>AUDIO: TRACK_PLAY_START(track_id, position=0)
-    STATE->>DISPLAY: TRACK_STATE_RENDER(PLAYING)
+    STATE->>DISPLAY: TRACK_STATE_SNAPSHOT_RENDER(all tracks)
     AUDIO->>AUDIO: 준비된 first_chunk로 반복 재생 시작
 ```
 
@@ -81,12 +93,12 @@ sequenceDiagram
 | `RECORDING -> PLAYING` 전환 지연 | 해결되지 않음 |
 | 첫 재생 chunk가 준비되기 전 무음 가능성 | 남아 있음 |
 
-## 4. 향후 검토할 대안
+## 4. 기본 전제와 향후 검토할 대안
 
 | 대안 | 설명 | 장점 | 주의점 |
 | --- | --- | --- | --- |
 | 전이 지연 허용 | 파일 쓰기 마무리와 첫 read chunk 준비가 끝난 뒤 재생을 시작한다. | 구현이 단순하다. | 녹음 종료 후 재생 시작까지 짧은 지연이 생길 수 있다. |
-| read/write 파일 핸들 유지 | 파일을 read/write 가능 모드로 열고 close/open 없이 seek/read로 전환한다. | close/open 비용을 줄일 수 있다. | 파일 접근 소유권, header 갱신, FatFs 동기화 정책이 필요하다. |
+| read-write 파일 handle 유지 | 파일을 read-write 모드로 열어 close/open 없이 read/write 요청을 처리한다. 이 정책은 기본 전제로 확정한다. | close/open 비용을 줄일 수 있다. | 하나의 handle은 read/write 위치 포인터가 분리되지 않으므로 요청별 frame offset 관리와 header 갱신 정책이 필요하다. |
 | 시작 구간 RAM prebuffer | `RECORDING` 중 트랙 시작부 일부를 RAM에 보관하고, 녹음 종료 직후 이 버퍼로 재생을 시작한다. | `RECORDING -> PLAYING` 지연을 숨길 수 있다. | RAM 사용량과 SD read stream으로 이어받는 정책이 필요하다. |
 | 재생 위치 rolling buffer | 현재 loop position 이후의 재생 데이터를 RAM에 유지한다. | `OVERDUBBING -> PLAYING` 전환에 적합하다. | loop position, wrap 처리, 버퍼 소유권이 복잡해진다. |
 
@@ -115,8 +127,24 @@ STM32H743VIT6에서 100~200 ms 수준의 단일 트랙 prebuffer는 검토 가�
 
 `OVERDUBBING -> PLAYING`에서는 오버더빙을 끝낸 시점의 loop position에서 재생이 이어져야 한다. 따라서 트랙 시작부 prebuffer는 충분하지 않다. 이 경우 현재 재생 위치 이후의 데이터를 보관하는 rolling buffer 또는 loop-aware read buffer 정책이 필요하다.
 
+## 7. Undo/Redo 확장 계획
+
+현재 오버더빙 저장 방식은 기존 트랙 chunk를 읽고, 입력 오디오와 합성한 뒤, 같은 파일 offset에 합성 결과를 다시 쓰는 destructive overwrite를 전제로 한다. 이 방식은 구현이 단순하지만, 기존 오디오 데이터를 덮어쓰므로 undo/redo를 구현하기 어렵다.
+
+루프스테이션 기능으로 undo/redo를 추가할 경우에는 기존 파일을 즉시 덮어쓰지 않는 저장 정책이 필요하다. 후보는 다음과 같다.
+
+| 후보 | 설명 | 장점 | 주의점 |
+| --- | --- | --- | --- |
+| take 파일 방식 | 첫 녹음 또는 오버더빙 결과를 별도 take 파일로 저장하고, 현재 활성 take를 metadata로 선택한다. | undo/redo가 파일 선택 변경으로 단순해질 수 있다. | 첫 녹음 완료 시 동일 오디오 데이터를 가진 기준 take를 준비해야 하며, 저장 공간 사용량이 증가한다. |
+| delta 파일 방식 | 오버더빙에서 변경된 구간 또는 추가 입력 성분만 별도 delta 파일로 저장한다. | 원본 트랙을 보존하면서 변경분만 관리할 수 있다. | 재생 시 원본과 delta 합성이 필요해 read/mix 흐름이 복잡해진다. |
+| snapshot 파일 방식 | 오버더빙이 끝날 때마다 전체 트랙 결과를 새 파일로 저장한다. | 재생 경로가 단순하고 undo/redo는 이전 snapshot 선택으로 처리할 수 있다. | 저장 용량과 쓰기 시간이 가장 크게 증가한다. |
+
+향후 undo/redo를 도입한다면 첫 녹음 완료 시 기준 take를 생성하는 시점, 오버더빙 시작 시 활성 take와 새 take의 관계, 오버더빙 취소 또는 완료 시 metadata commit 순서를 함께 설계해야 한다.
+
 TODO: `RECORDING -> PLAYING`과 `OVERDUBBING -> PLAYING`에 서로 다른 buffer 정책을 둘지 결정한다.
 
-TODO: 파일을 read/write 모드로 유지할지, 쓰기 종료 후 읽기 준비 단계로 전환할지 결정한다.
+TODO: read-write handle을 유지한 상태에서 WAV header 갱신, `f_sync`, metadata commit 시점을 어떻게 둘지 결정한다.
 
 TODO: 첫 재생 chunk 준비 전까지 상태를 `PLAYING`으로 전환할지, 별도 `PREPARING_PLAYBACK` 상태를 둘지 결정한다.
+
+TODO: undo/redo 도입 시 take 파일, delta 파일, snapshot 파일 중 어떤 저장 정책을 사용할지 결정한다.
