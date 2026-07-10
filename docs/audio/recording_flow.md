@@ -1,6 +1,6 @@
 ---
 title: 녹음 절차 문서
-version: 0.6.1
+version: 0.6.3
 change_history:
   - date: 2026-07-08
     version: 0.1.0
@@ -23,6 +23,12 @@ change_history:
   - date: 2026-07-08
     version: 0.6.1
     summary: target_end_frame 계산 책임을 오디오 처리 태스크로 옮기고 없는 표시 상태를 제거함
+  - date: 2026-07-10
+    version: 0.6.2
+    summary: 트랙 상태 표시 메시지를 전체 snapshot 전달 방식으로 갱신함
+  - date: 2026-07-10
+    version: 0.6.3
+    summary: 트랙 파일 열기 메시지를 read-write 모드 기준으로 갱신함
 ---
 
 # 녹음 절차 문서
@@ -137,9 +143,9 @@ sequenceDiagram
     Control->>State: CONTROL_BUTTON(record pressed)
     State->>State: record_start_frame, BPM snapshot 저장
     State->>Audio: TRACK_RECORD_START
-    Audio->>Storage: TRACK_FILE_OPEN_WRITE
+    Audio->>Storage: TRACK_FILE_OPEN_RW
     Storage-->>Audio: TRACK_FILE_OPEN_DONE
-    State->>Display: TRACK_STATE_RENDER(recording)
+    State->>Display: TRACK_STATE_SNAPSHOT_RENDER(all tracks)
 
     loop 녹음 중
         Audio->>Storage: STORAGE_WRITE_CHUNK_REQ
@@ -158,10 +164,10 @@ sequenceDiagram
     Audio-->>State: AUDIO_RECORD_DONE
     alt 저장된 다음 상태가 PLAYING
         State->>Audio: TRACK_PLAY_START
-        State->>Display: TRACK_STATE_RENDER(playing)
+        State->>Display: TRACK_STATE_SNAPSHOT_RENDER(all tracks)
     else 저장된 다음 상태가 STOPPED
         State->>Audio: TRACK_RECORD_STOP
-        State->>Display: TRACK_STATE_RENDER(stopped)
+        State->>Display: TRACK_STATE_SNAPSHOT_RENDER(all tracks)
     end
 ```
 
@@ -179,7 +185,7 @@ sequenceDiagram
 
     Control->>State: CONTROL_BUTTON(record/play pressed)
     State->>Audio: TRACK_OVERDUB_START
-    State->>Display: TRACK_STATE_RENDER(overdubbing)
+    State->>Display: TRACK_STATE_SNAPSHOT_RENDER(all tracks)
 
     loop 오버더빙 중
         Audio->>Storage: STORAGE_READ_CHUNK_REQ
@@ -193,12 +199,12 @@ sequenceDiagram
         Control->>State: CONTROL_BUTTON(record/play pressed)
         State->>Audio: TRACK_OVERDUB_FINISH
         Audio->>Audio: 오버더빙 쓰기 마무리 후 PLAYING으로 전환
-        State->>Display: TRACK_STATE_RENDER(playing)
+        State->>Display: TRACK_STATE_SNAPSHOT_RENDER(all tracks)
     else 오버더빙 후 정지
         Control->>State: CONTROL_BUTTON(stop pressed)
         State->>Audio: TRACK_OVERDUB_STOP
         Audio->>Audio: 오버더빙 쓰기 마무리 후 STOPPED로 전환
-        State->>Display: TRACK_STATE_RENDER(stopped)
+        State->>Display: TRACK_STATE_SNAPSHOT_RENDER(all tracks)
     end
 ```
 
