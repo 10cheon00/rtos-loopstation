@@ -1,10 +1,16 @@
 ---
 title: 오디오 처리 태스크 수신 메시지 스키마
-version: 0.1.0
+version: 0.2.1
 change_history:
   - date: 2026-07-08
     version: 0.1.0
     summary: 오디오 처리 태스크가 수신하는 메시지 목록과 공통 스키마를 분리하고 트랙 loop 구간 변경 메시지를 제외함
+  - date: 2026-07-10
+    version: 0.2.0
+    summary: 트랙 설정값 변경을 위한 TRACK_PARAM_SET 메시지와 payload를 추가함
+  - date: 2026-07-10
+    version: 0.2.1
+    summary: 파일 포인터 이동 전용 처리 결과 메시지를 제거함
 ---
 
 # 오디오 처리 태스크 수신 메시지 스키마
@@ -31,6 +37,7 @@ typedef struct {
         AudioTrackCommandPayload track_command;
         AudioConfigPayload config;
         AudioFxPayload fx;
+        AudioTrackParamPayload track_param;
         AudioTempoPayload tempo;
         TrackFileResultPayload file_result;
         StorageChunkResultPayload chunk_result;
@@ -55,6 +62,7 @@ typedef struct {
 | FX 활성화 설정 | 루프스테이션 상태 관리 태스크 | `FX_ENABLE_SET` | `AudioFxPayload` | IFX 또는 TFX 활성화 상태를 반영한다. |
 | FX 선택 | 루프스테이션 상태 관리 태스크 | `FX_SELECT` | `AudioFxPayload` | IFX/TFX 종류를 변경한다. |
 | FX 파라미터 변경 | 루프스테이션 상태 관리 태스크 | `FX_PARAM_SET` | `AudioFxPayload` | FX 파라미터를 변경한다. |
+| 트랙 파라미터 변경 | 루프스테이션 상태 관리 태스크 | `TRACK_PARAM_SET` | `AudioTrackParamPayload` | 트랙 볼륨, TFX 적용 여부, 재생 방향 같은 트랙 설정값을 변경한다. |
 | 트랙 gain 변경 | 루프스테이션 상태 관리 태스크 | `TRACK_GAIN_SET` | `AudioConfigPayload` | 트랙별 gain 값을 반영한다. |
 | 트랙 TFX 설정 | 루프스테이션 상태 관리 태스크 | `TRACK_TFX_SET` | `AudioConfigPayload` | 트랙별 TFX 적용 여부를 반영한다. |
 | 트랙 재생 방향 변경 | 루프스테이션 상태 관리 태스크 | `TRACK_PLAY_DIRECTION_SET` | `AudioConfigPayload` | 트랙 재생 방향을 설정한다. |
@@ -65,12 +73,9 @@ typedef struct {
 | 파일 열기 실패 | 저장 장치 입출력 태스크 | `TRACK_FILE_OPEN_FAILED` | `TrackFileResultPayload` | 트랙 파일 open 실패 결과를 전달한다. |
 | 파일 닫기 완료 | 저장 장치 입출력 태스크 | `TRACK_FILE_CLOSE_DONE` | `TrackFileResultPayload` | 트랙 파일 close 및 WAV header 갱신 완료를 전달한다. |
 | 파일 닫기 실패 | 저장 장치 입출력 태스크 | `TRACK_FILE_CLOSE_FAILED` | `TrackFileResultPayload` | 트랙 파일 close 실패를 전달한다. |
-| 파일 위치 이동 완료 | 저장 장치 입출력 태스크 | `TRACK_FILE_SEEK_DONE` | `TrackFileResultPayload` | 파일 위치 이동 성공을 전달한다. |
-| 파일 위치 이동 실패 | 저장 장치 입출력 태스크 | `TRACK_FILE_SEEK_FAILED` | `TrackFileResultPayload` | 파일 위치 이동 실패를 전달한다. |
 | storage chunk 쓰기 완료 | 저장 장치 입출력 태스크 | `STORAGE_WRITE_CHUNK_DONE` | `StorageChunkResultPayload` | chunk write 완료와 버퍼 반환 가능 여부를 전달한다. |
 | storage chunk 읽기 완료 | 저장 장치 입출력 태스크 | `STORAGE_READ_CHUNK_READY` | `StorageChunkResultPayload` | read chunk 준비를 전달한다. |
 | storage chunk 처리 실패 | 저장 장치 입출력 태스크 | `STORAGE_CHUNK_IO_FAILED` | `StorageChunkResultPayload` | chunk read/write 실패를 전달한다. |
-| loop rewind 완료 | 저장 장치 입출력 태스크 | `STORAGE_LOOP_REWIND_DONE` | `TrackFileResultPayload` | 반복 재생 read pointer 되감기 완료를 전달한다. |
 
 ## 4. Payload 스키마
 
@@ -110,7 +115,18 @@ typedef struct {
 | `value` | `int32_t` | 파라미터 값 |
 | `enabled` | `bool` | 활성화 여부 |
 
-### 4.4 `AudioTempoPayload`
+### 4.4 `AudioTrackParamPayload`
+
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| `track_id` | `uint8_t` | 대상 트랙 |
+| `param_id` | `TrackParamId` | track gain, TFX enable, play direction 등 트랙 설정 항목 |
+| `value_i32` | `int32_t` | 정수 설정값 |
+| `value_u32` | `uint32_t` | unsigned 설정값 또는 bitmask |
+
+트랙 설정 패널에서 변경되는 값은 이 payload를 우선 사용한다. 기존 `TRACK_GAIN_SET`, `TRACK_TFX_SET`, `TRACK_PLAY_DIRECTION_SET`는 자주 쓰는 설정을 명시적으로 드러내는 특화 메시지로 유지할 수 있지만, 후속 설계에서 `TRACK_PARAM_SET`으로 통합할지 결정한다.
+
+### 4.5 `AudioTempoPayload`
 
 | 필드 | 타입 | 설명 |
 | --- | --- | --- |
@@ -119,7 +135,7 @@ typedef struct {
 | `beat_unit` | `uint8_t` | 박자표 분모 |
 | `tempo_sync_enabled_mask` | `uint32_t` | tempo sync 적용 트랙 bitmask |
 
-### 4.5 `TrackFileResultPayload`
+### 4.6 `TrackFileResultPayload`
 
 | 필드 | 타입 | 설명 |
 | --- | --- | --- |
@@ -131,7 +147,7 @@ typedef struct {
 | `total_frames` | `uint32_t` | 읽기 open 시 확인한 전체 frame 수 |
 | `error_code` | `int32_t` | 실패 원인. 성공이면 `0` |
 
-### 4.6 `StorageChunkResultPayload`
+### 4.7 `StorageChunkResultPayload`
 
 | 필드 | 타입 | 설명 |
 | --- | --- | --- |
@@ -144,7 +160,7 @@ typedef struct {
 | `result` | `ResultCode` | 성공 또는 실패 |
 | `error_code` | `int32_t` | 실패 원인. 성공이면 `0` |
 
-### 4.7 `AudioDmaBlockPayload`
+### 4.8 `AudioDmaBlockPayload`
 
 | 필드 | 타입 | 설명 |
 | --- | --- | --- |
