@@ -1,6 +1,6 @@
 ---
 title: Loop Station 기획 문서
-version: 0.5.0
+version: 0.6.0
 change_history:
   - date: 2026-07-02
     version: 0.1.0
@@ -20,6 +20,9 @@ change_history:
   - date: 2026-07-08
     version: 0.5.0
     summary: 태스크 메시지 설계 문서를 문서 목록에 추가함
+  - date: 2026-07-10
+    version: 0.6.0
+    summary: TODO 목록 자동 생성 뷰와 메시지 기반 아키텍처 문서 링크를 문서 목록에 추가함
 ---
 
 # Loop Station 기획 문서
@@ -37,10 +40,11 @@ change_history:
 | [fx_design.md](./audio/fx_design.md) | 필수 FX와 추후 FX 후보의 설명 및 파라미터를 정리한다. |
 | [audio_data_format.md](./audio/audio_data_format.md) | 저장/처리/입출력에 사용할 오디오 데이터 포맷 기준을 정리한다. |
 | [software_architecture.md](./architecture/software_architecture.md) | RTOS 태스크, 상태 머신, 오디오 처리 구조를 정리한다. |
-| [layered_architecture.md](./architecture/layered_architecture.md) | 사용자 이벤트와 하드웨어 데이터가 시스템 계층을 통과하는 책임 경계를 정리한다. |
+| [message-driven_architecture.md](./architecture/message-driven_architecture.md) | 태스크들이 직접 메시지를 주고받는 구조와 설계 원칙을 정리한다. |
 | [task_message_design.md](./architecture/task_message_design.md) | RTOS 태스크 사이에서 오갈 수 있는 메시지 후보를 정리한다. |
 | [hardware_configuration.md](./hardware/hardware_configuration.md) | 현재 검증된 모듈과 STM32 결선을 정리한다. |
 | [test_plan.md](./verification/test_plan.md) | 모듈 테스트와 통합 테스트 계획을 정리한다. |
+| [todo_index.md](./todo_index.md) | docs 하위 문서에 남아 있는 TODO 항목을 모아 보여준다. |
 
 ## 폴더 목록
 
