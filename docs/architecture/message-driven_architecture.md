@@ -1,6 +1,6 @@
 ---
 title: 태스크 메시지 기반 아키텍처 문서
-version: 0.3.2
+version: 0.3.3
 change_history:
   - date: 2026-07-04
     version: 0.1.0
@@ -20,6 +20,9 @@ change_history:
   - date: 2026-07-10
     version: 0.3.2
     summary: 외부 입력 대상 노드에서 각 태스크 내부 처리 노드로 직접 연결되는 화살표를 추가함
+  - date: 2026-07-10
+    version: 0.3.3
+    summary: 문서 파일명을 메시지 기반 아키텍처 명칭에 맞게 변경함
 ---
 
 # 태스크 메시지 기반 아키텍처 문서
