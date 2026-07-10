@@ -1,10 +1,13 @@
 ---
 title: Repository Instructions
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-08
     version: 0.1.0
     summary: 문서 변경 이력 자동화 hook 운영 규칙을 추가함
+  - date: 2026-07-10
+    version: 0.2.0
+    summary: 문서 TODO 목록 자동 생성 hook 운영 규칙을 추가함
 ---
 
 # Repository Instructions
@@ -30,6 +33,8 @@ Before finishing a documentation edit:
 When multiple Markdown files are changed, apply the version bump and `change_history` update independently to each changed file.
 
 The project-local Codex `Stop` hook runs `scripts/check-md-change-history.sh` to validate and, when possible, automatically fix missing Markdown frontmatter, `version`, and `change_history` entries.
+
+After that, the same `Stop` hook runs `scripts/update-doc-todo-index.sh` to regenerate `docs/todo_index.md`, which lists TODO items from Markdown files under `docs/` except `docs/old/`.
 
 Frontmatter format:
 
