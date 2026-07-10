@@ -1,6 +1,6 @@
 ---
 title: 태스크 메시지 기반 아키텍처 문서
-version: 0.3.3
+version: 0.3.4
 change_history:
   - date: 2026-07-04
     version: 0.1.0
@@ -23,6 +23,9 @@ change_history:
   - date: 2026-07-10
     version: 0.3.3
     summary: 문서 파일명을 메시지 기반 아키텍처 명칭에 맞게 변경함
+  - date: 2026-07-10
+    version: 0.3.4
+    summary: 태스크 다이어그램을 확정하지 않고 후속 TODO 항목으로 전환함
 ---
 
 # 태스크 메시지 기반 아키텍처 문서
@@ -110,90 +113,15 @@ actor model의 핵심은 각 actor가 자기 상태를 소유하고, 다른 acto
 | 저장장치 I/O 태스크 | FatFs/SDMMC 파일 생성, 쓰기, 읽기, close/finalize를 담당한다. | 오디오 처리 태스크, 상태 관리 태스크 |
 | 디스플레이/LED 출력 태스크 | LCD 화면과 LED 상태 표시를 담당한다. | 상태 관리 태스크 |
 
-# 아키텍처 시각화 및 태스크 요청 흐름
+# 4. TODO: 아키텍처 시각화 및 태스크 요청 흐름
 
-```mermaid
-flowchart LR
-    subgraph external_input["외부 입력 대상"]
-        direction LR
-        user_io["사용자 조작\n버튼/엔코더/노브"]
-        audio_input["오디오 입력\nINMP441"]
-        storage_input["저장장치 입력\nSD 카드 read"]
-    end
+태스크 간 메시지 구조와 외부 입출력 흐름을 하나의 다이어그램으로 표현하는 작업은 아직 확정하지 않는다.
 
-    subgraph external_output["외부 출력 대상"]
-        direction LR
-        audio_output["오디오 출력\nPCM5102A DAC"]
-        storage_output["저장장치 출력\nSD 카드 write"]
-        display_output["표시 출력\nLCD/LED"]
-    end
+후속 작업에서는 다음 내용을 만족하는 다이어그램을 다시 작성한다.
 
-    subgraph control_task["사용자 컨트롤 처리 태스크"]
-        direction LR
-        control_in["사용자 입력 이벤트"]
-        gpio["버튼 입력 처리"]
-        rotary_encoder["로터리 엔코더 입력 처리"]
-        potentiometer["노브, 슬라이더 입력 처리"]
-    end
-
-    subgraph state_task["루프스테이션 상태 관리 태스크"]
-        direction LR
-        state_model["시스템/트랙/FX/UI 상태"]
-        transition["상태 전이 판단"]
-    end
-
-    subgraph audio_task["오디오 처리 태스크"]
-        direction LR
-        sai_io["SAI 입출력"]
-        fx_logic["FX 처리"]
-        track_mix["트랙 녹음/재생/믹싱"]
-    end
-
-    subgraph io_task["저장 장치 입출력 태스크\nFatFs/SDMMC"]
-        direction LR
-        save["녹음 데이터 저장"]
-        read["트랙 데이터 읽기"]
-    end
-
-    subgraph display_task["LED/디스플레이 출력 태스크\nu8g2/SPI"]
-        direction LR
-        track_led["트랙 상태 표시"]
-        fx_led["IFX/TFX 상태 표시"]
-        ui_lcd["패널 출력"]
-    end
-
-    user_io --> control_in
-    control_in --> gpio
-    control_in --> rotary_encoder
-    control_in --> potentiometer
-
-    audio_input --> sai_io
-    storage_input --> read
-
-    control_task --> state_task
-    control_task --> display_task
-
-    state_task --> audio_task
-    state_task --> io_task
-    state_task --> display_task
-
-    audio_task <--> io_task
-    sai_io --> audio_output
-    audio_task --> state_task
-
-    save --> storage_output
-    io_task --> state_task
-
-    track_led --> display_output
-    fx_led --> display_output
-    ui_lcd --> display_output
-
-    style external_input rx:15px,ry:15px
-    style external_output rx:15px,ry:15px
-
-    style state_task rx:15px,ry:15px,font-weight:bold
-    style audio_task rx:15px,ry:15px,font-weight:bold
-    style io_task rx:15px,ry:15px,font-weight:bold
-    style control_task rx:15px,ry:15px,font-weight:bold
-    style display_task rx:15px,ry:15px,font-weight:bold
-```
+- 외부 입력 대상과 외부 출력 대상을 분리한다.
+- 사용자 조작 입력이 사용자 컨트롤 처리 태스크로 전달되는 흐름을 표시한다.
+- 오디오 입력은 오디오 처리 태스크로 들어가고, 오디오 출력은 오디오 처리 태스크에서 바로 나가는 것으로 표시한다.
+- 저장장치 read/write는 저장장치 I/O 태스크와 상호작용하는 것으로 표시한다.
+- LCD/LED 출력은 디스플레이/LED 출력 태스크에서 나가는 것으로 표시한다.
+- 태스크 간 직접 메시지 전송은 상태 관리 태스크를 필수 중계자로 보이게 하지 않도록 표현한다.
