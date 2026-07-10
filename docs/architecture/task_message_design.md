@@ -1,6 +1,6 @@
 ---
 title: RTOS 태스크 메시지 설계 인덱스
-version: 0.10.0
+version: 0.11.1
 change_history:
   - date: 2026-07-08
     version: 0.1.0
@@ -38,6 +38,12 @@ change_history:
   - date: 2026-07-08
     version: 0.10.0
     summary: 태스크별 메시지 스키마 문서를 분리하고 트랙 loop 구간 변경 메시지를 제외함
+  - date: 2026-07-10
+    version: 0.11.0
+    summary: LED/디스플레이 표시 mailbox 분리 결정을 메시지 인덱스에 반영함
+  - date: 2026-07-10
+    version: 0.11.1
+    summary: 트랙 파일 read-write open 정책 확정에 맞춰 후속 결정 항목을 정리함
 ---
 
 # RTOS 태스크 메시지 설계 인덱스
@@ -79,7 +85,7 @@ change_history:
 | 루프스테이션 상태 관리 태스크 | [state_task_messages.md](./messages/state_task_messages.md) | `state_event_queue` |
 | 오디오 처리 태스크 | [audio_task_messages.md](./messages/audio_task_messages.md) | `audio_command_queue`, `audio_dma_event_queue` |
 | 저장 장치 입출력 태스크 | [storage_task_messages.md](./messages/storage_task_messages.md) | `storage_request_queue` |
-| LED/디스플레이 처리 태스크 | [display_task_messages.md](./messages/display_task_messages.md) | `display_command_queue`, `display_render_mailbox`, `track_position_mailbox`, `level_meter_mailbox` |
+| LED/디스플레이 처리 태스크 | [display_task_messages.md](./messages/display_task_messages.md) | `display_command_queue`, `track_state_mailbox`, `track_param_mailbox`, `fx_state_mailbox`, `fx_param_mailbox`, `system_mailbox`, `diagnostic_mailbox`, `track_position_mailbox`, `level_meter_mailbox` |
 | 사용자 컨트롤 처리 태스크 | [user_control_task_messages.md](./messages/user_control_task_messages.md) | 현재 수신 queue 없음 |
 | 전체 태스크 대상 메시지 | [system_broadcast_messages.md](./messages/system_broadcast_messages.md) | TODO |
 
@@ -96,7 +102,7 @@ change_history:
 - `TODO`로 남긴 시스템 초기화/정지 요청과 오디오 DMA 이벤트의 수신 방식을 확정한다.
 - `AUDIO_RX_BLOCK_READY`, `AUDIO_TX_BLOCK_READY`처럼 실시간성이 높은 이벤트는 후속 오디오 DMA 설계에서 별도로 확정한다.
 - `STORAGE_WRITE_CHUNK_REQ`, `STORAGE_READ_CHUNK_READY`, `STORAGE_CHUNK_IO_FAILED`는 buffer pointer를 포함하므로 buffer pool과 소유권 이전 규칙을 함께 정의한다.
-- LED/디스플레이 처리 태스크의 표시 갱신 메시지는 `display_render_mailbox` 사용을 기준으로 큐 길이와 overwrite 정책을 확정한다.
+- LED/디스플레이 처리 태스크의 표시 갱신 mailbox별 큐 길이와 overwrite 정책을 구현 단계에서 확정한다.
 - 오류 메시지는 향후 [오류 처리 정책 문서](./error_handling_policy.md)에서 severity, 복구 가능 여부, 사용자 표시 정책과 연결한다.
 - 트랙 파일 open/read/write/reset 정책은 향후 [트랙 파일 포맷/저장 정책 문서](../storage/track_file_storage_policy.md)에서 파일명, 디렉터리, metadata, split 정책과 함께 확정한다.
-- 녹음 종료 후 재생 전환 지연, RAM prebuffer, read/write 파일 핸들 유지 여부는 [녹음 후 재생 전환 정책 TBA](../storage/record_to_playback_transition_tba.md)에서 별도로 검토한다.
+- 트랙 파일 open은 read-write 모드 단일 handle 정책을 따른다. 녹음 종료 후 재생 전환 지연, RAM prebuffer, 첫 read chunk 준비 정책은 [녹음 후 재생 전환 정책 TBA](../storage/record_to_playback_transition_tba.md)에서 별도로 검토한다.

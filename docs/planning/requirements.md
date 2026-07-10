@@ -1,6 +1,6 @@
 ---
 title: 요구사항 정의서
-version: 0.4.2
+version: 0.4.3
 change_history:
   - date: 2026-07-02
     version: 0.1.0
@@ -23,6 +23,9 @@ change_history:
   - date: 2026-07-07
     version: 0.4.2
     summary: docs 폴더 재구성에 따라 문서 위치와 내부 링크를 갱신함
+  - date: 2026-07-10
+    version: 0.4.3
+    summary: FR-TRACK-008의 정지 버튼 long/repeat 판정 시간을 구체화함
 ---
 
 # 요구사항 정의서
@@ -50,7 +53,7 @@ change_history:
 | FR-TRACK-005 | `OVERDUBBING` 상태에서 녹음/재생 버튼을 누르면 `PLAYING`으로 전환해야 한다. | `project_summary.md` |
 | FR-TRACK-006 | 정지 버튼은 녹음, 재생, 오버더빙을 중단하고 `STOPPED`로 전환해야 한다. | `project_summary.md` |
 | FR-TRACK-007 | `STOPPED` 상태에서 녹음/재생 버튼을 누르면 `PLAYING`으로 전환해야 한다. | `project_summary.md` |
-| FR-TRACK-008 | `STOPPED` 상태에서 정지 버튼을 길게 누르거나 짧은 시간 안에 연속 입력하면 트랙 데이터를 삭제해야 한다. | `project_summary.md` |
+| FR-TRACK-008 | `STOPPED` 상태에서 정지 버튼을 2초 동안 누르거나 0.5초 안에 2회 이상 입력하면 트랙 데이터를 삭제해야 한다. | `project_summary.md` |
 
 ### 1.3 저장장치
 
