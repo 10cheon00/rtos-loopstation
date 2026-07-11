@@ -1,6 +1,6 @@
 ---
 title: 사용자 입력 아키텍처
-version: 0.2.0
+version: 0.3.0
 change_history:
   - date: 2026-07-11
     version: 0.1.0
@@ -8,6 +8,9 @@ change_history:
   - date: 2026-07-11
     version: 0.2.0
     summary: 엔코더 회전 modifier snapshot의 보관 주체와 생성 흐름을 명확히 함
+  - date: 2026-07-11
+    version: 0.3.0
+    summary: 설계 문서에서 특정 하드웨어 peripheral 의존 설명을 제거함
 ---
 
 # 사용자 입력 아키텍처
@@ -20,7 +23,7 @@ change_history:
 | 항목 | 내용 |
 | --- | --- |
 | 대상 요구사항 | `REQ-INPUT-001`, `REQ-INPUT-002`, `REQ-INPUT-003`, `REQ-INPUT-004`, `REQ-INPUT-005`, `REQ-INPUT-006` |
-| 포함 범위 | 버튼 입력 감지, 로터리 엔코더 회전/누름 감지, 포텐셔미터 값 변경 감지, raw event 생성, 상태 관리 구조로 event 전달 |
+| 포함 범위 | 버튼 입력 감지, 로터리 엔코더 회전/누름 감지, 아날로그 조작값 변경 감지, raw event 생성, 상태 관리 구조로 event 전달 |
 | 연관 설계 | 표시 및 피드백, 오디오 효과, 트랙 생명주기, 실시간 동작 |
 | 제외 범위 | LCD 렌더링, LED 출력, FX 알고리즘, 트랙 상태 전이 세부 정책, 물리 핀 초기화 코드 |
 
@@ -30,7 +33,7 @@ change_history:
 | --- | --- | --- |
 | `REQ-INPUT-001` | 좌, 우, Enter, Exit 조작을 디스플레이 패널 조작 입력으로 받는다. | 버튼 press/release를 raw event로 전달하고 상태 관리 구조가 패널 탐색 명령으로 해석한다. |
 | `REQ-INPUT-002` | FX 조작을 FX 활성화 입력으로 받는다. | IFX/TFX 버튼 event를 FX enable toggle 입력으로 해석할 수 있게 전달한다. |
-| `REQ-INPUT-003` | FX부의 아날로그 조작을 FX 파라미터 변경 입력으로 받는다. | 포텐셔미터 변경값을 threshold/rate limit 후 정규화해 상태 관리 구조로 전달한다. |
+| `REQ-INPUT-003` | FX부의 아날로그 조작을 FX 파라미터 변경 입력으로 받는다. | 아날로그 조작값을 threshold/rate limit 후 정규화해 상태 관리 구조로 전달한다. |
 | `REQ-INPUT-004` | 트랙부의 아날로그 조작을 트랙 볼륨 변경 입력으로 받는다. | 아날로그 입력값을 대상 트랙 파라미터 변경 입력으로 해석할 수 있게 전달한다. |
 | `REQ-INPUT-005` | 로터리 조작의 회전 방향을 입력으로 받는다. | 로터리 엔코더 회전량을 signed delta로 표현해 전달한다. |
 | `REQ-INPUT-006` | 로터리 조작의 누름을 입력으로 받는다. | 엔코더 push를 일반 버튼과 같은 press/release event로 전달한다. |
@@ -47,7 +50,7 @@ change_history:
 
 | 아키텍처 항목 | 역할 | 설계 결정 |
 | --- | --- | --- |
-| 버튼 scan | 좌, 우, Enter, Exit 버튼의 물리 상태를 읽는다. | GPIO 확장 또는 직접 GPIO 입력을 주기적으로 읽는다. |
+| 버튼 scan | 좌, 우, Enter, Exit 버튼의 물리 상태를 읽는다. | 디지털 입력 상태를 주기적으로 읽는다. |
 | debounce | 접점 흔들림으로 인한 중복 event를 제거한다. | 안정화된 press/release 변화만 raw event로 만든다. |
 | raw button event | 버튼 ID, 상태, 감지 시각을 하나의 event로 표현한다. | `CONTROL_BUTTON` 메시지와 `ControlButtonPayload`를 사용한다. |
 | 패널 탐색 해석 | raw button event를 패널 이동, 진입, 복귀로 해석한다. | 상태 관리 구조가 현재 패널 상태를 기준으로 결정한다. |
@@ -151,16 +154,16 @@ sequenceDiagram
 ### 3.3 REQ-INPUT-003 설계
 
 `REQ-INPUT-003`은 FX부의 아날로그 조작을 FX 파라미터 변경 입력으로 받을 수 있어야 한다는 요구사항이다.
-이를 구현하려면 포텐셔미터 ADC sampling, 값 안정화, 정규화, FX 파라미터 대상 해석 아키텍처가 필요하다.
+이를 구현하려면 아날로그 입력 sampling, 값 안정화, 정규화, FX 파라미터 대상 해석 아키텍처가 필요하다.
 아날로그 입력은 작은 흔들림이 많으므로 threshold와 rate limit을 거친 변경 event만 상태 관리 구조로 전달한다.
 
 #### 3.3.1 필요 아키텍처
 
 | 아키텍처 항목 | 역할 | 설계 결정 |
 | --- | --- | --- |
-| ADC sampling | FX부 포텐셔미터 raw ADC 값을 주기적으로 읽는다. | 입력 처리 구조가 sampling 주기를 관리한다. |
+| 아날로그 입력 sampling | FX부 아날로그 조작값을 주기적으로 읽는다. | 입력 처리 구조가 sampling 주기를 관리한다. |
 | 변화 감지 | 의미 없는 미세 변화를 제거한다. | threshold와 rate limit을 적용한다. |
-| 값 정규화 | raw ADC 값을 UI/파라미터 범위로 변환한다. | `raw_value`와 `normalized_value`를 함께 전달한다. |
+| 값 정규화 | raw 입력값을 UI/파라미터 범위로 변환한다. | `raw_value`와 `normalized_value`를 함께 전달한다. |
 | pot event 생성 | pot ID, raw 값, 정규화 값을 event로 표현한다. | `CONTROL_POT_CHANGE` 메시지와 `ControlPotPayload`를 사용한다. |
 | FX 파라미터 해석 | 현재 선택된 FX와 파라미터에 값을 반영한다. | 상태 관리 구조가 현재 FX context를 기준으로 결정한다. |
 
@@ -168,8 +171,8 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    Pot["FX 포텐셔미터"]
-    Adc["ADC sampling"]
+    Pot["FX부 아날로그 조작"]
+    Adc["아날로그 입력 sampling"]
     Filter["threshold/rate limit"]
     Normalize["값 정규화"]
     Event["CONTROL_POT_CHANGE event"]
@@ -184,13 +187,13 @@ flowchart LR
 
 ```mermaid
 sequenceDiagram
-    participant Pot as 포텐셔미터
+    participant Pot as FX부 아날로그 조작
     participant Control as 사용자 컨트롤 처리 구조
     participant State as 상태 관리 구조
     participant Audio as 오디오 처리 구조
     participant Display as 표시 구조
 
-    Pot->>Control: ADC 값 변화
+    Pot->>Control: 아날로그 값 변화
     Control->>Control: threshold/rate limit 적용
     Control->>Control: normalized_value 계산
     Control->>State: CONTROL_POT_CHANGE(pot_id, raw_value, normalized_value)
@@ -203,7 +206,7 @@ sequenceDiagram
 
 | 기능 문서 | 기능 | 목적 |
 | --- | --- | --- |
-| `FEAT-potentiometer-sampling.md` | 포텐셔미터 sampling | ADC raw 값을 주기적으로 읽고 의미 있는 변경만 event로 만든다. |
+| `FEAT-potentiometer-sampling.md` | 아날로그 입력 sampling | raw 입력값을 주기적으로 읽고 의미 있는 변경만 event로 만든다. |
 | `FEAT-fx-parameter-input.md` | FX 파라미터 입력 해석 | pot 변경 event를 FX 파라미터 변경으로 해석한다. |
 
 ### 3.4 REQ-INPUT-004 설계
@@ -215,9 +218,9 @@ sequenceDiagram
 
 | 아키텍처 항목 | 역할 | 설계 결정 |
 | --- | --- | --- |
-| 트랙부 아날로그 sampling | 트랙 볼륨 조작값을 읽는다. | 포텐셔미터 sampling 경로를 공유한다. |
+| 트랙부 아날로그 sampling | 트랙 볼륨 조작값을 읽는다. | 아날로그 입력 sampling 경로를 공유한다. |
 | 입력 대상 식별 | 어떤 트랙 또는 어떤 트랙 파라미터에 해당하는지 식별한다. | pot ID와 현재 UI context를 함께 사용한다. |
-| 값 정규화 | raw ADC 값을 track gain 범위로 변환할 수 있게 준비한다. | 입력 처리 구조는 정규화 값만 제공하고 gain scaling은 상태 관리 구조가 결정한다. |
+| 값 정규화 | raw 입력값을 track gain 범위로 변환할 수 있게 준비한다. | 입력 처리 구조는 정규화 값만 제공하고 gain scaling은 상태 관리 구조가 결정한다. |
 | 트랙 파라미터 해석 | 입력값을 트랙 볼륨 변경으로 해석한다. | 상태 관리 구조가 `TRACK_PARAM_SET` 또는 track gain 변경 command로 전파한다. |
 
 #### 3.4.2 구조 다이어그램
@@ -225,7 +228,7 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     Pot["트랙부 아날로그 조작"]
-    PotPath["ADC sampling/정규화"]
+    PotPath["아날로그 sampling/정규화"]
     Event["CONTROL_POT_CHANGE event"]
     State["상태 관리 구조"]
     Audio["오디오 처리 구조"]
@@ -246,7 +249,7 @@ sequenceDiagram
     participant Audio as 오디오 처리 구조
     participant Display as 표시 구조
 
-    Pot->>Control: ADC 값 변화
+    Pot->>Control: 아날로그 값 변화
     Control->>Control: threshold/rate limit 및 정규화
     Control->>State: CONTROL_POT_CHANGE(pot_id, normalized_value)
     State->>State: 대상 트랙 볼륨 변경으로 해석
@@ -258,7 +261,7 @@ sequenceDiagram
 
 | 기능 문서 | 기능 | 목적 |
 | --- | --- | --- |
-| `FEAT-potentiometer-sampling.md` | 포텐셔미터 sampling | 트랙부 아날로그 조작값을 안정적으로 event로 만든다. |
+| `FEAT-potentiometer-sampling.md` | 아날로그 입력 sampling | 트랙부 아날로그 조작값을 안정적으로 event로 만든다. |
 | `FEAT-track-volume-input.md` | 트랙 볼륨 입력 해석 | pot 변경 event를 트랙 볼륨 변경으로 해석한다. |
 
 ### 3.5 REQ-INPUT-005 설계
@@ -272,7 +275,7 @@ sequenceDiagram
 
 | 아키텍처 항목 | 역할 | 설계 결정 |
 | --- | --- | --- |
-| encoder decoding | 로터리 엔코더 회전 방향과 step 수를 계산한다. | timer encoder mode 또는 동등한 decoding 경로를 사용한다. |
+| encoder decoding | 로터리 엔코더 회전 방향과 step 수를 계산한다. | 회전 입력을 방향과 step으로 변환하는 decoding 경로를 사용한다. |
 | delta 계산 | 시계 방향과 반시계 방향을 signed delta로 표현한다. | 시계 방향은 양수, 반시계 방향은 음수로 전달한다. |
 | button state snapshot | debounce가 끝난 버튼별 현재 press/release 상태를 보관한다. | 입력 처리 구조가 `button_state_snapshot`을 유지한다. |
 | modifier snapshot | 회전 순간 눌려 있는 modifier 버튼 상태를 함께 기록한다. | `button_state_snapshot`에서 encoder push 등 modifier bit를 읽어 `modifier_mask` 필드에 복사한다. |
@@ -400,10 +403,10 @@ flowchart LR
 
 | 구성 요소 | 책임 | 입력 | 출력 | 관련 요구사항 |
 | --- | --- | --- | --- | --- |
-| 버튼 scan/debounce | 물리 버튼의 안정된 press/release 변화를 만든다. | 버튼 GPIO 상태 | `CONTROL_BUTTON` | `REQ-INPUT-001`, `REQ-INPUT-002`, `REQ-INPUT-006` |
+| 버튼 scan/debounce | 물리 버튼의 안정된 press/release 변화를 만든다. | digital input state | `CONTROL_BUTTON` | `REQ-INPUT-001`, `REQ-INPUT-002`, `REQ-INPUT-006` |
 | button state snapshot | debounce가 끝난 버튼별 현재 상태를 보관하고 회전 event의 modifier 입력으로 제공한다. | debounced button state | `modifier_mask` | `REQ-INPUT-005`, `REQ-INPUT-006` |
-| 포텐셔미터 sampling | ADC raw 값을 읽고 의미 있는 변경을 찾는다. | ADC sample | `CONTROL_POT_CHANGE` | `REQ-INPUT-003`, `REQ-INPUT-004` |
-| 엔코더 decoding | 회전 방향과 step 수를 계산한다. | encoder pulse/counter | `CONTROL_ENCODER_ROTATE` | `REQ-INPUT-005` |
+| 아날로그 입력 sampling | raw 입력값을 읽고 의미 있는 변경을 찾는다. | analog input sample | `CONTROL_POT_CHANGE` | `REQ-INPUT-003`, `REQ-INPUT-004` |
+| 엔코더 decoding | 회전 방향과 step 수를 계산한다. | encoder rotation input | `CONTROL_ENCODER_ROTATE` | `REQ-INPUT-005` |
 | raw event queue | 입력 event를 순서대로 상태 관리 구조에 전달한다. | control event | `state_event_queue` message | `REQ-INPUT-001` ~ `REQ-INPUT-006` |
 | 상태 관리 해석 | raw event를 시스템 동작으로 변환한다. | control event, current state | audio/display/storage command | `REQ-INPUT-001` ~ `REQ-INPUT-006` |
 
@@ -413,7 +416,7 @@ flowchart LR
 | --- | --- | --- |
 | `CONTROL_BUTTON` | `ControlButtonPayload` | 버튼과 엔코더 push의 press/release 상태를 전달한다. |
 | `CONTROL_ENCODER_ROTATE` | `ControlEncoderPayload` | 로터리 엔코더 회전 방향, step 수, modifier snapshot을 전달한다. |
-| `CONTROL_POT_CHANGE` | `ControlPotPayload` | 포텐셔미터 raw 값과 정규화 값을 전달한다. |
+| `CONTROL_POT_CHANGE` | `ControlPotPayload` | 아날로그 조작의 raw 값과 정규화 값을 전달한다. |
 
 ### 4.4 Payload 핵심 필드
 
@@ -423,22 +426,13 @@ flowchart LR
 | `ControlEncoderPayload` | `encoder_id`, `delta`, `step_count`, `modifier_mask`, `timestamp_ms` | 회전 방향과 양, 회전 순간의 modifier 상태를 표현한다. |
 | `ControlPotPayload` | `pot_id`, `raw_value`, `normalized_value`, `timestamp_ms` | 아날로그 조작의 원본값과 해석 가능한 정규화 값을 표현한다. |
 
-### 4.5 물리 입력 장치
-
-| 입력 장치 | 연결 정보 | 설계상 입력 역할 |
-| --- | --- | --- |
-| MCP23017 GPIO 확장 버튼 | `I2C1` 기반 GPIO 확장 | 제어 버튼, FX 버튼, 엔코더 push 같은 digital input을 수집한다. |
-| 포텐셔미터 x3 | `ADC1` | FX 파라미터 또는 트랙 볼륨 같은 아날로그 조작값을 수집한다. |
-| KY-040 로터리 엔코더 회전 | `TIM4` encoder mode | 시계/반시계 방향 회전과 step 수를 수집한다. |
-| KY-040 로터리 엔코더 push | MCP23017 GPIO | 일반 button event 또는 encoder modifier로 사용한다. |
-
-### 4.6 책임 분리
+### 4.5 책임 분리
 
 | 책임 | 담당 구조 | 이유 |
 | --- | --- | --- |
 | debounce, press/release 감지 | 사용자 컨트롤 처리 구조 | 물리 입력 안정화는 입력 장치에 가까운 계층에서 처리한다. |
 | button state snapshot 유지 | 사용자 컨트롤 처리 구조 | 회전 event 생성 시점의 modifier 상태를 즉시 복사해야 한다. |
-| ADC threshold/rate limit | 사용자 컨트롤 처리 구조 | 아날로그 흔들림과 과도한 event 생성을 입력 계층에서 줄인다. |
+| 아날로그 입력 threshold/rate limit | 사용자 컨트롤 처리 구조 | 아날로그 흔들림과 과도한 event 생성을 입력 계층에서 줄인다. |
 | long press/repeat/double click 해석 | 상태 관리 구조 | 현재 트랙 상태와 UI context에 따라 의미가 달라진다. |
 | 엔코더 push + 회전 modifier 해석 | 상태 관리 구조 | modifier 조합의 의미가 현재 선택 항목에 따라 달라진다. |
 | BPM, FX, 트랙 볼륨 변경 해석 | 상태 관리 구조 | canonical state 변경과 command 전파를 한 곳에서 관리한다. |
@@ -450,9 +444,9 @@ flowchart LR
 
 | 기능 문서 | 목적 | 주요 입력 | 주요 출력 |
 | --- | --- | --- | --- |
-| `FEAT-button-event-processing.md` | 버튼과 엔코더 push의 press/release event를 생성한다. | GPIO input state | `CONTROL_BUTTON` |
-| `FEAT-encoder-event-processing.md` | 로터리 엔코더 회전을 signed delta event로 생성한다. | encoder counter/pulse | `CONTROL_ENCODER_ROTATE` |
-| `FEAT-potentiometer-sampling.md` | 포텐셔미터 변경값을 안정적인 아날로그 event로 생성한다. | ADC sample | `CONTROL_POT_CHANGE` |
+| `FEAT-button-event-processing.md` | 버튼과 엔코더 push의 press/release event를 생성한다. | digital input state | `CONTROL_BUTTON` |
+| `FEAT-encoder-event-processing.md` | 로터리 엔코더 회전을 signed delta event로 생성한다. | encoder rotation input | `CONTROL_ENCODER_ROTATE` |
+| `FEAT-potentiometer-sampling.md` | 아날로그 조작값을 안정적인 event로 생성한다. | analog input sample | `CONTROL_POT_CHANGE` |
 | `FEAT-input-panel-navigation.md` | 좌, 우, Enter, Exit 입력을 패널 탐색으로 해석한다. | `CONTROL_BUTTON` | display state change |
 | `FEAT-fx-enable-input.md` | FX 버튼 입력을 FX 활성화 변경으로 해석한다. | `CONTROL_BUTTON` | FX enable state |
 | `FEAT-fx-parameter-input.md` | 아날로그 입력을 FX 파라미터 변경으로 해석한다. | `CONTROL_POT_CHANGE` | FX parameter state |
@@ -464,9 +458,9 @@ flowchart LR
 
 | 항목 | 결정 필요 내용 | 영향 |
 | --- | --- | --- |
-| 버튼 ID 목록 | 실제 버튼 배치와 MCP23017 GPIO mapping을 확정해야 한다. | `ButtonId`, 표시/상태 해석 |
+| 버튼 ID 목록 | 실제 버튼 배치와 버튼 ID mapping을 확정해야 한다. | `ButtonId`, 표시/상태 해석 |
 | debounce 시간 | 버튼별 debounce 기준 시간을 정해야 한다. | 입력 응답성, 중복 입력 방지 |
 | long press 기준 | 길게 누름과 반복 입력의 시간 기준을 정해야 한다. | 트랙 reset, UI repeat 동작 |
-| 포텐셔미터 정규화 범위 | `normalized_value`의 범위와 scaling 정책을 정해야 한다. | FX parameter, track volume 해석 |
-| 포텐셔미터 threshold | raw ADC 변화량 기준과 rate limit 주기를 정해야 한다. | event 양, 조작 민감도 |
+| 아날로그 입력 정규화 범위 | `normalized_value`의 범위와 scaling 정책을 정해야 한다. | FX parameter, track volume 해석 |
+| 아날로그 입력 threshold | raw 입력 변화량 기준과 rate limit 주기를 정해야 한다. | event 양, 조작 민감도 |
 | 엔코더 step 단위 | encoder pulse와 UI step의 대응 관계를 정해야 한다. | 값 변경 속도, 사용자 조작감 |
