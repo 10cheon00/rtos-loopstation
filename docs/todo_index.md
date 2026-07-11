@@ -1,6 +1,6 @@
 ---
 title: 문서 TODO 목록
-version: 0.1.3
+version: 0.1.4
 change_history:
   - date: 2026-07-10
     version: 0.1.0
@@ -14,6 +14,9 @@ change_history:
   - date: 2026-07-11
     version: 0.1.3
     summary: 문서의 설계 및 설명 내용을 갱신함
+  - date: 2026-07-11
+    version: 0.1.4
+    summary: 문서 TODO 목록을 최신 상태로 갱신함
 ---
 
 # 문서 TODO 목록
@@ -25,7 +28,7 @@ change_history:
 
 | 파일 위치 | TODO 내용 |
 | --- | --- |
-| `docs/README.md:66` | 확인되지 않은 세부 사항은 `TODO:`로 남긴다. |
+| `docs/README.md:80` | 확인되지 않은 세부 사항은 `TODO:`로 남긴다. |
 | `docs/old-2/architecture/message-driven_architecture.md:116` | 4. TODO: 아키텍처 시각화 및 태스크 요청 흐름 |
 | `docs/old-2/architecture/messages/audio_task_messages.md:25` | `audio_dma_event_queue` \| TODO \| SAI DMA half/full event처럼 실시간성이 높은 이벤트를 수신한다. |
 | `docs/old-2/architecture/messages/system_broadcast_messages.md:29` | 시스템 초기화 요청 \| 루프스테이션 상태 관리 태스크 \| `SYSTEM_RESET_REQUEST` \| TODO \| `SystemControlPayload` \| 상태, 오디오, 저장, 표시 관련 작업을 초기 상태로 되돌리도록 요청한다. |
