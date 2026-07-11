@@ -1,6 +1,6 @@
 ---
 title: Loop Station 기획 문서
-version: 0.7.0
+version: 0.7.1
 change_history:
   - date: 2026-07-02
     version: 0.1.0
@@ -26,28 +26,15 @@ change_history:
   - date: 2026-07-11
     version: 0.7.0
     summary: V 모델 문서 폴더 구조와 아키텍처 및 기능 문서 파일명 규칙을 추가함
+  - date: 2026-07-11
+    version: 0.7.1
+    summary: 이전 폴더 구조 기준 문서 목록을 제거하고 작성 원칙을 현재 문서 구조에 맞게 정리함
 ---
 
 # Loop Station 기획 문서
 
-이 폴더는 Loop Station 프로젝트를 기획, 설계, 검증 관점에서 읽기 좋게 정리한 문서 묶음이다. 기존 `docs/old/project_summary.md`, `docs/old/software_design.md`, `docs/old/hardware_wiring.md`, `docs/old/peripheral_connections.md`에 흩어져 있던 내용을 문서 목적별로 다시 나누었다.
-
-## 문서 목록
-
-| 문서 | 목적 |
-| --- | --- |
-| [project_plan.md](./planning/project_plan.md) | 프로젝트 목표, 범위, 성공 기준을 정의한다. |
-| [requirements.md](./planning/requirements.md) | 기능/비기능/하드웨어 요구사항을 정리한다. |
-| [user_scenarios.md](./planning/user_scenarios.md) | 사용자가 시스템을 조작하는 주요 흐름을 정리한다. |
-| [ui_design.md](./ui/ui_design.md) | LCD 패널, 버튼, 엔코더, LED 표시 정책을 정리한다. |
-| [fx_design.md](./audio/fx_design.md) | 필수 FX와 추후 FX 후보의 설명 및 파라미터를 정리한다. |
-| [audio_data_format.md](./audio/audio_data_format.md) | 저장/처리/입출력에 사용할 오디오 데이터 포맷 기준을 정리한다. |
-| [software_architecture.md](./architecture/software_architecture.md) | RTOS 태스크, 상태 머신, 오디오 처리 구조를 정리한다. |
-| [message-driven_architecture.md](./architecture/message-driven_architecture.md) | 태스크들이 직접 메시지를 주고받는 구조와 설계 원칙을 정리한다. |
-| [task_message_design.md](./architecture/task_message_design.md) | RTOS 태스크 사이에서 오갈 수 있는 메시지 후보를 정리한다. |
-| [hardware_configuration.md](./hardware/hardware_configuration.md) | 현재 검증된 모듈과 STM32 결선을 정리한다. |
-| [test_plan.md](./verification/test_plan.md) | 모듈 테스트와 통합 테스트 계획을 정리한다. |
-| [todo_index.md](./todo_index.md) | docs 하위 문서에 남아 있는 TODO 항목을 모아 보여준다. |
+이 폴더는 Loop Station 프로젝트 문서를 V 모델 흐름에 맞춰 정리한 문서 묶음이다.
+현재 기준 문서는 `0-Hardware`, `1-Requirements`, `2-Architecture`, `3-Features` 폴더의 문서를 우선한다.
 
 ## 폴더 목록
 
@@ -78,6 +65,6 @@ change_history:
 
 - 기존 문서에서 확인할 수 있는 내용만 확정 사항으로 적는다.
 - 확인되지 않은 세부 사항은 `TODO:`로 남긴다.
-- 실제 결선 기준은 [hardware_configuration.md](./hardware/hardware_configuration.md)를 우선 참고한다.
-- 오디오 포맷 기준은 [audio_data_format.md](./audio/audio_data_format.md)를 우선 참고한다.
-- 개발 중 의사결정 기록이나 과거 배선 계획은 [old](./old/) 폴더를 참고한다.
+- 실제 결선 기준은 [0-Hardware](./0-Hardware/) 폴더의 문서를 우선 참고한다.
+- 설계 공통 정보는 [2-Architecture](./2-Architecture/) 폴더의 `ARCH-*-REF-*.md` 문서를 우선 참고한다.
+- 개발 중 의사결정 기록이나 과거 배선 계획은 [old](./old/) 또는 [old-2](./old-2/) 폴더를 참고한다.
