@@ -1,10 +1,13 @@
 ---
 title: 트랙 생명주기 아키텍처
-version: 0.1.0
+version: 0.1.1
 change_history:
   - date: 2026-07-11
     version: 0.1.0
     summary: 트랙 생명주기 요구사항별 상태 전이 설계와 공통 트랙 상태 구조를 작성함
+  - date: 2026-07-12
+    version: 0.1.1
+    summary: 문서의 설계 및 설명 내용을 갱신함
 ---
 
 # 트랙 생명주기 아키텍처
@@ -45,12 +48,12 @@ change_history:
 부팅과 트랙 초기화 요구사항은 트랙 상태 모델의 시작점을 정의한다.
 전원 인가 후 모든 트랙은 `NOT_INIT`으로 생성되고, 초기화 요청이 성공하면 `IDLE`로 전환된다.
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 트랙 상태 모델 | 트랙별 canonical state를 저장한다. | 상태 관리 구조가 소유한다. |
-| 초기화 요청 | 트랙 파일 또는 metadata를 사용할 수 있는 상태로 만든다. | 저장 구조에 `TRACK_FILE_RESET` 또는 준비 요청을 보낸다. |
-| 초기화 결과 처리 | 성공/실패에 따라 상태를 갱신한다. | 성공 시 `IDLE`, 실패 시 오류 표시 경로로 보낸다. |
-| 상태 표시 | 초기화 결과를 사용자에게 보여준다. | `TRACK_STATE_SNAPSHOT_RENDER`를 표시 구조로 보낸다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-TRACK-001` | 트랙 상태 모델 | 트랙별 canonical state를 저장한다. | 상태 관리 구조가 소유한다. |
+| `ARCH-TRACK-002` | 초기화 요청 | 트랙 파일 또는 metadata를 사용할 수 있는 상태로 만든다. | 저장 구조에 `TRACK_FILE_RESET` 또는 준비 요청을 보낸다. |
+| `ARCH-TRACK-003` | 초기화 결과 처리 | 성공/실패에 따라 상태를 갱신한다. | 성공 시 `IDLE`, 실패 시 오류 표시 경로로 보낸다. |
+| `ARCH-TRACK-004` | 상태 표시 | 초기화 결과를 사용자에게 보여준다. | `TRACK_STATE_SNAPSHOT_RENDER`를 표시 구조로 보낸다. |
 
 ```mermaid
 sequenceDiagram
@@ -73,12 +76,12 @@ sequenceDiagram
 첫 녹음 요구사항은 `IDLE -> RECORDING -> PLAYING/STOPPED` 흐름을 정의한다.
 녹음 종료 입력은 즉시 파일 기록을 끝내지 않고, 오디오 처리 구조가 실제 종료 frame까지 기록한 뒤 `AUDIO_RECORD_DONE`을 보고한다.
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 녹음 시작 판단 | `IDLE` 트랙에서 녹음 입력을 해석한다. | 상태 관리 구조가 `TRACK_RECORD_START`를 오디오 처리 구조로 보낸다. |
-| 녹음 종료 목표 상태 | 종료 입력의 의도를 저장한다. | 녹음/재생 버튼이면 `PLAYING`, 정지 버튼이면 `STOPPED`를 로컬에 보관한다. |
-| 녹음 완료 보고 | 실제 저장 완료를 상태 전이 조건으로 사용한다. | `AUDIO_RECORD_DONE` 수신 후 목표 상태로 전이한다. |
-| 표시 갱신 | 상태 변화마다 전체 트랙 snapshot을 보낸다. | 표시 구조는 snapshot을 기준으로 LED/LCD를 갱신한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-TRACK-005` | 녹음 시작 판단 | `IDLE` 트랙에서 녹음 입력을 해석한다. | 상태 관리 구조가 `TRACK_RECORD_START`를 오디오 처리 구조로 보낸다. |
+| `ARCH-TRACK-006` | 녹음 종료 목표 상태 | 종료 입력의 의도를 저장한다. | 녹음/재생 버튼이면 `PLAYING`, 정지 버튼이면 `STOPPED`를 로컬에 보관한다. |
+| `ARCH-TRACK-007` | 녹음 완료 보고 | 실제 저장 완료를 상태 전이 조건으로 사용한다. | `AUDIO_RECORD_DONE` 수신 후 목표 상태로 전이한다. |
+| `ARCH-TRACK-008` | 표시 갱신 | 상태 변화마다 전체 트랙 snapshot을 보낸다. | 표시 구조는 snapshot을 기준으로 LED/LCD를 갱신한다. |
 
 ```mermaid
 sequenceDiagram
@@ -112,11 +115,11 @@ sequenceDiagram
 
 재생과 정지 요구사항은 저장된 트랙이 있는 상태에서 `PLAYING`과 `STOPPED` 사이를 오가는 흐름을 정의한다.
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 재생 시작 판단 | `STOPPED` 트랙에서 재생 입력을 해석한다. | `TRACK_PLAY_START`를 오디오 처리 구조로 보낸다. |
-| 재생 정지 판단 | `PLAYING` 트랙에서 정지 입력을 해석한다. | `TRACK_PLAY_STOP`을 오디오 처리 구조로 보낸다. |
-| 재생 위치 관리 | 실제 loop position은 오디오 처리 구조가 관리한다. | 상태 관리 구조는 canonical state만 갱신한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-TRACK-009` | 재생 시작 판단 | `STOPPED` 트랙에서 재생 입력을 해석한다. | `TRACK_PLAY_START`를 오디오 처리 구조로 보낸다. |
+| `ARCH-TRACK-010` | 재생 정지 판단 | `PLAYING` 트랙에서 정지 입력을 해석한다. | `TRACK_PLAY_STOP`을 오디오 처리 구조로 보낸다. |
+| `ARCH-TRACK-011` | 재생 위치 관리 | 실제 loop position은 오디오 처리 구조가 관리한다. | 상태 관리 구조는 canonical state만 갱신한다. |
 
 ```mermaid
 sequenceDiagram
@@ -140,12 +143,12 @@ sequenceDiagram
 오버더빙 요구사항은 기존 재생을 유지하면서 입력 오디오를 트랙에 다시 저장하는 흐름을 정의한다.
 상태 관리 구조는 오버더빙 시작/완료/정지 명령을 보내고, read/write와 합성은 오디오/저장 구조가 담당한다.
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 오버더빙 시작 | `PLAYING` 트랙에서 녹음/재생 입력을 해석한다. | `TRACK_OVERDUB_START`를 보낸 뒤 `OVERDUBBING`으로 전이한다. |
-| 오버더빙 완료 | 오버더빙 후 재생으로 돌아간다. | `TRACK_OVERDUB_FINISH`를 보내고 `PLAYING`으로 전이한다. |
-| 오버더빙 정지 | 오버더빙 후 정지한다. | `TRACK_OVERDUB_STOP`을 보내고 `STOPPED`로 전이한다. |
-| 저장 정책 | 현재는 destructive overwrite를 전제로 한다. | undo/redo는 저장 설계의 미정 사항으로 둔다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-TRACK-012` | 오버더빙 시작 | `PLAYING` 트랙에서 녹음/재생 입력을 해석한다. | `TRACK_OVERDUB_START`를 보낸 뒤 `OVERDUBBING`으로 전이한다. |
+| `ARCH-TRACK-013` | 오버더빙 완료 | 오버더빙 후 재생으로 돌아간다. | `TRACK_OVERDUB_FINISH`를 보내고 `PLAYING`으로 전이한다. |
+| `ARCH-TRACK-014` | 오버더빙 정지 | 오버더빙 후 정지한다. | `TRACK_OVERDUB_STOP`을 보내고 `STOPPED`로 전이한다. |
+| `ARCH-TRACK-015` | 저장 정책 | 현재는 destructive overwrite를 전제로 한다. | undo/redo는 저장 설계의 미정 사항으로 둔다. |
 
 ```mermaid
 sequenceDiagram
@@ -175,11 +178,11 @@ sequenceDiagram
 트랙 리셋 요구사항은 `STOPPED` 트랙의 저장 데이터를 초기화하고 `IDLE`로 되돌리는 흐름을 정의한다.
 리셋 입력은 정지 버튼 long press 또는 반복 입력 같은 gesture로 해석될 수 있으나, gesture 해석은 사용자 입력 설계에서 다룬다.
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 리셋 조건 확인 | `STOPPED` 상태에서만 리셋을 허용한다. | 상태 관리 구조가 현재 track state를 검사한다. |
-| 파일 초기화 요청 | 트랙 audio data와 metadata를 초기화한다. | 저장 구조에 `TRACK_FILE_RESET`을 보낸다. |
-| 리셋 결과 처리 | 성공 시 `IDLE`로 전이한다. | 실패 시 오류 표시 경로로 보낸다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-TRACK-016` | 리셋 조건 확인 | `STOPPED` 상태에서만 리셋을 허용한다. | 상태 관리 구조가 현재 track state를 검사한다. |
+| `ARCH-TRACK-017` | 파일 초기화 요청 | 트랙 audio data와 metadata를 초기화한다. | 저장 구조에 `TRACK_FILE_RESET`을 보낸다. |
+| `ARCH-TRACK-018` | 리셋 결과 처리 | 성공 시 `IDLE`로 전이한다. | 실패 시 오류 표시 경로로 보낸다. |
 
 ```mermaid
 sequenceDiagram

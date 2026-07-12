@@ -1,6 +1,6 @@
 ---
 title: 표시 및 피드백 아키텍처
-version: 0.2.0
+version: 0.4.0
 change_history:
   - date: 2026-07-11
     version: 0.1.0
@@ -8,6 +8,12 @@ change_history:
   - date: 2026-07-11
     version: 0.2.0
     summary: 선택된 패널에 필요한 표시값만 전달하도록 표시값 갱신 설계를 수정함
+  - date: 2026-07-12
+    version: 0.3.0
+    summary: REQ-DISPLAY-002 구현을 위한 단일 기능 문서 참조를 추가함
+  - date: 2026-07-12
+    version: 0.4.0
+    summary: 설계 항목별 고유 식별자를 추가함
 ---
 
 # 표시 및 피드백 아키텍처
@@ -42,12 +48,12 @@ FX 활성화 여부는 상태 관리 구조가 canonical state로 소유하고, 
 
 #### 3.1.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| FX 상태 snapshot | IFX/TFX 선택 FX와 활성화 상태를 한 번에 표현한다. | `FX_STATE_SNAPSHOT_RENDER`를 사용한다. |
-| FX 상태 mailbox | 최신 FX 상태만 유지한다. | `fx_state_mailbox`를 overwritable queue로 둔다. |
-| FX LED renderer | 활성화 여부를 LED on/off로 변환한다. | 표시 구조는 상태 판단 없이 payload를 표시한다. |
-| FX LCD renderer | 현재 FX 패널에 표시되는 활성화 상태를 갱신한다. | 표시 중인 패널이 FX 관련이면 LCD 값도 갱신한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-DISPLAY-001` | FX 상태 snapshot | IFX/TFX 선택 FX와 활성화 상태를 한 번에 표현한다. | `FX_STATE_SNAPSHOT_RENDER`를 사용한다. |
+| `ARCH-DISPLAY-002` | FX 상태 mailbox | 최신 FX 상태만 유지한다. | `fx_state_mailbox`를 overwritable queue로 둔다. |
+| `ARCH-DISPLAY-003` | FX LED renderer | 활성화 여부를 LED on/off로 변환한다. | 표시 구조는 상태 판단 없이 payload를 표시한다. |
+| `ARCH-DISPLAY-004` | FX LCD renderer | 현재 FX 패널에 표시되는 활성화 상태를 갱신한다. | 표시 중인 패널이 FX 관련이면 LCD 값도 갱신한다. |
 
 #### 3.1.2 구조 다이어그램
 
@@ -95,12 +101,12 @@ sequenceDiagram
 
 #### 3.2.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| UI 상태 command | 새 panel id와 선택 항목을 전달한다. | `UI_STATE_RENDER`를 사용한다. |
-| display command queue | 패널 전환처럼 누락되면 안 되는 표시 명령을 순서대로 처리한다. | `display_command_queue`를 일반 queue로 둔다. |
-| panel renderer | panel id별 화면 구성을 그린다. | 홈, 트랙, FX, 설정, 진단 패널 renderer를 분리한다. |
-| 선택 항목 표시 | 현재 선택 track/item을 강조한다. | `selected_track`, `selected_item`을 payload에 포함한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-DISPLAY-005` | UI 상태 command | 새 panel id와 선택 항목을 전달한다. | `UI_STATE_RENDER`를 사용한다. |
+| `ARCH-DISPLAY-006` | display command queue | 패널 전환처럼 누락되면 안 되는 표시 명령을 순서대로 처리한다. | `display_command_queue`를 일반 queue로 둔다. |
+| `ARCH-DISPLAY-007` | panel renderer | panel id별 화면 구성을 그린다. | 홈, 트랙, FX, 설정, 진단 패널 renderer를 분리한다. |
+| `ARCH-DISPLAY-008` | 선택 항목 표시 | 현재 선택 track/item을 강조한다. | `selected_track`, `selected_item`을 payload에 포함한다. |
 
 #### 3.2.2 구조 다이어그램
 
@@ -132,8 +138,13 @@ sequenceDiagram
 
 | 기능 문서 | 기능 | 목적 |
 | --- | --- | --- |
-| `FEAT-lcd-panel-rendering.md` | LCD 패널 렌더링 | 선택된 패널을 LCD에 출력한다. |
-| `FEAT-display-mailbox-update.md` | 표시 command 처리 | 누락되면 안 되는 패널 전환 명령을 순서대로 처리한다. |
+| `FEAT-DISPLAY-001.md` | `UI_STATE_RENDER` payload 정의 | 선택된 패널과 선택 항목을 표시 command로 표현한다. |
+| `FEAT-DISPLAY-002.md` | display command queue 수신 | 패널 전환 command를 누락 없이 queue에 보관한다. |
+| `FEAT-DISPLAY-003.md` | display command dequeue | 표시 구조가 패널 전환 command를 순서대로 읽는다. |
+| `FEAT-DISPLAY-004.md` | 패널 렌더러 선택 | `panel_id`에 맞는 renderer를 선택한다. |
+| `FEAT-DISPLAY-005.md` | 패널 선택 context 갱신 | 현재 표시 패널과 선택 항목 context를 갱신한다. |
+| `FEAT-DISPLAY-006.md` | LCD 패널 frame 생성 | 선택된 panel renderer가 출력 frame을 만든다. |
+| `FEAT-DISPLAY-007.md` | LCD 출력 commit | 생성된 frame을 실제 LCD 출력으로 반영한다. |
 
 ### 3.3 REQ-DISPLAY-003 설계
 
@@ -143,13 +154,13 @@ sequenceDiagram
 
 #### 3.3.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 표시 대상 선별 | 현재 패널이 표시해야 하는 값만 표시 메시지로 만든다. | 상태 관리 구조가 current panel과 변경된 canonical state를 비교한다. |
-| 패널 표시 payload | 선택된 패널을 그리는 데 필요한 값만 묶어 보낸다. | 트랙 설정 패널이면 선택 트랙의 표시 항목만, FX 패널이면 선택 FX의 표시 항목만 전달한다. |
-| 패널 전환 초기 payload | 패널이 바뀌면 새 패널의 초기 출력에 필요한 값만 함께 전달한다. | `UI_STATE_RENDER` 이후 현재 패널 표시 payload를 별도로 전송한다. |
-| 표시 구조 최소 상태 | 표시 구조는 화면 출력에 필요한 최신 payload만 보관한다. | 표시하지 않는 패널의 파라미터를 별도 최신값으로 유지하지 않는다. |
-| telemetry 표시 | 레벨 미터처럼 현재 화면에 항상 노출되는 값만 직접 표시 구조로 보낼 수 있다. | 현재 출력 영역에 없는 telemetry는 표시 갱신 대상이 아니다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-DISPLAY-009` | 표시 대상 선별 | 현재 패널이 표시해야 하는 값만 표시 메시지로 만든다. | 상태 관리 구조가 current panel과 변경된 canonical state를 비교한다. |
+| `ARCH-DISPLAY-010` | 패널 표시 payload | 선택된 패널을 그리는 데 필요한 값만 묶어 보낸다. | 트랙 설정 패널이면 선택 트랙의 표시 항목만, FX 패널이면 선택 FX의 표시 항목만 전달한다. |
+| `ARCH-DISPLAY-011` | 패널 전환 초기 payload | 패널이 바뀌면 새 패널의 초기 출력에 필요한 값만 함께 전달한다. | `UI_STATE_RENDER` 이후 현재 패널 표시 payload를 별도로 전송한다. |
+| `ARCH-DISPLAY-012` | 표시 구조 최소 상태 | 표시 구조는 화면 출력에 필요한 최신 payload만 보관한다. | 표시하지 않는 패널의 파라미터를 별도 최신값으로 유지하지 않는다. |
+| `ARCH-DISPLAY-013` | telemetry 표시 | 레벨 미터처럼 현재 화면에 항상 노출되는 값만 직접 표시 구조로 보낼 수 있다. | 현재 출력 영역에 없는 telemetry는 표시 갱신 대상이 아니다. |
 
 #### 3.3.2 구조 다이어그램
 
@@ -197,12 +208,12 @@ sequenceDiagram
 
 #### 3.4.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 트랙 상태 snapshot | 모든 트랙 상태와 LED 표시값을 묶어 전달한다. | `TRACK_STATE_SNAPSHOT_RENDER`를 사용한다. |
-| 트랙 상태 mailbox | 최신 트랙 상태 snapshot만 유지한다. | `track_state_mailbox`를 overwritable queue로 둔다. |
-| LED 색상 mapping | 트랙 상태를 LED 색상으로 변환한다. | `IDLE`, `RECORDING`, `PLAYING`, `OVERDUBBING`, `STOPPED` 색상을 매핑한다. |
-| LCD 트랙 상태 표시 | 트랙 패널이 표시 중이면 상태 문자열과 길이를 함께 갱신한다. | snapshot payload의 track list를 사용한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-DISPLAY-014` | 트랙 상태 snapshot | 모든 트랙 상태와 LED 표시값을 묶어 전달한다. | `TRACK_STATE_SNAPSHOT_RENDER`를 사용한다. |
+| `ARCH-DISPLAY-015` | 트랙 상태 mailbox | 최신 트랙 상태 snapshot만 유지한다. | `track_state_mailbox`를 overwritable queue로 둔다. |
+| `ARCH-DISPLAY-016` | LED 색상 mapping | 트랙 상태를 LED 색상으로 변환한다. | `IDLE`, `RECORDING`, `PLAYING`, `OVERDUBBING`, `STOPPED` 색상을 매핑한다. |
+| `ARCH-DISPLAY-017` | LCD 트랙 상태 표시 | 트랙 패널이 표시 중이면 상태 문자열과 길이를 함께 갱신한다. | snapshot payload의 track list를 사용한다. |
 
 #### 3.4.2 구조 다이어그램
 
@@ -247,6 +258,8 @@ sequenceDiagram
 
 ### 4.1 전체 표시 경로
 
+설계 ID: `ARCH-DISPLAY-018`
+
 ```mermaid
 flowchart LR
     State["상태 관리 구조"]
@@ -266,17 +279,17 @@ flowchart LR
 
 ### 4.2 Queue와 mailbox
 
-| 채널 | 수신 방식 | 사용 기준 |
-| --- | --- | --- |
-| `display_command_queue` | 일반 queue | 초기화, 패널 전환, 밝기 변경처럼 순서와 누락 방지가 중요한 명령 |
-| `track_state_mailbox` | overwritable mailbox | 모든 트랙의 최신 상태 snapshot |
-| `track_param_mailbox` | overwritable mailbox | 현재 선택된 트랙 설정 패널에 표시할 파라미터 payload |
-| `fx_state_mailbox` | overwritable mailbox | IFX/TFX 선택과 활성화 상태 snapshot |
-| `fx_param_mailbox` | overwritable mailbox | 현재 선택된 FX 패널에 표시할 파라미터 payload |
-| `system_mailbox` | overwritable mailbox | 현재 선택된 시스템 패널에 표시할 설정 payload |
-| `diagnostic_mailbox` | overwritable mailbox | 현재 선택된 하드웨어 점검 패널에 표시할 진단 payload |
-| `track_position_mailbox` | overwritable mailbox | 현재 패널의 진행률 영역에 표시할 트랙 위치 telemetry |
-| `level_meter_mailbox` | overwritable mailbox | 현재 출력 영역에 표시할 입력/출력 레벨 telemetry |
+| 설계 ID | 채널 | 수신 방식 | 사용 기준 |
+| --- | --- | --- | --- |
+| `ARCH-DISPLAY-019` | `display_command_queue` | 일반 queue | 초기화, 패널 전환, 밝기 변경처럼 순서와 누락 방지가 중요한 명령 |
+| `ARCH-DISPLAY-020` | `track_state_mailbox` | overwritable mailbox | 모든 트랙의 최신 상태 snapshot |
+| `ARCH-DISPLAY-021` | `track_param_mailbox` | overwritable mailbox | 현재 선택된 트랙 설정 패널에 표시할 파라미터 payload |
+| `ARCH-DISPLAY-022` | `fx_state_mailbox` | overwritable mailbox | IFX/TFX 선택과 활성화 상태 snapshot |
+| `ARCH-DISPLAY-023` | `fx_param_mailbox` | overwritable mailbox | 현재 선택된 FX 패널에 표시할 파라미터 payload |
+| `ARCH-DISPLAY-024` | `system_mailbox` | overwritable mailbox | 현재 선택된 시스템 패널에 표시할 설정 payload |
+| `ARCH-DISPLAY-025` | `diagnostic_mailbox` | overwritable mailbox | 현재 선택된 하드웨어 점검 패널에 표시할 진단 payload |
+| `ARCH-DISPLAY-026` | `track_position_mailbox` | overwritable mailbox | 현재 패널의 진행률 영역에 표시할 트랙 위치 telemetry |
+| `ARCH-DISPLAY-027` | `level_meter_mailbox` | overwritable mailbox | 현재 출력 영역에 표시할 입력/출력 레벨 telemetry |
 
 `track_param_mailbox`, `fx_param_mailbox`, `system_mailbox`, `diagnostic_mailbox`는 전체 상태 cache가 아니라 현재 선택된 패널을 출력하는 데 필요한 payload만 담는다.
 표시 구조는 이 채널들을 통해 전달받은 값을 LCD 출력용 최소 상태로만 보관하고, canonical state의 최신성은 상태 관리 구조가 책임진다.
@@ -297,6 +310,13 @@ flowchart LR
 
 | 기능 문서 | 목적 | 주요 입력 | 주요 출력 |
 | --- | --- | --- | --- |
+| `FEAT-DISPLAY-001.md` | 선택된 패널과 선택 항목을 `UI_STATE_RENDER` payload로 정의한다. | panel id, selected item | `UiStateRenderPayload` |
+| `FEAT-DISPLAY-002.md` | 패널 전환 command를 `display_command_queue`에 보관한다. | `UI_STATE_RENDER` | queued display command |
+| `FEAT-DISPLAY-003.md` | 표시 구조가 display command를 순서대로 읽는다. | `display_command_queue` | display command dispatch request |
+| `FEAT-DISPLAY-004.md` | `panel_id`에 맞는 LCD panel renderer를 선택한다. | panel id | panel render request |
+| `FEAT-DISPLAY-005.md` | 현재 표시 패널과 선택 항목 context를 갱신한다. | `UiStateRenderPayload` | display panel context |
+| `FEAT-DISPLAY-006.md` | 선택된 패널의 LCD frame을 생성한다. | panel render request | LCD frame buffer |
+| `FEAT-DISPLAY-007.md` | LCD frame을 실제 출력으로 반영한다. | LCD frame buffer | LCD output |
 | `FEAT-display-mailbox-update.md` | 현재 패널에 필요한 표시 메시지를 읽고 갱신 여부를 결정한다. | display message | render request |
 | `FEAT-lcd-panel-rendering.md` | 선택된 LCD 패널과 전달받은 표시값을 그린다. | panel id, display payload | LCD output |
 | `FEAT-led-status-rendering.md` | FX와 트랙 LED 상태를 갱신한다. | FX/track state snapshot | LED output |

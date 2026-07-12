@@ -1,6 +1,6 @@
 ---
 title: 사용자 입력 아키텍처
-version: 0.3.0
+version: 0.5.0
 change_history:
   - date: 2026-07-11
     version: 0.1.0
@@ -11,6 +11,12 @@ change_history:
   - date: 2026-07-11
     version: 0.3.0
     summary: 설계 문서에서 특정 하드웨어 peripheral 의존 설명을 제거함
+  - date: 2026-07-12
+    version: 0.4.0
+    summary: 버튼 이벤트 처리 기능 문서 분할에 맞춰 기능 문서 참조를 갱신함
+  - date: 2026-07-12
+    version: 0.5.0
+    summary: 설계 항목별 고유 식별자를 추가함
 ---
 
 # 사용자 입력 아키텍처
@@ -48,13 +54,13 @@ change_history:
 
 #### 3.1.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 버튼 scan | 좌, 우, Enter, Exit 버튼의 물리 상태를 읽는다. | 디지털 입력 상태를 주기적으로 읽는다. |
-| debounce | 접점 흔들림으로 인한 중복 event를 제거한다. | 안정화된 press/release 변화만 raw event로 만든다. |
-| raw button event | 버튼 ID, 상태, 감지 시각을 하나의 event로 표현한다. | `CONTROL_BUTTON` 메시지와 `ControlButtonPayload`를 사용한다. |
-| 패널 탐색 해석 | raw button event를 패널 이동, 진입, 복귀로 해석한다. | 상태 관리 구조가 현재 패널 상태를 기준으로 결정한다. |
-| 표시 갱신 요청 | 패널 선택이 바뀌면 표시 구조에 갱신을 요청한다. | 표시 갱신은 `ARCH-DISPLAY.md`에서 다룬다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-INPUT-001` | 버튼 scan | 좌, 우, Enter, Exit 버튼의 물리 상태를 읽는다. | 디지털 입력 상태를 주기적으로 읽는다. |
+| `ARCH-INPUT-002` | debounce | 접점 흔들림으로 인한 중복 event를 제거한다. | 안정화된 press/release 변화만 raw event로 만든다. |
+| `ARCH-INPUT-003` | raw button event | 버튼 ID, 상태, 감지 시각을 하나의 event로 표현한다. | `CONTROL_BUTTON` 메시지와 `ControlButtonPayload`를 사용한다. |
+| `ARCH-INPUT-004` | 패널 탐색 해석 | raw button event를 패널 이동, 진입, 복귀로 해석한다. | 상태 관리 구조가 현재 패널 상태를 기준으로 결정한다. |
+| `ARCH-INPUT-005` | 표시 갱신 요청 | 패널 선택이 바뀌면 표시 구조에 갱신을 요청한다. | 표시 갱신은 `ARCH-DISPLAY.md`에서 다룬다. |
 
 #### 3.1.2 구조 다이어그램
 
@@ -91,7 +97,7 @@ sequenceDiagram
 
 | 기능 문서 | 기능 | 목적 |
 | --- | --- | --- |
-| `FEAT-button-event-processing.md` | 버튼 event 처리 | 제어 버튼의 press/release를 안정적인 raw event로 변환한다. |
+| `FEAT-INPUT-001.md` ~ `FEAT-INPUT-009.md` | 버튼 event 처리 | 제어 버튼의 interrupt 기록, debounce, snapshot 갱신, `CONTROL_BUTTON` 전송, 오류 기록을 구현한다. |
 | `FEAT-input-panel-navigation.md` | 패널 탐색 입력 해석 | 좌, 우, Enter, Exit event를 패널 이동 명령으로 해석한다. |
 
 ### 3.2 REQ-INPUT-002 설계
@@ -102,13 +108,13 @@ FX 활성화 결과는 오디오 처리 구조와 표시 구조로 전달된다.
 
 #### 3.2.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| FX 버튼 감지 | IFX/TFX 같은 FX 조작 버튼의 상태 변화를 감지한다. | 버튼 입력과 같은 scan/debounce 경로를 공유한다. |
-| FX button event | 어떤 FX 조작이 발생했는지 button ID로 표현한다. | `CONTROL_BUTTON` 메시지에 FX button ID를 담는다. |
-| FX 활성화 해석 | press event를 FX enable toggle로 해석한다. | 상태 관리 구조가 canonical FX state를 변경한다. |
-| 오디오 설정 전파 | 변경된 FX enable state를 오디오 처리 구조에 전달한다. | `FX_ENABLE_SET` 계열 command로 연결한다. |
-| 표시 갱신 전파 | FX 활성화 상태를 LED 또는 LCD에 반영한다. | 표시 구조에 FX state snapshot을 전달한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-INPUT-006` | FX 버튼 감지 | IFX/TFX 같은 FX 조작 버튼의 상태 변화를 감지한다. | 버튼 입력과 같은 scan/debounce 경로를 공유한다. |
+| `ARCH-INPUT-007` | FX button event | 어떤 FX 조작이 발생했는지 button ID로 표현한다. | `CONTROL_BUTTON` 메시지에 FX button ID를 담는다. |
+| `ARCH-INPUT-008` | FX 활성화 해석 | press event를 FX enable toggle로 해석한다. | 상태 관리 구조가 canonical FX state를 변경한다. |
+| `ARCH-INPUT-009` | 오디오 설정 전파 | 변경된 FX enable state를 오디오 처리 구조에 전달한다. | `FX_ENABLE_SET` 계열 command로 연결한다. |
+| `ARCH-INPUT-010` | 표시 갱신 전파 | FX 활성화 상태를 LED 또는 LCD에 반영한다. | 표시 구조에 FX state snapshot을 전달한다. |
 
 #### 3.2.2 구조 다이어그램
 
@@ -148,7 +154,7 @@ sequenceDiagram
 
 | 기능 문서 | 기능 | 목적 |
 | --- | --- | --- |
-| `FEAT-button-event-processing.md` | 버튼 event 처리 | FX 버튼 입력을 raw button event로 변환한다. |
+| `FEAT-INPUT-001.md` ~ `FEAT-INPUT-009.md` | 버튼 event 처리 | FX 버튼 입력의 interrupt 기록, debounce, snapshot 갱신, `CONTROL_BUTTON` 전송, 오류 기록을 구현한다. |
 | `FEAT-fx-enable-input.md` | FX 활성화 입력 해석 | FX 버튼 event를 IFX/TFX 활성화 변경으로 해석한다. |
 
 ### 3.3 REQ-INPUT-003 설계
@@ -159,13 +165,13 @@ sequenceDiagram
 
 #### 3.3.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 아날로그 입력 sampling | FX부 아날로그 조작값을 주기적으로 읽는다. | 입력 처리 구조가 sampling 주기를 관리한다. |
-| 변화 감지 | 의미 없는 미세 변화를 제거한다. | threshold와 rate limit을 적용한다. |
-| 값 정규화 | raw 입력값을 UI/파라미터 범위로 변환한다. | `raw_value`와 `normalized_value`를 함께 전달한다. |
-| pot event 생성 | pot ID, raw 값, 정규화 값을 event로 표현한다. | `CONTROL_POT_CHANGE` 메시지와 `ControlPotPayload`를 사용한다. |
-| FX 파라미터 해석 | 현재 선택된 FX와 파라미터에 값을 반영한다. | 상태 관리 구조가 현재 FX context를 기준으로 결정한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-INPUT-011` | 아날로그 입력 sampling | FX부 아날로그 조작값을 주기적으로 읽는다. | 입력 처리 구조가 sampling 주기를 관리한다. |
+| `ARCH-INPUT-012` | 변화 감지 | 의미 없는 미세 변화를 제거한다. | threshold와 rate limit을 적용한다. |
+| `ARCH-INPUT-013` | 값 정규화 | raw 입력값을 UI/파라미터 범위로 변환한다. | `raw_value`와 `normalized_value`를 함께 전달한다. |
+| `ARCH-INPUT-014` | pot event 생성 | pot ID, raw 값, 정규화 값을 event로 표현한다. | `CONTROL_POT_CHANGE` 메시지와 `ControlPotPayload`를 사용한다. |
+| `ARCH-INPUT-015` | FX 파라미터 해석 | 현재 선택된 FX와 파라미터에 값을 반영한다. | 상태 관리 구조가 현재 FX context를 기준으로 결정한다. |
 
 #### 3.3.2 구조 다이어그램
 
@@ -216,12 +222,12 @@ sequenceDiagram
 
 #### 3.4.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 트랙부 아날로그 sampling | 트랙 볼륨 조작값을 읽는다. | 아날로그 입력 sampling 경로를 공유한다. |
-| 입력 대상 식별 | 어떤 트랙 또는 어떤 트랙 파라미터에 해당하는지 식별한다. | pot ID와 현재 UI context를 함께 사용한다. |
-| 값 정규화 | raw 입력값을 track gain 범위로 변환할 수 있게 준비한다. | 입력 처리 구조는 정규화 값만 제공하고 gain scaling은 상태 관리 구조가 결정한다. |
-| 트랙 파라미터 해석 | 입력값을 트랙 볼륨 변경으로 해석한다. | 상태 관리 구조가 `TRACK_PARAM_SET` 또는 track gain 변경 command로 전파한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-INPUT-016` | 트랙부 아날로그 sampling | 트랙 볼륨 조작값을 읽는다. | 아날로그 입력 sampling 경로를 공유한다. |
+| `ARCH-INPUT-017` | 입력 대상 식별 | 어떤 트랙 또는 어떤 트랙 파라미터에 해당하는지 식별한다. | pot ID와 현재 UI context를 함께 사용한다. |
+| `ARCH-INPUT-018` | 값 정규화 | raw 입력값을 track gain 범위로 변환할 수 있게 준비한다. | 입력 처리 구조는 정규화 값만 제공하고 gain scaling은 상태 관리 구조가 결정한다. |
+| `ARCH-INPUT-019` | 트랙 파라미터 해석 | 입력값을 트랙 볼륨 변경으로 해석한다. | 상태 관리 구조가 `TRACK_PARAM_SET` 또는 track gain 변경 command로 전파한다. |
 
 #### 3.4.2 구조 다이어그램
 
@@ -273,14 +279,14 @@ sequenceDiagram
 
 #### 3.5.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| encoder decoding | 로터리 엔코더 회전 방향과 step 수를 계산한다. | 회전 입력을 방향과 step으로 변환하는 decoding 경로를 사용한다. |
-| delta 계산 | 시계 방향과 반시계 방향을 signed delta로 표현한다. | 시계 방향은 양수, 반시계 방향은 음수로 전달한다. |
-| button state snapshot | debounce가 끝난 버튼별 현재 press/release 상태를 보관한다. | 입력 처리 구조가 `button_state_snapshot`을 유지한다. |
-| modifier snapshot | 회전 순간 눌려 있는 modifier 버튼 상태를 함께 기록한다. | `button_state_snapshot`에서 encoder push 등 modifier bit를 읽어 `modifier_mask` 필드에 복사한다. |
-| encoder event 생성 | encoder ID, delta, step 수, timestamp를 event로 표현한다. | `CONTROL_ENCODER_ROTATE` 메시지를 사용한다. |
-| 값 변경 해석 | 현재 선택 항목의 값을 증가/감소시킨다. | 상태 관리 구조가 UI context를 기준으로 결정한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-INPUT-020` | encoder decoding | 로터리 엔코더 회전 방향과 step 수를 계산한다. | 회전 입력을 방향과 step으로 변환하는 decoding 경로를 사용한다. |
+| `ARCH-INPUT-021` | delta 계산 | 시계 방향과 반시계 방향을 signed delta로 표현한다. | 시계 방향은 양수, 반시계 방향은 음수로 전달한다. |
+| `ARCH-INPUT-022` | button state snapshot | debounce가 끝난 버튼별 현재 press/release 상태를 보관한다. | 입력 처리 구조가 `button_state_snapshot`을 유지한다. |
+| `ARCH-INPUT-023` | modifier snapshot | 회전 순간 눌려 있는 modifier 버튼 상태를 함께 기록한다. | `button_state_snapshot`에서 encoder push 등 modifier bit를 읽어 `modifier_mask` 필드에 복사한다. |
+| `ARCH-INPUT-024` | encoder event 생성 | encoder ID, delta, step 수, timestamp를 event로 표현한다. | `CONTROL_ENCODER_ROTATE` 메시지를 사용한다. |
+| `ARCH-INPUT-025` | 값 변경 해석 | 현재 선택 항목의 값을 증가/감소시킨다. | 상태 관리 구조가 UI context를 기준으로 결정한다. |
 
 #### 3.5.2 구조 다이어그램
 
@@ -331,13 +337,13 @@ sequenceDiagram
 
 #### 3.6.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| encoder push scan | 엔코더 push switch 상태를 읽는다. | 버튼 scan/debounce 경로를 공유한다. |
-| button state snapshot 갱신 | debounce가 확정한 encoder push 상태를 내부 상태에 저장한다. | press면 encoder push modifier bit를 set, release면 clear한다. |
-| push event 생성 | encoder push를 button ID가 있는 raw event로 표현한다. | `CONTROL_BUTTON` 메시지에 encoder push button ID를 담는다. |
-| 선택 입력 해석 | 현재 UI context에서 선택, 확정, 진입 같은 의미로 해석한다. | 상태 관리 구조가 현재 패널과 선택 항목 기준으로 결정한다. |
-| modifier snapshot 제공 | push를 누른 상태의 회전을 별도 modifier로 해석할 수 있게 한다. | 입력 처리 구조의 `button_state_snapshot`이 encoder rotate event의 `modifier_mask` 입력이 된다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-INPUT-026` | encoder push scan | 엔코더 push switch 상태를 읽는다. | 버튼 scan/debounce 경로를 공유한다. |
+| `ARCH-INPUT-027` | button state snapshot 갱신 | debounce가 확정한 encoder push 상태를 내부 상태에 저장한다. | press면 encoder push modifier bit를 set, release면 clear한다. |
+| `ARCH-INPUT-028` | push event 생성 | encoder push를 button ID가 있는 raw event로 표현한다. | `CONTROL_BUTTON` 메시지에 encoder push button ID를 담는다. |
+| `ARCH-INPUT-029` | 선택 입력 해석 | 현재 UI context에서 선택, 확정, 진입 같은 의미로 해석한다. | 상태 관리 구조가 현재 패널과 선택 항목 기준으로 결정한다. |
+| `ARCH-INPUT-030` | modifier snapshot 제공 | push를 누른 상태의 회전을 별도 modifier로 해석할 수 있게 한다. | 입력 처리 구조의 `button_state_snapshot`이 encoder rotate event의 `modifier_mask` 입력이 된다. |
 
 #### 3.6.2 구조 다이어그램
 
@@ -374,7 +380,7 @@ sequenceDiagram
 
 | 기능 문서 | 기능 | 목적 |
 | --- | --- | --- |
-| `FEAT-button-event-processing.md` | 버튼 event 처리 | 엔코더 push를 일반 button event로 변환한다. |
+| `FEAT-INPUT-001.md` ~ `FEAT-INPUT-009.md` | 버튼 event 처리 | 엔코더 push의 interrupt 기록, debounce, snapshot 갱신, `CONTROL_BUTTON` 전송, 오류 기록을 구현한다. |
 | `FEAT-encoder-push-input.md` | 엔코더 push 입력 해석 | push event를 선택 또는 modifier 입력으로 해석한다. |
 
 ## 4. 공통 설계 정보
@@ -401,14 +407,14 @@ flowchart LR
 
 ### 4.2 공통 구성 요소
 
-| 구성 요소 | 책임 | 입력 | 출력 | 관련 요구사항 |
-| --- | --- | --- | --- | --- |
-| 버튼 scan/debounce | 물리 버튼의 안정된 press/release 변화를 만든다. | digital input state | `CONTROL_BUTTON` | `REQ-INPUT-001`, `REQ-INPUT-002`, `REQ-INPUT-006` |
-| button state snapshot | debounce가 끝난 버튼별 현재 상태를 보관하고 회전 event의 modifier 입력으로 제공한다. | debounced button state | `modifier_mask` | `REQ-INPUT-005`, `REQ-INPUT-006` |
-| 아날로그 입력 sampling | raw 입력값을 읽고 의미 있는 변경을 찾는다. | analog input sample | `CONTROL_POT_CHANGE` | `REQ-INPUT-003`, `REQ-INPUT-004` |
-| 엔코더 decoding | 회전 방향과 step 수를 계산한다. | encoder rotation input | `CONTROL_ENCODER_ROTATE` | `REQ-INPUT-005` |
-| raw event queue | 입력 event를 순서대로 상태 관리 구조에 전달한다. | control event | `state_event_queue` message | `REQ-INPUT-001` ~ `REQ-INPUT-006` |
-| 상태 관리 해석 | raw event를 시스템 동작으로 변환한다. | control event, current state | audio/display/storage command | `REQ-INPUT-001` ~ `REQ-INPUT-006` |
+| 설계 ID | 구성 요소 | 책임 | 입력 | 출력 | 관련 요구사항 |
+| --- | --- | --- | --- | --- | --- |
+| `ARCH-INPUT-031` | 버튼 scan/debounce | 물리 버튼의 안정된 press/release 변화를 만든다. | digital input state | `CONTROL_BUTTON` | `REQ-INPUT-001`, `REQ-INPUT-002`, `REQ-INPUT-006` |
+| `ARCH-INPUT-032` | button state snapshot | debounce가 끝난 버튼별 현재 상태를 보관하고 회전 event의 modifier 입력으로 제공한다. | debounced button state | `modifier_mask` | `REQ-INPUT-005`, `REQ-INPUT-006` |
+| `ARCH-INPUT-033` | 아날로그 입력 sampling | raw 입력값을 읽고 의미 있는 변경을 찾는다. | analog input sample | `CONTROL_POT_CHANGE` | `REQ-INPUT-003`, `REQ-INPUT-004` |
+| `ARCH-INPUT-034` | 엔코더 decoding | 회전 방향과 step 수를 계산한다. | encoder rotation input | `CONTROL_ENCODER_ROTATE` | `REQ-INPUT-005` |
+| `ARCH-INPUT-035` | raw event queue | 입력 event를 순서대로 상태 관리 구조에 전달한다. | control event | `state_event_queue` message | `REQ-INPUT-001` ~ `REQ-INPUT-006` |
+| `ARCH-INPUT-036` | 상태 관리 해석 | raw event를 시스템 동작으로 변환한다. | control event, current state | audio/display/storage command | `REQ-INPUT-001` ~ `REQ-INPUT-006` |
 
 ### 4.3 입력 event 메시지
 
@@ -444,7 +450,15 @@ flowchart LR
 
 | 기능 문서 | 목적 | 주요 입력 | 주요 출력 |
 | --- | --- | --- | --- |
-| `FEAT-button-event-processing.md` | 버튼과 엔코더 push의 press/release event를 생성한다. | digital input state | `CONTROL_BUTTON` |
+| `FEAT-INPUT-001.md` | 버튼 source를 `ButtonId`로 식별한다. | EXTI source | `ButtonId` |
+| `FEAT-INPUT-002.md` | 버튼 EXTI ISR에서 raw event를 기록한다. | EXTI interrupt | `ButtonIsrEvent` |
+| `FEAT-INPUT-003.md` | ISR 버튼 event를 사용자 컨트롤 입력 큐에 보관한다. | `ButtonIsrEvent` | `button_isr_event_queue` |
+| `FEAT-INPUT-004.md` | 사용자 컨트롤 처리 태스크가 raw event를 순서대로 읽는다. | `button_isr_event_queue` | raw button transition |
+| `FEAT-INPUT-005.md` | 버튼 bounce를 제거하고 stable edge를 확정한다. | raw button transition | stable button edge |
+| `FEAT-INPUT-006.md` | 버튼 상태 snapshot을 갱신한다. | stable button edge | `button_state_snapshot` |
+| `FEAT-INPUT-007.md` | stable edge를 `CONTROL_BUTTON` payload로 변환한다. | stable button edge | `ControlButtonPayload` |
+| `FEAT-INPUT-008.md` | `CONTROL_BUTTON` message를 상태 관리 event queue로 전송한다. | `ControlButtonPayload` | `CONTROL_BUTTON` |
+| `FEAT-INPUT-009.md` | 버튼 입력 오류와 overflow를 기록한다. | input error | diagnostic counter |
 | `FEAT-encoder-event-processing.md` | 로터리 엔코더 회전을 signed delta event로 생성한다. | encoder rotation input | `CONTROL_ENCODER_ROTATE` |
 | `FEAT-potentiometer-sampling.md` | 아날로그 조작값을 안정적인 event로 생성한다. | analog input sample | `CONTROL_POT_CHANGE` |
 | `FEAT-input-panel-navigation.md` | 좌, 우, Enter, Exit 입력을 패널 탐색으로 해석한다. | `CONTROL_BUTTON` | display state change |

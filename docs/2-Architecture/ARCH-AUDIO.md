@@ -1,6 +1,6 @@
 ---
 title: 오디오 입출력 아키텍처
-version: 0.4.0
+version: 0.4.1
 change_history:
   - date: 2026-07-11
     version: 0.1.0
@@ -14,6 +14,9 @@ change_history:
   - date: 2026-07-11
     version: 0.4.0
     summary: ARCH 기반 파일명 규칙과 기능 문서 경로 규칙을 반영함
+  - date: 2026-07-12
+    version: 0.4.1
+    summary: 문서의 설계 및 설명 내용을 갱신함
 ---
 
 # 오디오 입출력 아키텍처
@@ -48,13 +51,13 @@ change_history:
 
 #### 3.1.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 입력 수신 | 마이크 입력 sample을 일정한 audio block 단위로 받는다. | 입력 peripheral event를 오디오 처리 구조로 전달한다. |
-| 입력 포맷 변환 | raw input sample을 내부 공통 sample format으로 바꾼다. | 단일 마이크 입력은 내부 stereo block의 L/R에 복제한다. |
-| 패스스루 분기 | 입력음을 출력으로 보낼지 결정한다. | 상태 관리 구조가 보낸 `AUDIO_PASSTHROUGH_ENABLE` 값을 runtime snapshot으로 유지한다. |
-| 출력 믹서 | 패스스루 입력과 재생 트랙을 합산한다. | 패스스루만 활성화된 경우에도 믹서를 통과해 최종 출력 경로를 공유한다. |
-| 출력 송신 | mixed block을 출력 장치 전송 format으로 변환해 보낸다. | 최종 출력 직전에 clipping을 제한하고 출력 slot에 맞춰 변환한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-AUDIO-001` | 입력 수신 | 마이크 입력 sample을 일정한 audio block 단위로 받는다. | 입력 peripheral event를 오디오 처리 구조로 전달한다. |
+| `ARCH-AUDIO-002` | 입력 포맷 변환 | raw input sample을 내부 공통 sample format으로 바꾼다. | 단일 마이크 입력은 내부 stereo block의 L/R에 복제한다. |
+| `ARCH-AUDIO-003` | 패스스루 분기 | 입력음을 출력으로 보낼지 결정한다. | 상태 관리 구조가 보낸 `AUDIO_PASSTHROUGH_ENABLE` 값을 runtime snapshot으로 유지한다. |
+| `ARCH-AUDIO-004` | 출력 믹서 | 패스스루 입력과 재생 트랙을 합산한다. | 패스스루만 활성화된 경우에도 믹서를 통과해 최종 출력 경로를 공유한다. |
+| `ARCH-AUDIO-005` | 출력 송신 | mixed block을 출력 장치 전송 format으로 변환해 보낸다. | 최종 출력 직전에 clipping을 제한하고 출력 slot에 맞춰 변환한다. |
 
 #### 3.1.2 구조 다이어그램
 
@@ -116,13 +119,13 @@ sequenceDiagram
 
 #### 3.2.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 녹음 command 수신 | 상태 관리 구조의 녹음 시작/종료 결정을 오디오 처리 구조에 반영한다. | `TRACK_RECORD_START`, `TRACK_RECORD_FINISH_REQUEST`, `TRACK_RECORD_STOP`을 수신한다. |
-| 녹음 runtime snapshot | 대상 트랙, 시작 frame, BPM snapshot, 종료 후보 정보를 보관한다. | 상태 원본은 상태 관리 구조가 소유하고 오디오 처리 구조는 실행에 필요한 값만 보관한다. |
-| 녹음 분기 | 입력 변환이 끝난 block을 대상 트랙의 기록 경로로 전달한다. | 녹음 또는 오버더빙 상태인 트랙에 대해서만 write chunk를 만든다. |
-| 저장 구조 연동 | 오디오 처리 주기에서 파일 I/O를 직접 수행하지 않는다. | 저장 구조에 file open/write/close 요청을 보내고 결과 메시지를 받는다. |
-| 종료 frame 보정 | 사용자의 종료 요청 시점과 실제 기록 종료 시점을 분리한다. | 오디오 처리 구조가 `target_end_frame`을 계산하고 해당 frame까지 기록한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-AUDIO-006` | 녹음 command 수신 | 상태 관리 구조의 녹음 시작/종료 결정을 오디오 처리 구조에 반영한다. | `TRACK_RECORD_START`, `TRACK_RECORD_FINISH_REQUEST`, `TRACK_RECORD_STOP`을 수신한다. |
+| `ARCH-AUDIO-007` | 녹음 runtime snapshot | 대상 트랙, 시작 frame, BPM snapshot, 종료 후보 정보를 보관한다. | 상태 원본은 상태 관리 구조가 소유하고 오디오 처리 구조는 실행에 필요한 값만 보관한다. |
+| `ARCH-AUDIO-008` | 녹음 분기 | 입력 변환이 끝난 block을 대상 트랙의 기록 경로로 전달한다. | 녹음 또는 오버더빙 상태인 트랙에 대해서만 write chunk를 만든다. |
+| `ARCH-AUDIO-009` | 저장 구조 연동 | 오디오 처리 주기에서 파일 I/O를 직접 수행하지 않는다. | 저장 구조에 file open/write/close 요청을 보내고 결과 메시지를 받는다. |
+| `ARCH-AUDIO-010` | 종료 frame 보정 | 사용자의 종료 요청 시점과 실제 기록 종료 시점을 분리한다. | 오디오 처리 구조가 `target_end_frame`을 계산하고 해당 frame까지 기록한다. |
 
 #### 3.2.2 구조 다이어그램
 
@@ -194,13 +197,13 @@ sequenceDiagram
 
 #### 3.3.1 필요 아키텍처
 
-| 아키텍처 항목 | 역할 | 설계 결정 |
-| --- | --- | --- |
-| 재생 command 수신 | 상태 관리 구조의 재생 시작/정지 결정을 반영한다. | `TRACK_PLAY_START`, `TRACK_PLAY_STOP`을 수신한다. |
-| read chunk prefetch | 출력 주기 전에 트랙 데이터를 확보한다. | 저장 구조에 다음 read chunk를 비동기로 요청한다. |
-| 재생 위치 관리 | 현재 frame offset과 트랙 길이를 기준으로 다음 block을 선택한다. | 트랙 끝에 도달하면 frame offset을 data 시작 위치로 되돌린다. |
-| 트랙 block 공급 | 재생 중인 트랙 block을 출력 믹서에 전달한다. | 여러 트랙이 활성화될 수 있으므로 track id별 runtime 상태를 유지한다. |
-| 출력 믹싱 | 입력 패스스루와 재생 트랙을 합산한다. | 최종 출력 경로는 `REQ-AUDIO-001`의 출력 송신 아키텍처를 공유한다. |
+| 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
+| --- | --- | --- | --- |
+| `ARCH-AUDIO-011` | 재생 command 수신 | 상태 관리 구조의 재생 시작/정지 결정을 반영한다. | `TRACK_PLAY_START`, `TRACK_PLAY_STOP`을 수신한다. |
+| `ARCH-AUDIO-012` | read chunk prefetch | 출력 주기 전에 트랙 데이터를 확보한다. | 저장 구조에 다음 read chunk를 비동기로 요청한다. |
+| `ARCH-AUDIO-013` | 재생 위치 관리 | 현재 frame offset과 트랙 길이를 기준으로 다음 block을 선택한다. | 트랙 끝에 도달하면 frame offset을 data 시작 위치로 되돌린다. |
+| `ARCH-AUDIO-014` | 트랙 block 공급 | 재생 중인 트랙 block을 출력 믹서에 전달한다. | 여러 트랙이 활성화될 수 있으므로 track id별 runtime 상태를 유지한다. |
+| `ARCH-AUDIO-015` | 출력 믹싱 | 입력 패스스루와 재생 트랙을 합산한다. | 최종 출력 경로는 `REQ-AUDIO-001`의 출력 송신 아키텍처를 공유한다. |
 
 #### 3.3.2 구조 다이어그램
 
