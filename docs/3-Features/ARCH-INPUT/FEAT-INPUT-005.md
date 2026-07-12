@@ -1,6 +1,6 @@
 ---
 title: 버튼 debounce 판정
-version: 0.2.0
+version: 0.2.1
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -8,6 +8,9 @@ change_history:
   - date: 2026-07-12
     version: 0.2.0
     summary: MCP23017에서 읽은 raw 버튼 transition을 debounce하도록 수정함
+  - date: 2026-07-12
+    version: 0.2.1
+    summary: 상위 설계 항목명을 버튼 변경 감지 기준으로 맞춤
 ---
 
 # 버튼 debounce 판정
@@ -28,7 +31,7 @@ change_history:
 | --- | --- | --- |
 | `ARCH-INPUT-002` | debounce | 제어부 버튼의 stable press/release edge를 만든다. |
 | `ARCH-INPUT-006` | FX 버튼 감지 | FX 버튼도 같은 debounce 경로를 사용한다. |
-| `ARCH-INPUT-026` | encoder push scan | 엔코더 push도 같은 debounce 경로를 사용한다. |
+| `ARCH-INPUT-026` | encoder push 변경 감지 | 엔코더 push도 같은 debounce 경로를 사용한다. |
 
 ## 3. 목적
 

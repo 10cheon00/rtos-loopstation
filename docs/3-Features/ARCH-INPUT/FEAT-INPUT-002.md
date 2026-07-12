@@ -1,6 +1,6 @@
 ---
 title: MCP23017 INT ISR event 기록
-version: 0.2.0
+version: 0.2.1
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -8,6 +8,9 @@ change_history:
   - date: 2026-07-12
     version: 0.2.0
     summary: 개별 버튼 EXTI가 아닌 MCP23017 INT 라인 ISR event 기록으로 수정함
+  - date: 2026-07-12
+    version: 0.2.1
+    summary: 상위 설계 항목명을 버튼 변경 감지 기준으로 맞춤
 ---
 
 # MCP23017 INT ISR event 기록
@@ -26,9 +29,9 @@ change_history:
 
 | 설계 항목 ID | 설계 항목 | 연결 내용 |
 | --- | --- | --- |
-| `ARCH-INPUT-001` | 버튼 scan | polling 대신 MCP23017 INT 라인 기반 event 기록으로 구현한다. |
+| `ARCH-INPUT-001` | 버튼 변경 감지 | polling 대신 MCP23017 INT 라인 기반 event 기록으로 구현한다. |
 | `ARCH-INPUT-006` | FX 버튼 감지 | FX 버튼 변화도 같은 MCP23017 INT 기록 경로를 사용한다. |
-| `ARCH-INPUT-026` | encoder push scan | 엔코더 push 변화도 같은 MCP23017 INT 기록 경로를 사용한다. |
+| `ARCH-INPUT-026` | encoder push 변경 감지 | 엔코더 push 변화도 같은 MCP23017 INT 기록 경로를 사용한다. |
 
 ## 3. 목적
 

@@ -1,6 +1,6 @@
 ---
 title: 사용자 컨트롤 입력 큐
-version: 0.2.0
+version: 0.2.1
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -8,6 +8,9 @@ change_history:
   - date: 2026-07-12
     version: 0.2.0
     summary: MCP23017 INT event를 태스크로 전달하는 입력 큐로 수정함
+  - date: 2026-07-12
+    version: 0.2.1
+    summary: 상위 설계 항목명을 버튼 변경 감지 기준으로 맞춤
 ---
 
 # 사용자 컨트롤 입력 큐
@@ -27,7 +30,7 @@ change_history:
 | 설계 항목 ID | 설계 항목 | 연결 내용 |
 | --- | --- | --- |
 | `ARCH-INPUT-035` | raw event queue | MCP23017 INT ISR과 사용자 컨트롤 처리 태스크 사이의 event 전달 경로다. |
-| `ARCH-INPUT-031` | 버튼 scan/debounce | ISR은 기록만 하고 태스크가 후속 처리를 수행한다. |
+| `ARCH-INPUT-031` | 버튼 변경 감지/debounce | ISR은 기록만 하고 태스크가 후속 처리를 수행한다. |
 
 ## 3. 목적
 

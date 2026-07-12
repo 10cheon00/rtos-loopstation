@@ -1,6 +1,6 @@
 ---
 title: 버튼 입력 오류 및 overflow 기록
-version: 0.2.0
+version: 0.2.1
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -8,6 +8,9 @@ change_history:
   - date: 2026-07-12
     version: 0.2.0
     summary: MCP23017 INT queue overflow와 I2C 상태 읽기 오류를 기록하도록 수정함
+  - date: 2026-07-12
+    version: 0.2.1
+    summary: 상위 설계 항목명을 버튼 변경 감지 기준으로 맞춤
 ---
 
 # 버튼 입력 오류 및 overflow 기록
@@ -26,7 +29,7 @@ change_history:
 
 | 설계 항목 ID | 설계 항목 | 연결 내용 |
 | --- | --- | --- |
-| `ARCH-INPUT-031` | 버튼 scan/debounce | 입력 처리 구조에서 감지 가능한 오류를 기록한다. |
+| `ARCH-INPUT-031` | 버튼 변경 감지/debounce | 입력 처리 구조에서 감지 가능한 오류를 기록한다. |
 | `ARCH-INPUT-035` | raw event queue | queue overflow와 전송 실패를 기록한다. |
 
 ## 3. 목적

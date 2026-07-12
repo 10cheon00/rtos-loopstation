@@ -1,6 +1,6 @@
 ---
 title: MCP23017 버튼 pin 식별 테이블
-version: 0.2.0
+version: 0.2.1
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -8,6 +8,9 @@ change_history:
   - date: 2026-07-12
     version: 0.2.0
     summary: EXTI source가 아닌 MCP23017 pin bit를 ButtonId로 변환하도록 수정함
+  - date: 2026-07-12
+    version: 0.2.1
+    summary: 상위 설계 항목명을 버튼 변경 감지 기준으로 맞춤
 ---
 
 # MCP23017 버튼 pin 식별 테이블
@@ -26,9 +29,9 @@ change_history:
 
 | 설계 항목 ID | 설계 항목 | 연결 내용 |
 | --- | --- | --- |
-| `ARCH-INPUT-001` | 버튼 scan | 제어부 버튼 입력 source를 식별한다. |
+| `ARCH-INPUT-001` | 버튼 변경 감지 | 제어부 버튼 입력 source를 식별한다. |
 | `ARCH-INPUT-006` | FX 버튼 감지 | IFX/TFX 버튼 입력 source를 식별한다. |
-| `ARCH-INPUT-026` | encoder push scan | 엔코더 push 입력 source를 식별한다. |
+| `ARCH-INPUT-026` | encoder push 변경 감지 | 엔코더 push 입력 source를 식별한다. |
 
 ## 3. 목적
 
