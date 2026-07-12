@@ -24,22 +24,15 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
-
-#include "u8g2.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-extern const uint8_t u8g2_font_ref4x5_prop_v4_tr[];
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define AUDIO_DISPLAY_INTERVAL_MS 100U
-#define MIC_SLOT_INDEX 0U
-#define FONT u8g2_font_ref4x5_prop_v4_tr
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -91,166 +84,6 @@ void StartDefaultTask(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static u8g2_t lcd;
-static int32_t mic_rx_frame[2];
-static int32_t dac_tx_frame[2];
-static int32_t last_mic_word;
-static int32_t last_mic_sample;
-
-static void GMG12864_DelayCycles(volatile uint32_t cycles) {
-  while (cycles-- > 0U) {
-    __NOP();
-  }
-}
-
-static uint8_t GMG12864_U8x8ByteHwSpi(u8x8_t* u8x8, uint8_t msg,
-                                      uint8_t arg_int, void* arg_ptr) {
-  (void)u8x8;
-
-  switch (msg) {
-    case U8X8_MSG_BYTE_INIT:
-      break;
-
-    case U8X8_MSG_BYTE_SEND:
-      if (HAL_SPI_Transmit(&hspi2, (uint8_t*)arg_ptr, arg_int, HAL_MAX_DELAY) !=
-          HAL_OK) {
-        Error_Handler();
-      }
-      break;
-
-    case U8X8_MSG_BYTE_SET_DC:
-      HAL_GPIO_WritePin(GMG12864_DC_GPIO_Port, GMG12864_DC_Pin,
-                        arg_int != 0U ? GPIO_PIN_SET : GPIO_PIN_RESET);
-      break;
-
-    case U8X8_MSG_BYTE_START_TRANSFER:
-      HAL_GPIO_WritePin(GMG12864_CS_GPIO_Port, GMG12864_CS_Pin, GPIO_PIN_RESET);
-      break;
-
-    case U8X8_MSG_BYTE_END_TRANSFER:
-      HAL_GPIO_WritePin(GMG12864_CS_GPIO_Port, GMG12864_CS_Pin, GPIO_PIN_SET);
-      break;
-
-    default:
-      return 0;
-  }
-
-  return 1;
-}
-
-static uint8_t GMG12864_U8x8GpioDelay(u8x8_t* u8x8, uint8_t msg,
-                                      uint8_t arg_int, void* arg_ptr) {
-  (void)u8x8;
-  (void)arg_ptr;
-
-  switch (msg) {
-    case U8X8_MSG_GPIO_AND_DELAY_INIT:
-      HAL_GPIO_WritePin(GMG12864_CS_GPIO_Port, GMG12864_CS_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GMG12864_RST_GPIO_Port, GMG12864_RST_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GMG12864_DC_GPIO_Port, GMG12864_DC_Pin, GPIO_PIN_RESET);
-      break;
-
-    case U8X8_MSG_DELAY_MILLI:
-      HAL_Delay(arg_int);
-      break;
-
-    case U8X8_MSG_DELAY_10MICRO:
-      GMG12864_DelayCycles((uint32_t)arg_int * 1600U);
-      break;
-
-    case U8X8_MSG_DELAY_100NANO:
-      GMG12864_DelayCycles((uint32_t)arg_int * 16U);
-      break;
-
-    case U8X8_MSG_DELAY_NANO:
-      break;
-
-    case U8X8_MSG_GPIO_RESET:
-      HAL_GPIO_WritePin(GMG12864_RST_GPIO_Port, GMG12864_RST_Pin,
-                        arg_int != 0U ? GPIO_PIN_SET : GPIO_PIN_RESET);
-      break;
-
-    case U8X8_MSG_GPIO_CS:
-      HAL_GPIO_WritePin(GMG12864_CS_GPIO_Port, GMG12864_CS_Pin,
-                        arg_int != 0U ? GPIO_PIN_SET : GPIO_PIN_RESET);
-      break;
-
-    case U8X8_MSG_GPIO_DC:
-      HAL_GPIO_WritePin(GMG12864_DC_GPIO_Port, GMG12864_DC_Pin,
-                        arg_int != 0U ? GPIO_PIN_SET : GPIO_PIN_RESET);
-      break;
-
-    default:
-      return 0;
-  }
-
-  return 1;
-}
-
-static void LCD_DrawAudioStatus(void) {
-  char line1[22];
-  char line2[22];
-  char line3[22];
-
-  (void)snprintf(line1, sizeof(line1), "slot: %lu",
-                 (unsigned long)MIC_SLOT_INDEX);
-  (void)snprintf(line2, sizeof(line2), "mic : %7ld",
-                 (long)last_mic_sample);
-  (void)snprintf(line3, sizeof(line3), "word: %08lX",
-                 (unsigned long)((uint32_t)last_mic_word));
-
-  u8g2_ClearBuffer(&lcd);
-  u8g2_SetFont(&lcd, FONT);
-  u8g2_DrawStr(&lcd, 0, 10, "INMP441 passthru");
-  u8g2_DrawStr(&lcd, 0, 26, line1);
-  u8g2_DrawStr(&lcd, 0, 40, line2);
-  u8g2_DrawStr(&lcd, 0, 54, line3);
-  u8g2_SendBuffer(&lcd);
-}
-
-static void LCD_DrawAudioError(const char* message) {
-  u8g2_ClearBuffer(&lcd);
-  u8g2_SetFont(&lcd, FONT);
-  u8g2_DrawStr(&lcd, 0, 12, "SAI error");
-  u8g2_DrawStr(&lcd, 0, 28, message);
-  u8g2_SendBuffer(&lcd);
-}
-
-static void Audio_UpdateMicSample(void) {
-  last_mic_word = mic_rx_frame[MIC_SLOT_INDEX];
-  last_mic_sample = last_mic_word >> 8;
-  dac_tx_frame[0] = last_mic_word;
-  dac_tx_frame[1] = last_mic_word;
-}
-
-static HAL_StatusTypeDef Audio_PassthroughPoll(void) {
-  HAL_StatusTypeDef status;
-
-  status = HAL_SAI_Transmit(&hsai_BlockA1, (uint8_t*)dac_tx_frame, 2U, 10U);
-  if (status != HAL_OK) {
-    return status;
-  }
-
-  status = HAL_SAI_Receive(&hsai_BlockB1, (uint8_t*)mic_rx_frame, 2U, 10U);
-  if (status != HAL_OK) {
-    return status;
-  }
-
-  Audio_UpdateMicSample();
-  return HAL_OK;
-}
-
-static void Audio_UpdateDisplay(void) {
-  static uint32_t last_display_ms;
-  uint32_t now_ms = HAL_GetTick();
-
-  if ((now_ms - last_display_ms) < AUDIO_DISPLAY_INTERVAL_MS) {
-    return;
-  }
-  last_display_ms = now_ms;
-
-  LCD_DrawAudioStatus();
-}
 
 /* USER CODE END 0 */
 
@@ -298,15 +131,6 @@ int main(void)
   MX_SAI1_Init();
   /* USER CODE BEGIN 2 */
 
-  u8g2_Setup_st7565_erc12864_alt_f(&lcd, U8G2_R0, GMG12864_U8x8ByteHwSpi,
-                                   GMG12864_U8x8GpioDelay);
-  u8g2_InitDisplay(&lcd);
-  u8g2_SetPowerSave(&lcd, 0);
-  u8g2_SetContrast(&lcd, 80);
-
-  __HAL_SAI_ENABLE(&hsai_BlockB1);
-  LCD_DrawAudioStatus();
-
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -351,11 +175,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    if (Audio_PassthroughPoll() != HAL_OK) {
-      LCD_DrawAudioError("audio failed");
-      Error_Handler();
-    }
-    Audio_UpdateDisplay();
   }
   /* USER CODE END 3 */
 }
