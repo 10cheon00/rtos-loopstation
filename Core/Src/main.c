@@ -24,6 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "app_messages.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +60,43 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for inputTask */
+osThreadId_t inputTaskHandle;
+const osThreadAttr_t inputTask_attributes = {
+  .name = "inputTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
+};
+/* Definitions for displayTask */
+osThreadId_t displayTaskHandle;
+const osThreadAttr_t displayTask_attributes = {
+  .name = "displayTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
+};
+/* Definitions for stateTask */
+osThreadId_t stateTaskHandle;
+const osThreadAttr_t stateTask_attributes = {
+  .name = "stateTask",
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for mcp23017_int_event_queue */
+osMessageQueueId_t mcp23017_int_event_queueHandle;
+const osMessageQueueAttr_t mcp23017_int_event_queue_attributes = {
+  .name = "mcp23017_int_event_queue"
+};
+/* Definitions for display_command_queue */
+osMessageQueueId_t display_command_queueHandle;
+const osMessageQueueAttr_t display_command_queue_attributes = {
+  .name = "display_command_queue"
+};
+/* Definitions for state_event_queue */
+osMessageQueueId_t state_event_queueHandle;
+const osMessageQueueAttr_t state_event_queue_attributes = {
+  .name = "state_event_queue"
 };
 /* USER CODE BEGIN PV */
 
@@ -77,6 +114,9 @@ static void MX_TIM4_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_SAI1_Init(void);
 void StartDefaultTask(void *argument);
+extern void InputTask_Init(void *argument);
+extern void DisplayTask_Init(void *argument);
+extern void StateTask_Init(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -148,6 +188,16 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of mcp23017_int_event_queue */
+  mcp23017_int_event_queueHandle = osMessageQueueNew (16, sizeof(Mcp23017IntEvent), &mcp23017_int_event_queue_attributes);
+
+  /* creation of display_command_queue */
+  display_command_queueHandle = osMessageQueueNew (16, sizeof(ControlButtonPayload), &display_command_queue_attributes);
+
+  /* creation of state_event_queue */
+  state_event_queueHandle = osMessageQueueNew (16, sizeof(UiStateRenderPayload), &state_event_queue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -155,6 +205,15 @@ int main(void)
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* creation of inputTask */
+  inputTaskHandle = osThreadNew(InputTask_Init, NULL, &inputTask_attributes);
+
+  /* creation of displayTask */
+  displayTaskHandle = osThreadNew(DisplayTask_Init, NULL, &displayTask_attributes);
+
+  /* creation of stateTask */
+  stateTaskHandle = osThreadNew(StateTask_Init, NULL, &stateTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
