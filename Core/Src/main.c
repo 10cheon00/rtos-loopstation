@@ -213,6 +213,12 @@ int main(void)
 
   display_init_params.display_command_queue = display_command_queueHandle;
   display_init_params.hspi = &hspi2;
+  display_init_params.CS_Port = GMG12864_CS_GPIO_Port;
+  display_init_params.CS_Pin = GMG12864_CS_Pin;
+  display_init_params.RST_Port = GMG12864_RST_GPIO_Port;
+  display_init_params.RST_Pin = GMG12864_RST_Pin;
+  display_init_params.DC_Port = GMG12864_DC_GPIO_Port;
+  display_init_params.DC_Pin = GMG12864_DC_Pin;
 
   state_init_params.state_event_queue = state_event_queueHandle;
   state_init_params.display_command_queue = display_command_queueHandle;

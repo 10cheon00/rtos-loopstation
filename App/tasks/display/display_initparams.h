@@ -7,6 +7,12 @@
 typedef struct {
     osMessageQueueId_t display_command_queue;
     SPI_HandleTypeDef *hspi;
+    GPIO_TypeDef* CS_Port;
+    uint16_t CS_Pin;
+    GPIO_TypeDef* RST_Port;
+    uint16_t RST_Pin;
+    GPIO_TypeDef* DC_Port;
+    uint16_t DC_Pin;
 } DisplayInitParams;
 
 #endif

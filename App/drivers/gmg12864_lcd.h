@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "stm32h7xx.h"
+#include "u8g2.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,17 +17,15 @@ typedef enum {
 
 typedef struct {
     SPI_HandleTypeDef *hspi;
+    uint16_t CS_Pin;
+    uint16_t RST_Pin;
+    uint16_t DC_Pin;
+    GPIO_TypeDef* CS_Port;
+    GPIO_TypeDef* RST_Port;
+    GPIO_TypeDef* DC_Port;
 } Gmg12864Lcd_InitParams;
 
-typedef struct {
-    SPI_HandleTypeDef *hspi;
-} Gmg12864LcdHandle_t;
-
-Gmg12864LcdStatus Gmg12864Lcd_Init(Gmg12864LcdHandle_t *handle,
-                                   Gmg12864Lcd_InitParams *init_params);
-Gmg12864LcdStatus Gmg12864Lcd_WriteCommand(uint8_t command);
-Gmg12864LcdStatus Gmg12864Lcd_WriteData(const uint8_t *data, uint16_t length);
-Gmg12864LcdStatus Gmg12864Lcd_DrawText(uint8_t x, uint8_t y, const char *text);
+Gmg12864LcdStatus Gmg12864Lcd_Init(u8g2_t *u8g2, Gmg12864Lcd_InitParams *init_params);
 
 #ifdef __cplusplus
 }
