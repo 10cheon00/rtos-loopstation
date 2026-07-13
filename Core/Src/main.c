@@ -25,6 +25,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "app_messages.h"
+#include "display_initparams.h"
+#include "input_initparams.h"
+#include "state_initparams.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,6 +103,9 @@ const osMessageQueueAttr_t state_event_queue_attributes = {
   .name = "state_event_queue"
 };
 /* USER CODE BEGIN PV */
+static InputInitParams input_init_params;
+static DisplayInitParams display_init_params;
+static StateInitParams state_init_params;
 
 /* USER CODE END PV */
 
@@ -202,7 +208,14 @@ int main(void)
   state_event_queueHandle = osMessageQueueNew (16, sizeof(UiStateRenderPayload), &state_event_queue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
+  input_init_params.mcp23017_int_event_queue = mcp23017_int_event_queueHandle;
+  input_init_params.state_event_queue = state_event_queueHandle;
+
+  display_init_params.display_command_queue = display_command_queueHandle;
+  display_init_params.hspi = &hspi2;
+
+  state_init_params.state_event_queue = state_event_queueHandle;
+  state_init_params.display_command_queue = display_command_queueHandle;
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -210,13 +223,13 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of inputTask */
-  inputTaskHandle = osThreadNew(InputTask_Init, NULL, &inputTask_attributes);
+  inputTaskHandle = osThreadNew(InputTask_Init, (void*) &input_init_params, &inputTask_attributes);
 
   /* creation of displayTask */
-  displayTaskHandle = osThreadNew(DisplayTask_Init, NULL, &displayTask_attributes);
+  displayTaskHandle = osThreadNew(DisplayTask_Init, (void*) &display_init_params, &displayTask_attributes);
 
   /* creation of stateTask */
-  stateTaskHandle = osThreadNew(StateTask_Init, NULL, &stateTask_attributes);
+  stateTaskHandle = osThreadNew(StateTask_Init, (void*) &state_init_params, &stateTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-void InputTask_Init(void);
+void InputTask_Init(void *argument);
 void InputTask_Run(void);
 
 #ifdef __cplusplus

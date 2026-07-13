@@ -15,3 +15,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
 )
+
+target_link_libraries(loopstation_app PUBLIC
+    stm32cubemx
+)

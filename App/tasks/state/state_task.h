@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-void StateTask_Init(void);
+void StateTask_Init(void *argument);
 void StateTask_Run(void);
 
 #ifdef __cplusplus
