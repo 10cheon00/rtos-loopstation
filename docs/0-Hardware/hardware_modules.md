@@ -1,6 +1,6 @@
 ---
 title: 하드웨어 모듈 목록
-version: 0.3.0
+version: 0.4.0
 change_history:
   - date: 2026-07-11
     version: 0.1.0
@@ -11,6 +11,9 @@ change_history:
   - date: 2026-07-11
     version: 0.3.0
     summary: FX부와 트랙부의 버튼 및 포텐셔미터 구성을 실제 조작명 기준으로 수정함
+  - date: 2026-07-15
+    version: 0.4.0
+    summary: MCP23017 INTA와 MCU EXTI 연결 및 버튼 인터럽트 용도를 추가함
 ---
 
 # 하드웨어 모듈 목록
@@ -24,7 +27,7 @@ change_history:
 
 | 모듈명 | 연결 peripheral | peripheral 연결 pinout | 비고 |
 | --- | --- | --- | --- |
-| MCP23017 x2 | `I2C1` | `PB6 / I2C1_SCL`, `PB7 / I2C1_SDA` | 제어부의 Enter 버튼, Exit 버튼, 좌 버튼, 우 버튼 입력에 사용한다. U1 주소는 `0x24`, U2 주소는 `0x25`를 기준으로 한다. |
+| MCP23017 x2 | `I2C1`, `GPIO EXTI` | `PB6 / I2C1_SCL`, `PB7 / I2C1_SDA`, U1 `INTA -> PE0 / EXTI0`, U2 `INTA -> PE1 / EXTI1` | 제어부의 Enter 버튼, Exit 버튼, 좌 버튼, 우 버튼 입력에 사용한다. INTA로 버튼 상태 변경을 알리고, MCU가 EXTI로 수신한 뒤 I2C로 입력 상태를 읽는다. U1 주소는 `0x24`, U2 주소는 `0x25`를 기준으로 한다. |
 | KY-040 로터리 엔코더 | `TIM4`, MCP23017 GPIO | `PD12 / TIM4_CH1`, `PD13 / TIM4_CH2`, MCP23017 U1 `GPIOB3 / SW` | 제어부의 로터리 엔코더 회전 조작과 로터리 엔코더 푸시 버튼 입력에 사용한다. |
 
 ## 2. FX부
@@ -33,7 +36,7 @@ FX부는 FX 활성화와 FX 파라미터 조작 입력을 담당한다.
 
 | 모듈명 | 연결 peripheral | peripheral 연결 pinout | 비고 |
 | --- | --- | --- | --- |
-| MCP23017 x2 | `I2C1` | `PB6 / I2C1_SCL`, `PB7 / I2C1_SDA` | FX부의 IFX 활성화 버튼, TFX 활성화 버튼 입력에 사용한다. U1 주소는 `0x24`, U2 주소는 `0x25`를 기준으로 한다. |
+| MCP23017 x2 | `I2C1`, `GPIO EXTI` | `PB6 / I2C1_SCL`, `PB7 / I2C1_SDA`, U1 `INTA -> PE0 / EXTI0`, U2 `INTA -> PE1 / EXTI1` | FX부의 IFX 활성화 버튼, TFX 활성화 버튼 입력에 사용한다. INTA로 버튼 상태 변경을 알리고, MCU가 EXTI로 수신한 뒤 I2C로 입력 상태를 읽는다. U1 주소는 `0x24`, U2 주소는 `0x25`를 기준으로 한다. |
 | 포텐셔미터 x2 | `ADC1` | `PA0 / ADC1_INP16`, `PA1 / ADC1_INP17` | FX부의 IFX 파라미터 조절 노브, TFX 파라미터 조절 노브 입력에 사용한다. |
 
 ## 3. 트랙부
@@ -42,7 +45,7 @@ FX부는 FX 활성화와 FX 파라미터 조작 입력을 담당한다.
 
 | 모듈명 | 연결 peripheral | peripheral 연결 pinout | 비고 |
 | --- | --- | --- | --- |
-| MCP23017 x2 | `I2C1` | `PB6 / I2C1_SCL`, `PB7 / I2C1_SDA` | 트랙부의 녹음/재생 버튼, 정지 버튼, 트랙 조작 버튼 입력과 트랙 상태 LED 출력에 사용한다. U1 주소는 `0x24`, U2 주소는 `0x25`를 기준으로 한다. |
+| MCP23017 x2 | `I2C1`, `GPIO EXTI` | `PB6 / I2C1_SCL`, `PB7 / I2C1_SDA`, U1 `INTA -> PE0 / EXTI0`, U2 `INTA -> PE1 / EXTI1` | 트랙부의 녹음/재생 버튼, 정지 버튼, 트랙 조작 버튼 입력과 트랙 상태 LED 출력에 사용한다. INTA로 버튼 상태 변경을 알리고, MCU가 EXTI로 수신한 뒤 I2C로 입력 상태를 읽는다. U1 주소는 `0x24`, U2 주소는 `0x25`를 기준으로 한다. |
 | 포텐셔미터 x1 | `ADC1` | `PA2 / ADC1_INP14` | 트랙부의 트랙 볼륨 조절 노브 입력에 사용한다. |
 
 ## 4. 표시부
@@ -52,7 +55,7 @@ FX부는 FX 활성화와 FX 파라미터 조작 입력을 담당한다.
 | 모듈명 | 연결 peripheral | peripheral 연결 pinout | 비고 |
 | --- | --- | --- | --- |
 | GMG12864-06D LCD | `SPI2`, `GPIO` | `PB10 / SPI2_SCK`, `PC1 / SPI2_MOSI`, `PE7 / GPIO_Output / CS`, `PE8 / GPIO_Output / RST`, `PE9 / GPIO_Output / DC` | SPI 송신 전용으로 사용한다. `u8g2` 기반 출력 테스트를 완료했다. |
-| MCP23017 x2 | `I2C1` | `PB6 / I2C1_SCL`, `PB7 / I2C1_SDA` | 표시부의 IFX 활성화 LED, TFX 활성화 LED, 트랙 상태 LED 출력에 사용한다. U1 주소는 `0x24`, U2 주소는 `0x25`를 기준으로 한다. |
+| MCP23017 x2 | `I2C1`, `GPIO EXTI` | `PB6 / I2C1_SCL`, `PB7 / I2C1_SDA`, U1 `INTA -> PE0 / EXTI0`, U2 `INTA -> PE1 / EXTI1` | 표시부의 IFX 활성화 LED, TFX 활성화 LED, 트랙 상태 LED 출력에 사용한다. 같은 모듈의 INTA는 버튼 입력 변경 알림을 위해 MCU EXTI에 연결한다. U1 주소는 `0x24`, U2 주소는 `0x25`를 기준으로 한다. |
 
 ## 5. 저장부
 
