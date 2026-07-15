@@ -4,9 +4,8 @@
 #include <stdint.h>
 
 typedef struct {
-  uint8_t mcp23017_id;
-  uint8_t int_line;
-  uint32_t timestamp_ms;
+    uint32_t timestamp_tick;
+    uint8_t i2c_slave_address;
 } Mcp23017IntEvent;
 
 #endif
