@@ -6,6 +6,7 @@
 #include "display_initparams.h"
 
 static u8g2_t u8g2;
+extern const uint8_t u8g2_font_ref4x5_prop_v4_tr[];
 
 static int DisplayTask_IsValidInitParams(const DisplayInitParams *params)
 {
@@ -26,7 +27,15 @@ void DisplayTask_Init(void *argument)
         }
     }
 
-    Gmg12864Lcd_InitParams initparams = {.hspi = params->hspi};
+    Gmg12864Lcd_InitParams initparams = {
+        .hspi = params->hspi,
+        .CS_Pin = params->CS_Pin,
+        .CS_Port = params->CS_Port,
+        .DC_Pin = params->DC_Pin,
+        .DC_Port = params->DC_Port,
+        .RST_Pin = params->RST_Pin,
+        .RST_Port = params->RST_Port
+    };
     ;
 
     Gmg12864LcdStatus status = Gmg12864Lcd_Init(&u8g2, &initparams);
@@ -42,6 +51,10 @@ void DisplayTask_Init(void *argument)
 
 void DisplayTask_Run(void)
 {
+    u8g2_SetFont(&u8g2, u8g2_font_ref4x5_prop_v4_tr);
+    u8g2_ClearBuffer(&u8g2);
+    u8g2_SendBuffer(&u8g2);
+    u8g2_DrawStr(&u8g2, 6, 6, "hi!");
     for (;;) {
     }
 }
