@@ -210,6 +210,7 @@ int main(void)
   /* USER CODE BEGIN RTOS_QUEUES */
   input_init_params.mcp23017_int_event_queue = mcp23017_int_event_queueHandle;
   input_init_params.state_event_queue = state_event_queueHandle;
+  input_init_params.hi2c = &hi2c1;
 
   display_init_params.display_command_queue = display_command_queueHandle;
   display_init_params.hspi = &hspi2;
