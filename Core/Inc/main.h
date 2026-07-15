@@ -65,6 +65,10 @@ void Error_Handler(void);
 #define GMG12864_DC_GPIO_Port GPIOE
 #define SDMMC_Detect_Pin GPIO_PIN_4
 #define SDMMC_Detect_GPIO_Port GPIOD
+#define MCP23017_100_INTA_Pin GPIO_PIN_0
+#define MCP23017_100_INTA_GPIO_Port GPIOE
+#define MCP23017_101_INTA_Pin GPIO_PIN_1
+#define MCP23017_101_INTA_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 

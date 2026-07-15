@@ -692,6 +692,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(SDMMC_Detect_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : MCP23017_100_INTA_Pin MCP23017_101_INTA_Pin */
+  GPIO_InitStruct.Pin = MCP23017_100_INTA_Pin|MCP23017_101_INTA_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
