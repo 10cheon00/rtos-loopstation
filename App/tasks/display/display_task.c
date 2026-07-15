@@ -53,8 +53,8 @@ void DisplayTask_Run(void)
 {
     u8g2_SetFont(&u8g2, u8g2_font_ref4x5_prop_v4_tr);
     u8g2_ClearBuffer(&u8g2);
+    u8g2_DrawStr(&u8g2, 6, 6, "hi666!");
     u8g2_SendBuffer(&u8g2);
-    u8g2_DrawStr(&u8g2, 6, 6, "hi!");
     for (;;) {
     }
 }
