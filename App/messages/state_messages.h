@@ -3,19 +3,16 @@
 
 #include <stdint.h>
 
+#include "control_button.h"
+
 typedef enum {
   STATE_EVENT_CONTROL_BUTTON = 0
 } StateEventType;
 
-typedef enum {
-  CONTROL_BUTTON_STATE_RELEASED = 0,
-  CONTROL_BUTTON_STATE_PRESSED
-} ControlButtonState;
-
 typedef struct {
-  uint16_t button_id;
-  ControlButtonState state;
   uint32_t timestamp_ms;
+  ControlButtonId id;
+  ControlButtonState state;
 } ControlButtonPayload;
 
 typedef struct {

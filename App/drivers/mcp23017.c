@@ -32,8 +32,8 @@
 
 static Mcp23017Status Mcp23017_IsValidInitParams(Mcp23017InitParams *params)
 {
-    if (params != NULL &&
-        (params->hi2c != NULL && params->infomation_len > 0 && params->infomations != NULL)) {
+    if (params != NULL && (params->hi2c != NULL && params->device_config_count > 0 &&
+                           params->device_configs != NULL)) {
         return MCP23017_STATUS_OK;
     }
     return MCP23017_STATUS_ERROR;
@@ -57,8 +57,8 @@ Mcp23017Status Mcp23017_Init(Mcp23017InitParams *params)
     Mcp23017Status status;
     uint8_t dummy;
 
-    for (uint8_t i = 0; i < params->infomation_len; i++) {
-        const Mcp23017Infomation *info = &params->infomations[i];
+    for (uint8_t i = 0; i < params->device_config_count; i++) {
+        const Mcp23017DeviceConfig *info = &params->device_configs[i];
         const uint8_t address = info->address;
         const uint8_t pin_status = info->pin_status;
         if (HAL_I2C_IsDeviceReady(hi2c, address << 1, 10, MCP23017_TIMEOUT_MS) != HAL_OK) {

@@ -45,6 +45,7 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/csrc/u8x8_u8toa.c
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/fonts/u8g2_font_ref4x5_prop_v4_tr.c
 
+    tasks/input/input_config.c
     tasks/input/input_task.c
     tasks/display/display_task.c
     tasks/state/state_task.c
@@ -55,11 +56,13 @@ target_sources(loopstation_app PRIVATE
 target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/csrc/
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/types
     ${CMAKE_CURRENT_SOURCE_DIR}/messages
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
+    ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 
 target_link_libraries(loopstation_app PUBLIC

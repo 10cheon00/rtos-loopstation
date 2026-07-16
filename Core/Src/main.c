@@ -127,7 +127,16 @@ extern void DisplayTask_Init(void *argument);
 extern void StateTask_Init(void *argument);
 
 /* USER CODE BEGIN PFP */
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    // 이 함수는 전역 콜백 함수 이므로, 여기서는 애플리케이션에게 
+    //  처리를 위임하는 코드만 둔다.
+    Mcp23017IntEvent event = {
+        .timestamp_tick = osKernelGetTickCount(),
+        .gpio_pin = GPIO_Pin
+    };
+    osMessageQueuePut(mcp23017_int_event_queueHandle, &event, 0, 0);   
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/

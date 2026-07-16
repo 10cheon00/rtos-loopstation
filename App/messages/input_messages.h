@@ -2,10 +2,11 @@
 #define INPUT_MESSAGES_H
 
 #include <stdint.h>
+#include "FreeRTOS.h"
 
 typedef struct {
-    uint32_t timestamp_tick;
-    uint8_t i2c_slave_address;
+    TickType_t timestamp_tick;
+    uint16_t gpio_pin;
 } Mcp23017IntEvent;
 
 #endif

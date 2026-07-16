@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include "app.h"
+
 void InputTask_Init(void *argument);
 void InputTask_Run(void);
 
