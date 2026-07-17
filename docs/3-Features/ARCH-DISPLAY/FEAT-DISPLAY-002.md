@@ -1,10 +1,13 @@
 ---
 title: display command queue 수신
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
     summary: UI_STATE_RENDER command를 display_command_queue로 수신하는 기능 문서를 작성함
+  - date: 2026-07-17
+    version: 0.2.0
+    summary: 기능 구현 및 검증 상태 표를 추가함
 ---
 
 # display command queue 수신
@@ -58,3 +61,10 @@ change_history:
 | enqueue | `UI_STATE_RENDER` command가 queue에 들어가는지 확인한다. |
 | 순서 보존 | 연속된 패널 전환 command가 같은 순서로 dequeue되는지 확인한다. |
 | overflow 기록 | queue full 상황에서 오류가 기록되는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 미확인 | - | 이번 구현 판정 범위에 포함하지 않았다. |
+| 검증 | 미확인 | - | 구현 확인 후 기록한다. |

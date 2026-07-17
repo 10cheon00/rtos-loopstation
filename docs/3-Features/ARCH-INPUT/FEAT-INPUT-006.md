@@ -1,10 +1,13 @@
 ---
 title: button state snapshot 갱신
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
     summary: stable 버튼 상태를 modifier snapshot에 반영하는 기능 문서를 작성함
+  - date: 2026-07-17
+    version: 0.2.0
+    summary: button state snapshot 기능의 미구현 상태를 기록함
 ---
 
 # button state snapshot 갱신
@@ -59,3 +62,10 @@ change_history:
 | press 반영 | press 확정 시 해당 bit가 set되는지 확인한다. |
 | release 반영 | release 확정 시 해당 bit가 clear되는지 확인한다. |
 | modifier 연계 | 엔코더 회전 기능이 snapshot을 읽어 `modifier_mask`를 만들 수 있는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 미구현 | - | InputTask에 `button_state_snapshot` 저장 및 갱신 구조가 없다. |
+| 검증 | 미완료 | - | 구현 후 검증한다. |

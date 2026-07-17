@@ -1,6 +1,6 @@
 ---
 title: 상태 관리 event queue 전송
-version: 0.1.1
+version: 0.2.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -8,6 +8,9 @@ change_history:
   - date: 2026-07-13
     version: 0.1.1
     summary: 상태 관리 태스크 수신 queue 이름을 state_event_queue로 명시함
+  - date: 2026-07-17
+    version: 0.2.0
+    summary: 상태 관리 event queue 전송의 구현 및 검증 상태를 추가함
 ---
 
 # 상태 관리 event queue 전송
@@ -62,3 +65,10 @@ change_history:
 | message 전송 | `CONTROL_BUTTON` message가 `state_event_queue`에 들어가는지 확인한다. |
 | 순서 보존 | 연속 생성된 button message가 같은 순서로 수신되는지 확인한다. |
 | 실패 기록 | queue 전송 실패 시 진단 counter가 증가하는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 부분 구현 | - | queue 전송 호출은 있으나 `StateEvent` envelope, queue 원소 타입, 전송 실패 처리가 일치하지 않는다. |
+| 검증 | 미완료 | - | 상태 관리 태스크 수신까지 메시지 계약을 맞춘 뒤 검증한다. |

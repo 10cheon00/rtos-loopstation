@@ -1,6 +1,6 @@
 ---
 title: 사용자 컨트롤 입력 큐
-version: 0.2.1
+version: 0.3.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -11,6 +11,9 @@ change_history:
   - date: 2026-07-12
     version: 0.2.1
     summary: 상위 설계 항목명을 버튼 변경 감지 기준으로 맞춤
+  - date: 2026-07-17
+    version: 0.3.0
+    summary: 사용자 컨트롤 입력 큐의 구현 및 검증 상태를 추가함
 ---
 
 # 사용자 컨트롤 입력 큐
@@ -65,3 +68,10 @@ MCP23017 INT 라인으로 버튼 변화를 감지하더라도 사용자 컨트�
 | ISR enqueue | ISR context에서 event enqueue가 가능한지 확인한다. |
 | 순서 보존 | 연속 입력 event가 enqueue 순서대로 dequeue되는지 확인한다. |
 | overflow 기록 | queue full 상황에서 overflow counter가 증가하는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 부분 구현 | - | queue 생성, ISR enqueue, InputTask dequeue를 구현했으나 overflow counter가 없다. |
+| 검증 | 부분 완료 | 2026-07-17 | INTA event가 queue를 거쳐 InputTask에서 dequeue되는 경로를 확인했다. |

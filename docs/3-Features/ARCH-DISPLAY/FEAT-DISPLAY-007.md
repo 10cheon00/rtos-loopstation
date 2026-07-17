@@ -1,10 +1,13 @@
 ---
 title: LCD 출력 commit
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
     summary: 생성된 LCD panel frame을 실제 LCD 출력으로 반영하는 기능 문서를 작성함
+  - date: 2026-07-17
+    version: 0.2.0
+    summary: 기능 구현 및 검증 상태 표를 추가함
 ---
 
 # LCD 출력 commit
@@ -58,3 +61,10 @@ change_history:
 | LCD 반영 | `UI_STATE_RENDER` 처리 후 LCD에 새 패널이 출력되는지 확인한다. |
 | frame 일치 | renderer가 만든 frame과 LCD 출력 내용이 일치하는지 확인한다. |
 | 실패 기록 | LCD commit 실패 시 오류가 기록되는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 미확인 | - | 이번 구현 판정 범위에 포함하지 않았다. |
+| 검증 | 미확인 | - | 구현 확인 후 기록한다. |

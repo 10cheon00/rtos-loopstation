@@ -1,6 +1,6 @@
 ---
 title: MCP23017 버튼 상태 읽기
-version: 0.2.0
+version: 0.3.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -8,6 +8,9 @@ change_history:
   - date: 2026-07-12
     version: 0.2.0
     summary: MCP23017 INT event dequeue 후 I2C로 버튼 상태를 읽는 기능으로 수정함
+  - date: 2026-07-17
+    version: 0.3.0
+    summary: MCP23017 상태 읽기의 구현 및 검증 상태를 추가함
 ---
 
 # MCP23017 버튼 상태 읽기
@@ -65,3 +68,10 @@ change_history:
 | queue drain | 쌓인 MCP23017 INT event가 태스크 실행 시 순서대로 처리되는지 확인한다. |
 | I2C 상태 읽기 | 태스크 context에서 `INTF`, `INTCAP` 또는 `GPIO`를 읽는지 확인한다. |
 | event 전달 | 읽은 pin bit가 `ButtonId`와 raw state로 변환되어 debounce 입력으로 전달되는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 부분 구현 | - | InputTask에서 `INTF`와 `INTCAP`을 읽고 raw state를 계산하지만 debounce 입력 전달과 복수 pin 처리가 남아 있다. |
+| 검증 | 부분 완료 | 2026-07-17 | GPIOB 버튼 press/release에 따른 `INTCAPB` 값 수신을 확인했다. |

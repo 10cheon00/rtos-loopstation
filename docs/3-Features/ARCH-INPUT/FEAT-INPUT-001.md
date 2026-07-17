@@ -1,6 +1,6 @@
 ---
 title: MCP23017 버튼 pin 식별 테이블
-version: 0.2.1
+version: 0.3.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -11,6 +11,9 @@ change_history:
   - date: 2026-07-12
     version: 0.2.1
     summary: 상위 설계 항목명을 버튼 변경 감지 기준으로 맞춤
+  - date: 2026-07-17
+    version: 0.3.0
+    summary: 버튼 매핑 구현 현황과 검증 상태를 추가함
 ---
 
 # MCP23017 버튼 pin 식별 테이블
@@ -71,3 +74,10 @@ MCP23017의 interrupt line은 여러 버튼 입력을 하나의 MCU interrupt로
 | pin 변환 | 각 MCP23017 pin bit가 기대한 `ButtonId`로 변환되는지 확인한다. |
 | active level 정규화 | active high/low 입력이 동일한 pressed/released 의미로 정규화되는지 확인한다. |
 | unknown pin 처리 | 매핑되지 않은 pin bit가 event를 만들지 않고 오류로 기록되는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 부분 구현 | - | `input_button_mappings`와 `InputTask_FindControlButtonId()`를 구현했으나 unknown pin 진단과 복수 pin event 처리가 남아 있다. |
+| 검증 | 부분 완료 | 2026-07-17 | 단일 pin의 slave address 및 pin mask 매핑 경로를 확인했다. |

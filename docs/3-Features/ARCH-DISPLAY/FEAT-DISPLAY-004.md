@@ -1,10 +1,13 @@
 ---
 title: 패널 렌더러 선택
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
     summary: UI_STATE_RENDER panel_id에 맞는 패널 렌더러 선택 기능 문서를 작성함
+  - date: 2026-07-17
+    version: 0.2.0
+    summary: 기능 구현 및 검증 상태 표를 추가함
 ---
 
 # 패널 렌더러 선택
@@ -60,3 +63,10 @@ change_history:
 | renderer 선택 | 각 `panel_id`가 기대한 renderer로 매핑되는지 확인한다. |
 | context 전달 | 선택 트랙과 선택 항목이 renderer에 전달되는지 확인한다. |
 | invalid 처리 | 알 수 없는 `panel_id`가 진단값으로 기록되는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 미확인 | - | 이번 구현 판정 범위에 포함하지 않았다. |
+| 검증 | 미확인 | - | 구현 확인 후 기록한다. |

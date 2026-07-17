@@ -1,10 +1,13 @@
 ---
 title: 패널 상태 갱신 및 표시 요청
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-13
     version: 0.1.0
     summary: 상태 관리 태스크의 패널 상태 갱신 및 표시 요청 기능 문서를 작성함
+  - date: 2026-07-17
+    version: 0.2.0
+    summary: 기능 구현 및 검증 상태 표를 추가함
 ---
 
 # 패널 상태 갱신 및 표시 요청
@@ -81,3 +84,10 @@ change_history:
 | 표시 요청 | panel state가 변경되면 `display_command_queue`에 `UI_STATE_RENDER` command가 들어가는지 확인한다. |
 | 중복 억제 | panel state가 바뀌지 않는 입력에서 불필요한 표시 command가 생성되지 않는지 확인한다. |
 | 오류 기록 | invalid panel/button 조합과 queue 전송 실패가 진단 가능한 값으로 기록되는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 미확인 | - | 이번 구현 판정 범위에 포함하지 않았다. |
+| 검증 | 미확인 | - | 구현 확인 후 기록한다. |

@@ -1,10 +1,13 @@
 ---
 title: 패널 선택 context 갱신
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
     summary: 패널 전환 시 표시 구조의 현재 패널 context를 갱신하는 기능 문서를 작성함
+  - date: 2026-07-17
+    version: 0.2.0
+    summary: 기능 구현 및 검증 상태 표를 추가함
 ---
 
 # 패널 선택 context 갱신
@@ -60,3 +63,10 @@ change_history:
 | panel 갱신 | `UI_STATE_RENDER` 처리 후 현재 `panel_id`가 갱신되는지 확인한다. |
 | 선택값 갱신 | `selected_track`, `selected_item`이 payload와 같은 값으로 저장되는지 확인한다. |
 | renderer 일치 | renderer가 받은 context와 저장된 context가 일치하는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 미확인 | - | 이번 구현 판정 범위에 포함하지 않았다. |
+| 검증 | 미확인 | - | 구현 확인 후 기록한다. |

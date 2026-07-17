@@ -1,10 +1,13 @@
 ---
 title: CONTROL_BUTTON payload 생성
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
     summary: stable 버튼 edge를 CONTROL_BUTTON payload로 변환하는 기능 문서를 작성함
+  - date: 2026-07-17
+    version: 0.2.0
+    summary: CONTROL_BUTTON payload의 구현 및 검증 상태를 추가함
 ---
 
 # CONTROL_BUTTON payload 생성
@@ -61,3 +64,10 @@ long press, repeat, modifier 해석은 상태 관리 구조 또는 후속 기능
 | 필드 정확성 | `button_id`, `state`, `timestamp_ms`가 기대값으로 채워지는지 확인한다. |
 | press/release 지원 | press와 release가 모두 payload로 생성되는지 확인한다. |
 | 해석 비포함 | payload 생성 단계에서 패널 이동이나 FX toggle을 판단하지 않는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 부분 구현 | - | `ControlButtonPayload` 생성 코드는 있으나 stable edge 입력과 timestamp 단위가 확정되지 않았다. |
+| 검증 | 미완료 | - | debounce 이후 press/release payload 경로를 구현한 뒤 검증한다. |

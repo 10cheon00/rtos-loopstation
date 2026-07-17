@@ -1,6 +1,6 @@
 ---
 title: MCP23017 INT ISR event 기록
-version: 0.2.1
+version: 0.3.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -11,6 +11,9 @@ change_history:
   - date: 2026-07-12
     version: 0.2.1
     summary: 상위 설계 항목명을 버튼 변경 감지 기준으로 맞춤
+  - date: 2026-07-17
+    version: 0.3.0
+    summary: 현재 ISR event 형식과 구현 및 검증 완료 상태를 반영함
 ---
 
 # MCP23017 INT ISR event 기록
@@ -52,7 +55,7 @@ ISR에서는 I2C read를 수행하지 않고, 사용자 컨트롤 처리 태스�
 | --- | --- |
 | `Mcp23017IntEvent` | 사용자 컨트롤 처리 태스크로 전달할 ISR-safe interrupt event |
 
-`Mcp23017IntEvent`는 `mcp23017_id`, `int_line`, `timestamp_ms`를 포함한다.
+`Mcp23017IntEvent`는 `gpio_pin`, `timestamp_tick`을 포함한다.
 버튼별 `button_id`와 `raw_state`는 태스크 context에서 I2C 상태를 읽은 뒤 생성한다.
 
 ## 6. 구현 기준
@@ -72,3 +75,10 @@ ISR에서는 I2C read를 수행하지 않고, 사용자 컨트롤 처리 태스�
 | INT 기록 | MCP23017 INT assert 시 `Mcp23017IntEvent`가 queue에 들어가는지 확인한다. |
 | ISR 최소 처리 | ISR에서 I2C read, debounce, 의미 해석을 수행하지 않는지 확인한다. |
 | task wakeup | queue 기록 후 사용자 컨트롤 처리 태스크가 실행 기회를 얻는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 완료 | 2026-07-17 | EXTI callback이 GPIO pin과 RTOS tick을 기록하고 ISR-safe queue API로 전달한다. |
+| 검증 | 완료 | 2026-07-17 | INTA 발생 후 event가 queue를 통해 InputTask를 깨우는 경로를 확인했다. |

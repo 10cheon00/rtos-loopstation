@@ -1,6 +1,6 @@
 ---
 title: 버튼 debounce 판정
-version: 0.2.1
+version: 0.3.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -11,6 +11,9 @@ change_history:
   - date: 2026-07-12
     version: 0.2.1
     summary: 상위 설계 항목명을 버튼 변경 감지 기준으로 맞춤
+  - date: 2026-07-17
+    version: 0.3.0
+    summary: debounce 기능의 미구현 상태를 기록함
 ---
 
 # 버튼 debounce 판정
@@ -65,3 +68,10 @@ MCP23017 INT는 bounce로 인해 반복 assert될 수 있으므로, 사용자 �
 | bounce 제거 | bounce edge가 여러 번 들어와도 stable edge가 중복 생성되지 않는지 확인한다. |
 | press/release 확정 | 실제 press와 release가 각각 stable edge로 확정되는지 확인한다. |
 | 버튼별 독립성 | 한 버튼의 bounce가 다른 버튼 debounce 상태에 영향을 주지 않는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 미구현 | - | InputTask에 버튼별 debounce 상태와 시간 판정이 없다. |
+| 검증 | 미완료 | - | 구현 후 검증한다. |

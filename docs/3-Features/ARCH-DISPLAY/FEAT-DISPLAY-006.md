@@ -1,10 +1,13 @@
 ---
 title: LCD 패널 frame 생성
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
     summary: 선택된 panel renderer가 LCD 출력 frame을 생성하는 기능 문서를 작성함
+  - date: 2026-07-17
+    version: 0.2.0
+    summary: 기능 구현 및 검증 상태 표를 추가함
 ---
 
 # LCD 패널 frame 생성
@@ -60,3 +63,10 @@ change_history:
 | panel별 frame | 각 `panel_id`에 대해 기본 frame이 생성되는지 확인한다. |
 | 선택 강조 | 선택 track/item이 frame에 반영되는지 확인한다. |
 | renderer 독립성 | 특정 패널 renderer 변경이 다른 패널 renderer에 영향을 주지 않는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 미확인 | - | 이번 구현 판정 범위에 포함하지 않았다. |
+| 검증 | 미확인 | - | 구현 확인 후 기록한다. |

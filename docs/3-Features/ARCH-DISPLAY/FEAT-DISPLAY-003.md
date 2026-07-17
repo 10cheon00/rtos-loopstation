@@ -1,10 +1,13 @@
 ---
 title: display command dequeue
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
     summary: 표시 구조가 display_command_queue에서 패널 전환 command를 읽는 기능 문서를 작성함
+  - date: 2026-07-17
+    version: 0.2.0
+    summary: 기능 구현 및 검증 상태 표를 추가함
 ---
 
 # display command dequeue
@@ -58,3 +61,10 @@ change_history:
 | dequeue | queue에 쌓인 `UI_STATE_RENDER` command를 읽는지 확인한다. |
 | dispatch | `UI_STATE_RENDER`가 패널 전환 처리 경로로 전달되는지 확인한다. |
 | unknown 처리 | 알 수 없는 command type이 진단값으로 기록되는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 미확인 | - | 이번 구현 판정 범위에 포함하지 않았다. |
+| 검증 | 미확인 | - | 구현 확인 후 기록한다. |

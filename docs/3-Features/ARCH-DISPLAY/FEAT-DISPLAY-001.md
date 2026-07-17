@@ -1,10 +1,13 @@
 ---
 title: UI_STATE_RENDER command payload 정의
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
     summary: 선택 패널 출력을 위한 UI_STATE_RENDER command payload 기능 문서를 작성함
+  - date: 2026-07-17
+    version: 0.2.0
+    summary: 기능 구현 및 검증 상태 표를 추가함
 ---
 
 # UI_STATE_RENDER command payload 정의
@@ -63,3 +66,10 @@ change_history:
 | payload 생성 | 상태 관리 구조가 패널 전환 시 `UI_STATE_RENDER` payload를 만들 수 있는지 확인한다. |
 | 필드 보존 | `panel_id`, `selected_track`, `selected_item` 값이 queue 전송 전후로 유지되는지 확인한다. |
 | invalid 표현 | 선택값이 없는 패널에서 none 또는 invalid 값이 일관되게 표현되는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 미확인 | - | 이번 구현 판정 범위에 포함하지 않았다. |
+| 검증 | 미확인 | - | 구현 확인 후 기록한다. |

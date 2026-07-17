@@ -1,6 +1,6 @@
 ---
 title: 버튼 입력 오류 및 overflow 기록
-version: 0.2.1
+version: 0.3.0
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -11,6 +11,9 @@ change_history:
   - date: 2026-07-12
     version: 0.2.1
     summary: 상위 설계 항목명을 버튼 변경 감지 기준으로 맞춤
+  - date: 2026-07-17
+    version: 0.3.0
+    summary: 버튼 입력 오류 및 overflow 기록의 미구현 상태를 기록함
 ---
 
 # 버튼 입력 오류 및 overflow 기록
@@ -70,3 +73,10 @@ change_history:
 | ISR overflow 기록 | ISR queue full 상황에서 overflow counter가 증가하는지 확인한다. |
 | I2C read 실패 기록 | MCP23017 상태 읽기 실패 시 별도 counter가 증가하는지 확인한다. |
 | state queue 실패 기록 | 상태 관리 queue 전송 실패가 별도 counter로 기록되는지 확인한다. |
+
+## 8. 구현 및 검증 상태
+
+| 항목 | 상태 | 날짜 | 비고 |
+| --- | --- | --- | --- |
+| 구현 | 미구현 | - | queue overflow, unknown pin, I2C 실패, state queue 실패를 구분하는 진단 counter가 없다. |
+| 검증 | 미완료 | - | 구현 후 오류 주입으로 검증한다. |
