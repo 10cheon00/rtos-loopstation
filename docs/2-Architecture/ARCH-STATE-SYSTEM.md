@@ -1,10 +1,13 @@
 ---
 title: 시스템 상태 머신 아키텍처
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-18
     version: 0.1.0
     summary: 시스템 초기화, 정상 실행, 오류 및 종료 상태 전이 설계를 작성함
+  - date: 2026-07-18
+    version: 0.2.0
+    summary: 시스템 상태 설계 항목을 단일 기능 명세와 일대일로 연결함
 ---
 
 # 시스템 상태 머신 아키텍처
@@ -217,13 +220,30 @@ stateDiagram-v2
 
 ## 5. 기능 문서 작성 대상
 
-| 기능 문서 | 목적 | 주요 입력 | 주요 출력 |
-| --- | --- | --- | --- |
-| `FEAT-STATE-SYSTEM-001.md` | 시스템 상태와 초기 context를 생성한다. | 시스템 등록 정보 | `NOT_INIT` 상태 머신 |
-| `FEAT-STATE-SYSTEM-002.md` | 필수 자원 초기화 결과를 수집하고 성공 또는 실패를 판정한다. | 자원별 초기화 결과 | init done/failed event |
-| `FEAT-STATE-SYSTEM-003.md` | `RUNNING` 상태에 따른 일반 이벤트 gate를 구현한다. | system state, state event | dispatch 또는 rejected result |
-| `FEAT-STATE-SYSTEM-004.md` | 치명 오류를 `ERROR` 전이와 안전 정지로 연결한다. | fatal error event | error state, stop/display command |
-| `FEAT-STATE-SYSTEM-005.md` | 종료 요청과 cleanup 완료 흐름을 구현한다. | shutdown event, cleanup result | `END`, 플랫폼 종료 |
+| 설계 ID | 기능 문서 | 기능 |
+| --- | --- | --- |
+| `ARCH-STATE-SYSTEM-001` | [FEAT-STATE-SYSTEM-001.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-001.md) | 시스템 상태 모델 |
+| `ARCH-STATE-SYSTEM-002` | [FEAT-STATE-SYSTEM-002.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-002.md) | 시스템 초기 상태 |
+| `ARCH-STATE-SYSTEM-003` | [FEAT-STATE-SYSTEM-003.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-003.md) | 시작 이벤트 |
+| `ARCH-STATE-SYSTEM-004` | [FEAT-STATE-SYSTEM-004.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-004.md) | 초기화 context |
+| `ARCH-STATE-SYSTEM-005` | [FEAT-STATE-SYSTEM-005.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-005.md) | 초기화 시작 |
+| `ARCH-STATE-SYSTEM-006` | [FEAT-STATE-SYSTEM-006.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-006.md) | 초기화 결과 수집 |
+| `ARCH-STATE-SYSTEM-007` | [FEAT-STATE-SYSTEM-007.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-007.md) | 초기화 성공 판정 |
+| `ARCH-STATE-SYSTEM-008` | [FEAT-STATE-SYSTEM-008.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-008.md) | 초기화 실패 판정 |
+| `ARCH-STATE-SYSTEM-009` | [FEAT-STATE-SYSTEM-009.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-009.md) | 초기화 결과 전이 |
+| `ARCH-STATE-SYSTEM-010` | [FEAT-STATE-SYSTEM-010.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-010.md) | RUNNING gate |
+| `ARCH-STATE-SYSTEM-011` | [FEAT-STATE-SYSTEM-011.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-011.md) | 시스템 우선 이벤트 |
+| `ARCH-STATE-SYSTEM-012` | [FEAT-STATE-SYSTEM-012.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-012.md) | 비활성 상태 처리 |
+| `ARCH-STATE-SYSTEM-013` | [FEAT-STATE-SYSTEM-013.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-013.md) | 상태 머신 활성화 |
+| `ARCH-STATE-SYSTEM-014` | [FEAT-STATE-SYSTEM-014.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-014.md) | 치명 오류 이벤트 |
+| `ARCH-STATE-SYSTEM-015` | [FEAT-STATE-SYSTEM-015.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-015.md) | 오류 상태 전이 |
+| `ARCH-STATE-SYSTEM-016` | [FEAT-STATE-SYSTEM-016.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-016.md) | 기능 차단 |
+| `ARCH-STATE-SYSTEM-017` | [FEAT-STATE-SYSTEM-017.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-017.md) | 오류 표시 |
+| `ARCH-STATE-SYSTEM-018` | [FEAT-STATE-SYSTEM-018.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-018.md) | 안전 정지 요청 |
+| `ARCH-STATE-SYSTEM-019` | [FEAT-STATE-SYSTEM-019.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-019.md) | 종료 요청 |
+| `ARCH-STATE-SYSTEM-020` | [FEAT-STATE-SYSTEM-020.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-020.md) | cleanup 시작 |
+| `ARCH-STATE-SYSTEM-021` | [FEAT-STATE-SYSTEM-021.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-021.md) | cleanup 결과 수집 |
+| `ARCH-STATE-SYSTEM-022` | [FEAT-STATE-SYSTEM-022.md](../3-Features/ARCH-STATE-SYSTEM/FEAT-STATE-SYSTEM-022.md) | 시스템 동작 종료 |
 
 ## 6. 미정 사항
 

@@ -1,6 +1,6 @@
 ---
 title: 루프스테이션 요구사항 정의서
-version: 1.2.0
+version: 1.3.0
 change_history:
   - date: 2026-07-11
     version: 0.1.0
@@ -23,6 +23,9 @@ change_history:
   - date: 2026-07-18
     version: 1.2.0
     summary: 시스템 및 디스플레이 패널 상태 머신 요구사항을 전용 설계 문서와 연결함
+  - date: 2026-07-18
+    version: 1.3.0
+    summary: 시스템 및 디스플레이 패널 상태 요구사항을 구현 기능 명세 폴더와 연결함
 ---
 
 # 루프스테이션 요구사항 정의서
@@ -183,9 +186,9 @@ change_history:
 | REQ-AUDIO-001 ~ REQ-AUDIO-003 | [ARCH-AUDIO.md](../2-Architecture/ARCH-AUDIO.md) | 작성 예정 | 시험 |
 | REQ-FX-001 ~ REQ-FX-005 | [ARCH-FX.md](../2-Architecture/ARCH-FX.md) | 작성 예정 | 시험 |
 | REQ-STATE-001 ~ REQ-STATE-006 | [ARCH-STATE.md](../2-Architecture/ARCH-STATE.md) | [ARCH-STATE 기능 문서](../3-Features/ARCH-STATE/) | 시험, 분석 |
-| REQ-STATE-SYSTEM-001 ~ REQ-STATE-SYSTEM-010 | [ARCH-STATE-SYSTEM.md](../2-Architecture/ARCH-STATE-SYSTEM.md) | 작성 예정 | 시험, 시연 |
+| REQ-STATE-SYSTEM-001 ~ REQ-STATE-SYSTEM-010 | [ARCH-STATE-SYSTEM.md](../2-Architecture/ARCH-STATE-SYSTEM.md) | [ARCH-STATE-SYSTEM 기능 문서](../3-Features/ARCH-STATE-SYSTEM/) | 시험, 시연 |
 | REQ-STATE-TRACK-001 ~ REQ-STATE-TRACK-012 | [ARCH-STATE-TRACK.md](../2-Architecture/ARCH-STATE-TRACK.md) | 작성 예정 | 시험, 시연 |
-| REQ-STATE-DISPLAY-001 ~ REQ-STATE-DISPLAY-013 | [ARCH-STATE-DISPLAY.md](../2-Architecture/ARCH-STATE-DISPLAY.md) | 작성 예정 | 시험, 시연 |
+| REQ-STATE-DISPLAY-001 ~ REQ-STATE-DISPLAY-013 | [ARCH-STATE-DISPLAY.md](../2-Architecture/ARCH-STATE-DISPLAY.md) | [ARCH-STATE-DISPLAY 기능 문서](../3-Features/ARCH-STATE-DISPLAY/) | 시험, 시연 |
 | REQ-STORAGE-001 ~ REQ-STORAGE-003 | [ARCH-STORAGE.md](../2-Architecture/ARCH-STORAGE.md) | 작성 예정 | 시험 |
 | REQ-INPUT-001 ~ REQ-INPUT-006 | [ARCH-INPUT.md](../2-Architecture/ARCH-INPUT.md) | 작성 예정 | 시험, 시연 |
 | REQ-DISPLAY-001 ~ REQ-DISPLAY-004 | [ARCH-DISPLAY.md](../2-Architecture/ARCH-DISPLAY.md) | 작성 예정 | 시험, 시연 |

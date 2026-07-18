@@ -1,6 +1,6 @@
 ---
 title: 상태 머신 공통 아키텍처
-version: 0.3.0
+version: 0.4.0
 change_history:
   - date: 2026-07-17
     version: 0.1.0
@@ -11,6 +11,9 @@ change_history:
   - date: 2026-07-18
     version: 0.3.0
     summary: 모든 공통 상태 머신 설계 항목을 단일 기능 명세와 일대일로 연결함
+  - date: 2026-07-18
+    version: 0.4.0
+    summary: 태스크 외부의 상태 머신 자원 조립과 초기화 인자 주입 및 의존성 격리 설계를 추가함
 ---
 
 # 상태 머신 공통 아키텍처
@@ -23,9 +26,9 @@ change_history:
 | 항목 | 내용 |
 | --- | --- |
 | 대상 요구사항 | `REQ-STATE-001` ~ `REQ-STATE-006` |
-| 포함 범위 | 상태 머신 등록과 소유권, 정적 상태 인스턴스, 이벤트 분류와 위임, 공통 생명주기 인터페이스, 전이 순서, 공통 처리 결과와 오류 판별 |
+| 포함 범위 | 상태 머신 등록과 소유권, 태스크 외부 자원 조립과 초기화 인자 주입, 정적 상태 인스턴스, 이벤트 분류와 위임, 공통 생명주기 인터페이스, 전이 순서, 공통 처리 결과와 오류 판별 |
 | 연관 설계 | 상태 머신별 상태 종류와 전이, 사용자 입력 이벤트, 표시 및 피드백, 실시간 동작과 오류 대응 |
-| 제외 범위 | 특정 상태 머신의 상태 목록과 전이 조건, 특정 상태의 진입 및 이탈 동작, 상태별 command 생성, command queue 의존성 전달, C 파일 배치 |
+| 제외 범위 | 특정 상태 머신의 상태 목록과 전이 조건, 특정 상태의 진입 및 이탈 동작, 상태별 command 생성, 상태 머신별 구체적 자원 목록, C 파일 배치 |
 
 ## 2. 관련 요구사항
 
@@ -42,14 +45,14 @@ change_history:
 
 ### 3.1 REQ-STATE-001 설계
 
-상태 머신 인스턴스는 자신의 현재 상태와 도메인 context를 가지며, 상태 관리 태스크가 등록된 모든 인스턴스의 단일 소유자가 된다.
+상태 머신 인스턴스는 자신의 현재 상태와 전용 도메인 context를 가진다. 상태 관리 태스크는 등록된 인스턴스를 직렬로 운용하는 단일 변경 주체이며, 각 context에 포함된 도메인 자원의 사용 책임은 해당 상태 머신에 있다.
 다른 태스크나 상태 머신은 현재 상태 참조를 직접 변경하지 않고 이벤트를 통해 변경을 요청한다.
 
 | 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
 | --- | --- | --- | --- |
 | `ARCH-STATE-001` | 상태 머신 등록부 | 실행할 상태 머신 인스턴스를 식별한다. | 상태 관리 태스크가 정적으로 구성된 인스턴스 등록부를 소유한다. |
 | `ARCH-STATE-002` | 상태 머신 인스턴스 | 현재 상태와 도메인 데이터를 분리해 유지한다. | 인스턴스마다 현재 상태 참조와 전용 context를 가진다. |
-| `ARCH-STATE-003` | 단일 변경 주체 | canonical state의 동시 변경을 방지한다. | 상태 관리 태스크만 현재 상태 참조와 context를 변경한다. |
+| `ARCH-STATE-003` | 단일 변경 주체 | canonical state의 동시 변경을 방지한다. | 상태 관리 태스크의 직렬 처리 경로에서만 현재 상태 참조와 context의 canonical state를 변경한다. |
 
 ```mermaid
 flowchart LR
@@ -67,12 +70,31 @@ flowchart LR
 
 상태와 상태 머신 인스턴스는 런타임 중 동적으로 생성하지 않는다.
 초기화 시 각 인스턴스에 전용 설계가 정한 초기 상태를 연결하고, 초기 상태의 `on_enter`를 호출한 뒤 이벤트 수신을 허용한다.
+상태 머신이 필요로 하는 queue, semaphore, command 전달 경로 등의 자원은 상태 관리 태스크 내부에서 생성하거나 임의로 탐색하지 않는다. 태스크 생성 전에 외부 조립 지점에서 자원을 준비하고, 미리 정의된 초기화 인자 구조체를 통해 각 상태 머신에 전달한다.
 
 | 설계 ID | 아키텍처 항목 | 역할 | 설계 결정 |
 | --- | --- | --- | --- |
 | `ARCH-STATE-004` | 정적 상태 인스턴스 | 동적 할당 없이 상태를 전환한다. | 각 상태 구현을 미리 생성하고 상태 참조만 전환한다. |
 | `ARCH-STATE-005` | 초기 상태 주입 | 상태 머신별 시작 상태를 공통 구조에 연결한다. | 등록 정보가 초기 상태 참조와 context를 제공한다. |
 | `ARCH-STATE-006` | 최초 진입 | 초기 상태의 생명주기를 시작한다. | 등록 완료 후 이벤트 처리 전에 초기 상태의 `on_enter`를 한 번 호출한다. |
+| `ARCH-STATE-022` | 외부 자원 조립 | 상태 머신의 의존 자원 생성 시점과 소유 경계를 분리한다. | `main.c`와 같은 태스크 외부 조립 지점이 필요한 RTOS 자원을 생성하고 유효한 handle을 초기화 인자에 설정한다. |
+| `ARCH-STATE-023` | 정형화된 초기화 인자 | 태스크와 상태 머신별 의존성을 명시적으로 구분한다. | `StateInitParams`는 태스크 자체의 의존성과 상태 머신별 초기화 인자를 미리 정의된 필드로 가진다. |
+| `ARCH-STATE-024` | 상태 머신별 인자 전달 | 상태 관리 태스크가 구체 자원의 사용 책임을 갖지 않게 한다. | 태스크 초기화 경로는 상위 인자와 태스크 자체의 의존성을 검증한 뒤 각 상태 머신에 해당 머신의 전용 인자만 전달한다. |
+| `ARCH-STATE-025` | 전용 context 의존성 보관 | 이벤트 처리 중 필요한 자원을 안전하게 사용한다. | 각 상태 머신은 자신의 초기화 인자를 검증하고 필요한 handle 또는 port 참조만 자신의 전용 context에 보관한다. |
+
+```mermaid
+flowchart LR
+    Main[main.c 외부 조립 지점] --> Resources[RTOS 및 command 자원]
+    Main --> Params[StateInitParams]
+    Resources --> Params
+    Params --> StateTask[상태 관리 태스크 초기화]
+    StateTask --> SystemParams[시스템 상태 머신 초기화 인자]
+    StateTask --> TrackParams[트랙 상태 머신 초기화 인자]
+    StateTask --> DisplayParams[디스플레이 상태 머신 초기화 인자]
+    SystemParams --> SystemContext[시스템 전용 context]
+    TrackParams --> TrackContext[트랙 전용 context]
+    DisplayParams --> DisplayContext[디스플레이 전용 context]
+```
 
 ### 3.3 REQ-STATE-003 설계
 
@@ -183,13 +205,27 @@ sequenceDiagram
 | 허용 상태 집합 | 전이 요청의 다음 상태가 유효한지 검사한다. |
 | context 참조 | 상태 머신이 수명 동안 유지할 도메인 데이터를 제공한다. |
 
-### 4.2 책임 분리
+### 4.2 초기화 인자 계층
+
+| 구조 | 포함 내용 | 사용 주체 |
+| --- | --- | --- |
+| `StateInitParams` | `state_event_queue` 같은 태스크 자체의 의존성과 상태 머신별 초기화 인자 | 상태 관리 태스크 초기화 경로 |
+| 상태 머신별 InitParams | 해당 머신이 사용할 queue, semaphore, command port 또는 공유 상태 참조 | 해당 상태 머신 초기화 함수 |
+| 상태 머신 context | 검증을 통과한 의존성 참조와 머신의 mutable 도메인 데이터 | 해당 상태 머신과 상태 생명주기 |
+
+`StateInitParams`와 그 구조체가 참조하는 자원은 태스크 및 상태 머신이 사용하는 동안 유효한 수명을 가져야 한다. 초기화 함수는 지역 변수의 주소를 런타임 context에 보관하지 않고, 필요한 handle과 값을 안전한 수명의 context에 복사한다.
+
+### 4.3 책임 분리
 
 | 책임 | 담당 |
 | --- | --- |
 | queue dequeue와 이벤트 유효성 검사 | 상태 관리 태스크 |
+| RTOS 및 command 자원 생성과 초기화 인자 구성 | `main.c`와 같은 태스크 외부 조립 지점 |
+| 상위 초기화 인자 검증과 상태 머신별 인자 전달 | 상태 관리 태스크 초기화 경로 |
+| 상태 머신별 초기화 인자 검증 | 각 상태 머신 초기화 함수 |
 | 이벤트 분류와 대상 인스턴스 조회 | 상태 관리 태스크와 상태 머신 등록부 |
-| 현재 상태 및 context 소유 | 상태 관리 태스크 |
+| 현재 상태 변경 경로의 직렬화 | 상태 관리 태스크 |
+| context의 도메인 데이터와 의존 자원 사용 | 각 상태 머신 |
 | 현재 상태에서의 이벤트 해석 | 각 상태 구현의 `on_message` |
 | 공통 생명주기 호출과 전이 순서 | 상태 관리 태스크 |
 | 상태 종류, 초기 상태, 허용 전이 정의 | 상태 머신별 아키텍처와 구현 |
@@ -221,6 +257,10 @@ sequenceDiagram
 | `ARCH-STATE-019` | [FEAT-STATE-019.md](../3-Features/ARCH-STATE/FEAT-STATE-019.md) | 상태 처리 결과 검사 |
 | `ARCH-STATE-020` | [FEAT-STATE-020.md](../3-Features/ARCH-STATE/FEAT-STATE-020.md) | 실패 시 canonical state 보존 |
 | `ARCH-STATE-021` | [FEAT-STATE-021.md](../3-Features/ARCH-STATE/FEAT-STATE-021.md) | 상태 오류 판별 정보 생성 |
+| `ARCH-STATE-022` | [FEAT-STATE-022.md](../3-Features/ARCH-STATE/FEAT-STATE-022.md) | 외부 상태 자원 조립 |
+| `ARCH-STATE-023` | [FEAT-STATE-023.md](../3-Features/ARCH-STATE/FEAT-STATE-023.md) | 상태 초기화 인자 구조 정의 |
+| `ARCH-STATE-024` | [FEAT-STATE-024.md](../3-Features/ARCH-STATE/FEAT-STATE-024.md) | 상태 머신별 초기화 인자 전달 |
+| `ARCH-STATE-025` | [FEAT-STATE-025.md](../3-Features/ARCH-STATE/FEAT-STATE-025.md) | 상태 머신 의존성 보관 |
 
 ## 6. 미정 사항
 
@@ -228,6 +268,6 @@ sequenceDiagram
 | --- | --- | --- |
 | 등록부 크기 | 상태 머신 종류와 인스턴스의 최대 개수를 확정해야 한다. | 정적 메모리 크기 |
 | 생명주기 함수 실패 | `on_exit` 또는 `on_enter` 실패 시 상태 참조 유지, 복구, 오류 승격 정책을 정해야 한다. | 전이 일관성과 오류 대응 |
-| 상태 command 전달 | 상태 구현이 command queue에 접근하기 위한 context 또는 처리 결과 구조를 정해야 한다. | 생명주기 인터페이스 인자, command 원자성 |
+| 상태 command 전달 | 각 상태 머신이 초기화 인자로 받을 command queue 또는 port의 구체 타입과 메시지 정책을 정해야 한다. | 상태 머신별 InitParams와 context, command 원자성 |
 | command 전송 실패 | 필수 command 전송 실패 시 상태 유지, rollback, retry 정책을 정해야 한다. | canonical state와 외부 동작의 일관성 |
 | 오류 정보 전달 | 상태 처리 오류를 진단 또는 상위 오류 정책에 전달하는 메시지 형식을 정해야 한다. | 오류 보고 경로 |

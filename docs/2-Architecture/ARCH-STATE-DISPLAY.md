@@ -1,10 +1,13 @@
 ---
 title: 디스플레이 패널 상태 머신 아키텍처
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-18
     version: 0.1.0
     summary: 디스플레이 패널의 초기 상태, 탐색, 하위 진입 및 복귀 전이 설계를 작성함
+  - date: 2026-07-18
+    version: 0.2.0
+    summary: 디스플레이 패널 상태 설계 항목을 단일 기능 명세와 일대일로 연결함
 ---
 
 # 디스플레이 패널 상태 머신 아키텍처
@@ -254,14 +257,31 @@ IFX 및 TFX 직접 진입은 모든 panel state를 출발점으로 가질 수 �
 
 ## 5. 기능 문서 작성 대상
 
-| 기능 문서 | 목적 | 주요 입력 | 주요 출력 |
-| --- | --- | --- | --- |
-| `FEAT-STATE-DISPLAY-001.md` | 패널 상태와 선택 context를 생성하고 `HOME`으로 초기화한다. | display state 등록 정보 | home panel state |
-| `FEAT-STATE-DISPLAY-002.md` | 상위 패널 좌우 탐색표를 적용한다. | current panel, direction | next panel 또는 handled result |
-| `FEAT-STATE-DISPLAY-003.md` | Enter 조작과 선택 context를 하위 패널 전이로 변환한다. | current panel, selected item | child panel |
-| `FEAT-STATE-DISPLAY-004.md` | Exit 조작을 parent panel 복귀로 변환한다. | child panel, Exit event | parent panel |
-| `FEAT-STATE-DISPLAY-005.md` | IFX와 TFX 설정 패널 직접 진입을 처리한다. | FX direct event | FX setting panel |
-| `FEAT-STATE-DISPLAY-006.md` | 전이한 panel state와 context로 render 요청을 생성한다. | panel state, display context | `UI_STATE_RENDER` |
+| 설계 ID | 기능 문서 | 기능 |
+| --- | --- | --- |
+| `ARCH-STATE-DISPLAY-001` | [FEAT-STATE-DISPLAY-001.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-001.md) | 패널 상태 모델 |
+| `ARCH-STATE-DISPLAY-002` | [FEAT-STATE-DISPLAY-002.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-002.md) | 패널 context |
+| `ARCH-STATE-DISPLAY-003` | [FEAT-STATE-DISPLAY-003.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-003.md) | 초기 패널 상태 |
+| `ARCH-STATE-DISPLAY-004` | [FEAT-STATE-DISPLAY-004.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-004.md) | 최초 패널 render |
+| `ARCH-STATE-DISPLAY-005` | [FEAT-STATE-DISPLAY-005.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-005.md) | 상위 패널 순서 |
+| `ARCH-STATE-DISPLAY-006` | [FEAT-STATE-DISPLAY-006.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-006.md) | 좌 조작 전이 |
+| `ARCH-STATE-DISPLAY-007` | [FEAT-STATE-DISPLAY-007.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-007.md) | 우 조작 전이 |
+| `ARCH-STATE-DISPLAY-008` | [FEAT-STATE-DISPLAY-008.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-008.md) | 탐색 경계 |
+| `ARCH-STATE-DISPLAY-009` | [FEAT-STATE-DISPLAY-009.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-009.md) | 상위 패널 render |
+| `ARCH-STATE-DISPLAY-010` | [FEAT-STATE-DISPLAY-010.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-010.md) | Enter 대상 선택 |
+| `ARCH-STATE-DISPLAY-011` | [FEAT-STATE-DISPLAY-011.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-011.md) | 설정 하위 패널 |
+| `ARCH-STATE-DISPLAY-012` | [FEAT-STATE-DISPLAY-012.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-012.md) | FX 하위 패널 |
+| `ARCH-STATE-DISPLAY-013` | [FEAT-STATE-DISPLAY-013.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-013.md) | 트랙 하위 패널 |
+| `ARCH-STATE-DISPLAY-014` | [FEAT-STATE-DISPLAY-014.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-014.md) | 하위 패널 render |
+| `ARCH-STATE-DISPLAY-015` | [FEAT-STATE-DISPLAY-015.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-015.md) | parent panel mapping |
+| `ARCH-STATE-DISPLAY-016` | [FEAT-STATE-DISPLAY-016.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-016.md) | Exit 전이 |
+| `ARCH-STATE-DISPLAY-017` | [FEAT-STATE-DISPLAY-017.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-017.md) | 선택 context 유지 |
+| `ARCH-STATE-DISPLAY-018` | [FEAT-STATE-DISPLAY-018.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-018.md) | 복귀 panel render |
+| `ARCH-STATE-DISPLAY-019` | [FEAT-STATE-DISPLAY-019.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-019.md) | FX 직접 진입 이벤트 |
+| `ARCH-STATE-DISPLAY-020` | [FEAT-STATE-DISPLAY-020.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-020.md) | IFX 직접 전이 |
+| `ARCH-STATE-DISPLAY-021` | [FEAT-STATE-DISPLAY-021.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-021.md) | TFX 직접 전이 |
+| `ARCH-STATE-DISPLAY-022` | [FEAT-STATE-DISPLAY-022.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-022.md) | 직접 진입 parent |
+| `ARCH-STATE-DISPLAY-023` | [FEAT-STATE-DISPLAY-023.md](../3-Features/ARCH-STATE-DISPLAY/FEAT-STATE-DISPLAY-023.md) | 직접 진입 render |
 
 ## 6. 미정 사항
 
