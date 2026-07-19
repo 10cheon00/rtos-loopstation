@@ -45,12 +45,16 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/csrc/u8x8_u8toa.c
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/fonts/u8g2_font_ref4x5_prop_v4_tr.c
 
-    tasks/input/input_config.c
-    tasks/input/input_task.c
-    tasks/display/display_task.c
-    tasks/state/state_task.c
-    drivers/gmg12864_lcd.c
-    drivers/mcp23017.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_config.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/state.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/state_machine.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/display/home_panel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/display/setting_panel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864_lcd.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017.c
 )
 
 target_include_directories(loopstation_app PUBLIC
@@ -61,6 +65,8 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/display/
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
     ${CMAKE_CURRENT_SOURCE_DIR}/
 )

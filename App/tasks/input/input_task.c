@@ -80,6 +80,7 @@ static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     if (taskStatus != TASK_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
+    // TODO:  버튼 입력 이벤트를 debouncing하여 잘못된 입력을 전달하지 않도록 검사하기
 
     taskStatus = InputTask_FindControlButtonId(address, button_id_mask, &control_button_id);
     ControlButtonPayload payload = {
