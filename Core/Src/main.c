@@ -211,10 +211,10 @@ int main(void)
   mcp23017_int_event_queueHandle = osMessageQueueNew (16, sizeof(Mcp23017IntEvent), &mcp23017_int_event_queue_attributes);
 
   /* creation of display_command_queue */
-  display_command_queueHandle = osMessageQueueNew (16, sizeof(ControlButtonPayload), &display_command_queue_attributes);
+  display_command_queueHandle = osMessageQueueNew (16, sizeof(DisplayCommand), &display_command_queue_attributes);
 
   /* creation of state_event_queue */
-  state_event_queueHandle = osMessageQueueNew (16, sizeof(UiStateRenderPayload), &state_event_queue_attributes);
+  state_event_queueHandle = osMessageQueueNew (16, sizeof(StateEvent), &state_event_queue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   input_init_params.mcp23017_int_event_queue = mcp23017_int_event_queueHandle;

@@ -57,9 +57,10 @@ void InputTask_Run(void)
 {
     TaskStatus taskStatus;
     Mcp23017IntEvent intEvent;
-
+    osStatus_t os_status;
     for (;;) {
-        if (osMessageQueueGet(mcp23017_int_event_queue, &intEvent, NULL, osWaitForever) == osOK) {
+        os_status = osMessageQueueGet(mcp23017_int_event_queue, &intEvent, NULL, osWaitForever);
+        if (os_status == osOK) {
             taskStatus = InputTask_HandleMcp23017IntEvent(&intEvent);
         }
     }
@@ -160,7 +161,7 @@ static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mas
 static TaskStatus InputTask_FindControlButtonId(uint8_t address, uint16_t button_id_mask, ControlButtonId* control_button_id) {
     // TODO: uint16_t 타입으로 받은 id 마스크와 MCP23017 종류에 따라 ControlButtonId를 반환
     uint8_t mapping_index = 0;
-    while((button_id_mask & 0x1) == 0) {
+    while(button_id_mask != 0 && (button_id_mask & 0x1) == 0) {
         button_id_mask >>= 1;
         mapping_index++;
     }
