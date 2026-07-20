@@ -1,10 +1,32 @@
 #include "home_panel.h"
+
+#include "FreeRTOS.h"
+
 #include "setting_panel.h"
+#include "display_messages.h"
 #include "display_context.h"
-#include "display_task.h"
+
+#define HOME_PANEL_TIMEOUT_MS 500
+#define HOME_PANEL_TIMEOUT_TICKS (pdMS_TO_TICKS(HOME_PANEL_TIMEOUT_MS))
+
+const State DISPLAY_STATE_HOME_PANEL = {
+    .on_enter = DisplayHomePanel_OnEnter,
+    .on_event = DisplayHomePanel_OnEvent,
+    .on_exit =  DisplayHomePanel_OnExit,
+};
 
 void DisplayHomePanel_OnEnter(void *context) {
     DisplayPanelContext* display_context = context;
+    DisplayCommand command = {
+        .type = DISPLAY_COMMAND_UI_STATE_RENDER,
+        .payload = {
+            .ui_state_render = {
+                .panel_id = 1
+            }
+        }
+    };
+    osMessageQueuePut(display_context->display_command_queue,
+        &command, 0, HOME_PANEL_TIMEOUT_TICKS);
 }
 
 EventHandlingResult DisplayHomePanel_OnEvent(const StateEvent *state_event)
