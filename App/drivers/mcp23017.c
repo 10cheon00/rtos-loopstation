@@ -60,11 +60,21 @@ Mcp23017Status Mcp23017_Init(Mcp23017InitParams *params)
     for (uint8_t i = 0; i < params->device_config_count; i++) {
         const Mcp23017DeviceConfig *info = &params->device_configs[i];
         const uint8_t address = info->address;
-        const uint8_t pin_status = info->pin_status;
+        const uint16_t pin_status = info->pin_status;
+        const uint8_t gpio_a_pin_status = (pin_status >> 8) & 0xFF,
+                      gpio_b_pin_status = pin_status & 0xFF;
         if (HAL_I2C_IsDeviceReady(hi2c, address << 1, 10, MCP23017_TIMEOUT_MS) != HAL_OK) {
             return MCP23017_STATUS_ERROR;
         };
+        status = Mcp23017_WriteRegister(hi2c, address, GPINTENA, 0);
+        if (status == MCP23017_STATUS_ERROR) {
+            return status;
+        }
         status = Mcp23017_WriteRegister(hi2c, address, GPINTENB, 0);
+        if (status == MCP23017_STATUS_ERROR) {
+            return status;
+        }
+        status = Mcp23017_WriteRegister(hi2c, address, IOCONA, IOCON_SETTING);
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
@@ -72,11 +82,23 @@ Mcp23017Status Mcp23017_Init(Mcp23017InitParams *params)
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
-        status = Mcp23017_WriteRegister(hi2c, address, IODIRB, pin_status);
+        status = Mcp23017_WriteRegister(hi2c, address, IODIRA, gpio_a_pin_status);
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
-        status = Mcp23017_WriteRegister(hi2c, address, GPPUB, pin_status);
+        status = Mcp23017_WriteRegister(hi2c, address, IODIRB, gpio_b_pin_status);
+        if (status == MCP23017_STATUS_ERROR) {
+            return status;
+        }
+        status = Mcp23017_WriteRegister(hi2c, address, GPPUA, gpio_a_pin_status);
+        if (status == MCP23017_STATUS_ERROR) {
+            return status;
+        }
+        status = Mcp23017_WriteRegister(hi2c, address, GPPUB, gpio_b_pin_status);
+        if (status == MCP23017_STATUS_ERROR) {
+            return status;
+        }
+        status = Mcp23017_WriteRegister(hi2c, address, INTCONA, INTCON_AGAINST_PREVIOUS_PIN_VALUE);
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
@@ -84,11 +106,19 @@ Mcp23017Status Mcp23017_Init(Mcp23017InitParams *params)
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
+        status = Mcp23017_ReadRegister(hi2c, address, _GPIOA, &dummy);
+        if (status == MCP23017_STATUS_ERROR) {
+            return status;
+        }
         status = Mcp23017_ReadRegister(hi2c, address, _GPIOB, &dummy);
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
-        status = Mcp23017_WriteRegister(hi2c, address, GPINTENB, pin_status);
+        status = Mcp23017_WriteRegister(hi2c, address, GPINTENA, gpio_a_pin_status);
+        if (status == MCP23017_STATUS_ERROR) {
+            return status;
+        }
+        status = Mcp23017_WriteRegister(hi2c, address, GPINTENB, gpio_b_pin_status);
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }

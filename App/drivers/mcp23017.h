@@ -22,7 +22,7 @@ typedef enum {
 typedef struct {
     const uint8_t gpio_pin;
     const uint8_t address;
-    const uint8_t pin_status;
+    const uint16_t pin_status;
 } Mcp23017DeviceConfig;
 
 typedef struct {
