@@ -43,7 +43,12 @@ void InputTask_Init(void *argument)
     Mcp23017InitParams mcp23017InitParams = {.hi2c = params->hi2c,
                                              .device_configs = input_mcp23017_devices,
                                              .device_config_count = input_mcp23017_device_count};
-    Mcp23017_Init(&mcp23017InitParams);
+    Mcp23017Status mcp23017Status = Mcp23017_Init(&mcp23017InitParams);
+    if (mcp23017Status != MCP23017_STATUS_OK) {
+        for (;;) {
+            osDelay(1);
+        }
+    }
     InputTask_Run();
 }
 
@@ -88,7 +93,11 @@ static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
         .state = control_button_state,
         .timestamp_ms = timestamp_tick // TODO: ms를 쓸건지 tick을 쓸건지?
     };
-    osMessageQueuePut(state_event_queue, &payload, 0, INPUT_TASK_TIMEOUT_MS);
+    StateEvent state_event = {
+        .type = STATE_EVENT_CONTROL_BUTTON,
+        .payload = payload
+    };
+    osMessageQueuePut(state_event_queue, &state_event, 0, INPUT_TASK_TIMEOUT_MS);
 
     return TASK_STATUS_OK;
 }
