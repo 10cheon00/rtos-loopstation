@@ -7,7 +7,6 @@
 #include "ui.h"
 
 static u8g2_t u8g2;
-extern const uint8_t u8g2_font_ref4x5_prop_v4_tr[];
 
 static osMessageQueueId_t display_command_queue;
 
@@ -47,7 +46,6 @@ void DisplayTask_Init(void *argument)
             osDelay(1);
         }
     }
-    u8g2_SetFont(&u8g2, u8g2_font_ref4x5_prop_v4_tr);
 
     DisplayTask_Run();
 }
