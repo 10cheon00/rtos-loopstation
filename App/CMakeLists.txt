@@ -48,6 +48,8 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_config.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/uis/ui_home_panel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/uis/ui_setting_panel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/state.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/state_machine.c
@@ -64,6 +66,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/messages
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/uis/
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/display/

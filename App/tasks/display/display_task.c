@@ -1,10 +1,10 @@
 #include "display_task.h"
 
 #include "cmsis_os2.h"
-#include "gmg12864_lcd.h"
 
 #include "display_messages.h"
 #include "display_initparams.h"
+#include "ui.h"
 
 static u8g2_t u8g2;
 extern const uint8_t u8g2_font_ref4x5_prop_v4_tr[];
@@ -47,6 +47,7 @@ void DisplayTask_Init(void *argument)
             osDelay(1);
         }
     }
+    u8g2_SetFont(&u8g2, u8g2_font_ref4x5_prop_v4_tr);
 
     DisplayTask_Run();
 }
@@ -54,22 +55,14 @@ void DisplayTask_Init(void *argument)
 void DisplayTask_Run(void)
 {
     DisplayCommand command;
-    u8g2_SetFont(&u8g2, u8g2_font_ref4x5_prop_v4_tr);
-    u8g2_ClearBuffer(&u8g2);
-    u8g2_DrawStr(&u8g2, 6, 6, "hi666!");
-    u8g2_SendBuffer(&u8g2);
     for (;;) {
         osMessageQueueGet(display_command_queue, &command, NULL, osWaitForever);
         if (command.type == DISPLAY_COMMAND_UI_STATE_RENDER) {
             if (command.payload.ui_state_render.panel_id == 1) {
-                u8g2_ClearBuffer(&u8g2);
-                u8g2_DrawStr(&u8g2, 6, 6, "HOME PANEL");
-                u8g2_SendBuffer(&u8g2);
+                Ui_DrawHomePanel(&u8g2);
             }
             if (command.payload.ui_state_render.panel_id == 2) {
-                u8g2_ClearBuffer(&u8g2);
-                u8g2_DrawStr(&u8g2, 6, 6, "SETTING PANEL");
-                u8g2_SendBuffer(&u8g2);
+                Ui_DrawSettingPanel(&u8g2);
             }
         }
     }
