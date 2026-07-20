@@ -9,6 +9,7 @@
 #include "mcp23017.h"
 
 #define INPUT_TASK_TIMEOUT_MS 500
+#define INPUT_TASK_TIMEOUT_TICKS (pdMS_TO_TICKS(INPUT_TASK_TIMEOUT_MS))
 
 static osMessageQueueId_t mcp23017_int_event_queue;
 static osMessageQueueId_t state_event_queue;
@@ -97,7 +98,7 @@ static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
         .type = STATE_EVENT_CONTROL_BUTTON,
         .payload = payload
     };
-    osMessageQueuePut(state_event_queue, &state_event, 0, INPUT_TASK_TIMEOUT_MS);
+    osMessageQueuePut(state_event_queue, &state_event, 0, INPUT_TASK_TIMEOUT_TICKS);
 
     return TASK_STATUS_OK;
 }
