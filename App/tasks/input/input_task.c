@@ -97,7 +97,9 @@ static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     };
     StateEvent state_event = {
         .type = STATE_EVENT_CONTROL_BUTTON,
-        .payload = payload
+        .payload = {
+            .control_button = payload
+        }
     };
     osMessageQueuePut(state_event_queue, &state_event, 0, INPUT_TASK_TIMEOUT_TICKS);
 
