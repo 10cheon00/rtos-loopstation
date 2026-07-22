@@ -17,6 +17,7 @@ static DisplayPanelContext display_panel_context;
 static StateMachine display_state_machine;
 
 static TaskStatus StateTask_DispatchStateEvent(const StateEvent *state_event);
+static TaskStatus StateTask_HandleStateEvent(StateMachine *state_machine, StateEvent *state_event);
 
 static int StateTask_IsValidInitParams(const StateInitParams *params)
 {
@@ -71,21 +72,35 @@ void StateTask_Run(void)
 static TaskStatus StateTask_DispatchStateEvent(const StateEvent *state_event)
 {
     EventHandlingResult result;
+    TaskStatus task_status;
 
     switch (state_event->type) {
     case STATE_EVENT_CONTROL_BUTTON:
         if (state_event->payload.control_button.state == CONTROL_BUTTON_STATE_RELEASED) {
-            result = display_state_machine.current_state->on_event(state_event);
+            task_status = StateTask_HandleEvent(&display_state_machine, state_event);
         }
         break;
     default:
         break;
     }
 
-    if (result.status == EVENT_HANDLING_STATUS_TRANSITION) {
-        StateTransition transition = {.cause_event = state_event, .to = result.next_state, .context = &display_panel_context};
-        StateMachine_DoTransition(&display_state_machine, &transition);
+    if (task_status == TASK_STATUS_ERROR) {
+        return TASK_STATUS_ERROR;
     }
 
+    return TASK_STATUS_OK;
+}
+
+static TaskStatus StateTask_HandleStateEvent(StateMachine *state_machine, StateEvent *state_event)
+{
+    EventHandlingResult result = state_machine->current_state->on_event(state_event);
+
+    if (result.status == EVENT_HANDLING_STATUS_TRANSITION) {
+        StateTransition transition = {
+            .cause_event = state_event, .to = result.next_state, .context = state_machine->context};
+        StateMachine_DoTransition(state_machine, &transition);
+    } else if (result.status == EVENT_HANDLING_STATUS_ERROR) {
+        return TASK_STATUS_ERROR;
+    }
     return TASK_STATUS_OK;
 }
