@@ -1,6 +1,6 @@
 ---
 title: MCP23017 INT ISR event 기록
-version: 0.3.0
+version: 0.3.1
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -14,6 +14,9 @@ change_history:
   - date: 2026-07-17
     version: 0.3.0
     summary: 현재 ISR event 형식과 구현 및 검증 완료 상태를 반영함
+  - date: 2026-07-23
+    version: 0.3.1
+    summary: 문서 변경 사항 반영
 ---
 
 # MCP23017 INT ISR event 기록
@@ -64,7 +67,7 @@ ISR에서는 I2C read를 수행하지 않고, 사용자 컨트롤 처리 태스�
 | --- | --- |
 | ISR 작업량 | MCP23017 INT source 식별, timestamp 기록, queue 전송만 수행한다. |
 | 금지 작업 | ISR에서 I2C read, debounce, 버튼 의미 해석, display/audio command 생성을 수행하지 않는다. |
-| queue 전송 | ISR-safe queue API로 `mcp23017_int_event_queue`에 event를 기록한다. |
+| queue 전송 | ISR-safe queue API로 `input_event_queue`에 event를 기록한다. |
 | task wakeup | queue 전송 후 사용자 컨트롤 처리 태스크를 깨울 수 있는 RTOS 메커니즘을 사용한다. |
 | 오류 처리 | queue 전송 실패는 ISR-safe 방식으로 오류 counter에 기록한다. |
 

@@ -87,10 +87,10 @@ const osThreadAttr_t stateTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for mcp23017_int_event_queue */
-osMessageQueueId_t mcp23017_int_event_queueHandle;
-const osMessageQueueAttr_t mcp23017_int_event_queue_attributes = {
-  .name = "mcp23017_int_event_queue"
+/* Definitions for input_event_queue */
+osMessageQueueId_t input_event_queueHandle;
+const osMessageQueueAttr_t input_event_queue_attributes = {
+  .name = "input_event_queue"
 };
 /* Definitions for display_command_queue */
 osMessageQueueId_t display_command_queueHandle;
@@ -131,12 +131,36 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     // 이 함수는 전역 콜백 함수 이므로, 여기서는 애플리케이션에게 
     //  처리를 위임하는 코드만 둔다.
-    Mcp23017IntEvent event = {
-        .timestamp_tick = osKernelGetTickCount(),
-        .gpio_pin = GPIO_Pin
+    InputEvent input_event = {
+        .type = INPUT_EVENT_MCP23017,
+        .payload = {
+            .mcp23017_int_event = {
+                .timestamp_tick = osKernelGetTickCount(),
+                .gpio_pin = GPIO_Pin
+            }
+        }  
     };
-    osMessageQueuePut(mcp23017_int_event_queueHandle, &event, 0, 0);   
+    osMessageQueuePut(input_event_queueHandle, &input_event, 0, 0);   
 }
+
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+    // 이 함수는 전역 콜백 함수 이므로, 여기서는 애플리케이션에게 
+    //  처리를 위임하는 코드만 둔다.
+    if (htim->Instance == TIM4) {
+        InputEvent input_event = {
+            .type = INPUT_EVENT_ENCODER_ROTATION,
+            .payload = {
+                .encoder_rotation_event = {
+                    .timestamp_tick = osKernelGetTickCount(),
+                    .encoder_counter = htim->Instance->CNT
+                }
+            }
+        };
+        osMessageQueuePut(input_event_queueHandle, &input_event, 0, 0);   
+    }
+}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -188,7 +212,7 @@ int main(void)
   MX_ADC1_Init();
   MX_SAI1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_Encoder_Start_IT(&htim4, htim4.Channel);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -207,8 +231,8 @@ int main(void)
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
-  /* creation of mcp23017_int_event_queue */
-  mcp23017_int_event_queueHandle = osMessageQueueNew (16, sizeof(Mcp23017IntEvent), &mcp23017_int_event_queue_attributes);
+  /* creation of input_event_queue */
+  input_event_queueHandle = osMessageQueueNew (16, sizeof(InputEvent), &input_event_queue_attributes);
 
   /* creation of display_command_queue */
   display_command_queueHandle = osMessageQueueNew (16, sizeof(DisplayCommand), &display_command_queue_attributes);
@@ -217,7 +241,7 @@ int main(void)
   state_event_queueHandle = osMessageQueueNew (16, sizeof(StateEvent), &state_event_queue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  input_init_params.mcp23017_int_event_queue = mcp23017_int_event_queueHandle;
+  input_init_params.input_event_queue = input_event_queueHandle;
   input_init_params.state_event_queue = state_event_queueHandle;
   input_init_params.hi2c = &hi2c1;
 

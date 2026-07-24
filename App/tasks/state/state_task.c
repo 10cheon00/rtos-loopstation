@@ -78,6 +78,9 @@ static TaskStatus StateTask_DispatchStateEvent(const StateEvent *state_event)
             result = display_state_machine.current_state->on_event(state_event);
         }
         break;
+    case STATE_EVENT_ENCODER_ROTATION:
+        // TODO: 디스플레이 상태 머신 내에서 커서 위치를 기억해야한다. 
+        //  엔코더 입력 시 커서를 움직일 수 있게 한다.
     default:
         break;
     }

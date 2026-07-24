@@ -11,20 +11,25 @@
 #define INPUT_TASK_TIMEOUT_MS 500
 #define INPUT_TASK_TIMEOUT_TICKS (pdMS_TO_TICKS(INPUT_TASK_TIMEOUT_MS))
 
-static osMessageQueueId_t mcp23017_int_event_queue;
+static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;
 static I2C_HandleTypeDef *hi2c;
 
+static TaskStatus InputTask_HandleInputEvent(InputEvent *input_event);
 static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent);
 static TaskStatus InputTask_FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address);
 static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mask,
                                         ControlButtonState *button_state);
-static TaskStatus InputTask_FindControlButtonId(uint8_t address, uint16_t button_id_mask, ControlButtonId* control_button_id);
+static TaskStatus InputTask_FindControlButtonId(uint8_t address, uint16_t button_id_mask,
+                                                ControlButtonId *control_button_id);
+static TaskStatus InputTask_HandleEncoderRotationEvent(EncoderRotationEvent* encoder_rotation_event);
+
+static InputTaskContext input_task_context;
 
 static int InputTask_IsValidInitParams(const InputInitParams *params)
 {
-    return (params != 0) && (params->mcp23017_int_event_queue != 0 &&
-                             params->state_event_queue != 0 && params->hi2c != NULL);
+    return (params != 0) && (params->input_event_queue != 0 && params->state_event_queue != 0 &&
+                             params->hi2c != NULL);
 }
 
 void InputTask_Init(void *argument)
@@ -37,7 +42,7 @@ void InputTask_Init(void *argument)
         }
     }
 
-    mcp23017_int_event_queue = params->mcp23017_int_event_queue;
+    input_event_queue = params->input_event_queue;
     state_event_queue = params->state_event_queue;
     hi2c = params->hi2c;
 
@@ -50,20 +55,35 @@ void InputTask_Init(void *argument)
             osDelay(1);
         }
     }
+
+    input_task_context.previous_encoder_counter = 0;
+
     InputTask_Run();
 }
 
 void InputTask_Run(void)
 {
-    TaskStatus taskStatus;
-    Mcp23017IntEvent intEvent;
+    TaskStatus task_status;
+    InputEvent input_event;
     osStatus_t os_status;
     for (;;) {
-        os_status = osMessageQueueGet(mcp23017_int_event_queue, &intEvent, NULL, osWaitForever);
+        os_status = osMessageQueueGet(input_event_queue, &input_event, NULL, osWaitForever);
         if (os_status == osOK) {
-            taskStatus = InputTask_HandleMcp23017IntEvent(&intEvent);
+            task_status = InputTask_HandleInputEvent(&input_event);
         }
     }
+}
+
+static TaskStatus InputTask_HandleInputEvent(InputEvent *input_event)
+{
+    // TODO: 현재는 버튼 입력만 받도록 구현되어 있으므로,
+    //  엔코더 입력이나 포텐셔미터 입력 들을 받을 수 있도록 변경해야한다.
+    if (input_event->type == INPUT_EVENT_MCP23017) {
+        return InputTask_HandleMcp23017IntEvent(&input_event->payload.mcp23017_int_event);
+    } else if (input_event->type == INPUT_EVENT_ENCODER_ROTATION) {
+        return InputTask_HandleEncoderRotationEvent(&input_event->payload.encoder_rotation_event);
+    }
+    return TASK_STATUS_OK;
 }
 
 // 인터럽트가 발생한 핀을 확인하고 핀 상태를 얻어낸다.
@@ -95,12 +115,8 @@ static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
         .state = control_button_state,
         .timestamp_ms = timestamp_tick // TODO: ms를 쓸건지 tick을 쓸건지?
     };
-    StateEvent state_event = {
-        .type = STATE_EVENT_CONTROL_BUTTON,
-        .payload = {
-            .control_button = payload
-        }
-    };
+    StateEvent state_event = {.type = STATE_EVENT_CONTROL_BUTTON,
+                              .payload = {.control_button = payload}};
     osMessageQueuePut(state_event_queue, &state_event, 0, INPUT_TASK_TIMEOUT_TICKS);
 
     return TASK_STATUS_OK;
@@ -160,10 +176,12 @@ static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mas
     return TASK_STATUS_OK;
 }
 
-static TaskStatus InputTask_FindControlButtonId(uint8_t address, uint16_t button_id_mask, ControlButtonId* control_button_id) {
+static TaskStatus InputTask_FindControlButtonId(uint8_t address, uint16_t button_id_mask,
+                                                ControlButtonId *control_button_id)
+{
     // TODO: uint16_t 타입으로 받은 id 마스크와 MCP23017 종류에 따라 ControlButtonId를 반환
     uint8_t mapping_index = 0;
-    while(button_id_mask != 0 && (button_id_mask & 0x1) == 0) {
+    while (button_id_mask != 0 && (button_id_mask & 0x1) == 0) {
         button_id_mask >>= 1;
         mapping_index++;
     }
@@ -174,4 +192,29 @@ static TaskStatus InputTask_FindControlButtonId(uint8_t address, uint16_t button
         }
     }
     return TASK_STATUS_ERROR;
+}
+
+static TaskStatus InputTask_HandleEncoderRotationEvent(EncoderRotationEvent* encoder_rotation_event) {
+    uint16_t current = encoder_rotation_event->encoder_counter;
+    uint16_t previous = input_task_context.previous_encoder_counter;
+    uint16_t unsigned_delta = (uint16_t)(current - previous);
+    int32_t delta = (int32_t)unsigned_delta;
+    if (unsigned_delta > INT16_MAX) {
+        delta = (int32_t)unsigned_delta - 65536;
+    }
+    
+    StateEvent state_event = {
+        .type = STATE_EVENT_ENCODER_ROTATION,
+        .payload = {
+            .encoder_rotation = {
+                .delta = delta,
+                .encoder_id = encoder_rotation_event->encoder_id,
+                .timestamp_ms = encoder_rotation_event->timestamp_tick,
+            }
+        }
+    };
+    input_task_context.previous_encoder_counter = encoder_rotation_event->encoder_counter;
+    osMessageQueuePut(state_event_queue, &state_event, 0, INPUT_TASK_TIMEOUT_TICKS);
+    
+    return TASK_STATUS_OK;
 }

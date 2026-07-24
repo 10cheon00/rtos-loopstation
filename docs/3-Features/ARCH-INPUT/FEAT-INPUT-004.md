@@ -1,6 +1,6 @@
 ---
 title: MCP23017 버튼 상태 읽기
-version: 0.3.0
+version: 0.3.1
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -11,6 +11,9 @@ change_history:
   - date: 2026-07-17
     version: 0.3.0
     summary: MCP23017 상태 읽기의 구현 및 검증 상태를 추가함
+  - date: 2026-07-23
+    version: 0.3.1
+    summary: 문서 변경 사항 반영
 ---
 
 # MCP23017 버튼 상태 읽기
@@ -22,7 +25,7 @@ change_history:
 | 기능 ID | `FEAT-INPUT-004` |
 | 상위 설계 문서 | `ARCH-INPUT.md` |
 | 관련 설계 항목 | `ARCH-INPUT-002`, `ARCH-INPUT-035` |
-| 주요 목적 | `mcp23017_int_event_queue`에 쌓인 interrupt event를 읽고 I2C로 MCP23017 버튼 상태를 확인한다. |
+| 주요 목적 | `input_event_queue`에 쌓인 interrupt event를 읽고 I2C로 MCP23017 버튼 상태를 확인한다. |
 | 제외 범위 | ISR 처리, debounce 판정, 상태 관리 구조 전송, 버튼 의미 해석 |
 
 ## 2. 연결된 상위 설계 항목
@@ -41,7 +44,7 @@ change_history:
 
 | 입력 | 설명 |
 | --- | --- |
-| `mcp23017_int_event_queue` | ISR이 기록한 MCP23017 interrupt event queue |
+| `input_event_queue` | ISR이 기록한 MCP23017 interrupt event queue |
 | MCP23017 interrupt registers | I2C로 읽은 `INTF`, `INTCAP`, `GPIO` 값 |
 
 ## 5. 출력

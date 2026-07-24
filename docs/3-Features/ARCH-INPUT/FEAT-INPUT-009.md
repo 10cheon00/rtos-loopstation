@@ -1,6 +1,6 @@
 ---
 title: 버튼 입력 오류 및 overflow 기록
-version: 0.3.0
+version: 0.3.1
 change_history:
   - date: 2026-07-12
     version: 0.1.0
@@ -14,6 +14,9 @@ change_history:
   - date: 2026-07-17
     version: 0.3.0
     summary: 버튼 입력 오류 및 overflow 기록의 미구현 상태를 기록함
+  - date: 2026-07-23
+    version: 0.3.1
+    summary: 문서 변경 사항 반영
 ---
 
 # 버튼 입력 오류 및 overflow 기록
@@ -45,7 +48,7 @@ change_history:
 | 입력 | 설명 |
 | --- | --- |
 | unknown pin bit | source 식별 테이블에 없는 MCP23017 pin bit |
-| ISR queue overflow | `mcp23017_int_event_queue`에 event를 넣지 못한 상황 |
+| ISR queue overflow | `input_event_queue`에 event를 넣지 못한 상황 |
 | I2C read failure | MCP23017 상태 레지스터를 읽지 못한 상황 |
 | state queue send failure | `CONTROL_BUTTON`을 상태 관리 구조로 보내지 못한 상황 |
 
