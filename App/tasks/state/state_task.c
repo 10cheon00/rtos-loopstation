@@ -6,15 +6,15 @@
 #include "state_messages.h"
 #include "state_initparams.h"
 #include "state_machine.h"
-#include "home_panel.h"
-#include "setting_panel.h"
-#include "display_context.h"
+#include "ui_state_home_panel.h"
+#include "ui_state_setting_panel.h"
+#include "ui_state_context.h"
 
 static osMessageQueueId_t state_event_queue = 0;
 static osMessageQueueId_t display_command_queue = 0;
 
-static DisplayPanelContext display_panel_context;
-static StateMachine display_state_machine;
+static RendererContext renderer_context;
+static StateMachine ui_state_machine;
 
 static TaskStatus StateTask_DispatchStateEvent(const StateEvent *state_event);
 
@@ -37,10 +37,10 @@ void StateTask_Init(void *argument)
     state_event_queue = params->state_event_queue;
     display_command_queue = params->display_command_queue;
 
-    display_panel_context.display_command_queue = display_command_queue;
-    display_state_machine.context =
-        &(DisplayPanelContext){.display_command_queue = display_command_queue};
-    display_state_machine.current_state = &DISPLAY_STATE_HOME_PANEL;
+    renderer_context.display_command_queue = display_command_queue;
+    ui_state_machine.context =
+        &(RendererContext){.display_command_queue = display_command_queue};
+    ui_state_machine.current_state = &UI_STATE_HOME_PANEL;
 
     StateTask_Run();
 }
@@ -51,7 +51,7 @@ void StateTask_Run(void)
     TaskStatus task_status;
     osStatus_t os_status;
 
-    display_state_machine.current_state->on_enter(&display_panel_context);
+    ui_state_machine.current_state->on_enter(NULL);
 
     for (;;) {
         os_status = osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
@@ -63,6 +63,7 @@ void StateTask_Run(void)
             task_status = StateTask_DispatchStateEvent(&state_event);
 
             if (task_status != TASK_STATUS_OK) {
+                // TODO: 변경된 값에 따라 렌더링하기
             }
         }
     }
@@ -75,19 +76,21 @@ static TaskStatus StateTask_DispatchStateEvent(const StateEvent *state_event)
     switch (state_event->type) {
     case STATE_EVENT_CONTROL_BUTTON:
         if (state_event->payload.control_button.state == CONTROL_BUTTON_STATE_RELEASED) {
-            result = display_state_machine.current_state->on_event(state_event);
+            result = ui_state_machine.current_state->on_event(state_event);
         }
         break;
     case STATE_EVENT_ENCODER_ROTATION:
         // TODO: 디스플레이 상태 머신 내에서 커서 위치를 기억해야한다. 
         //  엔코더 입력 시 커서를 움직일 수 있게 한다.
+        result = ui_state_machine.current_state->on_event(state_event);
+        break;
     default:
         break;
     }
 
     if (result.status == EVENT_HANDLING_STATUS_TRANSITION) {
-        StateTransition transition = {.cause_event = state_event, .to = result.next_state, .context = &display_panel_context};
-        StateMachine_DoTransition(&display_state_machine, &transition);
+        StateTransition transition = {.cause_event = state_event, .to = result.next_state, .context = &renderer_context};
+        StateMachine_DoTransition(&ui_state_machine, &transition);
     }
 
     return TASK_STATUS_OK;

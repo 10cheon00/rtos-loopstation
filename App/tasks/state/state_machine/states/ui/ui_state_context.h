@@ -5,6 +5,6 @@
 
 typedef struct {
     osMessageQueueId_t display_command_queue;
-} DisplayPanelContext;
+} RendererContext;
 
 #endif
