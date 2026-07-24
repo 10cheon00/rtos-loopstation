@@ -27,6 +27,7 @@ struct State {
     OnEventFunction on_event;
     OnExitFunction on_exit;
     void *context;
+    const uint16_t id; // TODO: enum으로 나타낸 상태 ID를 uint16_t로 취급해도 되는지 결정하기
 };
 
 #endif
