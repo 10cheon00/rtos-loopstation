@@ -76,8 +76,6 @@ void InputTask_Run(void)
 
 static TaskStatus InputTask_HandleInputEvent(InputEvent *input_event)
 {
-    // TODO: 현재는 버튼 입력만 받도록 구현되어 있으므로,
-    //  엔코더 입력이나 포텐셔미터 입력 들을 받을 수 있도록 변경해야한다.
     if (input_event->type == INPUT_EVENT_MCP23017) {
         return InputTask_HandleMcp23017IntEvent(&input_event->payload.mcp23017_int_event);
     } else if (input_event->type == INPUT_EVENT_ENCODER_ROTATION) {
@@ -140,7 +138,6 @@ static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mas
 {
     Mcp23017Status status;
 
-    // TODO: i2c 통신으로 핀 상태 조회하기
     uint8_t flag_a, flag_b;
     uint8_t capture_a, capture_b;
     status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTFA, &flag_a);
@@ -179,7 +176,6 @@ static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mas
 static TaskStatus InputTask_FindControlButtonId(uint8_t address, uint16_t button_id_mask,
                                                 ControlButtonId *control_button_id)
 {
-    // TODO: uint16_t 타입으로 받은 id 마스크와 MCP23017 종류에 따라 ControlButtonId를 반환
     uint8_t mapping_index = 0;
     while (button_id_mask != 0 && (button_id_mask & 0x1) == 0) {
         button_id_mask >>= 1;
@@ -202,7 +198,7 @@ static TaskStatus InputTask_HandleEncoderRotationEvent(EncoderRotationEvent* enc
     if (unsigned_delta > INT16_MAX) {
         delta = (int32_t)unsigned_delta - 65536;
     }
-    
+
     StateEvent state_event = {
         .type = STATE_EVENT_ENCODER_ROTATION,
         .payload = {
