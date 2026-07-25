@@ -111,7 +111,7 @@ StateTask_HandleStateEvent(const StateEvent *state_event,
 
         // 좌우 버튼은 무조건 패널 전환에 쓰이므로 바로 UI 상태 머신에 전달한다.
         // TODO:
-        // 좌우 버튼이 아니면 버튼 입력에 대한 처리를 하지 않는가?
+        // 좌우 버튼이 아닌 다른 버튼을 눌렀을 때는 파라미터 값 변경이 일어나지 않는가?
         if (state_event->payload.control_button.state == CONTROL_BUTTON_STATE_RELEASED) {
             *state_on_event_handling_result = ui_state_machine.current_state->on_event(state_event);
             if (state_on_event_handling_result->flag == STATE_ON_EVENT_HANDLING_FLAG_TRANSITION) {
