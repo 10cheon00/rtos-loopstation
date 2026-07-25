@@ -1,9 +1,12 @@
 #include "input_config.h"
 
+#define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))
+
 const Mcp23017DeviceConfig input_mcp23017_devices[] = {
     {.gpio_pin = GPIO_PIN_0, .address = 0x24, .pin_status = 0xFFDF},
     {.gpio_pin = GPIO_PIN_1, .address = 0x25, .pin_status = 0xFFFF}};
-const uint8_t input_mcp23017_device_count = 2;
+const uint8_t input_mcp23017_device_count = ARRAY_COUNT(input_mcp23017_devices);
+
 const InputButtonMapping input_button_mappings[] = {
     {
         .slave_address = 0x24,
@@ -48,4 +51,4 @@ const InputButtonMapping input_button_mappings[] = {
         }
     }
 };
-const uint8_t input_button_mapping_count = 2;
+const uint8_t input_button_mapping_count = ARRAY_COUNT(input_button_mappings);
