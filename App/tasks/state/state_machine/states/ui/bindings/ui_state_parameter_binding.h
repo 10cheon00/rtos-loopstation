@@ -9,7 +9,7 @@
 
 typedef struct {
     UiPanelId ui_panel_id;
-    ParameterId parameter_id;
+    ParameterId parameter_id[4]; // 한 패널에서 최대 4개의 파라미터를 설정 가능함
 } UiPanelParameterBinding;
 
 extern const UiPanelParameterBinding ui_panel_parameter_binding[];
