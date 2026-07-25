@@ -241,3 +241,12 @@ static TaskStatus StateTask_RequestRendering(StateOnEventResultFlags *state_on_e
     }
     return TASK_STATUS_OK;
 }
+
+static void StateTask_GetCurrentUiPanelParameters(Parameter *parameters)
+{
+    UiPanelParameterBinding *bindings = StateTask_GetCurrentUiPanelParameterBindings();
+    for (uint8_t i = 0; i < UI_PANEL_MAX_PARAMETER_COUNT; i++) {
+        parameters[i] =
+            s_loopstation_parameter_store->parameters[bindings->parameter_ids[i]];
+    }
+}
