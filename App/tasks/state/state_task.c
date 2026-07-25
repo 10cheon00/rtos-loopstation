@@ -208,7 +208,7 @@ static StateOnEventResultFlags StateTask_ModifyParametersByEncoder(const StateEv
     }
     value = scale * state_event->payload.encoder_rotation.delta;
 
-    parameter_store_index = binding->parameter_id[parameter_index];
+    parameter_store_index = binding->parameter_ids[parameter_index];
     parameter = &s_loopstation_parameter_store->parameters[parameter_store_index];
     Parameter_AddValue(parameter, value);
 
