@@ -12,7 +12,7 @@ typedef enum {
 
 typedef struct {
   UiPanelId panel_id;
-  Parameter_t parameter[4];
+  Parameter parameter[4];
 } UiStateRenderPayload;
 
 typedef struct {

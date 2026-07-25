@@ -29,8 +29,9 @@ static const State *StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id)
 static StateOnEventResultFlags StateTask_ModifyParameters(const StateEvent *state_event);
 static StateOnEventResultFlags StateTask_ModifyParametersByEncoder(const StateEvent *state_event,
                                                                    uint8_t parameter_index);
-static UiPanelParameterBinding *StateTask_GetCurrentUiPanelParameters();
+static UiPanelParameterBinding *StateTask_GetCurrentUiPanelParameterBindings();
 static TaskStatus StateTask_RequestRendering(StateOnEventResultFlags *state_on_event_result_flags);
+static void StateTask_GetCurrentUiPanelParameters(Parameter *parameters);
 
 static int StateTask_IsValidInitParams(const StateInitParams *params)
 {
@@ -189,7 +190,7 @@ static StateOnEventResultFlags StateTask_ModifyParameters(const StateEvent *stat
 static StateOnEventResultFlags StateTask_ModifyParametersByEncoder(const StateEvent *state_event,
                                                                    uint8_t parameter_index)
 {
-    UiPanelParameterBinding *binding;
+    UiPanelParameterBinding *bindings;
     Parameter_t value, scale = 1;
     ParameterId parameter_store_index;
     Parameter *parameter;
@@ -198,8 +199,8 @@ static StateOnEventResultFlags StateTask_ModifyParametersByEncoder(const StateEv
         return STATE_ON_EVENT_HANDLING_FLAG_ERROR;
     }
 
-    binding = StateTask_GetCurrentUiPanelParameters();
-    if (binding->ui_panel_id == UI_PANEL_ID_NONE) {
+    bindings = StateTask_GetCurrentUiPanelParameterBindings();
+    if (bindings->ui_panel_id == UI_PANEL_ID_NONE) {
         return STATE_ON_EVENT_HANDLING_FLAG_ERROR;
     }
 
@@ -208,14 +209,14 @@ static StateOnEventResultFlags StateTask_ModifyParametersByEncoder(const StateEv
     }
     value = scale * state_event->payload.encoder_rotation.delta;
 
-    parameter_store_index = binding->parameter_ids[parameter_index];
+    parameter_store_index = bindings->parameter_ids[parameter_index];
     parameter = &s_loopstation_parameter_store->parameters[parameter_store_index];
     Parameter_AddValue(parameter, value);
 
     return STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED;
 }
 
-static UiPanelParameterBinding *StateTask_GetCurrentUiPanelParameters()
+static UiPanelParameterBinding *StateTask_GetCurrentUiPanelParameterBindings()
 {
     UiPanelId ui_panel_id = ui_state_machine.current_state->id;
 
@@ -231,9 +232,13 @@ static UiPanelParameterBinding *StateTask_GetCurrentUiPanelParameters()
 static TaskStatus StateTask_RequestRendering(StateOnEventResultFlags *state_on_event_result_flags)
 {
     osStatus_t os_status;
+
     DisplayCommand command = {
         .type = DISPLAY_COMMAND_UI_STATE_RENDER,
         .payload = {.ui_state_render = {.panel_id = ui_state_machine.current_state->id}}};
+    Parameter *parameters = command.payload.ui_state_render.parameter;
+    StateTask_GetCurrentUiPanelParameters(parameters);
+
     os_status =
         osMessageQueuePut(display_command_queue, &command, 0, STATE_TASK_TIMEOUT_500MS_TO_TICK);
     if (os_status != osOK) {
