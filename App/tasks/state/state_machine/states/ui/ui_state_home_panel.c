@@ -6,32 +6,25 @@
 const State UI_STATE_HOME_PANEL = {
     .on_enter = UiStateHomePanel_OnEnter,
     .on_event = UiStateHomePanel_OnEvent,
-    .on_exit =  UiStateHomePanel_OnExit,
+    .on_exit = UiStateHomePanel_OnExit,
     .id = UI_PANEL_ID_HOME,
 };
 
-void UiStateHomePanel_OnEnter(void *context) {
-}
+void UiStateHomePanel_OnEnter(void *context) {}
 
-StateOnEventHandlingResult UiStateHomePanel_OnEvent(const StateEvent *state_event)
+StateOnEventResultFlags UiStateHomePanel_OnEvent(const StateEvent *state_event,
+                                                 State *next_state)
 {
     if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
         ControlButtonPayload button_payload = state_event->payload.control_button;
         if (button_payload.id == CONTROL_BUTTON_ID_LEFT) {
             // 실제 트랜지션은 상태 관리 태스크에서 수행하기
-            return (StateOnEventHandlingResult) {
-                .next_state = &UI_STATE_SETTING_PANEL,
-                .flag = STATE_ON_EVENT_HANDLING_FLAG_TRANSITION
-            };
+            *next_state = UI_STATE_SETTING_PANEL;
+            return STATE_ON_EVENT_HANDLING_FLAG_TRANSITION;
         }
     }
 
-    return (StateOnEventHandlingResult){
-        .next_state = 0,
-        .flag = STATE_ON_EVENT_HANDLING_FLAG_IGNORED
-    };
+    return STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
 }
 
-void UiStateHomePanel_OnExit(void) {
-
-}
+void UiStateHomePanel_OnExit(void) {}

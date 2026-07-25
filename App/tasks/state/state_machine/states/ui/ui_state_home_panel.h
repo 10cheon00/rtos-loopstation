@@ -4,7 +4,8 @@
 #include "state.h"
 
 void UiStateHomePanel_OnEnter(void *context);
-StateOnEventHandlingResult UiStateHomePanel_OnEvent(const StateEvent *state_event);
+StateOnEventResultFlags UiStateHomePanel_OnEvent(const StateEvent *state_event,
+                                                 State *next_state);
 void UiStateHomePanel_OnExit(void);
 
 extern const State UI_STATE_HOME_PANEL;

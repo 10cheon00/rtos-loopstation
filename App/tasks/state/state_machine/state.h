@@ -5,7 +5,7 @@
 
 typedef struct State State;
 
-typedef uint32_t StateOnEventHandlingFlag;
+typedef uint32_t StateOnEventResultFlags;
 
 #define STATE_ON_EVENT_HANDLING_FLAG_ERROR (0x0)
 #define STATE_ON_EVENT_HANDLING_FLAG_REJECTED (0x1)
@@ -13,14 +13,9 @@ typedef uint32_t StateOnEventHandlingFlag;
 #define STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED (0x4)
 #define STATE_ON_EVENT_HANDLING_FLAG_TRANSITION (0x8)
 
-typedef struct {
-    const State *next_state;
-    StateOnEventHandlingFlag flag;
-} StateOnEventHandlingResult;
-
-typedef void(*StateOnEnterFunction)(void* context);
-typedef StateOnEventHandlingResult(*StateOnEventFunction)(const StateEvent* event);
-typedef void(*StateOnExitFunction)(void);
+typedef void (*StateOnEnterFunction)(void *context);
+typedef StateOnEventResultFlags (*StateOnEventFunction)(const StateEvent *event, State *next_state);
+typedef void (*StateOnExitFunction)(void);
 
 struct State {
     StateOnEnterFunction on_enter;
