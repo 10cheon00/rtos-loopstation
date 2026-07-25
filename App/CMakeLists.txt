@@ -49,15 +49,20 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_config.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.c
+
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/uis/ui.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/uis/ui_home_panel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/uis/ui_setting_panel.c
+
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/state.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/state_machine.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/ui/bindings/ui_state_parameter_binding.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/ui/ui_state_home_panel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/ui/ui_state_setting_panel.c
+
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864_lcd.c
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017.c
 )
@@ -71,8 +76,10 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/uis/
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/ui/
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/ui/bindings
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
     ${CMAKE_CURRENT_SOURCE_DIR}/
 )
