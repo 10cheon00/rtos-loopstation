@@ -25,7 +25,8 @@ static StateMachine ui_state_machine;
 
 static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags);
-static const State* StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id);
+void StateTask_UpdateSnapshot(const StateEvent *state_event);
+static const State *StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id);
 static TaskStatus StateTask_ModifyParameters(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags);
 static TaskStatus
@@ -99,13 +100,13 @@ static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags)
 {
     UiPanelId ui_panel_id;
-    const State* next_state;
+    const State *next_state;
 
     switch (state_event->type) {
     case STATE_EVENT_CONTROL_BUTTON:
         // TODO:
-        // 버튼 스냅샷을 업데이트하는 코드를 추가해야 한다.
         // 그리고 코드가 너무 길어보이는데 리팩토링하기
+        StateTask_UpdateSnapshot(state_event);
 
         // 좌우 버튼은 무조건 패널 전환에 쓰이므로 바로 UI 상태 머신에 전달한다.
         // TODO:
@@ -118,9 +119,8 @@ static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
                 if (next_state != 0) {
                     // TODO:
                     // UiStateMachine에서 renderer_context를 제거하기
-                    StateTransition transition = {.cause_event = state_event,
-                                                  .to = next_state,
-                                                  .context = &renderer_context};
+                    StateTransition transition = {
+                        .cause_event = state_event, .to = next_state, .context = &renderer_context};
                     StateMachine_DoTransition(&ui_state_machine, &transition);
                 }
 
@@ -139,7 +139,22 @@ static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
     return TASK_STATUS_OK;
 }
 
-static const State* StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id)
+void StateTask_UpdateSnapshot(const StateEvent *state_event)
+{
+    ControlButtonPayload *control_button_payload;
+    if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
+        control_button_payload = &state_event->payload.control_button;
+        switch (control_button_payload->id) {
+        case CONTROL_BUTTON_ID_ENCODER_PUSH:
+            state_task_context.encoder_button_state_snapshot = control_button_payload->state;
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+static const State *StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id)
 {
     if (ui_panel_id < 0 || ui_panel_id >= UI_PANEL_ID_COUNT) {
         return 0;
