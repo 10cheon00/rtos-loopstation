@@ -23,18 +23,14 @@ static osMessageQueueId_t display_command_queue = 0;
 static RendererContext renderer_context;
 static StateMachine ui_state_machine;
 
-static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
-                                             StateOnEventResultFlags *state_on_event_result_flags);
+static StateOnEventResultFlags StateTask_HandleStateEvent(const StateEvent *state_event);
 void StateTask_UpdateSnapshot(const StateEvent *state_event);
-static TaskStatus
-StateTask_HandleStateEventControlButton(const StateEvent *state_event,
-                                        StateOnEventResultFlags *state_on_event_result_flags);
+static StateOnEventResultFlags
+StateTask_HandleStateEventControlButton(const StateEvent *state_event);
 static const State *StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id);
-static TaskStatus StateTask_ModifyParameters(const StateEvent *state_event,
-                                             StateOnEventResultFlags *state_on_event_result_flags);
-static TaskStatus
-StateTask_ModifyParametersByEncoder(const StateEvent *state_event, uint8_t parameter_index,
-                                    StateOnEventResultFlags *state_on_event_result_flags);
+static StateOnEventResultFlags StateTask_ModifyParameters(const StateEvent *state_event);
+static StateOnEventResultFlags StateTask_ModifyParametersByEncoder(const StateEvent *state_event,
+                                                                   uint8_t parameter_index);
 static UiPanelParameterBinding *StateTask_GetCurrentUiPanelParameters();
 static TaskStatus StateTask_RequestRendering(StateOnEventResultFlags *state_on_event_result_flags);
 
@@ -82,8 +78,8 @@ void StateTask_Run(void)
             // 각 상태 머신마다 폴더를 갖고, 폴더에 나열된 파일들이 각 상태를 나타낸다.
             // 각 상태는 정해진 구조체에 따라 객체처럼 공통된 API를 구현한다.
             // 외부에서 전해진 이벤트를 상태에 전달함으로 이벤트 처리를 위임힌다.
-            task_status = StateTask_HandleStateEvent(&state_event, &state_on_event_result_flags);
-            if (task_status != TASK_STATUS_OK) {
+            state_on_event_result_flags = StateTask_HandleStateEvent(&state_event);
+            if (state_on_event_result_flags == STATE_ON_EVENT_HANDLING_FLAG_ERROR) {
                 // TODO:
                 // 이벤트 처리에 실패하는 경우에 대해 처리하기
             }
@@ -99,8 +95,7 @@ void StateTask_Run(void)
     }
 }
 
-static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
-                                             StateOnEventResultFlags *state_on_event_result_flags)
+static StateOnEventResultFlags StateTask_HandleStateEvent(const StateEvent *state_event)
 {
     StateTask_UpdateSnapshot(state_event);
 
@@ -110,20 +105,19 @@ static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
         // TODO:
         // 좌우 버튼이 아닌 다른 버튼을 눌렀을 때는 파라미터 값 변경이 일어나지 않는가?
         if (state_event->payload.control_button.state == CONTROL_BUTTON_STATE_RELEASED) {
-            return StateTask_HandleStateEventControlButton(state_event,
-                                                           state_on_event_result_flags);
+            return StateTask_HandleStateEventControlButton(state_event);
         } else {
-            *state_on_event_result_flags = STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
+            return STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
         }
     case STATE_EVENT_ENCODER_ROTATION:
         // 여기서는 UI 상태를 전이시키지 않고, 파라미터 값을 바꾼다.
         // 예를 들어 설정 패널에서는 커서 파라미터 값을 바꾼다.
-        return StateTask_ModifyParameters(state_event, state_on_event_result_flags);
+        return StateTask_ModifyParameters(state_event);
     default:
         break;
     }
 
-    return TASK_STATUS_OK;
+    return STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
 }
 
 void StateTask_UpdateSnapshot(const StateEvent *state_event)
@@ -141,19 +135,19 @@ void StateTask_UpdateSnapshot(const StateEvent *state_event)
     }
 }
 
-static TaskStatus
-StateTask_HandleStateEventControlButton(const StateEvent *state_event,
-                                        StateOnEventResultFlags *state_on_event_result_flags)
+static StateOnEventResultFlags
+StateTask_HandleStateEventControlButton(const StateEvent *state_event)
 {
     UiPanelId ui_panel_id;
     const State *next_state;
+    StateOnEventResultFlags state_on_event_result_flags;
 
-    *state_on_event_result_flags =
+    state_on_event_result_flags =
         ui_state_machine.current_state->on_event(state_event, &ui_panel_id);
-    if ((*state_on_event_result_flags & STATE_ON_EVENT_HANDLING_FLAG_TRANSITION) != 0) {
+    if ((state_on_event_result_flags & STATE_ON_EVENT_HANDLING_FLAG_TRANSITION) != 0) {
         next_state = StateTask_GetUiStateByUiPanelId(ui_panel_id);
         if (next_state == 0) {
-            return TASK_STATUS_ERROR;
+            return STATE_ON_EVENT_HANDLING_FLAG_ERROR;
         }
         // TODO:
         // UiStateMachine에서 renderer_context를 제거하기
@@ -161,7 +155,7 @@ StateTask_HandleStateEventControlButton(const StateEvent *state_event,
             .cause_event = state_event, .to = next_state, .context = &renderer_context};
         StateMachine_DoTransition(&ui_state_machine, &transition);
     }
-    return TASK_STATUS_OK;
+    return state_on_event_result_flags;
 }
 
 static const State *StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id)
@@ -179,27 +173,24 @@ static const State *StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id)
  * - 포텐셔미터로 변경하는 경우
  *  ADC 변환값이 그대로 파라미터에 대입된다.
  */
-static TaskStatus StateTask_ModifyParameters(const StateEvent *state_event,
-                                             StateOnEventResultFlags *state_on_event_result_flags)
+static StateOnEventResultFlags StateTask_ModifyParameters(const StateEvent *state_event)
 {
     // UI 상태 머신의 상태에 따라 정해진 파라미터만 수정한다.
     // 패널에 바인딩된 여러 파라미터 중 엔코더 id를 인덱스로 하여 수정한다.
     if (state_event->type == STATE_EVENT_ENCODER_ROTATION) {
         uint8_t parameter_index = state_event->payload.encoder_rotation.encoder_id;
-        return StateTask_ModifyParametersByEncoder(state_event, parameter_index,
-                                                   state_on_event_result_flags);
+        return StateTask_ModifyParametersByEncoder(state_event, parameter_index);
     } else {
         // TODO:
         // 여기서는 ADC 변환값을 파라미터에 대입하도록 한다.
         // ADC 종류에 따라 바인딩된 파라미터만 수정해야한다.
     }
 
-    return TASK_STATUS_ERROR;
+    return STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
 }
 
-static TaskStatus
-StateTask_ModifyParametersByEncoder(const StateEvent *state_event, uint8_t parameter_index,
-                                    StateOnEventResultFlags *state_on_event_result_flags)
+static StateOnEventResultFlags StateTask_ModifyParametersByEncoder(const StateEvent *state_event,
+                                                                   uint8_t parameter_index)
 {
     UiPanelParameterBinding *binding;
     Parameter_t value, scale = 1;
@@ -207,12 +198,12 @@ StateTask_ModifyParametersByEncoder(const StateEvent *state_event, uint8_t param
     Parameter *parameter;
 
     if (parameter_index < 0 || parameter_index >= 4) {
-        return TASK_STATUS_ERROR;
+        return STATE_ON_EVENT_HANDLING_FLAG_ERROR;
     }
 
     binding = StateTask_GetCurrentUiPanelParameters();
     if (binding->ui_panel_id == UI_PANEL_ID_NONE) {
-        return TASK_STATUS_ERROR;
+        return STATE_ON_EVENT_HANDLING_FLAG_ERROR;
     }
 
     if (state_task_context.encoder_button_state_snapshot == CONTROL_BUTTON_STATE_PRESSED) {
@@ -224,8 +215,7 @@ StateTask_ModifyParametersByEncoder(const StateEvent *state_event, uint8_t param
     parameter = &s_loopstation_parameter_store->parameters[parameter_store_index];
     Parameter_AddValue(parameter, value);
 
-    *state_on_event_result_flags = STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED;
-    return TASK_STATUS_OK;
+    return STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED;
 }
 
 static UiPanelParameterBinding *StateTask_GetCurrentUiPanelParameters()
