@@ -1,6 +1,7 @@
 #ifndef STATE_H
 #define STATE_H
 
+#include "state_id.h"
 #include "state_messages.h"
 
 typedef struct State State;

@@ -8,9 +8,8 @@
 #include "state_messages.h"
 #include "state_initparams.h"
 #include "state_machine.h"
-#include "ui_state_home_panel.h"
-#include "ui_state_setting_panel.h"
 #include "ui_state_context.h"
+#include "ui_state_ui_panel_id_mapping.h"
 #include "loopstation_parameter_store.h"
 
 #define STATE_TASK_TIMEOUT_500MS_TO_TICK (pdMS_TO_TICKS(500UL))
@@ -26,7 +25,7 @@ static StateMachine ui_state_machine;
 
 static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags);
-static TaskStatus StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id, State* next_state);
+static const State* StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id);
 static TaskStatus StateTask_ModifyParameters(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags);
 static TaskStatus
@@ -99,9 +98,8 @@ void StateTask_Run(void)
 static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags)
 {
-    TaskStatus task_status;
     UiPanelId ui_panel_id;
-    State next_state;
+    const State* next_state;
 
     switch (state_event->type) {
     case STATE_EVENT_CONTROL_BUTTON:
@@ -116,12 +114,12 @@ static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
             *state_on_event_result_flags =
                 ui_state_machine.current_state->on_event(state_event, &ui_panel_id);
             if ((*state_on_event_result_flags & STATE_ON_EVENT_HANDLING_FLAG_TRANSITION) != 0) {
-                task_status = StateTask_GetUiStateByUiPanelId(ui_panel_id, &next_state);
-                if (task_status != TASK_STATUS_ERROR) {
+                next_state = StateTask_GetUiStateByUiPanelId(ui_panel_id);
+                if (next_state != 0) {
                     // TODO:
                     // UiStateMachine에서 renderer_context를 제거하기
                     StateTransition transition = {.cause_event = state_event,
-                                                  .to = &next_state,
+                                                  .to = next_state,
                                                   .context = &renderer_context};
                     StateMachine_DoTransition(&ui_state_machine, &transition);
                 }
@@ -141,11 +139,12 @@ static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
     return TASK_STATUS_OK;
 }
 
-TaskStatus StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id, State* next_state)
+static const State* StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id)
 {
-    TODO:
-    // 패널 id에 따른 UiState를 반환하기 위해 매핑 관계를 정의한 파일 작성 필요
-    return TASK_STATUS_OK;
+    if (ui_panel_id < 0 || ui_panel_id >= UI_PANEL_ID_COUNT) {
+        return 0;
+    }
+    return ui_state_ui_panel_id_mappings[ui_panel_id];
 }
 
 /** 파라미터를 수정하는 것은 무조건 엔코더 또는 포텐셔미터를 통해 발생하므로,
