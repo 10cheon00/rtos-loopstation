@@ -21,14 +21,14 @@ StateOnEventHandlingResult UiStateHomePanel_OnEvent(const StateEvent *state_even
             // 실제 트랜지션은 상태 관리 태스크에서 수행하기
             return (StateOnEventHandlingResult) {
                 .next_state = &UI_STATE_SETTING_PANEL,
-                .status = STATE_ON_EVENT_HANDLING_STATUS_TRANSITION
+                .flag = STATE_ON_EVENT_HANDLING_FLAG_TRANSITION
             };
         }
     }
 
     return (StateOnEventHandlingResult){
         .next_state = 0,
-        .status = STATE_ON_EVENT_HANDLING_STATUS_HANDLED
+        .flag = STATE_ON_EVENT_HANDLING_FLAG_IGNORED
     };
 }
 

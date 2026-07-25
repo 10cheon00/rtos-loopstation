@@ -5,17 +5,17 @@
 
 typedef struct State State;
 
-typedef enum {
-    STATE_ON_EVENT_HANDLING_STATUS_ERROR = 0x0,
-    STATE_ON_EVENT_HANDLING_STATUS_REJECTED = 0x1,
-    STATE_ON_EVENT_HANDLING_STATUS_IGNORED = 0x2,
-    STATE_ON_EVENT_HANDLING_STATUS_HANDLED = 0x4,
-    STATE_ON_EVENT_HANDLING_STATUS_TRANSITION = 0x8,
-} StateOnEventHandlingStatus;
+typedef uint32_t StateOnEventHandlingFlag;
+
+#define STATE_ON_EVENT_HANDLING_FLAG_ERROR (0x0)
+#define STATE_ON_EVENT_HANDLING_FLAG_REJECTED (0x1)
+#define STATE_ON_EVENT_HANDLING_FLAG_IGNORED (0x2)
+#define STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED (0x4)
+#define STATE_ON_EVENT_HANDLING_FLAG_TRANSITION (0x8)
 
 typedef struct {
     const State *next_state;
-    StateOnEventHandlingStatus status;
+    StateOnEventHandlingFlag flag;
 } StateOnEventHandlingResult;
 
 typedef void(*StateOnEnterFunction)(void* context);
