@@ -5,7 +5,7 @@
 
 void UiStateHomePanel_OnEnter(void *context);
 StateOnEventResultFlags UiStateHomePanel_OnEvent(const StateEvent *state_event,
-                                                 State *next_state);
+                                                 StateId *next_state_id);
 void UiStateHomePanel_OnExit(void);
 
 extern const State UI_STATE_HOME_PANEL;

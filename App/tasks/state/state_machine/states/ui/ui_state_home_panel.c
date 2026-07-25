@@ -13,13 +13,13 @@ const State UI_STATE_HOME_PANEL = {
 void UiStateHomePanel_OnEnter(void *context) {}
 
 StateOnEventResultFlags UiStateHomePanel_OnEvent(const StateEvent *state_event,
-                                                 State *next_state)
+                                                 StateId *next_state_id)
 {
     if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
         ControlButtonPayload button_payload = state_event->payload.control_button;
         if (button_payload.id == CONTROL_BUTTON_ID_LEFT) {
             // 실제 트랜지션은 상태 관리 태스크에서 수행하기
-            *next_state = UI_STATE_SETTING_PANEL;
+            *next_state_id = UI_PANEL_ID_SETTING;
             return STATE_ON_EVENT_HANDLING_FLAG_TRANSITION;
         }
     }

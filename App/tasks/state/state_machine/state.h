@@ -14,7 +14,7 @@ typedef uint32_t StateOnEventResultFlags;
 #define STATE_ON_EVENT_HANDLING_FLAG_TRANSITION (0x8)
 
 typedef void (*StateOnEnterFunction)(void *context);
-typedef StateOnEventResultFlags (*StateOnEventFunction)(const StateEvent *event, State *next_state);
+typedef StateOnEventResultFlags (*StateOnEventFunction)(const StateEvent *event, StateId *next_state_id);
 typedef void (*StateOnExitFunction)(void);
 
 struct State {
@@ -22,7 +22,7 @@ struct State {
     StateOnEventFunction on_event;
     StateOnExitFunction on_exit;
     void *context;
-    const uint16_t id; // TODO: enum으로 나타낸 상태 ID를 uint16_t로 취급해도 되는지 결정하기
+    const StateId id;
 };
 
 #endif

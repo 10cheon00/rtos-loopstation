@@ -5,7 +5,7 @@
 
 void UiStateSettingPanel_OnEnter(void *context);
 StateOnEventResultFlags UiStateSettingPanel_OnEvent(const StateEvent *state_event,
-                                                    State *next_state);
+                                                    StateId *next_state_id);
 void UiStateSettingPanel_OnExit(void);
 
 extern const State UI_STATE_SETTING_PANEL;

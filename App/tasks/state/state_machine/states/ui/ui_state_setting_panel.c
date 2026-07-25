@@ -13,7 +13,7 @@ const State UI_STATE_SETTING_PANEL = {
 void UiStateSettingPanel_OnEnter(void *context) {}
 
 StateOnEventResultFlags UiStateSettingPanel_OnEvent(const StateEvent *state_event,
-                                                    State *next_state)
+                                                    StateId *next_state_id)
 {
     if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
         ControlButtonPayload button_payload = state_event->payload.control_button;
@@ -23,7 +23,7 @@ StateOnEventResultFlags UiStateSettingPanel_OnEvent(const StateEvent *state_even
             // 다음 상태를 가리키는 것을 더블 포인터로 구현할 수 있으나,
             // 그러면 복잡해지므로, 더블 포인터 대신 패널 id로 한다.
             // State와 패널 id간 매핑 관계를 정의한 파일이 필요함
-            *next_state = UI_STATE_HOME_PANEL;
+            *next_state_id = UI_PANEL_ID_HOME;
             return STATE_ON_EVENT_HANDLING_FLAG_TRANSITION;
         }
     }

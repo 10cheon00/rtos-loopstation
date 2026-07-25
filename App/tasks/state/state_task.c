@@ -26,6 +26,7 @@ static StateMachine ui_state_machine;
 
 static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags);
+static TaskStatus StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id, State* next_state);
 static TaskStatus StateTask_ModifyParameters(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags);
 static TaskStatus
@@ -83,9 +84,8 @@ void StateTask_Run(void)
                 // TODO:
                 // 이벤트 처리에 실패하는 경우에 대해 처리하기
             }
-            if ((state_on_event_result_flags &
-                 (STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED |
-                  STATE_ON_EVENT_HANDLING_FLAG_TRANSITION)) != 0) {
+            if ((state_on_event_result_flags & (STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED |
+                                                STATE_ON_EVENT_HANDLING_FLAG_TRANSITION)) != 0) {
                 task_status = StateTask_RequestRendering(&state_on_event_result_flags);
                 if (task_status == TASK_STATUS_ERROR) {
                     // TODO:
@@ -99,6 +99,8 @@ void StateTask_Run(void)
 static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags)
 {
+    TaskStatus task_status;
+    UiPanelId ui_panel_id;
     State next_state;
 
     switch (state_event->type) {
@@ -111,14 +113,18 @@ static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
         // TODO:
         // 좌우 버튼이 아닌 다른 버튼을 눌렀을 때는 파라미터 값 변경이 일어나지 않는가?
         if (state_event->payload.control_button.state == CONTROL_BUTTON_STATE_RELEASED) {
-            *state_on_event_result_flags = ui_state_machine.current_state->on_event(state_event, &next_state);
+            *state_on_event_result_flags =
+                ui_state_machine.current_state->on_event(state_event, &ui_panel_id);
             if ((*state_on_event_result_flags & STATE_ON_EVENT_HANDLING_FLAG_TRANSITION) != 0) {
-                // TODO:
-                // UiStateMachine에서 renderer_context를 제거하기
-                StateTransition transition = {.cause_event = state_event,
-                                              .to = &next_state,
-                                              .context = &renderer_context};
-                StateMachine_DoTransition(&ui_state_machine, &transition);
+                task_status = StateTask_GetUiStateByUiPanelId(ui_panel_id, &next_state);
+                if (task_status != TASK_STATUS_ERROR) {
+                    // TODO:
+                    // UiStateMachine에서 renderer_context를 제거하기
+                    StateTransition transition = {.cause_event = state_event,
+                                                  .to = &next_state,
+                                                  .context = &renderer_context};
+                    StateMachine_DoTransition(&ui_state_machine, &transition);
+                }
 
                 return TASK_STATUS_OK;
             }
@@ -132,6 +138,13 @@ static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
         break;
     }
 
+    return TASK_STATUS_OK;
+}
+
+TaskStatus StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id, State* next_state)
+{
+    TODO:
+    // 패널 id에 따른 UiState를 반환하기 위해 매핑 관계를 정의한 파일 작성 필요
     return TASK_STATUS_OK;
 }
 
