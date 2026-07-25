@@ -53,7 +53,6 @@ void StateTask_Init(void *argument)
     state_event_queue = params->state_event_queue;
     display_command_queue = params->display_command_queue;
 
-    ui_state_machine.context = &(RendererContext){.display_command_queue = display_command_queue};
     ui_state_machine.current_state = (State *)&UI_STATE_HOME_PANEL;
 
     StateTask_Run();
