@@ -26,6 +26,9 @@ static StateMachine ui_state_machine;
 static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags);
 void StateTask_UpdateSnapshot(const StateEvent *state_event);
+static TaskStatus
+StateTask_HandleStateEventControlButton(const StateEvent *state_event,
+                                        StateOnEventResultFlags *state_on_event_result_flags);
 static const State *StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id);
 static TaskStatus StateTask_ModifyParameters(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags);
@@ -99,35 +102,19 @@ void StateTask_Run(void)
 static TaskStatus StateTask_HandleStateEvent(const StateEvent *state_event,
                                              StateOnEventResultFlags *state_on_event_result_flags)
 {
-    UiPanelId ui_panel_id;
-    const State *next_state;
+    StateTask_UpdateSnapshot(state_event);
 
     switch (state_event->type) {
     case STATE_EVENT_CONTROL_BUTTON:
-        // TODO:
-        // 그리고 코드가 너무 길어보이는데 리팩토링하기
-        StateTask_UpdateSnapshot(state_event);
-
         // 좌우 버튼은 무조건 패널 전환에 쓰이므로 바로 UI 상태 머신에 전달한다.
         // TODO:
         // 좌우 버튼이 아닌 다른 버튼을 눌렀을 때는 파라미터 값 변경이 일어나지 않는가?
         if (state_event->payload.control_button.state == CONTROL_BUTTON_STATE_RELEASED) {
-            *state_on_event_result_flags =
-                ui_state_machine.current_state->on_event(state_event, &ui_panel_id);
-            if ((*state_on_event_result_flags & STATE_ON_EVENT_HANDLING_FLAG_TRANSITION) != 0) {
-                next_state = StateTask_GetUiStateByUiPanelId(ui_panel_id);
-                if (next_state != 0) {
-                    // TODO:
-                    // UiStateMachine에서 renderer_context를 제거하기
-                    StateTransition transition = {
-                        .cause_event = state_event, .to = next_state, .context = &renderer_context};
-                    StateMachine_DoTransition(&ui_state_machine, &transition);
-                }
-
-                return TASK_STATUS_OK;
-            }
+            return StateTask_HandleStateEventControlButton(state_event,
+                                                           state_on_event_result_flags);
+        } else {
+            *state_on_event_result_flags = STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
         }
-        break;
     case STATE_EVENT_ENCODER_ROTATION:
         // 여기서는 UI 상태를 전이시키지 않고, 파라미터 값을 바꾼다.
         // 예를 들어 설정 패널에서는 커서 파라미터 값을 바꾼다.
@@ -152,6 +139,29 @@ void StateTask_UpdateSnapshot(const StateEvent *state_event)
             break;
         }
     }
+}
+
+static TaskStatus
+StateTask_HandleStateEventControlButton(const StateEvent *state_event,
+                                        StateOnEventResultFlags *state_on_event_result_flags)
+{
+    UiPanelId ui_panel_id;
+    const State *next_state;
+
+    *state_on_event_result_flags =
+        ui_state_machine.current_state->on_event(state_event, &ui_panel_id);
+    if ((*state_on_event_result_flags & STATE_ON_EVENT_HANDLING_FLAG_TRANSITION) != 0) {
+        next_state = StateTask_GetUiStateByUiPanelId(ui_panel_id);
+        if (next_state == 0) {
+            return TASK_STATUS_ERROR;
+        }
+        // TODO:
+        // UiStateMachine에서 renderer_context를 제거하기
+        StateTransition transition = {
+            .cause_event = state_event, .to = next_state, .context = &renderer_context};
+        StateMachine_DoTransition(&ui_state_machine, &transition);
+    }
+    return TASK_STATUS_OK;
 }
 
 static const State *StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id)
