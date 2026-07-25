@@ -1,6 +1,6 @@
 #include "input_config.h"
 
-#define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))
+#include "utils.h"
 
 const Mcp23017DeviceConfig input_mcp23017_devices[] = {
     {.gpio_pin = GPIO_PIN_0, .address = 0x24, .pin_status = 0xFFDF},

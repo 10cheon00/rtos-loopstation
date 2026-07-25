@@ -1,6 +1,6 @@
 #include "ui_state_parameter_binding.h"
 
-#define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))
+#include "utils.h"
 
 const UiPanelParameterBinding ui_panel_parameter_binding[] = {
     {

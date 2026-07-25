@@ -81,6 +81,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/ui/
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/ui/bindings
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils
     ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 
