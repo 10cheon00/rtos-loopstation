@@ -118,7 +118,7 @@ static StateOnEventResultFlags StateTask_HandleStateEvent(const StateEvent *stat
 
 void StateTask_UpdateSnapshot(const StateEvent *state_event)
 {
-    ControlButtonPayload *control_button_payload;
+    const ControlButtonPayload *control_button_payload;
     if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
         control_button_payload = &state_event->payload.control_button;
         switch (control_button_payload->id) {
