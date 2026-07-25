@@ -100,7 +100,7 @@ static StateOnEventResultFlags StateTask_HandleStateEvent(const StateEvent *stat
     case STATE_EVENT_CONTROL_BUTTON:
         // 좌우 버튼은 무조건 패널 전환에 쓰이므로 바로 UI 상태 머신에 전달한다.
         // TODO:
-        // 좌우 버튼이 아닌 다른 버튼을 눌렀을 때는 파라미터 값 변경이 일어나지 않는가?
+        // 좌우 버튼이 아닌 다른 버튼을 눌렀을 때 파라미터 값 변경이 일어날 수 있다.
         if (state_event->payload.control_button.state == CONTROL_BUTTON_STATE_RELEASED) {
             return StateTask_HandleStateEventControlButton(state_event);
         } else {
@@ -175,6 +175,9 @@ static StateOnEventResultFlags StateTask_ModifyParameters(const StateEvent *stat
     if (state_event->type == STATE_EVENT_ENCODER_ROTATION) {
         uint8_t parameter_index = state_event->payload.encoder_rotation.encoder_id;
         return StateTask_ModifyParametersByEncoder(state_event, parameter_index);
+    } else if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
+        // TODO:
+        // 버튼을 누르는 경우에도 파라미터 값 변경이 발생할 수 있다.
     } else {
         // TODO:
         // 여기서는 ADC 변환값을 파라미터에 대입하도록 한다.
