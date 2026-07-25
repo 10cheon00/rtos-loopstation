@@ -16,7 +16,7 @@ typedef struct {
 typedef struct {
     const State *to;
     const StateEvent *cause_event;
-    void *context;
+    void *context; // TODO: 모든 상태 머신에 컨텍스트 멤버가 필요한지 판단하기
 } StateTransition;
 
 StateMachineStatus StateMachine_DoTransition(StateMachine *state_machine,

@@ -8,7 +8,6 @@
 #include "state_messages.h"
 #include "state_initparams.h"
 #include "state_machine.h"
-#include "ui_state_context.h"
 #include "ui_state_ui_panel_id_mapping.h"
 #include "loopstation_parameter_store.h"
 
@@ -20,7 +19,6 @@ static LoopStationParameterStore *s_loopstation_parameter_store;
 static osMessageQueueId_t state_event_queue = 0;
 static osMessageQueueId_t display_command_queue = 0;
 
-static RendererContext renderer_context;
 static StateMachine ui_state_machine;
 
 static StateOnEventResultFlags StateTask_HandleStateEvent(const StateEvent *state_event);
@@ -55,7 +53,6 @@ void StateTask_Init(void *argument)
     state_event_queue = params->state_event_queue;
     display_command_queue = params->display_command_queue;
 
-    renderer_context.display_command_queue = display_command_queue;
     ui_state_machine.context = &(RendererContext){.display_command_queue = display_command_queue};
     ui_state_machine.current_state = (State *)&UI_STATE_HOME_PANEL;
 
@@ -149,10 +146,8 @@ StateTask_HandleStateEventControlButton(const StateEvent *state_event)
         if (next_state == 0) {
             return STATE_ON_EVENT_HANDLING_FLAG_ERROR;
         }
-        // TODO:
-        // UiStateMachine에서 renderer_context를 제거하기
         StateTransition transition = {
-            .cause_event = state_event, .to = next_state, .context = &renderer_context};
+            .cause_event = state_event, .to = next_state, .context = NULL};
         StateMachine_DoTransition(&ui_state_machine, &transition);
     }
     return state_on_event_result_flags;
