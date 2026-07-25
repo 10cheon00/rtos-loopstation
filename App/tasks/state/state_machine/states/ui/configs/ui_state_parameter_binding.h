@@ -5,7 +5,7 @@
 
 #include "parameter.h"
 #include "ui_panel_id.h"
-#include "parameter_ids.h"
+#include "parameter_id.h"
 
 typedef struct {
     UiPanelId ui_panel_id;
