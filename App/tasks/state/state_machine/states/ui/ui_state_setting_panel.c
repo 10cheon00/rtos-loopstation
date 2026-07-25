@@ -13,22 +13,22 @@ const State UI_STATE_SETTING_PANEL = {
 void UiStateSettingPanel_OnEnter(void *context) {
 }
 
-EventHandlingResult UiStateSettingPanel_OnEvent(const StateEvent *state_event)
+StateOnEventHandlingResult UiStateSettingPanel_OnEvent(const StateEvent *state_event)
 {
     if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
         ControlButtonPayload button_payload = state_event->payload.control_button;
         if (button_payload.id == CONTROL_BUTTON_ID_RIGHT) {
             // 실제 트랜지션은 상태 관리 태스크에서 수행하기
-            return (EventHandlingResult) {
+            return (StateOnEventHandlingResult) {
                 .next_state = &UI_STATE_HOME_PANEL,
-                .status = EVENT_HANDLING_STATUS_TRANSITION
+                .status = STATE_ON_EVENT_HANDLING_STATUS_TRANSITION
             };
         }
     }
 
-    return (EventHandlingResult){ 
+    return (StateOnEventHandlingResult){
         .next_state = 0,
-        .status = EVENT_HANDLING_STATUS_HANDLED
+        .status = STATE_ON_EVENT_HANDLING_STATUS_HANDLED
     };
 }
 
