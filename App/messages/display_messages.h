@@ -3,15 +3,16 @@
 
 #include <stdint.h>
 
+#include "ui_panel_id.h"
+#include "parameter.h"
+
 typedef enum {
   DISPLAY_COMMAND_UI_STATE_RENDER = 0
 } DisplayCommandType;
 
 typedef struct {
-  uint16_t panel_id;
-  uint16_t selected_track;
-  uint16_t selected_item;
-  uint32_t timestamp_ms;
+  UiPanelId panel_id;
+  Parameter_t parameter[4];
 } UiStateRenderPayload;
 
 typedef struct {
