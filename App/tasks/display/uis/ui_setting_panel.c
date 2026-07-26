@@ -1,6 +1,6 @@
-#include "ui.h"
+#include "ui_setting_panel.h"
 
-UI_DRAWING_STATUS Ui_DrawSettingPanel(u8g2_t *u8g2)
+UI_DRAWING_STATUS Ui_DrawSettingPanel(u8g2_t *u8g2, Parameter *parameters)
 {
     u8g2_ClearBuffer(u8g2);
     u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
@@ -8,6 +8,8 @@ UI_DRAWING_STATUS Ui_DrawSettingPanel(u8g2_t *u8g2)
     u8g2_DrawLine(u8g2, 0, 7, 128, 7);
     UI_DrawArrowRight4x5(u8g2, 122, 6);
     u8g2_SetFont(u8g2, u8g2_font_tiny5_tr);
+    char str[2] = {(parameters[0].current + '0'), 0};
+    u8g2_DrawStr(u8g2, 1, 30, str);
 
     u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
     u8g2_DrawGlyph(u8g2, 8, 40, 104);
@@ -18,7 +20,6 @@ UI_DRAWING_STATUS Ui_DrawSettingPanel(u8g2_t *u8g2)
     u8g2_DrawStr(u8g2, 2, 46, "SYSTEM");
     u8g2_DrawStr(u8g2, 36, 46, "DEBUG");
     u8g2_DrawStr(u8g2, 28, 52, "HARDWARE");
-
     u8g2_SendBuffer(u8g2);
     return UI_DRAWING_STATUS_OK;
 }
