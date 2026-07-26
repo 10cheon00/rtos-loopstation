@@ -4,11 +4,14 @@
 
 #include "display_messages.h"
 #include "display_initparams.h"
-#include "ui.h"
+#include "ui_panel_renderer.h"
 
 static u8g2_t u8g2;
 
 static osMessageQueueId_t display_command_queue;
+
+static TaskStatus
+DisplayTask_HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload);
 
 static int DisplayTask_IsValidInitParams(const DisplayInitParams *params)
 {
@@ -56,12 +59,20 @@ void DisplayTask_Run(void)
     for (;;) {
         osMessageQueueGet(display_command_queue, &command, NULL, osWaitForever);
         if (command.type == DISPLAY_COMMAND_UI_STATE_RENDER) {
-            if (command.payload.ui_state_render.panel_id == 1) {
-                Ui_DrawHomePanel(&u8g2);
-            }
-            if (command.payload.ui_state_render.panel_id == 2) {
-                Ui_DrawSettingPanel(&u8g2);
-            }
+            DisplayTask_HandleUiStateRenderPayload(&command.payload.ui_state_render);
         }
     }
+}
+
+TaskStatus DisplayTask_HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload)
+{
+    UI_DRAWING_STATUS ui_drawing_status;
+
+    ui_drawing_status = ui_panel_render_mappings[ui_state_render_payload->panel_id](
+        &u8g2, ui_state_render_payload->parameter);
+
+    if (ui_drawing_status != UI_DRAWING_STATUS_OK) {
+        return TASK_STATUS_ERROR;
+    }
+    return TASK_STATUS_OK;
 }
