@@ -93,29 +93,23 @@ void StateTask_Run(void)
     }
 }
 
+/**
+ * 좌우 버튼, Enter, Exit 버튼은 패널 렌더링이 무조건 발생한다.
+ * 엔코더 버튼을 누르거나 ADC 값이 변경되었을 때도 경우에 따라서 패널 렌더링이 발생한다.
+ * 따라서 버튼과 파라미터 수정은 독립적이지 않으므로 버튼 입력을 처리하는 것과 파라미터 값 변경을
+ *  처리하는 것은 동시에 수행되어야 한다.
+ */
 static StateOnEventResultFlags StateTask_HandleStateEvent(const StateEvent *state_event)
 {
+    StateOnEventResultFlags flags = STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
+
     StateTask_UpdateSnapshot(state_event);
-
-    switch (state_event->type) {
-    case STATE_EVENT_CONTROL_BUTTON:
-        // 좌우 버튼은 무조건 패널 전환에 쓰이므로 바로 UI 상태 머신에 전달한다.
-        // TODO:
-        // 좌우 버튼이 아닌 다른 버튼을 눌렀을 때 파라미터 값 변경이 일어날 수 있다.
-        if (state_event->payload.control_button.state == CONTROL_BUTTON_STATE_RELEASED) {
-            return StateTask_HandleStateEventControlButton(state_event);
-        } else {
-            return STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
-        }
-    case STATE_EVENT_ENCODER_ROTATION:
-        // 여기서는 UI 상태를 전이시키지 않고, 파라미터 값을 바꾼다.
-        // 예를 들어 설정 패널에서는 커서 파라미터 값을 바꾼다.
-        return StateTask_ModifyParameters(state_event);
-    default:
-        break;
+    if (state_event->payload.control_button.state == CONTROL_BUTTON_STATE_PRESSED) {
+        flags |= StateTask_HandleStateEventControlButton(state_event);
     }
+    flags |= StateTask_ModifyParameters(state_event);
 
-    return STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
+    return flags;
 }
 
 void StateTask_UpdateSnapshot(const StateEvent *state_event)
