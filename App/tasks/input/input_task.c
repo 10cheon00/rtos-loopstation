@@ -2,7 +2,8 @@
 
 #include "cmsis_os2.h"
 
-#include "input_config.h"
+#include "input_button_mapping.h"
+#include "input_mcp23017_devices.h"
 #include "input_initparams.h"
 #include "input_messages.h"
 #include "state_messages.h"
