@@ -47,7 +47,8 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/types/parameter.c
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_config.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/configs/input_mcp23017_devices.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/configs/input_button_mapping.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.c
@@ -75,6 +76,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/types
     ${CMAKE_CURRENT_SOURCE_DIR}/messages
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/uis/
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
