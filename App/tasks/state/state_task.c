@@ -81,6 +81,9 @@ void StateTask_Run(void)
                 // TODO:
                 // 이벤트 처리에 실패하는 경우에 대해 처리하기
             }
+
+            // TODO:
+            // 파라미터가 변경되었는데 현재 패널에 바인딩된 파라미터가 아닌 경우 출력하지 않기
             if ((state_on_event_result_flags & (STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED |
                                                 STATE_ON_EVENT_HANDLING_FLAG_TRANSITION)) != 0) {
                 task_status = StateTask_RequestRendering(ui_state_machine.current_state->id);
