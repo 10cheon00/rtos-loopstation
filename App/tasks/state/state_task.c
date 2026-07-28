@@ -30,7 +30,7 @@ static StateOnEventResultFlags StateTask_ModifyParameters(const StateEvent *stat
 static StateOnEventResultFlags StateTask_ModifyParametersByEncoder(const StateEvent *state_event,
                                                                    uint8_t parameter_index);
 static UiPanelParameterBinding *StateTask_GetCurrentUiPanelParameterBindings();
-static TaskStatus StateTask_RequestRendering(StateOnEventResultFlags *state_on_event_result_flags);
+static TaskStatus StateTask_RequestRendering(UiPanelId ui_panel_id);
 static void StateTask_GetCurrentUiPanelParameters(Parameter *parameters);
 
 static int StateTask_IsValidInitParams(const StateInitParams *params)
@@ -67,6 +67,7 @@ void StateTask_Run(void)
     TaskStatus task_status;
 
     ui_state_machine.current_state->on_enter(NULL);
+    StateTask_RequestRendering(ui_state_machine.current_state->id);
 
     for (;;) {
         os_status = osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
@@ -82,7 +83,7 @@ void StateTask_Run(void)
             }
             if ((state_on_event_result_flags & (STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED |
                                                 STATE_ON_EVENT_HANDLING_FLAG_TRANSITION)) != 0) {
-                task_status = StateTask_RequestRendering(&state_on_event_result_flags);
+                task_status = StateTask_RequestRendering(ui_state_machine.current_state->id);
                 if (task_status == TASK_STATUS_ERROR) {
                     // TODO:
                     // 렌더링 요청에 실패하는 경우에 대해 처리하기
@@ -229,13 +230,13 @@ static UiPanelParameterBinding *StateTask_GetCurrentUiPanelParameterBindings()
     return (UiPanelParameterBinding *)&ui_panel_parameter_binding[0];
 }
 
-static TaskStatus StateTask_RequestRendering(StateOnEventResultFlags *state_on_event_result_flags)
+static TaskStatus StateTask_RequestRendering(UiPanelId ui_panel_id)
 {
     osStatus_t os_status;
 
     DisplayCommand command = {
         .type = DISPLAY_COMMAND_UI_STATE_RENDER,
-        .payload = {.ui_state_render = {.panel_id = ui_state_machine.current_state->id}}};
+        .payload = {.ui_state_render = {.panel_id = ui_panel_id}}};
     Parameter *parameters = command.payload.ui_state_render.parameter;
     StateTask_GetCurrentUiPanelParameters(parameters);
 
