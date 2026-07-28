@@ -11,7 +11,10 @@ TODO_PATTERN = re.compile(r"\bTODO\s*:|(?:^|\|)\s*TODO\s*(?:\||$)", re.IGNORECAS
 
 
 def is_excluded(path):
-    return path == OUTPUT_PATH or "old" in path.parts or "old-2" in path.parts
+    return path == OUTPUT_PATH or any(
+        part in {"old", "old-2"} or part.startswith("legacy_")
+        for part in path.parts
+    )
 
 
 def markdown_files():
@@ -159,7 +162,7 @@ def build_document(todos, version, history):
         "",
         "이 문서는 `docs/` 하위 Markdown 문서에 남아 있는 TODO 항목을 모아 보여주는 자동 생성 뷰다.",
         "",
-        f"- 생성 기준: `docs/**/*.md`, `docs/old/**`, `docs/old-2/**`, `{OUTPUT_PATH}` 제외",
+        f"- 생성 기준: `docs/**/*.md`, legacy 문서 폴더, `{OUTPUT_PATH}` 제외",
         f"- TODO 개수: {len(todos)}",
         "",
         *build_table(todos),

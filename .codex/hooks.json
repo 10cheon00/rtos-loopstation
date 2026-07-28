@@ -10,6 +10,10 @@
           },
           {
             "type": "command",
+            "command": "./scripts/update-feature-indexes.sh"
+          },
+          {
+            "type": "command",
             "command": "./scripts/update-doc-todo-index.sh"
           }
         ]
