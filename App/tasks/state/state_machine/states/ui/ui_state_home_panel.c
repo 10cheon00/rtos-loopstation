@@ -1,24 +1,24 @@
 #include "ui_state_home_panel.h"
 
+#include "cmsis_os2.h"
+#include "display_messages.h"
 #include "ui_panel_id.h"
+#include "ui_state.h"
 #include "ui_state_setting_panel.h"
+#include "loopstation_parameter_store.h"
 
 const State UI_STATE_HOME_PANEL = {
+    .on_enter = UiStateHomePanel_OnEnter,
     .on_event = UiStateHomePanel_OnEvent,
     .id = UI_PANEL_ID_HOME,
 };
 
-StateOnEventResultFlags UiStateHomePanel_OnEvent(const StateEvent *state_event,
-                                                 StateId *next_state_id)
+StateFunctionStatus UiStateHomePanel_OnEnter(void *context)
 {
-    if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
-        ControlButtonPayload button_payload = state_event->payload.control_button;
-        if (button_payload.id == CONTROL_BUTTON_ID_LEFT) {
-            // 실제 트랜지션은 상태 관리 태스크에서 수행하기
-            *next_state_id = UI_PANEL_ID_SETTING;
-            return STATE_ON_EVENT_HANDLING_FLAG_TRANSITION;
-        }
-    }
-
-    return STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
+    UiStateMachineContext *ui_state_machine_context = context;
+    // TODO:
+    // 디스플레이 태스크에게 요청하는 코드 구현하기
 }
+
+StateFunctionStatus UiStateHomePanel_OnEvent(StateEvent *state_event, void *state_machine_context)
+{}

@@ -14,19 +14,18 @@ typedef uint32_t StateOnEventResultFlags;
 #define STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED (0x4)
 #define STATE_ON_EVENT_HANDLING_FLAG_TRANSITION (0x8)
 
-typedef struct {
-    uint32_t transition_event_id;
-    StateId next_state_id;
-} StateTransitionMapping;
+typedef enum {
+    STATE_FUNCTION_STATUS_OK = 0,
+    STATE_FUNCTION_STATUS_ERROR,
+} StateFunctionStatus;
 
-typedef StateOnEventResultFlags (*State_OnEventFunction)(const StateEvent *event,
-                                                         StateId *next_state_id);
+typedef StateFunctionStatus (*State_OnEnterFunction)(void *context);
+typedef StateFunctionStatus (*State_OnEventFunction)(StateEvent *event, void *context);
 
 typedef struct {
+    State_OnEnterFunction on_enter;
     State_OnEventFunction on_event;
-    const StateId id;
-    const StateTransitionMapping *state_transition_mapping;
-    const size_t state_transition_mapping_count;
+    StateId id;
 } State;
 
 #endif

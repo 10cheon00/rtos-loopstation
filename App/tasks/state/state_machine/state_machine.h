@@ -9,14 +9,16 @@ typedef enum {
 } StateMachineStatus;
 
 typedef struct {
-    const State *current_state;
+    State *current_state;
     void *context;
 } StateMachine;
 
 typedef struct {
-    const State *to;
-    const StateEvent *cause_event;
+    State *to;
+    StateEvent *cause_event;
 } StateTransition;
+
+StateMachineStatus StateMachine_Init(StateMachine *state_machine, State* init_state, void* context);
 
 StateMachineStatus StateMachine_DoTransition(StateMachine *state_machine,
                                              StateTransition *state_transition);

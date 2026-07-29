@@ -8,6 +8,7 @@
 #include "state_messages.h"
 #include "state_initparams.h"
 #include "state_machine.h"
+#include "ui_state.h"
 #include "ui_state_ui_panel_id_mapping.h"
 #include "loopstation_parameter_store.h"
 
@@ -20,18 +21,9 @@ static osMessageQueueId_t state_event_queue = 0;
 static osMessageQueueId_t display_command_queue = 0;
 
 static StateMachine ui_state_machine;
+static UiStateMachineContext ui_state_machine_context;
 
-static StateOnEventResultFlags StateTask_HandleStateEvent(const StateEvent *state_event);
-void StateTask_UpdateSnapshot(const StateEvent *state_event);
-static StateOnEventResultFlags
-StateTask_HandleStateEventControlButton(const StateEvent *state_event);
-static const State *StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id);
-static StateOnEventResultFlags StateTask_ModifyParameters(const StateEvent *state_event);
-static StateOnEventResultFlags StateTask_ModifyParametersByEncoder(const StateEvent *state_event,
-                                                                   uint8_t parameter_index);
-static UiPanelParameterBinding *StateTask_GetCurrentUiPanelParameterBindings();
-static TaskStatus StateTask_RequestRendering(UiPanelId ui_panel_id);
-static void StateTask_GetCurrentUiPanelParameters(Parameter *parameters);
+static TaskStatus StateTask_HandleStateEvent(StateEvent *state_event);
 
 static int StateTask_IsValidInitParams(const StateInitParams *params)
 {
@@ -54,8 +46,6 @@ void StateTask_Init(void *argument)
     state_event_queue = params->state_event_queue;
     display_command_queue = params->display_command_queue;
 
-    ui_state_machine.current_state = (State *)&UI_STATE_HOME_PANEL;
-
     StateTask_Run();
 }
 
@@ -66,186 +56,35 @@ void StateTask_Run(void)
     osStatus_t os_status;
     TaskStatus task_status;
 
-    StateTask_RequestRendering(ui_state_machine.current_state->id);
+    StateMachine_Init(&ui_state_machine, &UI_STATE_HOME_PANEL, &ui_state_machine_context);
 
     for (;;) {
         os_status = osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
         if (os_status == osOK) {
-            // 상태 전이는 switch case로 작성하지 않는다.
-            // 각 상태 머신마다 폴더를 갖고, 폴더에 나열된 파일들이 각 상태를 나타낸다.
-            // 각 상태는 정해진 구조체에 따라 객체처럼 공통된 API를 구현한다.
-            // 외부에서 전해진 이벤트를 상태에 전달함으로 이벤트 처리를 위임힌다.
-            state_on_event_result_flags = StateTask_HandleStateEvent(&state_event);
-            if (state_on_event_result_flags == STATE_ON_EVENT_HANDLING_FLAG_ERROR) {
-                // TODO:
-                // 이벤트 처리에 실패하는 경우에 대해 처리하기
-            }
-
-            // TODO:
-            // 파라미터가 변경되었는데 현재 패널에 바인딩된 파라미터가 아닌 경우 출력하지 않기
-            if ((state_on_event_result_flags & (STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED |
-                                                STATE_ON_EVENT_HANDLING_FLAG_TRANSITION)) != 0) {
-                task_status = StateTask_RequestRendering(ui_state_machine.current_state->id);
-                if (task_status == TASK_STATUS_ERROR) {
-                    // TODO:
-                    // 렌더링 요청에 실패하는 경우에 대해 처리하기
-                }
-            }
+            /**
+             * 외부 입력이 발생했을 때
+             * 1. 해당 입력이 패널과 관계없이 파라미터를 수정할 수 있다면 수정한다.
+             * 2. 해당 입력이 현재 패널 상태에 따라 파라미터를 수정할 수 있다면 수정한다.
+             * 3. 해당 입력이 트랙 상태 머신의 상태를 바꾼다면 트랙 상태 머신에게 알린다.
+             * 4. 해당 입력으로 인해 파라미터가 수정되었다면 ui 상태 머신에게 알린다.
+             * 5. 해당 입력이 현재 패널을 다른 패널로 전이시킨다면 ui 상태 머신에게 알린다.
+             * 6. 현재 패널 상태에 따라 트랙 상태가 전이된 것을 ui 상태 머신에게 알려야 하는 경우
+             * 알린다.
+             *
+             * ui 상태머신이 4,5,6의 조건을 검사해야하나? 아니지 않나...
+             * 3 역시 트랙 상태 머신이 판단해야하나?
+             * 그러면 상태 머신에게 이벤트 처리를 위임하는게 아니라, 이벤트 처리는 StateTask에서
+             * 하고, 그 결과를 상태 머신에게 위임한다.
+             * 트랙 상태 머신은 상태에 따라 OnEnter에서 오디오 처리 태스크에게 요청하기.
+             * UI 상태 머신은 OnEnter에서 디스플레이 태스크에게 요청하기, OnEvent에서 디스플레이
+             * 태스크에게 요청하기
+             */
+            task_status = StateTask_HandleStateEvent(&state_event);
         }
     }
 }
 
-/**
- * 좌우 버튼, Enter, Exit 버튼은 패널 렌더링이 무조건 발생한다.
- * 엔코더 버튼을 누르거나 ADC 값이 변경되었을 때도 경우에 따라서 패널 렌더링이 발생한다.
- * 따라서 버튼과 파라미터 수정은 독립적이지 않으므로 버튼 입력을 처리하는 것과 파라미터 값 변경을
- *  처리하는 것은 동시에 수행되어야 한다.
- */
-static StateOnEventResultFlags StateTask_HandleStateEvent(const StateEvent *state_event)
+TaskStatus StateTask_HandleStateEvent(StateEvent *state_event)
 {
-    StateOnEventResultFlags flags = STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
-
-    StateTask_UpdateSnapshot(state_event);
-    if (state_event->payload.control_button.state == CONTROL_BUTTON_STATE_PRESSED) {
-        flags |= StateTask_HandleStateEventControlButton(state_event);
-    }
-    flags |= StateTask_ModifyParameters(state_event);
-
-    return flags;
-}
-
-void StateTask_UpdateSnapshot(const StateEvent *state_event)
-{
-    const ControlButtonPayload *control_button_payload;
-    if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
-        control_button_payload = &state_event->payload.control_button;
-        switch (control_button_payload->id) {
-        case CONTROL_BUTTON_ID_ENCODER_PUSH:
-            state_task_context.encoder_button_state_snapshot = control_button_payload->state;
-            break;
-        default:
-            break;
-        }
-    }
-}
-
-static StateOnEventResultFlags
-StateTask_HandleStateEventControlButton(const StateEvent *state_event)
-{
-    UiPanelId ui_panel_id;
-    const State *next_state;
-    StateOnEventResultFlags state_on_event_result_flags;
-
-    state_on_event_result_flags =
-        ui_state_machine.current_state->on_event(state_event, &ui_panel_id);
-    if ((state_on_event_result_flags & STATE_ON_EVENT_HANDLING_FLAG_TRANSITION) != 0) {
-        next_state = StateTask_GetUiStateByUiPanelId(ui_panel_id);
-        if (next_state == 0) {
-            return STATE_ON_EVENT_HANDLING_FLAG_ERROR;
-        }
-        StateTransition transition = {.cause_event = state_event, .to = next_state};
-        StateMachine_DoTransition(&ui_state_machine, &transition);
-    }
-    return state_on_event_result_flags;
-}
-
-static const State *StateTask_GetUiStateByUiPanelId(const UiPanelId ui_panel_id)
-{
-    if (ui_panel_id < 0 || ui_panel_id >= UI_PANEL_ID_COUNT) {
-        return 0;
-    }
-    return ui_state_ui_panel_id_mappings[ui_panel_id];
-}
-
-/** 파라미터를 수정하는 것은 무조건 엔코더 또는 포텐셔미터를 통해 발생하므로,
- * 두 경우를 구분하여 처리한다.
- * - 엔코더로 변경하는 경우
- *  엔코더의 방향 그리고 푸시버튼의 여부에 따라 파라미터 값에 증감을 한다.
- * - 포텐셔미터로 변경하는 경우
- *  ADC 변환값이 그대로 파라미터에 대입된다.
- */
-static StateOnEventResultFlags StateTask_ModifyParameters(const StateEvent *state_event)
-{
-    // UI 상태 머신의 상태에 따라 정해진 파라미터만 수정한다.
-    // 패널에 바인딩된 여러 파라미터 중 엔코더 id를 인덱스로 하여 수정한다.
-    if (state_event->type == STATE_EVENT_ENCODER_ROTATION) {
-        uint8_t parameter_index = state_event->payload.encoder_rotation.encoder_id;
-        return StateTask_ModifyParametersByEncoder(state_event, parameter_index);
-    } else if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
-        // TODO:
-        // 버튼을 누르는 경우에도 파라미터 값 변경이 발생할 수 있다.
-    } else {
-        // TODO:
-        // 여기서는 ADC 변환값을 파라미터에 대입하도록 한다.
-        // ADC 종류에 따라 바인딩된 파라미터만 수정해야한다.
-    }
-
-    return STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
-}
-
-static StateOnEventResultFlags StateTask_ModifyParametersByEncoder(const StateEvent *state_event,
-                                                                   uint8_t parameter_index)
-{
-    UiPanelParameterBinding *bindings;
-    Parameter_t value, scale = 1;
-    ParameterId parameter_store_index;
-    Parameter *parameter;
-
-    if (parameter_index < 0 || parameter_index >= 4) {
-        return STATE_ON_EVENT_HANDLING_FLAG_ERROR;
-    }
-
-    bindings = StateTask_GetCurrentUiPanelParameterBindings();
-    if (bindings->ui_panel_id == UI_PANEL_ID_NONE) {
-        return STATE_ON_EVENT_HANDLING_FLAG_ERROR;
-    }
-
-    if (state_task_context.encoder_button_state_snapshot == CONTROL_BUTTON_STATE_PRESSED) {
-        scale = 10;
-    }
-    value = scale * state_event->payload.encoder_rotation.delta;
-
-    parameter_store_index = bindings->parameter_ids[parameter_index];
-    parameter = &s_loopstation_parameter_store->parameters[parameter_store_index];
-    Parameter_AddValue(parameter, value);
-
-    return STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED;
-}
-
-static UiPanelParameterBinding *StateTask_GetCurrentUiPanelParameterBindings()
-{
-    UiPanelId ui_panel_id = ui_state_machine.current_state->id;
-
-    for (uint16_t i = 0; i < UI_PANEL_PARAMETER_BINDING_COUNT; i++) {
-        if (ui_panel_parameter_binding[i].ui_panel_id == ui_panel_id) {
-            return (UiPanelParameterBinding *)&ui_panel_parameter_binding[i];
-        }
-    }
-
-    return (UiPanelParameterBinding *)&ui_panel_parameter_binding[0];
-}
-
-static TaskStatus StateTask_RequestRendering(UiPanelId ui_panel_id)
-{
-    osStatus_t os_status;
-
-    DisplayCommand command = {.type = DISPLAY_COMMAND_UI_STATE_RENDER,
-                              .payload = {.ui_state_render = {.panel_id = ui_panel_id}}};
-    Parameter *parameters = command.payload.ui_state_render.parameter;
-    StateTask_GetCurrentUiPanelParameters(parameters);
-
-    os_status =
-        osMessageQueuePut(display_command_queue, &command, 0, STATE_TASK_TIMEOUT_500MS_TO_TICK);
-    if (os_status != osOK) {
-        return TASK_STATUS_ERROR;
-    }
     return TASK_STATUS_OK;
-}
-
-static void StateTask_GetCurrentUiPanelParameters(Parameter *parameters)
-{
-    UiPanelParameterBinding *bindings = StateTask_GetCurrentUiPanelParameterBindings();
-    for (uint8_t i = 0; i < UI_PANEL_MAX_PARAMETER_COUNT; i++) {
-        parameters[i] = s_loopstation_parameter_store->parameters[bindings->parameter_ids[i]];
-    }
 }
