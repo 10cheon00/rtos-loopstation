@@ -5,14 +5,11 @@
 
 #include "app.h"
 #include "display_messages.h"
+#include "loopstation_parameter_store.h"
 #include "state_messages.h"
 #include "state_initparams.h"
-#include "state_machine.h"
-#include "ui_state.h"
-#include "ui_state_ui_panel_id_mapping.h"
-#include "loopstation_parameter_store.h"
-
-#define STATE_TASK_TIMEOUT_500MS_TO_TICK (pdMS_TO_TICKS(500UL))
+#include "ui_state_machine.h"
+#include "ui_state_home_panel.h"
 
 static StateTaskContext state_task_context;
 static LoopStationParameterStore *s_loopstation_parameter_store;
@@ -20,8 +17,9 @@ static LoopStationParameterStore *s_loopstation_parameter_store;
 static osMessageQueueId_t state_event_queue = 0;
 static osMessageQueueId_t display_command_queue = 0;
 
-static StateMachine ui_state_machine;
+static UiStateMachine ui_state_machine;
 static UiStateMachineContext ui_state_machine_context;
+
 
 static TaskStatus StateTask_HandleStateEvent(StateEvent *state_event);
 
@@ -46,17 +44,18 @@ void StateTask_Init(void *argument)
     state_event_queue = params->state_event_queue;
     display_command_queue = params->display_command_queue;
 
+    UiStateMachineContext_Init(&ui_state_machine_context, display_command_queue);
+
     StateTask_Run();
 }
 
 void StateTask_Run(void)
 {
     StateEvent state_event;
-    StateOnEventResultFlags state_on_event_result_flags;
     osStatus_t os_status;
     TaskStatus task_status;
 
-    StateMachine_Init(&ui_state_machine, &UI_STATE_HOME_PANEL, &ui_state_machine_context);
+    UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context, &UI_STATE_HOME_PANEL);
 
     for (;;) {
         os_status = osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
