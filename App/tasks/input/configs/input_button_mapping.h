@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "control_button.h"
+#include "control_button_id.h"
 
 typedef struct {
     uint8_t slave_address;

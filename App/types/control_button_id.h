@@ -1,5 +1,5 @@
-#ifndef CONTROL_BUTTON_H
-#define CONTROL_BUTTON_H
+#ifndef CONTROL_BUTTON_ID_H
+#define CONTROL_BUTTON_ID_H
 
 #include <stdint.h>
 

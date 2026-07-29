@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "control_button.h"
+#include "control_button_id.h"
 
 typedef enum {
   STATE_EVENT_CONTROL_BUTTON = 0,
