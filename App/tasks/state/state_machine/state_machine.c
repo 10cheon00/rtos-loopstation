@@ -3,8 +3,7 @@
 StateMachineStatus StateMachine_DoTransition(StateMachine *state_machine,
                                              StateTransition *state_transition)
 {
-    state_machine->current_state = (State*)state_transition->to;
-    state_machine->current_state->on_enter();
+    state_machine->current_state = state_transition->to;
     
     return STATE_MACHINE_STATUS_OK;
 }

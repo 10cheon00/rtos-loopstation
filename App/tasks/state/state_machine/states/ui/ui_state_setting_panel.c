@@ -4,9 +4,7 @@
 #include "ui_panel_id.h"
 
 const State UI_STATE_SETTING_PANEL = {
-    .on_enter = UiStateSettingPanel_OnEnter,
     .on_event = UiStateSettingPanel_OnEvent,
-    .on_exit = UiStateSettingPanel_OnExit,
     .id = UI_PANEL_ID_SETTING,
 };
 

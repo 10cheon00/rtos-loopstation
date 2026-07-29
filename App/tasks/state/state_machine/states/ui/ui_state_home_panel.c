@@ -4,13 +4,9 @@
 #include "ui_state_setting_panel.h"
 
 const State UI_STATE_HOME_PANEL = {
-    .on_enter = UiStateHomePanel_OnEnter,
     .on_event = UiStateHomePanel_OnEvent,
-    .on_exit = UiStateHomePanel_OnExit,
     .id = UI_PANEL_ID_HOME,
 };
-
-void UiStateHomePanel_OnEnter(void *context) {}
 
 StateOnEventResultFlags UiStateHomePanel_OnEvent(const StateEvent *state_event,
                                                  StateId *next_state_id)
@@ -26,5 +22,3 @@ StateOnEventResultFlags UiStateHomePanel_OnEvent(const StateEvent *state_event,
 
     return STATE_ON_EVENT_HANDLING_FLAG_IGNORED;
 }
-
-void UiStateHomePanel_OnExit(void) {}

@@ -1,10 +1,10 @@
 #ifndef STATE_H
 #define STATE_H
 
+#include <stddef.h>
+
 #include "state_id.h"
 #include "state_messages.h"
-
-typedef struct State State;
 
 typedef uint32_t StateOnEventResultFlags;
 
@@ -14,15 +14,19 @@ typedef uint32_t StateOnEventResultFlags;
 #define STATE_ON_EVENT_HANDLING_FLAG_PARAMETER_UPDATED (0x4)
 #define STATE_ON_EVENT_HANDLING_FLAG_TRANSITION (0x8)
 
-typedef void (*StateOnEnterFunction)(void);
-typedef StateOnEventResultFlags (*StateOnEventFunction)(const StateEvent *event, StateId *next_state_id);
-typedef void (*StateOnExitFunction)(void);
+typedef struct {
+    uint32_t transition_event_id;
+    StateId next_state_id;
+} StateTransitionMapping;
 
-struct State {
-    StateOnEnterFunction on_enter;
-    StateOnEventFunction on_event;
-    StateOnExitFunction on_exit;
+typedef StateOnEventResultFlags (*State_OnEventFunction)(const StateEvent *event,
+                                                         StateId *next_state_id);
+
+typedef struct {
+    State_OnEventFunction on_event;
     const StateId id;
-};
+    const StateTransitionMapping *state_transition_mapping;
+    const size_t state_transition_mapping_count;
+} State;
 
 #endif

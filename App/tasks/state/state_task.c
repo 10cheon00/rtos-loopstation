@@ -66,7 +66,6 @@ void StateTask_Run(void)
     osStatus_t os_status;
     TaskStatus task_status;
 
-    ui_state_machine.current_state->on_enter();
     StateTask_RequestRendering(ui_state_machine.current_state->id);
 
     for (;;) {

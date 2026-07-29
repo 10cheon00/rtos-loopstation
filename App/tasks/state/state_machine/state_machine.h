@@ -9,7 +9,7 @@ typedef enum {
 } StateMachineStatus;
 
 typedef struct {
-    State *current_state;
+    const State *current_state;
     void *context;
 } StateMachine;
 
