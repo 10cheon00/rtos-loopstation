@@ -3,7 +3,7 @@
 
 #include "state.h"
 
-void UiStateSettingPanel_OnEnter(void *context);
+void UiStateSettingPanel_OnEnter();
 StateOnEventResultFlags UiStateSettingPanel_OnEvent(const StateEvent *state_event,
                                                     StateId *next_state_id);
 void UiStateSettingPanel_OnExit(void);

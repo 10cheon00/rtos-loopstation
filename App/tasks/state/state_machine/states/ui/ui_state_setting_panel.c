@@ -10,7 +10,7 @@ const State UI_STATE_SETTING_PANEL = {
     .id = UI_PANEL_ID_SETTING,
 };
 
-void UiStateSettingPanel_OnEnter(void *context) {}
+void UiStateSettingPanel_OnEnter() {}
 
 StateOnEventResultFlags UiStateSettingPanel_OnEvent(const StateEvent *state_event,
                                                     StateId *next_state_id)
