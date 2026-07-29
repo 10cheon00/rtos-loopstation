@@ -144,8 +144,7 @@ StateTask_HandleStateEventControlButton(const StateEvent *state_event)
         if (next_state == 0) {
             return STATE_ON_EVENT_HANDLING_FLAG_ERROR;
         }
-        StateTransition transition = {
-            .cause_event = state_event, .to = next_state, .context = NULL};
+        StateTransition transition = {.cause_event = state_event, .to = next_state};
         StateMachine_DoTransition(&ui_state_machine, &transition);
     }
     return state_on_event_result_flags;
@@ -231,9 +230,8 @@ static TaskStatus StateTask_RequestRendering(UiPanelId ui_panel_id)
 {
     osStatus_t os_status;
 
-    DisplayCommand command = {
-        .type = DISPLAY_COMMAND_UI_STATE_RENDER,
-        .payload = {.ui_state_render = {.panel_id = ui_panel_id}}};
+    DisplayCommand command = {.type = DISPLAY_COMMAND_UI_STATE_RENDER,
+                              .payload = {.ui_state_render = {.panel_id = ui_panel_id}}};
     Parameter *parameters = command.payload.ui_state_render.parameter;
     StateTask_GetCurrentUiPanelParameters(parameters);
 
@@ -249,7 +247,6 @@ static void StateTask_GetCurrentUiPanelParameters(Parameter *parameters)
 {
     UiPanelParameterBinding *bindings = StateTask_GetCurrentUiPanelParameterBindings();
     for (uint8_t i = 0; i < UI_PANEL_MAX_PARAMETER_COUNT; i++) {
-        parameters[i] =
-            s_loopstation_parameter_store->parameters[bindings->parameter_ids[i]];
+        parameters[i] = s_loopstation_parameter_store->parameters[bindings->parameter_ids[i]];
     }
 }
