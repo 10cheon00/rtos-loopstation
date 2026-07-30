@@ -144,11 +144,11 @@ TryUpdateParameterFromControlButton(ControlButtonPayload *control_button_payload
         // TODO:
         // Encoder_A~D 모두 처리 가능하게 해야함
         ui_panel_id = ui_state_machine.current_state->ui_panel_id;
-        parameter_id = UiPanelParameterBinding_GetParameterId(ui_panel_id, 0);
+        parameter_id = UiPanelIdParameterIdBinding_GetParameterId(ui_panel_id, 0);
         if (parameter_id == PARAMETER_ID_NONE) {
             return TASK_STATUS_ERROR;
         }
-        parameter = LoopStationParameterStore_GetParameterFromId(parameter_id);
+        parameter = LoopStationParameterStore_GetParameterFromParameterId(parameter_id);
         if (parameter->type == PARAMETER_TYPE_TOGGLE) {
             Parameter_ToggleValue(parameter);
             return TASK_STATUS_OK;
@@ -172,11 +172,11 @@ TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder_rotation_p
 
     encoder_id = encoder_rotation_payload->encoder_id;
     ui_panel_id = ui_state_machine.current_state->ui_panel_id;
-    parameter_id = UiPanelParameterBinding_GetParameterId(ui_panel_id, encoder_id);
+    parameter_id = UiPanelIdParameterIdBinding_GetParameterId(ui_panel_id, encoder_id);
     if (parameter_id == PARAMETER_ID_NONE) {
         return TASK_STATUS_ERROR;
     }
-    parameter = LoopStationParameterStore_GetParameterFromId(parameter_id);
+    parameter = LoopStationParameterStore_GetParameterFromParameterId(parameter_id);
     if (parameter->type == PARAMETER_TYPE_TOGGLE) {
         Parameter_ToggleValue(parameter);
         return TASK_STATUS_OK;

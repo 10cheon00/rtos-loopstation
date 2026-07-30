@@ -17,10 +17,19 @@ LoopStationParameterStore *LoopstationParameterStore_GetInstance()
     return &loopstation_parameter_store;
 }
 
-Parameter *LoopStationParameterStore_GetParameterFromId(ParameterId parameter_id)
+Parameter *LoopStationParameterStore_GetParameterFromParameterId(ParameterId parameter_id)
 {
     if (parameter_id <= PARAMETER_ID_NONE || parameter_id >= PARAMETER_ID_COUNT) {
-        return &loopstation_parameter_store.parameters[PARAMETER_ID_NONE];
+        parameter_id = PARAMETER_ID_NONE;
     }
     return &loopstation_parameter_store.parameters[parameter_id];
+}
+
+void LoopStationParameterStore_CopyParameterValueFromParameterId(ParameterId parameter_id,
+                                                           Parameter *parameter_snapshot)
+{
+    if (parameter_id <= PARAMETER_ID_NONE || parameter_id >= PARAMETER_ID_COUNT) {
+        parameter_id = PARAMETER_ID_NONE;
+    }
+    *parameter_snapshot = loopstation_parameter_store.parameters[parameter_id];
 }

@@ -7,7 +7,7 @@
 #include "ui_panel_id.h"
 #include "parameter.h"
 
-#define DISPLAY_COMMAND_QUEUE_TIMEOUT_TICK (pdMS_TO_TICKS(500UL))
+#define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS_TO_TICKS (pdMS_TO_TICKS(500UL))
 
 typedef enum {
   DISPLAY_COMMAND_UI_STATE_RENDER = 0

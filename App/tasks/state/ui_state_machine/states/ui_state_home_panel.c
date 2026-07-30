@@ -2,10 +2,11 @@
 
 #include "utils.h"
 
-UiTransitionMapping ui_transition_mappings[] = {
+UiTransitionMapping ui_home_panel_transition_mappings[] = {
     {.ui_state_event_id = UI_STATE_EVENT_NAVIGATE_LEFT, .next_ui_panel_id = UI_PANEL_ID_SETTING},
 };
 
-UiState UI_STATE_HOME_PANEL = {.ui_transition_mappings = ui_transition_mappings,
-                               .ui_transition_mappings_count = ARRAY_COUNT(ui_transition_mappings),
+UiState UI_STATE_HOME_PANEL = {.ui_transition_mappings = ui_home_panel_transition_mappings,
+                               .ui_transition_mappings_count =
+                                   ARRAY_COUNT(ui_home_panel_transition_mappings),
                                .ui_panel_id = UI_PANEL_ID_HOME};

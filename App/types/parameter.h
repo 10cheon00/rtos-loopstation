@@ -7,7 +7,8 @@ typedef int8_t Parameter_t;
 typedef uint8_t ParameterType_t;
 
 enum {
-    PARAMETER_TYPE_SLIDER = 0,
+    PARAMETER_TYPE_NONE = 0,
+    PARAMETER_TYPE_SLIDER,
     PARAMETER_TYPE_TOGGLE,
 };
 
