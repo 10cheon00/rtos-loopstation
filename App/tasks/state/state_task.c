@@ -9,7 +9,7 @@
 #include "state_messages.h"
 #include "state_initparams.h"
 #include "ui_state_machine.h"
-#include "ui_panel_id_ui_state_mapping.h"
+#include "ui_panel_ui_state_table.h"
 #include "button_ui_action_map.h"
 
 typedef enum {
@@ -77,7 +77,7 @@ void StateTask_Run(void)
     UiStateMachineTransitionResult ui_state_machine_transition_result;
 
     UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context,
-                        UiPanelIdUiStateMapping_GetUiStateFromUiPanelId(UI_PANEL_ID_HOME));
+                        UiPanelUiStateTable_GetUiStateFromUiPanelId(UI_PANEL_ID_HOME));
 
     for (;;) {
         os_status = osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
