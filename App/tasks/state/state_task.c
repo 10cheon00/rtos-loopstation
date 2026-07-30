@@ -168,7 +168,7 @@ TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder_rotation_p
     ParameterId parameter_id;
     Parameter *parameter;
     uint8_t encoder_id;
-    uint8_t delta = 1, scale = 1;
+    int8_t delta = 1, scale = 1;
 
     encoder_id = encoder_rotation_payload->encoder_id;
     ui_panel_id = ui_state_machine.current_state->ui_panel_id;
