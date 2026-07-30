@@ -1,5 +1,5 @@
-#ifndef UI_PANEL_ID 
-#define UI_PANEL_ID
+#ifndef UI_PANEL_ID_H 
+#define UI_PANEL_ID_H
 
 #include "state_id.h"
 

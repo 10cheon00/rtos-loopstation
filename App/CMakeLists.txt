@@ -58,13 +58,14 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/ui_panel_renderer.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/ui_state_parameter_binding.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/ui_state_ui_panel_id_mapping.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/ui_panel_id_parameter_id_binding.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/control_button_id_ui_state_event_id_mapping.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/state.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/state_machine.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/ui/ui_state_home_panel.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/ui/ui_state_setting_panel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/ui_state_machine.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_panel_id_ui_state_mapping.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_home_panel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_setting_panel.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864_lcd.c
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017.c
@@ -82,8 +83,9 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_machine/states/ui/
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
     ${CMAKE_CURRENT_SOURCE_DIR}/utils
     ${CMAKE_CURRENT_SOURCE_DIR}/

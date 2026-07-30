@@ -1,7 +1,7 @@
 #ifndef LOOPSTATION_PARAMETER_STORE_H
 #define LOOPSTATION_PARAMETER_STORE_H
 
-#include "ui_state_parameter_binding.h"
+#include "ui_panel_id_parameter_id_binding.h"
 
 /**
  * TODO: 
@@ -15,5 +15,6 @@ typedef struct {
 } LoopStationParameterStore;
 
 LoopStationParameterStore* LoopstationParameterStore_GetInstance();
-
+Parameter* LoopStationParameterStore_GetParameterFromParameterId(ParameterId parameter_id);
+void LoopStationParameterStore_CopyParameterValueFromParameterId(ParameterId parameter_id, Parameter* parameter_snapshot);
 #endif
