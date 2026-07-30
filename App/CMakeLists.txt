@@ -58,7 +58,7 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/ui_panel_renderer.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/ui_panel_id_parameter_id_binding.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/panel_parameter_table.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_ui_action_map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/ui_state_machine.c

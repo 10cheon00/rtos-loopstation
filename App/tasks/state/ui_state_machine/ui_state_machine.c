@@ -2,7 +2,7 @@
 
 #include "display_messages.h"
 #include "ui_panel_id_ui_state_mapping.h"
-#include "ui_panel_id_parameter_id_binding.h"
+#include "panel_parameter_table.h"
 #include "loopstation_parameter_store.h"
 
 static void GetParametersFromUiPanelId(UiPanelId ui_panel_id, Parameter *parameters);
@@ -54,7 +54,7 @@ void UiStateMachine_RenderCurrentState(UiStateMachine *ui_state_machine)
 static void GetParametersFromUiPanelId(UiPanelId ui_panel_id, Parameter *parameters)
 {
     ParameterId *parameter_ids =
-        UiPanelIdParameterIdBinding_GetParameterIdsFromUiPanelId(ui_panel_id);
+        PanelParameterTable_GetParameterIdsFromUiPanelId(ui_panel_id);
     if (parameter_ids == NULL) {
         for (uint8_t i = 0; i < UI_PANEL_MAX_PARAMETER_COUNT; i++) {
             LoopStationParameterStore_CopyParameterValueFromParameterId(PARAMETER_ID_NONE,
