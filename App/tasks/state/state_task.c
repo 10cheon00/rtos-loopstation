@@ -78,6 +78,7 @@ void StateTask_Run(void)
 
     UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context,
                         UiPanelUiStateTable_GetUiStateFromUiPanelId(UI_PANEL_ID_HOME));
+    UiStateMachine_RenderCurrentState(&ui_state_machine);
 
     for (;;) {
         os_status = osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
