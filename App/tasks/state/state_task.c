@@ -38,7 +38,7 @@ TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder_rotation_p
 static ParameterUpdateResult TryUpdateParameterFromAdc(StateEvent *state_event);
 static UiStateMachineTransitionResult TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
                                                                   StateEvent *state_event);
-static UiStateEventId GetUiStateEventIdFromControlButtonId(ControlButtonId control_button_id);
+static UiActionId GetUiActionIdFromControlButtonId(ControlButtonId control_button_id);
 static TaskStatus
 TryRenderCurrentUiState(UiStateMachine *ui_state_machine,
                         ParameterUpdateResult parameter_update_result,
@@ -203,7 +203,7 @@ static UiStateMachineTransitionResult TryTransitionUiStateMachine(UiStateMachine
                                                                   StateEvent *state_event)
 {
     ControlButtonPayload *control_button_payload;
-    UiStateEventId ui_state_event_id;
+    UiActionId ui_action_id;
 
     // 1. 버튼 입력일때에만 패널이 바뀜
     if (state_event->type != STATE_EVENT_CONTROL_BUTTON) {
@@ -217,23 +217,23 @@ static UiStateMachineTransitionResult TryTransitionUiStateMachine(UiStateMachine
     }
 
     // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
-    ui_state_event_id = GetUiStateEventIdFromControlButtonId(control_button_payload->id);
-    if (ui_state_event_id == UI_STATE_EVENT_NONE) {
+    ui_action_id = GetUiActionIdFromControlButtonId(control_button_payload->id);
+    if (ui_action_id == UI_ACTION_NONE) {
         return UI_STATE_MACHINE_TRANSITION_RESULT_ERROR;
     }
-    UiStateMachine_TryTransition(ui_state_machine, ui_state_event_id);
+    UiStateMachine_TryTransition(ui_state_machine, ui_action_id);
 
     return UI_STATE_MACHINE_TRANSITION_RESULT_OK;
 }
 
-static UiStateEventId GetUiStateEventIdFromControlButtonId(ControlButtonId control_button_id)
+static UiActionId GetUiActionIdFromControlButtonId(ControlButtonId control_button_id)
 {
-    for (size_t i = 0; i < control_button_id_ui_state_event_id_mapping_count; i++) {
-        if (control_button_id == control_button_id_ui_state_event_id_mapping[i].control_button_id) {
-            return control_button_id_ui_state_event_id_mapping[i].ui_state_event_id;
+    for (size_t i = 0; i < control_button_id_ui_action_id_mapping_count; i++) {
+        if (control_button_id == control_button_id_ui_action_id_mapping[i].control_button_id) {
+            return control_button_id_ui_action_id_mapping[i].ui_action_id;
         }
     }
-    return UI_STATE_EVENT_NONE;
+    return UI_ACTION_NONE;
 }
 
 static TaskStatus

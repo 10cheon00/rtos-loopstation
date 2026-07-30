@@ -1,5 +1,5 @@
-#ifndef CONTROL_BUTTON_ID_UI_STATE_EVENT_ID_MAPPING_H
-#define CONTROL_BUTTON_ID_UI_STATE_EVENT_ID_MAPPING_H
+#ifndef CONTROL_BUTTON_ID_UI_ACTION_ID_MAPPING_H
+#define CONTROL_BUTTON_ID_UI_ACTION_ID_MAPPING_H
 
 #include <stddef.h>
 
@@ -8,10 +8,10 @@
 
 typedef struct {
     ControlButtonId control_button_id;
-    UiStateEventId ui_state_event_id;
-} ControlButtonIdUiStateEventIdMapping;
+    UiActionId ui_action_id;
+} ControlButtonIdUiActionIdMapping;
 
-extern ControlButtonIdUiStateEventIdMapping control_button_id_ui_state_event_id_mapping[];
-extern size_t control_button_id_ui_state_event_id_mapping_count;
+extern ControlButtonIdUiActionIdMapping control_button_id_ui_action_id_mapping[];
+extern size_t control_button_id_ui_action_id_mapping_count;
 
 #endif

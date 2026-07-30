@@ -15,13 +15,13 @@ void UiStateMachine_Init(UiStateMachine *ui_state_machine, UiStateMachineContext
 }
 
 void UiStateMachine_TryTransition(UiStateMachine *ui_state_machine,
-                                  UiStateEventId ui_state_event_id)
+                                  UiActionId ui_action_id)
 {
     UiPanelId next_ui_panel_id;
     UiState *next_ui_state;
 
     next_ui_panel_id =
-        UiState_GetUiPanelIdFromUiStateEventId(ui_state_machine->current_state, ui_state_event_id);
+        UiState_GetUiPanelIdFromUiActionId(ui_state_machine->current_state, ui_action_id);
     next_ui_state = UiPanelIdUiStateMapping_GetUiStateFromUiPanelId(next_ui_panel_id);
     if (next_ui_state != NULL) {
         ui_state_machine->current_state = next_ui_state;
