@@ -10,7 +10,7 @@
 #include "state_initparams.h"
 #include "ui_state_machine.h"
 #include "ui_panel_id_ui_state_mapping.h"
-#include "control_button_id_ui_state_event_id_mapping.h"
+#include "button_ui_action_map.h"
 
 typedef enum {
     PARAMETER_UPDATE_RESULT_ERROR = 0,
@@ -228,9 +228,9 @@ static UiStateMachineTransitionResult TryTransitionUiStateMachine(UiStateMachine
 
 static UiActionId GetUiActionIdFromControlButtonId(ControlButtonId control_button_id)
 {
-    for (size_t i = 0; i < control_button_id_ui_action_id_mapping_count; i++) {
-        if (control_button_id == control_button_id_ui_action_id_mapping[i].control_button_id) {
-            return control_button_id_ui_action_id_mapping[i].ui_action_id;
+    for (size_t i = 0; i < button_ui_action_map_count; i++) {
+        if (control_button_id == button_ui_action_map[i].button_id) {
+            return button_ui_action_map[i].ui_action_id;
         }
     }
     return UI_ACTION_NONE;
