@@ -135,7 +135,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         .type = INPUT_EVENT_MCP23017,
         .payload = {
             .mcp23017_int_event = {
-                .timestamp_tick = osKernelGetTickCount(),
+                .timestamp_ticks = osKernelGetTickCount(),
                 .gpio_pin = GPIO_Pin
             }
         }  
@@ -151,9 +151,10 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
         InputEvent input_event = {
             .type = INPUT_EVENT_ENCODER_ROTATION,
             .payload = {
-                .encoder_rotation_event = {
-                    .timestamp_tick = osKernelGetTickCount(),
-                    .encoder_counter = htim->Instance->CNT
+                .encoder_rotation_event = (EncoderRotationEvent){
+                    .timestamp_ticks = osKernelGetTickCount(),
+                    .encoder_counter = htim->Instance->CNT,
+                    .encoder_id = 0
                 }
             }
         };
