@@ -5,7 +5,7 @@
 
 typedef enum {
     UI_DRAWING_STATUS_OK = 0,
-    UI_DRAWING_STATUS_ERROR
+    UI_DRAWING_STATUS_ERROR,
 } UI_DRAWING_STATUS;
 
 extern const uint8_t u8g2_font_ref4x5_prop_v4_tr[];

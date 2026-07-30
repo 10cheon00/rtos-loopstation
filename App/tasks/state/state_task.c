@@ -13,13 +13,13 @@
 #include "button_ui_action_map.h"
 
 typedef enum {
-    PARAMETER_UPDATE_RESULT_ERROR = 0,
-    PARAMETER_UPDATE_RESULT_OK,
+    PARAMETER_UPDATE_RESULT_OK = 0,
+    PARAMETER_UPDATE_RESULT_ERROR,
 } ParameterUpdateResult;
 
 typedef enum {
-    UI_STATE_MACHINE_TRANSITION_RESULT_ERROR = 0,
-    UI_STATE_MACHINE_TRANSITION_RESULT_OK,
+    UI_STATE_MACHINE_TRANSITION_RESULT_OK = 0,
+    UI_STATE_MACHINE_TRANSITION_RESULT_ERROR,
 } UiStateMachineTransitionResult;
 
 static StateTaskContext state_task_context;
