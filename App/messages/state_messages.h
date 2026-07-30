@@ -11,13 +11,13 @@ typedef enum {
 } StateEventType;
 
 typedef struct {
-  uint32_t timestamp_ms;
+  uint32_t timestamp_ticks;
   ButtonId id;
   ButtonState state;
 } ButtonPayload;
 
 typedef struct {
-    uint32_t timestamp_ms;
+    uint32_t timestamp_ticks;
     uint8_t encoder_id;
     int32_t delta;
 } EncoderRotationPayload;

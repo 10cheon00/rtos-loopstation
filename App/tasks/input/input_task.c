@@ -89,7 +89,7 @@ static TaskStatus InputTask_HandleInputEvent(InputEvent *input_event)
 // 핀 상태에 따라 상태 관리 태스크에게 메시지를 보낸다.
 static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
 {
-    TickType_t timestamp_tick = intEvent->timestamp_tick;
+    TickType_t timestamp_ticks = intEvent->timestamp_ticks;
     uint16_t GPIO_Pin = intEvent->gpio_pin;
     uint16_t button_id_mask;
     uint8_t address;
@@ -112,7 +112,7 @@ static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     ButtonPayload payload = {
         .id = button_id,
         .state = button_state,
-        .timestamp_ms = timestamp_tick // TODO: ms를 쓸건지 tick을 쓸건지?
+        .timestamp_ticks = timestamp_ticks
     };
     StateEvent state_event = {.type = STATE_EVENT_BUTTON,
                               .payload = {.button = payload}};
@@ -206,7 +206,7 @@ static TaskStatus InputTask_HandleEncoderRotationEvent(EncoderRotationEvent* enc
             .encoder_rotation = {
                 .delta = delta,
                 .encoder_id = encoder_rotation_event->encoder_id,
-                .timestamp_ms = encoder_rotation_event->timestamp_tick,
+                .timestamp_ticks = encoder_rotation_event->timestamp_ticks,
             }
         }
     };

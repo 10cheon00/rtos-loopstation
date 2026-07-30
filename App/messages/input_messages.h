@@ -5,7 +5,7 @@
 #include "FreeRTOS.h"
 
 typedef struct {
-    TickType_t timestamp_tick;
+    TickType_t timestamp_ticks;
     uint16_t gpio_pin;
 } Mcp23017IntEvent;
 
@@ -20,7 +20,7 @@ typedef enum {
 } EncoderRotationDirection;
 
 typedef struct {
-    TickType_t timestamp_tick; // for debugging only
+    TickType_t timestamp_ticks; // for debugging only
     uint32_t encoder_counter;
     uint8_t encoder_id;
 } EncoderRotationEvent;
