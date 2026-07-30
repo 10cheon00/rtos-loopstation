@@ -20,9 +20,9 @@ static TaskStatus InputTask_HandleInputEvent(InputEvent *input_event);
 static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent);
 static TaskStatus InputTask_FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address);
 static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mask,
-                                        ControlButtonState *button_state);
-static TaskStatus InputTask_FindControlButtonId(uint8_t address, uint16_t button_id_mask,
-                                                ControlButtonId *control_button_id);
+                                        ButtonState *button_state);
+static TaskStatus InputTask_FindButtonId(uint8_t address, uint16_t button_id_mask,
+                                                ButtonId *button_id);
 static TaskStatus InputTask_HandleEncoderRotationEvent(EncoderRotationEvent* encoder_rotation_event);
 
 static InputTaskContext input_task_context;
@@ -93,8 +93,8 @@ static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     uint16_t GPIO_Pin = intEvent->gpio_pin;
     uint16_t button_id_mask;
     uint8_t address;
-    ControlButtonState control_button_state;
-    ControlButtonId control_button_id;
+    ButtonState button_state;
+    ButtonId button_id;
     TaskStatus taskStatus;
 
     taskStatus = InputTask_FindI2cSlaveAddress(GPIO_Pin, &address);
@@ -102,20 +102,20 @@ static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
         return TASK_STATUS_ERROR;
     }
 
-    taskStatus = InputTask_GetPinState(address, &button_id_mask, &control_button_state);
+    taskStatus = InputTask_GetPinState(address, &button_id_mask, &button_state);
     if (taskStatus != TASK_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
     // TODO:  버튼 입력 이벤트를 debouncing하여 잘못된 입력을 전달하지 않도록 검사하기
 
-    taskStatus = InputTask_FindControlButtonId(address, button_id_mask, &control_button_id);
-    ControlButtonPayload payload = {
-        .id = control_button_id,
-        .state = control_button_state,
+    taskStatus = InputTask_FindButtonId(address, button_id_mask, &button_id);
+    ButtonPayload payload = {
+        .id = button_id,
+        .state = button_state,
         .timestamp_ms = timestamp_tick // TODO: ms를 쓸건지 tick을 쓸건지?
     };
-    StateEvent state_event = {.type = STATE_EVENT_CONTROL_BUTTON,
-                              .payload = {.control_button = payload}};
+    StateEvent state_event = {.type = STATE_EVENT_BUTTON,
+                              .payload = {.button = payload}};
     osMessageQueuePut(state_event_queue, &state_event, 0, INPUT_TASK_TIMEOUT_TICKS);
 
     return TASK_STATUS_OK;
@@ -135,7 +135,7 @@ TaskStatus InputTask_FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address)
 }
 
 static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mask,
-                                        ControlButtonState *button_state)
+                                        ButtonState *button_state)
 {
     Mcp23017Status status;
 
@@ -153,7 +153,7 @@ static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mas
     if (flag_a) {
         *button_id_mask = flag_a << 0;
         *button_state =
-            flag_a & capture_a ? CONTROL_BUTTON_STATE_RELEASED : CONTROL_BUTTON_STATE_PRESSED;
+            flag_a & capture_a ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
         return TASK_STATUS_OK;
     }
 
@@ -169,13 +169,13 @@ static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mas
     if (flag_b) {
         *button_id_mask = flag_b << 8;
         *button_state =
-            flag_b & capture_b ? CONTROL_BUTTON_STATE_RELEASED : CONTROL_BUTTON_STATE_PRESSED;
+            flag_b & capture_b ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
     }
     return TASK_STATUS_OK;
 }
 
-static TaskStatus InputTask_FindControlButtonId(uint8_t address, uint16_t button_id_mask,
-                                                ControlButtonId *control_button_id)
+static TaskStatus InputTask_FindButtonId(uint8_t address, uint16_t button_id_mask,
+                                                ButtonId *button_id)
 {
     uint8_t mapping_index = 0;
     while (button_id_mask != 0 && (button_id_mask & 0x1) == 0) {
@@ -184,7 +184,7 @@ static TaskStatus InputTask_FindControlButtonId(uint8_t address, uint16_t button
     }
     for (uint8_t i = 0; i < input_button_mapping_count; i++) {
         if (input_button_mappings[i].slave_address == address) {
-            *control_button_id = input_button_mappings[i].ids[mapping_index];
+            *button_id = input_button_mappings[i].ids[mapping_index];
             return TASK_STATUS_OK;
         }
     }

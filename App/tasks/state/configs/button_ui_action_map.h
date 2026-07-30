@@ -3,11 +3,11 @@
 
 #include <stddef.h>
 
-#include "control_button_id.h"
+#include "button_id.h"
 #include "ui_state.h"
 
 typedef struct {
-    ControlButtonId button_id;
+    ButtonId button_id;
     UiActionId ui_action_id;
 } ButtonUiActionMapEntry;
 

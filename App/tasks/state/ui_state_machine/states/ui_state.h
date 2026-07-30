@@ -5,8 +5,6 @@
 
 #include "ui_panel_id.h"
 
-// TODO:
-// UiStateEvent는 더 큰 범주를 의미하는 것 같다. 이벤트가 전이 이벤트 하나뿐인가?
 typedef enum {
     UI_ACTION_NONE,
     UI_ACTION_NAVIGATE_LEFT,

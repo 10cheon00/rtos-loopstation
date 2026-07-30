@@ -32,13 +32,13 @@ static UiStateMachineContext ui_state_machine_context;
 
 static ParameterUpdateResult TryUpdateParameter(StateEvent *state_event);
 static ParameterUpdateResult
-TryUpdateParameterFromControlButton(ControlButtonPayload *control_button_payload);
+TryUpdateParameterFromButton(ButtonPayload *button_payload);
 static ParameterUpdateResult
 TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder_rotation_payload);
 static ParameterUpdateResult TryUpdateParameterFromAdc(StateEvent *state_event);
 static UiStateMachineTransitionResult TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
                                                                   StateEvent *state_event);
-static UiActionId GetUiActionIdFromControlButtonId(ControlButtonId control_button_id);
+static UiActionId GetUiActionIdFromButtonId(ButtonId button_id);
 static TaskStatus
 TryRenderCurrentUiState(UiStateMachine *ui_state_machine,
                         ParameterUpdateResult parameter_update_result,
@@ -113,8 +113,8 @@ void StateTask_Run(void)
 
 static ParameterUpdateResult TryUpdateParameter(StateEvent *state_event)
 {
-    if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
-        return TryUpdateParameterFromControlButton(&state_event->payload.control_button);
+    if (state_event->type == STATE_EVENT_BUTTON) {
+        return TryUpdateParameterFromButton(&state_event->payload.button);
     } else if (state_event->type == STATE_EVENT_ENCODER_ROTATION) {
         return TryUpdateParameterFromEncoderRotation(&state_event->payload.encoder_rotation);
     } else {
@@ -128,19 +128,19 @@ static ParameterUpdateResult TryUpdateParameter(StateEvent *state_event)
  * 버튼 입력은 IFX/TFX 토글, 엔코더 버튼만 파라미터 값을 변경한다.
  * */
 static ParameterUpdateResult
-TryUpdateParameterFromControlButton(ControlButtonPayload *control_button_payload)
+TryUpdateParameterFromButton(ButtonPayload *button_payload)
 {
     UiPanelId ui_panel_id;
     ParameterId parameter_id;
     Parameter *parameter;
 
-    if (control_button_payload->id != CONTROL_BUTTON_ID_IFX_A_TOGGLE &&
-        control_button_payload->id != CONTROL_BUTTON_ID_TFX_A_TOGGLE &&
-        control_button_payload->id != CONTROL_BUTTON_ID_ENCODER_A_PUSH) {
+    if (button_payload->id != BUTTON_ID_IFX_A_TOGGLE &&
+        button_payload->id != BUTTON_ID_TFX_A_TOGGLE &&
+        button_payload->id != BUTTON_ID_ENCODER_A_PUSH) {
         return TASK_STATUS_ERROR;
     }
 
-    if (control_button_payload->id == CONTROL_BUTTON_ID_ENCODER_A_PUSH) {
+    if (button_payload->id == BUTTON_ID_ENCODER_A_PUSH) {
         // TODO:
         // Encoder_A~D 모두 처리 가능하게 해야함
         ui_panel_id = ui_state_machine.current_state->ui_panel_id;
@@ -181,7 +181,7 @@ TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder_rotation_p
         Parameter_ToggleValue(parameter);
         return TASK_STATUS_OK;
     } else if (parameter->type == PARAMETER_TYPE_SLIDER) {
-        if (state_task_context.encoder_button_state_snapshot == CONTROL_BUTTON_STATE_PRESSED) {
+        if (state_task_context.encoder_button_state_snapshot == BUTTON_STATE_PRESSED) {
             scale = 10;
         }
         delta = encoder_rotation_payload->delta;
@@ -202,22 +202,22 @@ ParameterUpdateResult TryUpdateParameterFromAdc(StateEvent *state_event)
 static UiStateMachineTransitionResult TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
                                                                   StateEvent *state_event)
 {
-    ControlButtonPayload *control_button_payload;
+    ButtonPayload *button_payload;
     UiActionId ui_action_id;
 
     // 1. 버튼 입력일때에만 패널이 바뀜
-    if (state_event->type != STATE_EVENT_CONTROL_BUTTON) {
+    if (state_event->type != STATE_EVENT_BUTTON) {
         return UI_STATE_MACHINE_TRANSITION_RESULT_ERROR;
     }
-    control_button_payload = &state_event->payload.control_button;
+    button_payload = &state_event->payload.button;
 
     // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
-    if (control_button_payload->state != CONTROL_BUTTON_STATE_PRESSED) {
+    if (button_payload->state != BUTTON_STATE_PRESSED) {
         return UI_STATE_MACHINE_TRANSITION_RESULT_ERROR;
     }
 
     // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
-    ui_action_id = GetUiActionIdFromControlButtonId(control_button_payload->id);
+    ui_action_id = GetUiActionIdFromButtonId(button_payload->id);
     if (ui_action_id == UI_ACTION_NONE) {
         return UI_STATE_MACHINE_TRANSITION_RESULT_ERROR;
     }
@@ -226,10 +226,10 @@ static UiStateMachineTransitionResult TryTransitionUiStateMachine(UiStateMachine
     return UI_STATE_MACHINE_TRANSITION_RESULT_OK;
 }
 
-static UiActionId GetUiActionIdFromControlButtonId(ControlButtonId control_button_id)
+static UiActionId GetUiActionIdFromButtonId(ButtonId button_id)
 {
     for (size_t i = 0; i < button_ui_action_map_count; i++) {
-        if (control_button_id == button_ui_action_map[i].button_id) {
+        if (button_id == button_ui_action_map[i].button_id) {
             return button_ui_action_map[i].ui_action_id;
         }
     }

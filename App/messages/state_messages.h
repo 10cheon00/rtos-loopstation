@@ -3,18 +3,18 @@
 
 #include <stdint.h>
 
-#include "control_button_id.h"
+#include "button_id.h"
 
 typedef enum {
-  STATE_EVENT_CONTROL_BUTTON = 0,
+  STATE_EVENT_BUTTON = 0,
   STATE_EVENT_ENCODER_ROTATION,
 } StateEventType;
 
 typedef struct {
   uint32_t timestamp_ms;
-  ControlButtonId id;
-  ControlButtonState state;
-} ControlButtonPayload;
+  ButtonId id;
+  ButtonState state;
+} ButtonPayload;
 
 typedef struct {
     uint32_t timestamp_ms;
@@ -25,7 +25,7 @@ typedef struct {
 typedef struct {
   StateEventType type;
   union {
-    ControlButtonPayload control_button;
+    ButtonPayload button;
     EncoderRotationPayload encoder_rotation;
   } payload;
 } StateEvent;

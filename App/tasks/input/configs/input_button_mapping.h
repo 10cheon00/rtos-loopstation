@@ -3,11 +3,11 @@
 
 #include <stdint.h>
 
-#include "control_button_id.h"
+#include "button_id.h"
 
 typedef struct {
     uint8_t slave_address;
-    ControlButtonId ids[16]; // first 8 is port A, second is port B
+    ButtonId ids[16]; // first 8 is port A, second is port B
 } InputButtonMapping;
 
 extern const InputButtonMapping input_button_mappings[];
