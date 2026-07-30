@@ -5,6 +5,8 @@
 
 #include "button_id.h"
 
+#define STATE_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS (pdMS_TO_TICKS(500UL))
+
 typedef enum {
   STATE_EVENT_BUTTON = 0,
   STATE_EVENT_ENCODER_ROTATION,

@@ -2,7 +2,12 @@
 #define INPUT_MESSAGES_H
 
 #include <stdint.h>
+
 #include "FreeRTOS.h"
+
+#include "knob_id.h"
+
+#define INPUT_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS (pdMS_TO_TICKS(500UL))
 
 typedef struct {
     TickType_t timestamp_ticks;
@@ -12,6 +17,7 @@ typedef struct {
 typedef enum {
     INPUT_EVENT_MCP23017 = 0,
     INPUT_EVENT_ENCODER_ROTATION,
+    INPUT_EVENT_ADC,
 } InputEventType;
 
 typedef enum {
@@ -26,10 +32,17 @@ typedef struct {
 } EncoderRotationEvent;
 
 typedef struct {
+    TickType_t timestamp_ticks; // for debugging only
+    uint16_t adc_value;
+    KnobId knob_id;
+} AdcEvent;
+
+typedef struct {
     InputEventType type;
     union {
         Mcp23017IntEvent mcp23017_int_event;
         EncoderRotationEvent encoder_rotation_event;
+        AdcEvent adc_event;
     } payload;
 } InputEvent;
 

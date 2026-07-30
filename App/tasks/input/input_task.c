@@ -9,9 +9,6 @@
 #include "state_messages.h"
 #include "mcp23017.h"
 
-#define INPUT_TASK_TIMEOUT_MS 500
-#define INPUT_TASK_TIMEOUT_TICKS (pdMS_TO_TICKS(INPUT_TASK_TIMEOUT_MS))
-
 static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;
 static I2C_HandleTypeDef *hi2c;
@@ -116,7 +113,7 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     };
     StateEvent state_event = {.type = STATE_EVENT_BUTTON,
                               .payload = {.button = payload}};
-    osMessageQueuePut(state_event_queue, &state_event, 0, INPUT_TASK_TIMEOUT_TICKS);
+    osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS);
 
     return TASK_STATUS_OK;
 }
@@ -211,7 +208,7 @@ static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent* encoder_rotat
         }
     };
     input_task_context.previous_encoder_counter = encoder_rotation_event->encoder_counter;
-    osMessageQueuePut(state_event_queue, &state_event, 0, INPUT_TASK_TIMEOUT_TICKS);
+    osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS);
     
     return TASK_STATUS_OK;
 }

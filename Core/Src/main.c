@@ -27,6 +27,7 @@
 #include "app_messages.h"
 #include "display_initparams.h"
 #include "input_initparams.h"
+#include "adc_input_initparams.h"
 #include "state_initparams.h"
 /* USER CODE END Includes */
 
@@ -87,6 +88,13 @@ const osThreadAttr_t stateTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for adcInputTask */
+osThreadId_t adcInputTaskHandle;
+const osThreadAttr_t adcInputTask_attributes = {
+  .name = "adcInputTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
+};
 /* Definitions for input_event_queue */
 osMessageQueueId_t input_event_queueHandle;
 const osMessageQueueAttr_t input_event_queue_attributes = {
@@ -106,6 +114,7 @@ const osMessageQueueAttr_t state_event_queue_attributes = {
 static InputInitParams input_init_params;
 static DisplayInitParams display_init_params;
 static StateInitParams state_init_params;
+static AdcInputInitParams adc_input_init_params;
 
 /* USER CODE END PV */
 
@@ -125,12 +134,13 @@ void StartDefaultTask(void *argument);
 extern void InputTask_Init(void *argument);
 extern void DisplayTask_Init(void *argument);
 extern void StateTask_Init(void *argument);
+extern void AdcInputTask_Init(void *argument);
 
 /* USER CODE BEGIN PFP */
+// 이 함수는 전역 콜백 함수 이므로, 여기서는 애플리케이션에게 
+//  처리를 위임하는 코드만 둔다.
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-    // 이 함수는 전역 콜백 함수 이므로, 여기서는 애플리케이션에게 
-    //  처리를 위임하는 코드만 둔다.
     InputEvent input_event = {
         .type = INPUT_EVENT_MCP23017,
         .payload = {
@@ -143,10 +153,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     osMessageQueuePut(input_event_queueHandle, &input_event, 0, 0);   
 }
 
+// 이 함수는 전역 콜백 함수 이므로, 여기서는 애플리케이션에게 
+//  처리를 위임하는 코드만 둔다.
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-    // 이 함수는 전역 콜백 함수 이므로, 여기서는 애플리케이션에게 
-    //  처리를 위임하는 코드만 둔다.
     if (htim->Instance == TIM4) {
         InputEvent input_event = {
             .type = INPUT_EVENT_ENCODER_ROTATION,
@@ -154,7 +164,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
                 .encoder_rotation_event = (EncoderRotationEvent){
                     .timestamp_ticks = osKernelGetTickCount(),
                     .encoder_counter = htim->Instance->CNT,
-                    .encoder_id = 0
+                    .encoder_id = 0 // TODO: 엔코더 번호도 enum으로 관리하기
                 }
             }
         };
@@ -271,6 +281,9 @@ int main(void)
 
   /* creation of stateTask */
   stateTaskHandle = osThreadNew(StateTask_Init, (void*) &state_init_params, &stateTask_attributes);
+
+  /* creation of adcInputTask */
+  adcInputTaskHandle = osThreadNew(AdcInputTask_Init, (void*) &adc_input_init_params, &adcInputTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -405,9 +418,9 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV2;
   hadc1.Init.Resolution = ADC_RESOLUTION_16B;
   hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
-  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.NbrOfConversion = 3;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;

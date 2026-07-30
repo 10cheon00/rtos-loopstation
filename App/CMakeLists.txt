@@ -50,6 +50,9 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/configs/input_mcp23017_devices.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/configs/input_button_mapping.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.c
+    
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/adc_input_task.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs/adc_rank_knob_table.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/ui.c
@@ -78,6 +81,8 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/messages
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
