@@ -11,9 +11,9 @@ static u8g2_t u8g2;
 static osMessageQueueId_t display_command_queue;
 
 static TaskStatus
-DisplayTask_HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload);
+HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload);
 
-static int DisplayTask_IsValidInitParams(const DisplayInitParams *params)
+static int IsValidInitParams(const DisplayInitParams *params)
 {
     return (params != 0) &&
            (params->display_command_queue != 0 && params->hspi != NULL && params->CS_Pin != 0 &&
@@ -25,7 +25,7 @@ void DisplayTask_Init(void *argument)
 {
     const DisplayInitParams *params = (const DisplayInitParams *)argument;
 
-    if (!DisplayTask_IsValidInitParams(params)) {
+    if (!IsValidInitParams(params)) {
         // TODO: 초기화 단계에서 오류 발생 시 처리 흐름에 대해 요구사항에서 정의하기
         for (;;) {
             osDelay(1);
@@ -59,12 +59,12 @@ void DisplayTask_Run(void)
     for (;;) {
         osMessageQueueGet(display_command_queue, &command, NULL, osWaitForever);
         if (command.type == DISPLAY_COMMAND_UI_STATE_RENDER) {
-            DisplayTask_HandleUiStateRenderPayload(&command.payload.ui_state_render);
+            HandleUiStateRenderPayload(&command.payload.ui_state_render);
         }
     }
 }
 
-TaskStatus DisplayTask_HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload)
+TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload)
 {
     UI_DRAWING_STATUS ui_drawing_status;
 

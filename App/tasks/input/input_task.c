@@ -16,18 +16,18 @@ static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;
 static I2C_HandleTypeDef *hi2c;
 
-static TaskStatus InputTask_HandleInputEvent(InputEvent *input_event);
-static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent);
-static TaskStatus InputTask_FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address);
-static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mask,
+static TaskStatus HandleInputEvent(InputEvent *input_event);
+static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent);
+static TaskStatus FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address);
+static TaskStatus GetPinState(uint8_t address, uint16_t *button_id_mask,
                                         ButtonState *button_state);
-static TaskStatus InputTask_FindButtonId(uint8_t address, uint16_t button_id_mask,
+static TaskStatus FindButtonId(uint8_t address, uint16_t button_id_mask,
                                                 ButtonId *button_id);
-static TaskStatus InputTask_HandleEncoderRotationEvent(EncoderRotationEvent* encoder_rotation_event);
+static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent* encoder_rotation_event);
 
 static InputTaskContext input_task_context;
 
-static int InputTask_IsValidInitParams(const InputInitParams *params)
+static int IsValidInitParams(const InputInitParams *params)
 {
     return (params != 0) && (params->input_event_queue != 0 && params->state_event_queue != 0 &&
                              params->hi2c != NULL);
@@ -37,7 +37,7 @@ void InputTask_Init(void *argument)
 {
     const InputInitParams *params = (const InputInitParams *)argument;
 
-    if (!InputTask_IsValidInitParams(params)) {
+    if (!IsValidInitParams(params)) {
         for (;;) {
             osDelay(1);
         }
@@ -70,24 +70,24 @@ void InputTask_Run(void)
     for (;;) {
         os_status = osMessageQueueGet(input_event_queue, &input_event, NULL, osWaitForever);
         if (os_status == osOK) {
-            task_status = InputTask_HandleInputEvent(&input_event);
+            task_status = HandleInputEvent(&input_event);
         }
     }
 }
 
-static TaskStatus InputTask_HandleInputEvent(InputEvent *input_event)
+static TaskStatus HandleInputEvent(InputEvent *input_event)
 {
     if (input_event->type == INPUT_EVENT_MCP23017) {
-        return InputTask_HandleMcp23017IntEvent(&input_event->payload.mcp23017_int_event);
+        return HandleMcp23017IntEvent(&input_event->payload.mcp23017_int_event);
     } else if (input_event->type == INPUT_EVENT_ENCODER_ROTATION) {
-        return InputTask_HandleEncoderRotationEvent(&input_event->payload.encoder_rotation_event);
+        return HandleEncoderRotationEvent(&input_event->payload.encoder_rotation_event);
     }
     return TASK_STATUS_OK;
 }
 
 // 인터럽트가 발생한 핀을 확인하고 핀 상태를 얻어낸다.
 // 핀 상태에 따라 상태 관리 태스크에게 메시지를 보낸다.
-static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
+static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
 {
     TickType_t timestamp_ticks = intEvent->timestamp_ticks;
     uint16_t GPIO_Pin = intEvent->gpio_pin;
@@ -97,18 +97,18 @@ static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     ButtonId button_id;
     TaskStatus taskStatus;
 
-    taskStatus = InputTask_FindI2cSlaveAddress(GPIO_Pin, &address);
+    taskStatus = FindI2cSlaveAddress(GPIO_Pin, &address);
     if (taskStatus != TASK_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
 
-    taskStatus = InputTask_GetPinState(address, &button_id_mask, &button_state);
+    taskStatus = GetPinState(address, &button_id_mask, &button_state);
     if (taskStatus != TASK_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
     // TODO:  버튼 입력 이벤트를 debouncing하여 잘못된 입력을 전달하지 않도록 검사하기
 
-    taskStatus = InputTask_FindButtonId(address, button_id_mask, &button_id);
+    taskStatus = FindButtonId(address, button_id_mask, &button_id);
     ButtonPayload payload = {
         .id = button_id,
         .state = button_state,
@@ -121,7 +121,7 @@ static TaskStatus InputTask_HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     return TASK_STATUS_OK;
 }
 
-TaskStatus InputTask_FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address)
+TaskStatus FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address)
 {
 
     for (uint8_t i = 0; i < input_mcp23017_device_count; i++) {
@@ -134,7 +134,7 @@ TaskStatus InputTask_FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address)
     return TASK_STATUS_ERROR;
 }
 
-static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mask,
+static TaskStatus GetPinState(uint8_t address, uint16_t *button_id_mask,
                                         ButtonState *button_state)
 {
     Mcp23017Status status;
@@ -174,7 +174,7 @@ static TaskStatus InputTask_GetPinState(uint8_t address, uint16_t *button_id_mas
     return TASK_STATUS_OK;
 }
 
-static TaskStatus InputTask_FindButtonId(uint8_t address, uint16_t button_id_mask,
+static TaskStatus FindButtonId(uint8_t address, uint16_t button_id_mask,
                                                 ButtonId *button_id)
 {
     uint8_t mapping_index = 0;
@@ -191,7 +191,7 @@ static TaskStatus InputTask_FindButtonId(uint8_t address, uint16_t button_id_mas
     return TASK_STATUS_ERROR;
 }
 
-static TaskStatus InputTask_HandleEncoderRotationEvent(EncoderRotationEvent* encoder_rotation_event) {
+static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent* encoder_rotation_event) {
     uint16_t current = encoder_rotation_event->encoder_counter;
     uint16_t previous = input_task_context.previous_encoder_counter;
     uint16_t unsigned_delta = (uint16_t)(current - previous);
