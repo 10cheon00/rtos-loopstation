@@ -8,6 +8,7 @@
 // 랭크 순으로 adc polling conversion이 수행되니까, 
 // 테이블 형태로 만들고 채널에 연결된 노브 id를 적는 것으로 해야함
 
-KnobId AdcRankKnobTable_GetKnobIdFromAdcRank(uint32_t adc_rank);
+extern KnobId adc_rank_knob_table[];
+extern const size_t adc_rank_knob_table_count;
 
 #endif

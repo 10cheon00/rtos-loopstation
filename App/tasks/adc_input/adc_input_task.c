@@ -8,8 +8,8 @@
 #include "adc_input_initparams.h"
 #include "input_messages.h"
 
-#define ADC_POLLING_FREQEUNCY_HZ (100)
-#define ADC_POLLING_DELAY_MS (1 / ADC_POLLING_FREQEUNCY_HZ)
+#define ADC_POLLING_FREQEUNCY_HZ (100UL)
+#define ADC_POLLING_DELAY_MS (1000UL / ADC_POLLING_FREQEUNCY_HZ)
 #define ADC_POLLING_DELAY_TICKS (pdMS_TO_TICKS(ADC_POLLING_DELAY_MS))
 
 static uint16_t adc_values[KNOB_ID_COUNT];
@@ -23,10 +23,13 @@ void AdcInputTask_Init(void *arguments) {
     input_message_queue = params->input_message_queue;
 
     AdcInputTask_Run();
+    // for (;;) {
+    //     osDelay(1);
+    // }
 }
 
 void AdcInputTask_Run() {
-    TickType_t last_wake_ticks = 0, next_wake_ticks;
+    TickType_t last_wake_ticks= 0, next_wake_ticks;
     InputEvent input_event;
 
     for (;;) {
@@ -35,7 +38,7 @@ void AdcInputTask_Run() {
         last_wake_ticks = osKernelGetTickCount();
 
         HAL_ADC_Start(hadc);
-        for (size_t i = 0; i < KNOB_ID_COUNT; i++) {
+        for (size_t i = 0; i < adc_rank_knob_table_count; i++) {
             HAL_ADC_PollForConversion(hadc, ADC_POLLING_DELAY_MS);
             adc_values[i] = HAL_ADC_GetValue(hadc);
 
@@ -43,7 +46,7 @@ void AdcInputTask_Run() {
             input_event.payload.adc_event = (AdcEvent) {
                 .timestamp_ticks = osKernelGetTickCount(),
                 .adc_value = adc_values[i],
-                .knob_id = AdcRankKnobTable_GetKnobIdFromAdcRank(i),
+                .knob_id = adc_rank_knob_table[i],
             };
             osMessageQueuePut(input_message_queue, &input_event, 0, INPUT_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS);
         }

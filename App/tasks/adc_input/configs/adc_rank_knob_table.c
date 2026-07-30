@@ -7,17 +7,9 @@
  * ADC의 어느 채널에 어떤 노브가 매핑되어 있는지 소프트웨어적으로는 알 수 없으므로,
  *  여기서 하드코딩으로 정의한다.
  */ 
-static KnobId adc_rank_knob_table[] = {
+KnobId adc_rank_knob_table[] = {
     KNOB_ID_IFX,
     KNOB_ID_TFX,
     KNOB_ID_TRACK_1_VOLUME_FADER,
 };
-static size_t adc_rank_knob_table_count = ARRAY_COUNT(adc_rank_knob_table);
-
-KnobId AdcRankKnobTable_GetKnobIdFromAdcRank(uint32_t adc_rank)
-{
-    if (adc_rank < 0 || adc_rank_knob_table_count) {
-        return KNOB_ID_NONE;
-    }
-    return adc_rank_knob_table[adc_rank];    
-}
+const size_t adc_rank_knob_table_count = ARRAY_COUNT(adc_rank_knob_table);
