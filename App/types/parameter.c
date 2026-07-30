@@ -18,3 +18,12 @@ void Parameter_AddValue(Parameter *parameter, Parameter_t value) {
 void Parameter_SetValue(Parameter *parameter, Parameter_t value) {
     parameter->current = clamp(parameter->min, parameter->max, value);
 }
+
+void Parameter_ToggleValue(Parameter *parameter) {
+    if (parameter->current == parameter->max) {
+        parameter->current = parameter->min;
+    } else {
+        parameter->current = parameter->max;
+    }
+}
+

@@ -1,5 +1,5 @@
-#ifndef PARAMETER_ID 
-#define PARAMETER_ID
+#ifndef PARAMETER_ID_H 
+#define PARAMETER_ID_H
 
 typedef enum {
     PARAMETER_ID_NONE = 0,

@@ -17,7 +17,7 @@ const InputButtonMapping input_button_mappings[] = {
             CONTROL_BUTTON_ID_NONE,
             CONTROL_BUTTON_ID_NONE,
             CONTROL_BUTTON_ID_NONE,
-            CONTROL_BUTTON_ID_ENCODER_PUSH,
+            CONTROL_BUTTON_ID_ENCODER_A_PUSH,
             CONTROL_BUTTON_ID_IFX_A_TOGGLE,
             CONTROL_BUTTON_ID_NONE,
             CONTROL_BUTTON_ID_TRACK_1_PLAY_RECORD,

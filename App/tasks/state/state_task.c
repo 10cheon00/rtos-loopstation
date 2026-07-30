@@ -10,9 +10,19 @@
 #include "state_initparams.h"
 #include "ui_state_machine.h"
 #include "ui_state_home_panel.h"
+#include "control_button_id_ui_state_event_id_mapping.h"
+
+typedef enum {
+    PARAMETER_UPDATE_RESULT_ERROR = 0,
+    PARAMETER_UPDATE_RESULT_OK,
+} ParameterUpdateResult;
+
+typedef enum {
+    UI_STATE_MACHINE_TRANSITION_RESULT_ERROR = 0,
+    UI_STATE_MACHINE_TRANSITION_RESULT_OK,
+} UiStateMachineTransitionResult;
 
 static StateTaskContext state_task_context;
-static LoopStationParameterStore *s_loopstation_parameter_store;
 
 static osMessageQueueId_t state_event_queue = 0;
 static osMessageQueueId_t display_command_queue = 0;
@@ -20,10 +30,21 @@ static osMessageQueueId_t display_command_queue = 0;
 static UiStateMachine ui_state_machine;
 static UiStateMachineContext ui_state_machine_context;
 
+static ParameterUpdateResult TryUpdateParameter(StateEvent *state_event);
+static ParameterUpdateResult
+TryUpdateParameterFromControlButton(ControlButtonPayload *control_button_payload);
+static ParameterUpdateResult
+TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder_rotation_payload);
+static ParameterUpdateResult TryUpdateParameterFromAdc(StateEvent *state_event);
+static UiStateMachineTransitionResult TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
+                                                                  StateEvent *state_event);
+static UiStateEventId GetUiStateEventIdFromControlButtonId(ControlButtonId control_button_id);
+static TaskStatus
+TryRenderCurrentUiState(UiStateMachine *ui_state_machine,
+                        ParameterUpdateResult parameter_update_result,
+                        UiStateMachineTransitionResult ui_state_machine_transition_result);
 
-static TaskStatus StateTask_HandleStateEvent(StateEvent *state_event);
-
-static int StateTask_IsValidInitParams(const StateInitParams *params)
+static int IsValidInitParams(const StateInitParams *params)
 {
     return (params != 0) && (params->state_event_queue != 0) &&
            (params->display_command_queue != 0);
@@ -33,13 +54,11 @@ void StateTask_Init(void *argument)
 {
     const StateInitParams *params = (const StateInitParams *)argument;
 
-    if (!StateTask_IsValidInitParams(params)) {
+    if (!IsValidInitParams(params)) {
         for (;;) {
             osDelay(1);
         }
     }
-
-    s_loopstation_parameter_store = LoopstationParameterStore_GetInstance();
 
     state_event_queue = params->state_event_queue;
     display_command_queue = params->display_command_queue;
@@ -54,6 +73,8 @@ void StateTask_Run(void)
     StateEvent state_event;
     osStatus_t os_status;
     TaskStatus task_status;
+    ParameterUpdateResult parameter_update_result;
+    UiStateMachineTransitionResult ui_state_machine_transition_result;
 
     UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context, &UI_STATE_HOME_PANEL);
 
@@ -78,12 +99,153 @@ void StateTask_Run(void)
              * UI 상태 머신은 OnEnter에서 디스플레이 태스크에게 요청하기, OnEvent에서 디스플레이
              * 태스크에게 요청하기
              */
-            task_status = StateTask_HandleStateEvent(&state_event);
+            parameter_update_result = TryUpdateParameter(&state_event);
+            ui_state_machine_transition_result =
+                TryTransitionUiStateMachine(&ui_state_machine, &state_event);
+            task_status = TryRenderCurrentUiState(&ui_state_machine, parameter_update_result,
+                                                  ui_state_machine_transition_result);
+            if (task_status != TASK_STATUS_OK) {
+            }
         }
     }
 }
 
-TaskStatus StateTask_HandleStateEvent(StateEvent *state_event)
+static ParameterUpdateResult TryUpdateParameter(StateEvent *state_event)
 {
-    return TASK_STATUS_OK;
+    if (state_event->type == STATE_EVENT_CONTROL_BUTTON) {
+        return TryUpdateParameterFromControlButton(&state_event->payload.control_button);
+    } else if (state_event->type == STATE_EVENT_ENCODER_ROTATION) {
+        return TryUpdateParameterFromEncoderRotation(&state_event->payload.encoder_rotation);
+    } else {
+        // TODO:
+        // ADC 입력에 대한 파라미터 값 변경 기능 구현하기
+        return TryUpdateParameterFromAdc(state_event);
+    }
+}
+
+/**
+ * 버튼 입력은 IFX/TFX 토글, 엔코더 버튼만 파라미터 값을 변경한다.
+ * */
+static ParameterUpdateResult
+TryUpdateParameterFromControlButton(ControlButtonPayload *control_button_payload)
+{
+    UiPanelId ui_panel_id;
+    ParameterId parameter_id;
+    Parameter *parameter;
+
+    if (control_button_payload->id != CONTROL_BUTTON_ID_IFX_A_TOGGLE &&
+        control_button_payload->id != CONTROL_BUTTON_ID_TFX_A_TOGGLE &&
+        control_button_payload->id != CONTROL_BUTTON_ID_ENCODER_A_PUSH) {
+        return TASK_STATUS_ERROR;
+    }
+
+    if (control_button_payload->id == CONTROL_BUTTON_ID_ENCODER_A_PUSH) {
+        // TODO:
+        // Encoder_A~D 모두 처리 가능하게 해야함
+        ui_panel_id = ui_state_machine.current_state->ui_panel_id;
+        parameter_id = UiPanelParameterBinding_GetParameterId(ui_panel_id, 0);
+        if (parameter_id == PARAMETER_ID_NONE) {
+            return TASK_STATUS_ERROR;
+        }
+        parameter = LoopStationParameterStore_GetParameterFromId(parameter_id);
+        if (parameter->type == PARAMETER_TYPE_TOGGLE) {
+            Parameter_ToggleValue(parameter);
+            return TASK_STATUS_OK;
+        }
+    } else {
+        // TODO:
+        // IFX, TFX 파라미터를 추가해야 함
+    }
+
+    return TASK_STATUS_ERROR;
+}
+
+ParameterUpdateResult
+TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder_rotation_payload)
+{
+    UiPanelId ui_panel_id;
+    ParameterId parameter_id;
+    Parameter *parameter;
+    uint8_t encoder_id;
+    uint8_t delta = 1, scale = 1;
+
+    encoder_id = encoder_rotation_payload->encoder_id;
+    ui_panel_id = ui_state_machine.current_state->ui_panel_id;
+    parameter_id = UiPanelParameterBinding_GetParameterId(ui_panel_id, encoder_id);
+    if (parameter_id == PARAMETER_ID_NONE) {
+        return TASK_STATUS_ERROR;
+    }
+    parameter = LoopStationParameterStore_GetParameterFromId(parameter_id);
+    if (parameter->type == PARAMETER_TYPE_TOGGLE) {
+        Parameter_ToggleValue(parameter);
+        return TASK_STATUS_OK;
+    } else if (parameter->type == PARAMETER_TYPE_SLIDER) {
+        if (state_task_context.encoder_button_state_snapshot == CONTROL_BUTTON_STATE_PRESSED) {
+            scale = 10;
+        }
+        delta = encoder_rotation_payload->delta;
+        Parameter_AddValue(parameter, delta * scale);
+        return TASK_STATUS_OK;
+    }
+    return TASK_STATUS_ERROR;
+}
+
+ParameterUpdateResult TryUpdateParameterFromAdc(StateEvent *state_event)
+{
+    // TODO:
+    // ADC 입력과 매핑된 파라미터를 수정하되, 현재 패널에 그 파라미터가 렌더링 되어야 하는 경우
+    // 판단하기
+    return TASK_STATUS_ERROR;
+}
+
+static UiStateMachineTransitionResult TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
+                                                                  StateEvent *state_event)
+{
+    ControlButtonPayload *control_button_payload;
+    UiStateEventId ui_state_event_id;
+
+    // 1. 버튼 입력일때에만 패널이 바뀜
+    if (state_event->type != STATE_EVENT_CONTROL_BUTTON) {
+        return UI_STATE_MACHINE_TRANSITION_RESULT_ERROR;
+    }
+    control_button_payload = &state_event->payload.control_button;
+
+    // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
+    if (control_button_payload->state != CONTROL_BUTTON_STATE_PRESSED) {
+        return UI_STATE_MACHINE_TRANSITION_RESULT_ERROR;
+    }
+
+    // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
+    ui_state_event_id = GetUiStateEventIdFromControlButtonId(control_button_payload->id);
+    if (ui_state_event_id == UI_STATE_EVENT_NONE) {
+        return UI_STATE_MACHINE_TRANSITION_RESULT_ERROR;
+    }
+    UiStateMachine_TryTransition(ui_state_machine, ui_state_event_id);
+
+    return UI_STATE_MACHINE_TRANSITION_RESULT_OK;
+}
+
+static UiStateEventId GetUiStateEventIdFromControlButtonId(ControlButtonId control_button_id)
+{
+    for (size_t i = 0; i < control_button_id_ui_state_event_id_mapping_count; i++) {
+        if (control_button_id == control_button_id_ui_state_event_id_mapping[i].control_button_id) {
+            return control_button_id_ui_state_event_id_mapping[i].ui_state_event_id;
+        }
+    }
+    return UI_STATE_EVENT_NONE;
+}
+
+static TaskStatus
+TryRenderCurrentUiState(UiStateMachine *ui_state_machine,
+                        ParameterUpdateResult parameter_update_result,
+                        UiStateMachineTransitionResult ui_state_machine_transition_result)
+{
+    if (parameter_update_result == PARAMETER_UPDATE_RESULT_OK ||
+        ui_state_machine_transition_result == UI_STATE_MACHINE_TRANSITION_RESULT_OK) {
+        // TODO:
+        // 상태 전이가 성공했는지 판단하기
+        UiStateMachine_RenderCurrentState(ui_state_machine);
+        return TASK_STATUS_OK;
+    }
+    return TASK_STATUS_ERROR;
 }

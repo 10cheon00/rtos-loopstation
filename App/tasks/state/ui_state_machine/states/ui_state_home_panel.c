@@ -1,9 +1,11 @@
 #include "ui_state_home_panel.h"
 
-UiState UI_STATE_HOME_PANEL = {.UiState_OnEnter = UiStateHomePanel_OnEnter,
-                               .UiState_OnEvent = UiStateHomePanel_OnEvent,
+#include "utils.h"
+
+UiTransitionMapping ui_transition_mappings[] = {
+    {.ui_state_event_id = UI_STATE_EVENT_NAVIGATE_LEFT, .next_ui_panel_id = UI_PANEL_ID_SETTING},
+};
+
+UiState UI_STATE_HOME_PANEL = {.ui_transition_mappings = ui_transition_mappings,
+                               .ui_transition_mappings_count = ARRAY_COUNT(ui_transition_mappings),
                                .ui_panel_id = UI_PANEL_ID_HOME};
-
-void UiStateHomePanel_OnEnter(UiStateMachine *ui_state_machine) {}
-
-void UiStateHomePanel_OnEvent(UiStateMachine *ui_state_machine, UiStateEventId ui_state_event_id) {}

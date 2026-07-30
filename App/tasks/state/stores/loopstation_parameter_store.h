@@ -15,5 +15,5 @@ typedef struct {
 } LoopStationParameterStore;
 
 LoopStationParameterStore* LoopstationParameterStore_GetInstance();
-
+Parameter* LoopStationParameterStore_GetParameterFromId(ParameterId parameter_id);
 #endif

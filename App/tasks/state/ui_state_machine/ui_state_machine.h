@@ -9,6 +9,9 @@ typedef struct {
     osMessageQueueId_t display_command_queue;
 } UiStateMachineContext;
 
+void UiStateMachineContext_Init(UiStateMachineContext *ui_state_machine_context,
+                                osMessageQueueId_t display_command_queue);
+
 struct UiStateMachine {
     UiState *current_state;
     UiStateMachineContext *context;
@@ -16,7 +19,8 @@ struct UiStateMachine {
 
 void UiStateMachine_Init(UiStateMachine *ui_state_machine, UiStateMachineContext *context,
                          UiState *init_state);
-
-void UiStateMachineContext_Init(UiStateMachineContext* ui_state_machine_context, osMessageQueueId_t display_command_queue);
+void UiStateMachine_TryTransition(UiStateMachine *ui_state_machine,
+                                  UiStateEventId ui_state_event_id);
+void UiStateMachine_RenderCurrentState(UiStateMachine *ui_state_machine);
 
 #endif
