@@ -24,11 +24,11 @@ typedef struct UiStateMachine UiStateMachine;
 typedef struct {
     UiActionId ui_action_id;
     UiPanelId next_ui_panel_id;
-} UiTransitionMapping;
+} UiTransitionMapEntry;
 
 typedef struct {
-    UiTransitionMapping* ui_transition_mappings;
-    size_t ui_transition_mappings_count;
+    UiTransitionMapEntry* ui_transition_map;
+    size_t ui_transition_map_count;
     UiPanelId ui_panel_id;
 } UiState;
 
