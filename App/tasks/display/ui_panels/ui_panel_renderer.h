@@ -5,8 +5,8 @@
 #include "parameter.h"
 #include "ui_panel_id.h"
 
-typedef UiDrawingStatus(*Ui_UiPanelRenderFunction)(u8g2_t*,Parameter*);
+typedef UiDrawingStatus(*UiPanelRenderFunction)(u8g2_t*,Parameter*);
 
-extern const Ui_UiPanelRenderFunction ui_panel_render_mappings[UI_PANEL_ID_COUNT];
+extern const UiPanelRenderFunction ui_panel_render_function_table[UI_PANEL_ID_COUNT];
 
 #endif
