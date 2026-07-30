@@ -121,7 +121,7 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     return TASK_STATUS_OK;
 }
 
-TaskStatus FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address)
+static TaskStatus FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address)
 {
 
     for (uint8_t i = 0; i < input_mcp23017_device_count; i++) {

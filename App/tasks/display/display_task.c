@@ -64,7 +64,7 @@ void DisplayTask_Run(void)
     }
 }
 
-TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload)
+static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload)
 {
     UI_DRAWING_STATUS ui_drawing_status;
 
