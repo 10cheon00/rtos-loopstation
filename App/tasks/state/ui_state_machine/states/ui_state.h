@@ -32,4 +32,6 @@ typedef struct {
     UiPanelId ui_panel_id;
 } UiState;
 
+UiPanelId UiState_GetUiPanelIdFromUiStateEventId(UiState* ui_state, UiStateEventId ui_state_event_id);
+
 #endif
