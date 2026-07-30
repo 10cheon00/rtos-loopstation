@@ -66,7 +66,7 @@ void DisplayTask_Run(void)
 
 static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload)
 {
-    UI_DRAWING_STATUS ui_drawing_status;
+    UiDrawingStatus ui_drawing_status;
 
     ui_drawing_status = ui_panel_render_mappings[ui_state_render_payload->panel_id](
         &u8g2, ui_state_render_payload->parameter);

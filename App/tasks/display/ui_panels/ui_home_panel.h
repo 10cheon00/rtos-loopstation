@@ -3,6 +3,6 @@
 
 #include "ui_panel_renderer.h"
 
-UI_DRAWING_STATUS Ui_DrawHomePanel(u8g2_t *u8g2, Parameter* parameters);
+UiDrawingStatus Ui_DrawHomePanel(u8g2_t *u8g2, Parameter* parameters);
 
 #endif
