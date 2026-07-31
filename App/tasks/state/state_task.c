@@ -100,6 +100,10 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload *button_payload)
     ParameterId parameter_id;
     Parameter *parameter;
 
+    if (button_payload->state != BUTTON_STATE_PRESSED) {
+        return TASK_STATUS_ERROR;
+    }
+
     if (button_payload->id != BUTTON_ID_IFX_A_TOGGLE &&
         button_payload->id != BUTTON_ID_TFX_A_TOGGLE &&
         button_payload->id != BUTTON_ID_ENCODER_A_PUSH) {
@@ -119,9 +123,18 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload *button_payload)
             Parameter_ToggleValue(parameter);
             return TASK_STATUS_OK;
         }
-    } else {
-        // TODO:
-        // IFX, TFX 파라미터를 추가해야 함
+    } else if (button_payload->id == BUTTON_ID_IFX_A_TOGGLE){
+        parameter = LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_IFX_A_STATE);
+        if (parameter != NULL) {
+            Parameter_ToggleValue(parameter);
+            return TASK_STATUS_OK;
+        }
+    } else if (button_payload->id == BUTTON_ID_TFX_A_TOGGLE){
+        parameter = LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_TFX_A_STATE);
+        if (parameter != NULL) {
+            Parameter_ToggleValue(parameter);
+            return TASK_STATUS_OK;
+        }
     }
 
     return TASK_STATUS_ERROR;
@@ -209,12 +222,15 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine)
     DisplaySnapshot snapshot = {
         .ui_state = {.panel_id = ui_state_machine->current_state->ui_panel_id}};
     for (size_t i = 0; i < UI_PANEL_MAX_PARAMETER_COUNT; i++) {
-        parameter = LoopStationParameterStore_GetParameterFromParameterId(parameter_ids[i]);
-        snapshot.ui_state.parameters[i] = *parameter;
+        snapshot.ui_state.parameters[i] = *LoopStationParameterStore_GetParameterFromParameterId(parameter_ids[i]);
     }
     // TODO:
     // LED와 관련된 정보도 같이 전송하도록 구현하기
-
+    snapshot.led = (LedRenderPayload){
+        .ifx_a_state = *LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_IFX_A_STATE),
+        .tfx_a_state = *LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_TFX_A_STATE),
+    };
+    
     xQueueOverwrite(display_snapshot_mailbox, &snapshot);
     return TASK_STATUS_OK;
 }

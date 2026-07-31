@@ -261,6 +261,7 @@ int main(void)
 
   display_init_params.display_snapshot_mailbox = display_snapshot_mailboxHandle;
   display_init_params.hspi = &hspi2;
+  display_init_params.hi2c = &hi2c1;
   display_init_params.CS_Port = GMG12864_CS_GPIO_Port;
   display_init_params.CS_Pin = GMG12864_CS_Pin;
   display_init_params.RST_Port = GMG12864_RST_GPIO_Port;

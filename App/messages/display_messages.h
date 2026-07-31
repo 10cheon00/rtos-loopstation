@@ -18,6 +18,8 @@ typedef struct {
 typedef struct {
     // TODO:
     // LED와 관련된 설정 구현하기
+    Parameter ifx_a_state;
+    Parameter tfx_a_state;
 } LedRenderPayload;
 
 typedef struct {
