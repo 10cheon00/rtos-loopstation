@@ -1,19 +1,22 @@
 ---
-title: 트랙 표시 snapshot 수신
-version: 0.1.0
+title: 트랙 표시 snapshot 유지
+version: 0.2.0
 change_history:
   - date: 2026-07-28
     version: 0.1.0
     summary: 간소화된 양식으로 트랙 표시 snapshot 수신 기능 초안을 작성함
+  - date: 2026-07-31
+    version: 0.2.0
+    summary: 트랙 상태를 DisplaySnapshot의 최신 값으로 유지해 주기적으로 읽도록 변경함
 ---
-# FEAT-DISPLAY-011: 트랙 표시 snapshot 수신
+# FEAT-DISPLAY-011: 트랙 표시 snapshot 유지
 ## 1. 연결된 상위 설계 항목
 | 설계 항목 식별자 | 설계 항목 설명 |
 | --- | --- |
 | `ARCH-DISPLAY-014` | 모든 트랙의 상태를 하나의 트랙 표시 snapshot으로 표현한다. |
-| `ARCH-DISPLAY-015` | 최신 트랙 상태가 표시되도록 snapshot 전달 경로를 둔다. |
+| `ARCH-DISPLAY-015` | 트랙 중간 상태를 누적하지 않고 최신 상태를 `DisplaySnapshot`에 유지한다. |
 ## 2. 설명
-모든 트랙의 최신 상태를 하나의 표시 snapshot으로 수신한다.
+모든 트랙의 최신 상태를 `DisplaySnapshot`에 보관해 DisplayTask가 표시 주기마다 읽을 수 있게 한다.
 ## 3. 입력
 | 입력 | 설명 |
 | --- | --- |
@@ -21,12 +24,13 @@ change_history:
 ## 4. 출력
 | 출력 | 설명 |
 | --- | --- |
-| 트랙 표시 snapshot | 트랙 LED renderer의 입력 |
+| `DisplaySnapshot`의 트랙 표시 영역 | 트랙 LED renderer가 주기적으로 읽을 최신 입력 |
 ## 5. 구현 기준
 | 항목 | 기준 |
 | --- | --- |
 | 전체성 | 표시 대상 모든 트랙의 식별자와 상태를 포함한다. |
 | 최신값 | 가장 최근 snapshot을 LED 출력에 사용한다. |
+| 누적 금지 | 트랙별 중간 상태를 FIFO로 쌓지 않고 마지막 상태로 덮어쓴다. |
 ## 6. 구현 및 검증 상태
 | 항목 | 상태 | 날짜 | 비고 |
 | --- | --- | --- | --- |

@@ -1,34 +1,38 @@
 ---
-title: 전체 패널 재렌더링 요청
-version: 0.1.0
+title: 주기적 전체 패널 렌더링
+version: 0.2.0
 change_history:
   - date: 2026-07-28
     version: 0.1.0
     summary: 간소화된 양식으로 전체 패널 재렌더링 요청 기능 초안을 작성함
+  - date: 2026-07-31
+    version: 0.2.0
+    summary: 이벤트별 렌더링 요청을 DisplayTask의 최신 snapshot 기반 주기적 전체 렌더링으로 변경함
 ---
-# FEAT-DISPLAY-008: 전체 패널 재렌더링 요청
+# FEAT-DISPLAY-008: 주기적 전체 패널 렌더링
 ## 1. 연결된 상위 설계 항목
 | 설계 항목 식별자 | 설계 항목 설명 |
 | --- | --- |
-| `ARCH-DISPLAY-009` | 상태 전이 또는 파라미터 변경 결과가 있을 때 렌더링 요청을 생성한다. |
-| `ARCH-DISPLAY-010` | 현재 패널의 바인딩 파라미터만 payload에 포함한다. |
+| `ARCH-DISPLAY-009` | `DisplayTask`가 상태 이벤트와 무관하게 정해진 표시 주기를 관리한다. |
+| `ARCH-DISPLAY-028` | 표시 주기마다 최신 snapshot으로 현재 패널의 전체 frame을 다시 생성한다. |
 ## 2. 설명
-StateTask가 이벤트 처리를 끝낸 뒤 전이 또는 파라미터 변경 flag가 있으면 현재 패널 전체의 렌더링을 요청한다.
+DisplayTask가 정해진 표시 주기마다 마지막으로 유효하게 취득한 `DisplaySnapshot`으로 현재 패널 전체를 렌더링한다.
 ## 3. 입력
 | 입력 | 설명 |
 | --- | --- |
-| `StateOnEventResultFlags`, 현재 `UiPanelId` | 이벤트 처리 결과와 현재 패널 |
+| 표시 주기, 최신 `DisplaySnapshot` | 출력 실행 시점과 최신 패널·표시값 |
 ## 4. 출력
 | 출력 | 설명 |
 | --- | --- |
-| `DISPLAY_COMMAND_UI_STATE_RENDER` | 현재 패널 전체를 다시 그리는 명령 |
+| LCD 전체 frame | 현재 패널과 최신 파라미터가 반영된 화면 |
 ## 5. 구현 기준
 | 항목 | 기준 |
 | --- | --- |
-| 시점 | 하나의 `StateEvent` 처리를 모두 마친 후 한 번 판정한다. |
-| 조건 | transition 또는 parameter-updated flag가 있을 때만 요청한다. |
+| 실행 주체 | 출력 시점 결정과 renderer 호출은 DisplayTask가 수행한다. |
+| 주기 | frame 생성과 전송의 최악 실행 시간보다 짧은 간격으로 다음 출력을 시작하지 않는다. |
+| 최신값 | 표시 주기 사이에 여러 변경이 발생하면 마지막 snapshot만 사용한다. |
 ## 6. 구현 및 검증 상태
 | 항목 | 상태 | 날짜 | 비고 |
 | --- | --- | --- | --- |
-| 구현 | 완료 | 2026-07-28 | StateTask가 결과 flag를 확인해 현재 패널 payload를 전송한다. |
-| 검증 | 부분 완료 | 2026-07-28 | 코드 경로를 확인했으며 빠른 연속 변경의 실제 화면 검증이 남아 있다. |
+| 구현 | 부분 구현 | - | DisplayTask의 주기 실행과 전체 frame 출력은 있으나 mailbox 수신 성공 여부와 표시 주기 최악 실행 시간이 검증되지 않았다. |
+| 검증 | 미완료 | - | 빠른 연속 변경에서 최신 값만 다음 표시 주기에 출력되는지 검증해야 한다. |

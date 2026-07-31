@@ -1,22 +1,25 @@
 ---
 title: 패널 renderer 선택
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-28
     version: 0.1.0
     summary: 간소화된 양식으로 패널 renderer 선택 기능 초안을 작성함
+  - date: 2026-07-31
+    version: 0.2.0
+    summary: 주기적으로 취득한 DisplaySnapshot의 패널 식별자를 renderer 선택 입력으로 변경함
 ---
 # FEAT-DISPLAY-004: 패널 renderer 선택
 ## 1. 연결된 상위 설계 항목
 | 설계 항목 식별자 | 설계 항목 설명 |
 | --- | --- |
-| `ARCH-DISPLAY-007` | `UiPanelId`에 맞는 패널 renderer를 선택한다. |
+| `ARCH-DISPLAY-007` | 표시 주기에 snapshot의 `UiPanelId`에 맞는 패널 renderer를 선택한다. |
 ## 2. 설명
-`UiStateRenderPayload.panel_id`를 `ui_panel_render_mappings`에 적용해 패널 renderer를 선택한다.
+마지막으로 유효하게 취득한 `DisplaySnapshot.ui_state.panel_id`를 renderer table에 적용해 패널 renderer를 선택한다.
 ## 3. 입력
 | 입력 | 설명 |
 | --- | --- |
-| `UiPanelId`, `ui_panel_render_mappings` | 패널 식별자와 renderer 매핑 |
+| `DisplaySnapshot.ui_state.panel_id`, renderer table | 최신 패널 식별자와 renderer 매핑 |
 ## 4. 출력
 | 출력 | 설명 |
 | --- | --- |

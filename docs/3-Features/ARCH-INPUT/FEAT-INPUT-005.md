@@ -1,10 +1,16 @@
 ---
 title: 버튼 debounce 판정
-version: 0.1.0
+version: 0.1.2
 change_history:
   - date: 2026-07-28
     version: 0.1.0
     summary: 간소화된 양식으로 버튼 debounce 판정 기능 초안을 작성함
+  - date: 2026-07-30
+    version: 0.1.1
+    summary: 문서 변경 사항 반영
+  - date: 2026-07-31
+    version: 0.1.2
+    summary: 문서 변경 사항 반영
 ---
 
 # FEAT-INPUT-005: 버튼 debounce 판정
@@ -28,7 +34,7 @@ MCP23017에서 읽은 버튼 상태의 접점 흔들림을 제거하고 실제 �
 | --- | --- |
 | `ControlButtonId` | 상태를 판정할 버튼 식별자 |
 | `ControlButtonState` | MCP23017에서 읽은 현재 버튼 상태 |
-| `TickType_t timestamp_tick` | 버튼 상태가 감지된 시각 |
+| `TickType_t timestamp_ticks` | 버튼 상태가 감지된 시각 |
 
 ## 4. 출력
 

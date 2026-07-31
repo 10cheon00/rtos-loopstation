@@ -1,18 +1,21 @@
 ---
 title: 트랙 상태 LED 출력
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-28
     version: 0.1.0
     summary: 간소화된 양식으로 트랙 상태 LED 출력 기능 초안을 작성함
+  - date: 2026-07-31
+    version: 0.2.0
+    summary: DisplayTask가 표시 주기에 최신 트랙 snapshot을 LED에 반영하도록 변경함
 ---
 # FEAT-DISPLAY-012: 트랙 상태 LED 출력
 ## 1. 연결된 상위 설계 항목
 | 설계 항목 식별자 | 설계 항목 설명 |
 | --- | --- |
-| `ARCH-DISPLAY-016` | 각 트랙 상태를 정해진 LED 색상으로 변환한다. |
+| `ARCH-DISPLAY-016` | 표시 주기에 각 트랙 상태를 정해진 LED 색상으로 변환한다. |
 ## 2. 설명
-트랙 표시 snapshot의 상태를 트랙별 LED 색상 출력값으로 변환한다.
+DisplayTask가 표시 주기마다 최신 트랙 표시 snapshot의 상태를 트랙별 LED 색상 출력값으로 변환한다.
 ## 3. 입력
 | 입력 | 설명 |
 | --- | --- |
@@ -25,6 +28,7 @@ change_history:
 | 항목 | 기준 |
 | --- | --- |
 | 매핑 | 모든 지원 트랙 상태에 하나의 색상 또는 off 값을 정의한다. |
+| 실행 주체 | snapshot 취득과 LED 쓰기는 DisplayTask가 수행한다. |
 | 독립성 | 한 트랙 출력 변경이 다른 트랙 LED에 영향을 주지 않는다. |
 ## 6. 구현 및 검증 상태
 | 항목 | 상태 | 날짜 | 비고 |

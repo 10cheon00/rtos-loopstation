@@ -1,10 +1,16 @@
 ---
 title: MCP23017 버튼 상태 조회
-version: 0.1.0
+version: 0.1.2
 change_history:
   - date: 2026-07-28
     version: 0.1.0
     summary: 간소화된 양식으로 MCP23017 버튼 상태 조회 기능 초안을 작성함
+  - date: 2026-07-30
+    version: 0.1.1
+    summary: 문서 변경 사항 반영
+  - date: 2026-07-31
+    version: 0.1.2
+    summary: 문서 변경 사항 반영
 ---
 
 # FEAT-INPUT-004: MCP23017 버튼 상태 조회
@@ -26,7 +32,7 @@ change_history:
 
 | 입력 | 설명 |
 | --- | --- |
-| `Mcp23017IntEvent` | `gpio_pin`과 `timestamp_tick`을 가진 인터럽트 기록 |
+| `Mcp23017IntEvent` | `gpio_pin`과 `timestamp_ticks`을 가진 인터럽트 기록 |
 | `input_mcp23017_devices` | EXTI 핀과 MCP23017 주소를 연결하는 `Mcp23017DeviceConfig` 배열 |
 | `I2C_HandleTypeDef *hi2c` | MCP23017 레지스터를 읽는 I2C 핸들 |
 

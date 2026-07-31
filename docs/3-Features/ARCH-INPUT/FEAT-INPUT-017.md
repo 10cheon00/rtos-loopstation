@@ -1,10 +1,16 @@
 ---
 title: 엔코더 회전 이벤트 전송
-version: 0.1.0
+version: 0.1.2
 change_history:
   - date: 2026-07-28
     version: 0.1.0
     summary: 간소화된 양식으로 엔코더 회전 이벤트 전송 기능 초안을 작성함
+  - date: 2026-07-30
+    version: 0.1.1
+    summary: 문서 변경 사항 반영
+  - date: 2026-07-31
+    version: 0.1.2
+    summary: 문서 변경 사항 반영
 ---
 
 # FEAT-INPUT-017: 엔코더 회전 이벤트 전송
@@ -24,7 +30,7 @@ change_history:
 
 | 입력 | 설명 |
 | --- | --- |
-| `EncoderRotationEvent` | 원본 `encoder_id`와 `timestamp_tick` |
+| `EncoderRotationEvent` | 원본 `encoder_id`와 `timestamp_ticks` |
 | `int32_t delta` | 방향과 이동량을 나타내는 부호 있는 변화량 |
 | `modifier_mask` | 회전 시점의 보조 버튼 상태 |
 | `osMessageQueueId_t state_event_queue` | 상태 관리 태스크의 입력 큐 |

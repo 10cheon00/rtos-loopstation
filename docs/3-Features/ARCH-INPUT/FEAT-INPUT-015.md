@@ -1,10 +1,16 @@
 ---
 title: 엔코더 인터럽트 기록
-version: 0.1.0
+version: 0.1.2
 change_history:
   - date: 2026-07-28
     version: 0.1.0
     summary: 간소화된 양식으로 엔코더 인터럽트 기록 기능 초안을 작성함
+  - date: 2026-07-30
+    version: 0.1.1
+    summary: 문서 변경 사항 반영
+  - date: 2026-07-31
+    version: 0.1.2
+    summary: 문서 변경 사항 반영
 ---
 
 # FEAT-INPUT-015: 엔코더 인터럽트 기록
@@ -32,7 +38,7 @@ change_history:
 
 | 출력 | 설명 |
 | --- | --- |
-| `EncoderRotationEvent` | `encoder_counter`, `encoder_id`, `timestamp_tick`을 담은 ISR 이벤트 |
+| `EncoderRotationEvent` | `encoder_counter`, `encoder_id`, `timestamp_ticks`을 담은 ISR 이벤트 |
 | `InputEvent` | `type`이 `INPUT_EVENT_ENCODER_ROTATION`인 입력 이벤트 |
 
 ## 5. 구현 기준

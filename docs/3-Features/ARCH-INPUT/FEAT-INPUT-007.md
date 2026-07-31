@@ -1,10 +1,16 @@
 ---
 title: 버튼 상태 이벤트 생성
-version: 0.1.0
+version: 0.1.2
 change_history:
   - date: 2026-07-28
     version: 0.1.0
     summary: 간소화된 양식으로 버튼 상태 이벤트 생성 기능 초안을 작성함
+  - date: 2026-07-30
+    version: 0.1.1
+    summary: 문서 변경 사항 반영
+  - date: 2026-07-31
+    version: 0.1.2
+    summary: 문서 변경 사항 반영
 ---
 
 # FEAT-INPUT-007: 버튼 상태 이벤트 생성
@@ -28,7 +34,7 @@ change_history:
 | --- | --- |
 | `ControlButtonId` | 물리 입력에서 변환된 버튼 식별자 |
 | `ControlButtonState` | 확정된 `PRESSED` 또는 `RELEASED` 상태 |
-| `TickType_t timestamp_tick` | 원본 버튼 입력이 감지된 RTOS tick |
+| `TickType_t timestamp_ticks` | 원본 버튼 입력이 감지된 RTOS tick |
 
 ## 4. 출력
 

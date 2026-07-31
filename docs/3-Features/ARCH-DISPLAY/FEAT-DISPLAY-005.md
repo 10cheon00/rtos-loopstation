@@ -1,23 +1,26 @@
 ---
 title: 패널 표시값 적용
-version: 0.1.0
+version: 0.2.0
 change_history:
   - date: 2026-07-28
     version: 0.1.0
     summary: 간소화된 양식으로 패널 표시값 적용 기능 초안을 작성함
+  - date: 2026-07-31
+    version: 0.2.0
+    summary: command payload 대신 최신 DisplaySnapshot의 UI 표시값을 renderer에 적용하도록 변경함
 ---
 # FEAT-DISPLAY-005: 패널 표시값 적용
 ## 1. 연결된 상위 설계 항목
 | 설계 항목 식별자 | 설계 항목 설명 |
 | --- | --- |
-| `ARCH-DISPLAY-008` | payload의 파라미터만 사용해 선택된 패널의 화면을 완성한다. |
-| `ARCH-DISPLAY-012` | canonical 파라미터 저장소에 접근하지 않고 command만으로 frame을 생성한다. |
+| `ARCH-DISPLAY-008` | snapshot의 파라미터만 사용해 선택된 패널의 화면을 완성한다. |
+| `ARCH-DISPLAY-012` | canonical 파라미터 저장소에 접근하지 않고 최신 snapshot만으로 frame을 생성한다. |
 ## 2. 설명
-`UiStateRenderPayload.parameter`를 선택된 renderer의 입력으로 전달한다.
+`DisplaySnapshot.ui_state.parameters`를 선택된 renderer의 읽기 전용 입력으로 전달한다.
 ## 3. 입력
 | 입력 | 설명 |
 | --- | --- |
-| `UiStateRenderPayload` | 패널 식별자와 복사된 파라미터 |
+| `DisplaySnapshot.ui_state` | 패널 식별자와 복사된 파라미터 |
 ## 4. 출력
 | 출력 | 설명 |
 | --- | --- |
@@ -26,7 +29,7 @@ change_history:
 | 항목 | 기준 |
 | --- | --- |
 | 저장소 독립 | DisplayTask와 renderer는 파라미터 저장소를 조회하지 않는다. |
-| 읽기 전용 | renderer는 command payload의 값을 변경하지 않는다. |
+| 읽기 전용 | renderer는 snapshot의 값을 변경하지 않는다. |
 ## 6. 구현 및 검증 상태
 | 항목 | 상태 | 날짜 | 비고 |
 | --- | --- | --- | --- |

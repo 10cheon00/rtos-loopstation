@@ -1,10 +1,16 @@
 ---
 title: MCP23017 인터럽트 기록
-version: 0.1.0
+version: 0.1.2
 change_history:
   - date: 2026-07-28
     version: 0.1.0
     summary: 간소화된 양식으로 MCP23017 인터럽트 기록 기능 초안을 작성함
+  - date: 2026-07-30
+    version: 0.1.1
+    summary: 문서 변경 사항 반영
+  - date: 2026-07-31
+    version: 0.1.2
+    summary: 문서 변경 사항 반영
 ---
 
 # FEAT-INPUT-002: MCP23017 인터럽트 기록
@@ -33,7 +39,7 @@ I2C 통신과 버튼 판정은 `InputTask`에서 수행한다.
 
 | 출력 | 설명 |
 | --- | --- |
-| `Mcp23017IntEvent` | `gpio_pin`과 `timestamp_tick`을 담은 인터럽트 기록 |
+| `Mcp23017IntEvent` | `gpio_pin`과 `timestamp_ticks`을 담은 인터럽트 기록 |
 | `InputEvent` | `type`이 `INPUT_EVENT_MCP23017`인 입력 이벤트 |
 
 ## 5. 구현 기준
@@ -43,7 +49,7 @@ I2C 통신과 버튼 판정은 `InputTask`에서 수행한다.
 | ISR 작업 | `Mcp23017IntEvent` 생성과 `input_event_queue` 전송만 수행한다. |
 | 금지 작업 | ISR에서 I2C 통신, debounce, `ControlButtonId` 변환을 수행하지 않는다. |
 | 대기 시간 | ISR의 `osMessageQueuePut()`은 대기하지 않도록 timeout을 0으로 사용한다. |
-| 시간 기록 | 이벤트 발생 시각은 `TickType_t timestamp_tick`에 저장한다. |
+| 시간 기록 | 이벤트 발생 시각은 `TickType_t timestamp_ticks`에 저장한다. |
 
 ## 6. 구현 및 검증 상태
 
