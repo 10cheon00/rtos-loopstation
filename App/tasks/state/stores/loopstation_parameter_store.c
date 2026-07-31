@@ -24,11 +24,6 @@ static LoopStationParameterStore loopstation_parameter_store = {
         }
     }};
 
-LoopStationParameterStore *LoopstationParameterStore_GetInstance()
-{
-    return &loopstation_parameter_store;
-}
-
 Parameter *LoopStationParameterStore_GetParameterFromParameterId(ParameterId parameter_id)
 {
     if (parameter_id <= PARAMETER_ID_NONE || parameter_id >= PARAMETER_ID_COUNT) {
