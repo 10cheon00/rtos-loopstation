@@ -42,8 +42,8 @@ void AdcInputTask_Run() {
             HAL_ADC_PollForConversion(hadc, ADC_POLLING_DELAY_MS);
             adc_values[i] = HAL_ADC_GetValue(hadc);
 
-            input_event.type = INPUT_EVENT_ADC;
-            input_event.payload.adc_event = (AdcEvent) {
+            input_event.type = INPUT_EVENT_ADC_CONVERSION;
+            input_event.payload.adc_conversion_event = (AdcConversionEvent) {
                 .timestamp_ticks = osKernelGetTickCount(),
                 .adc_value = adc_values[i],
                 .knob_id = adc_rank_knob_table[i],

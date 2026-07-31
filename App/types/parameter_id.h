@@ -4,7 +4,9 @@
 typedef enum {
     PARAMETER_ID_NONE = 0,
     PARAMETER_ID_SETTING_PANEL_CURSOR,
-
+    PARAMETER_ID_IFX_KNOB,
+    PARAMETER_ID_TFX_KNOB,
+    PARAMETER_ID_TRACK_1_VOLUME,
     PARAMETER_ID_COUNT // 이 enum은 ParameterId의 개수를 표시하는 용도임
 } ParameterId;
 

@@ -17,7 +17,7 @@ typedef struct {
 typedef enum {
     INPUT_EVENT_MCP23017 = 0,
     INPUT_EVENT_ENCODER_ROTATION,
-    INPUT_EVENT_ADC,
+    INPUT_EVENT_ADC_CONVERSION,
 } InputEventType;
 
 typedef enum {
@@ -35,14 +35,14 @@ typedef struct {
     TickType_t timestamp_ticks; // for debugging only
     uint16_t adc_value;
     KnobId knob_id;
-} AdcEvent;
+} AdcConversionEvent;
 
 typedef struct {
     InputEventType type;
     union {
         Mcp23017IntEvent mcp23017_int_event;
         EncoderRotationEvent encoder_rotation_event;
-        AdcEvent adc_event;
+        AdcConversionEvent adc_conversion_event;
     } payload;
 } InputEvent;
 

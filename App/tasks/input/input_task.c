@@ -16,11 +16,10 @@ static I2C_HandleTypeDef *hi2c;
 static TaskStatus HandleInputEvent(InputEvent *input_event);
 static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent);
 static TaskStatus FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address);
-static TaskStatus GetPinState(uint8_t address, uint16_t *button_id_mask,
-                                        ButtonState *button_state);
-static TaskStatus FindButtonId(uint8_t address, uint16_t button_id_mask,
-                                                ButtonId *button_id);
-static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent* encoder_rotation_event);
+static TaskStatus GetPinState(uint8_t address, uint16_t *button_id_mask, ButtonState *button_state);
+static TaskStatus FindButtonId(uint8_t address, uint16_t button_id_mask, ButtonId *button_id);
+static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent *encoder_rotation_event);
+static TaskStatus HandleAdcConversionEvent(AdcConversionEvent *adc_conversion_event);
 
 static InputTaskContext input_task_context;
 
@@ -78,6 +77,8 @@ static TaskStatus HandleInputEvent(InputEvent *input_event)
         return HandleMcp23017IntEvent(&input_event->payload.mcp23017_int_event);
     } else if (input_event->type == INPUT_EVENT_ENCODER_ROTATION) {
         return HandleEncoderRotationEvent(&input_event->payload.encoder_rotation_event);
+    } else if (input_event->type == INPUT_EVENT_ADC_CONVERSION) {
+        return HandleAdcConversionEvent(&input_event->payload.adc_conversion_event);
     }
     return TASK_STATUS_OK;
 }
@@ -107,12 +108,8 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
 
     taskStatus = FindButtonId(address, button_id_mask, &button_id);
     ButtonPayload payload = {
-        .id = button_id,
-        .state = button_state,
-        .timestamp_ticks = timestamp_ticks
-    };
-    StateEvent state_event = {.type = STATE_EVENT_BUTTON,
-                              .payload = {.button = payload}};
+        .id = button_id, .state = button_state, .timestamp_ticks = timestamp_ticks};
+    StateEvent state_event = {.type = STATE_EVENT_BUTTON, .payload = {.button = payload}};
     osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS);
 
     return TASK_STATUS_OK;
@@ -131,8 +128,7 @@ static TaskStatus FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address)
     return TASK_STATUS_ERROR;
 }
 
-static TaskStatus GetPinState(uint8_t address, uint16_t *button_id_mask,
-                                        ButtonState *button_state)
+static TaskStatus GetPinState(uint8_t address, uint16_t *button_id_mask, ButtonState *button_state)
 {
     Mcp23017Status status;
 
@@ -149,8 +145,7 @@ static TaskStatus GetPinState(uint8_t address, uint16_t *button_id_mask,
 
     if (flag_a) {
         *button_id_mask = flag_a << 0;
-        *button_state =
-            flag_a & capture_a ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
+        *button_state = flag_a & capture_a ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
         return TASK_STATUS_OK;
     }
 
@@ -165,14 +160,12 @@ static TaskStatus GetPinState(uint8_t address, uint16_t *button_id_mask,
     }
     if (flag_b) {
         *button_id_mask = flag_b << 8;
-        *button_state =
-            flag_b & capture_b ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
+        *button_state = flag_b & capture_b ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
     }
     return TASK_STATUS_OK;
 }
 
-static TaskStatus FindButtonId(uint8_t address, uint16_t button_id_mask,
-                                                ButtonId *button_id)
+static TaskStatus FindButtonId(uint8_t address, uint16_t button_id_mask, ButtonId *button_id)
 {
     uint8_t mapping_index = 0;
     while (button_id_mask != 0 && (button_id_mask & 0x1) == 0) {
@@ -188,7 +181,8 @@ static TaskStatus FindButtonId(uint8_t address, uint16_t button_id_mask,
     return TASK_STATUS_ERROR;
 }
 
-static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent* encoder_rotation_event) {
+static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent *encoder_rotation_event)
+{
     uint16_t current = encoder_rotation_event->encoder_counter;
     uint16_t previous = input_task_context.previous_encoder_counter;
     uint16_t unsigned_delta = (uint16_t)(current - previous);
@@ -199,16 +193,26 @@ static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent* encoder_rotat
 
     StateEvent state_event = {
         .type = STATE_EVENT_ENCODER_ROTATION,
-        .payload = {
-            .encoder_rotation = {
-                .delta = delta,
-                .encoder_id = encoder_rotation_event->encoder_id,
-                .timestamp_ticks = encoder_rotation_event->timestamp_ticks,
-            }
-        }
-    };
+        .payload = {.encoder_rotation = {
+                        .delta = delta,
+                        .encoder_id = encoder_rotation_event->encoder_id,
+                        .timestamp_ticks = encoder_rotation_event->timestamp_ticks,
+                    }}};
     input_task_context.previous_encoder_counter = encoder_rotation_event->encoder_counter;
     osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS);
-    
+
+    return TASK_STATUS_OK;
+}
+
+static TaskStatus HandleAdcConversionEvent(AdcConversionEvent *adc_conversion_event)
+{
+    StateEvent state_event = {
+        .type = STATE_EVENT_ADC_CONVERSION,
+        .payload = {.adc_conversion = {.timestamp_ticks = adc_conversion_event->timestamp_ticks,
+                                       .knob_id = adc_conversion_event->knob_id,
+                                       .adc_value = adc_conversion_event->adc_value}}};
+
+    osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS);
+
     return TASK_STATUS_OK;
 }
