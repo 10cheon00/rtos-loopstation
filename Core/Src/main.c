@@ -100,10 +100,10 @@ osMessageQueueId_t input_event_queueHandle;
 const osMessageQueueAttr_t input_event_queue_attributes = {
   .name = "input_event_queue"
 };
-/* Definitions for display_command_queue */
-osMessageQueueId_t display_command_queueHandle;
-const osMessageQueueAttr_t display_command_queue_attributes = {
-  .name = "display_command_queue"
+/* Definitions for display_snapshot_mailbox */
+osMessageQueueId_t display_snapshot_mailboxHandle;
+const osMessageQueueAttr_t display_snapshot_mailbox_attributes = {
+  .name = "display_snapshot_mailbox"
 };
 /* Definitions for state_event_queue */
 osMessageQueueId_t state_event_queueHandle;
@@ -245,8 +245,8 @@ int main(void)
   /* creation of input_event_queue */
   input_event_queueHandle = osMessageQueueNew (16, sizeof(InputEvent), &input_event_queue_attributes);
 
-  /* creation of display_command_queue */
-  display_command_queueHandle = osMessageQueueNew (16, sizeof(DisplayCommand), &display_command_queue_attributes);
+  /* creation of display_snapshot_mailbox */
+  display_snapshot_mailboxHandle = osMessageQueueNew (1, sizeof(DisplaySnapshot), &display_snapshot_mailbox_attributes);
 
   /* creation of state_event_queue */
   state_event_queueHandle = osMessageQueueNew (16, sizeof(StateEvent), &state_event_queue_attributes);
@@ -259,7 +259,7 @@ int main(void)
   adc_input_init_params.hadc = &hadc1;
   adc_input_init_params.input_message_queue = input_event_queueHandle;
 
-  display_init_params.display_command_queue = display_command_queueHandle;
+  display_init_params.display_snapshot_mailbox = display_snapshot_mailboxHandle;
   display_init_params.hspi = &hspi2;
   display_init_params.CS_Port = GMG12864_CS_GPIO_Port;
   display_init_params.CS_Pin = GMG12864_CS_Pin;
@@ -269,7 +269,7 @@ int main(void)
   display_init_params.DC_Pin = GMG12864_DC_Pin;
 
   state_init_params.state_event_queue = state_event_queueHandle;
-  state_init_params.display_command_queue = display_command_queueHandle;
+  state_init_params.display_snapshot_mailbox = display_snapshot_mailboxHandle;
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */

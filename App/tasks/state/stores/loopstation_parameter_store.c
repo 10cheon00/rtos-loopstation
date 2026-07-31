@@ -36,12 +36,3 @@ Parameter *LoopStationParameterStore_GetParameterFromParameterId(ParameterId par
     }
     return &loopstation_parameter_store.parameters[parameter_id];
 }
-
-void LoopStationParameterStore_CopyParameterValueFromParameterId(ParameterId parameter_id,
-                                                           Parameter *parameter_snapshot)
-{
-    if (parameter_id <= PARAMETER_ID_NONE || parameter_id >= PARAMETER_ID_COUNT) {
-        parameter_id = PARAMETER_ID_NONE;
-    }
-    *parameter_snapshot = loopstation_parameter_store.parameters[parameter_id];
-}

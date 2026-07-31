@@ -5,7 +5,7 @@
 
 typedef struct {
     osMessageQueueId_t state_event_queue;
-    osMessageQueueId_t display_command_queue;
+    osMessageQueueId_t display_snapshot_mailbox;
 } StateInitParams;
 
 #endif

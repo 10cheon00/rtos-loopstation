@@ -6,16 +6,20 @@
 #include "display_initparams.h"
 #include "ui_panel_renderer.h"
 
+#define DISPLAY_RENDER_FREQEUNCY_HZ (15UL)
+#define DISPLAY_RENDER_DELAY_MS (1000UL / DISPLAY_RENDER_FREQEUNCY_HZ)
+#define DISPLAY_RENDER_DELAY_TICKS (pdMS_TO_TICKS(DISPLAY_RENDER_DELAY_MS))
+
 static u8g2_t u8g2;
 
-static osMessageQueueId_t display_command_queue;
+static osMessageQueueId_t display_snapshot_mailbox;
 
-static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload);
+static TaskStatus HandleUiStateRenderPayload(DisplaySnapshot *snapshot);
 
 static int IsValidInitParams(const DisplayInitParams *params)
 {
     return (params != 0) &&
-           (params->display_command_queue != 0 && params->hspi != NULL && params->CS_Pin != 0 &&
+           (params->display_snapshot_mailbox != 0 && params->hspi != NULL && params->CS_Pin != 0 &&
             params->CS_Port != NULL && params->RST_Pin != 0 && params->RST_Port != NULL &&
             params->DC_Pin != 0 && params->DC_Port != NULL);
 }
@@ -31,7 +35,7 @@ void DisplayTask_Init(void *argument)
         }
     }
 
-    display_command_queue = params->display_command_queue;
+    display_snapshot_mailbox = params->display_snapshot_mailbox;
 
     Gmg12864Lcd_InitParams initparams = {.hspi = params->hspi,
                                          .CS_Pin = params->CS_Pin,
@@ -54,23 +58,28 @@ void DisplayTask_Init(void *argument)
 
 void DisplayTask_Run(void)
 {
-    DisplayCommand command;
+    TickType_t last_wake_ticks = 0, next_wake_ticks;
+    DisplaySnapshot snapshot;
+
     for (;;) {
-        osMessageQueueGet(display_command_queue, &command, NULL, osWaitForever);
-        if (command.type == DISPLAY_COMMAND_UI_STATE_RENDER) {
-            HandleUiStateRenderPayload(&command.payload.ui_state_render);
-        }
+        next_wake_ticks = last_wake_ticks + DISPLAY_RENDER_DELAY_TICKS;
+        osDelayUntil(next_wake_ticks);
+        last_wake_ticks = osKernelGetTickCount();
+        osMessageQueueGet(display_snapshot_mailbox, &snapshot, NULL, 0);
+        HandleUiStateRenderPayload(&snapshot);
     }
 }
 
-static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload)
+static TaskStatus HandleUiStateRenderPayload(DisplaySnapshot *snapshot)
 {
     UiPanelRenderFunction ui_panel_render_function;
     UiDrawingStatus ui_drawing_status;
 
     ui_panel_render_function =
-        UiPanelRendererTable_GetUiPanelRenderFunction(ui_state_render_payload->panel_id);
-    ui_drawing_status = ui_panel_render_function(&u8g2, ui_state_render_payload->parameter);
+        UiPanelRendererTable_GetUiPanelRenderFunction(snapshot->ui_state.panel_id);
+    ui_drawing_status = ui_panel_render_function(&u8g2, snapshot->ui_state.parameters);
+    // TODO:
+    // LED의 상태를 바꾸는 기능 구현하기
 
     if (ui_drawing_status != UI_DRAWING_STATUS_OK) {
         return TASK_STATUS_ERROR;

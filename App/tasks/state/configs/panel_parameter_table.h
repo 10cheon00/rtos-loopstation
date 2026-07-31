@@ -9,9 +9,9 @@
 #include "parameter_id.h"
 #include "ui_panel_id.h"
 
-
 ParameterId PanelParameterTable_GetParameterId(UiPanelId ui_panel_id, uint8_t index);
-ParameterId *PanelParameterTable_GetParameterIdsFromUiPanelId(UiPanelId ui_panel_id);
+ParameterId *PanelParameterTable_GetParameterIds(UiPanelId ui_panel_id);
 
-uint8_t PanelParameterTable_IsParameterIdInTableFromUiPanelId(UiPanelId ui_panel_id, ParameterId parameter_id);
+uint8_t PanelParameterTable_IsParameterIdInTableFromUiPanelId(UiPanelId ui_panel_id,
+                                                              ParameterId parameter_id);
 #endif

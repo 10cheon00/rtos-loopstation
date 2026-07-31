@@ -5,7 +5,7 @@
 #include "cmsis_os2.h"
 
 typedef struct {
-    osMessageQueueId_t display_command_queue;
+    osMessageQueueId_t display_snapshot_mailbox;
     SPI_HandleTypeDef *hspi;
     GPIO_TypeDef* CS_Port;
     uint16_t CS_Pin;
