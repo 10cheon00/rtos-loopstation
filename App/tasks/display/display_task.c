@@ -19,7 +19,7 @@ static osMutexId_t i2c1_mutex;
 
 static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *payload);
 static TaskStatus HandleLedRenderPayload(LedRenderPayload *payload);
-static TaskStatus RenderLed(Parameter *parameter, Mcp23017GpioId gpio_id);
+static TaskStatus RenderLed(Parameter *parameter, Mcp23017GpioPinMask gpio_id);
 
 static int IsValidInitParams(const DisplayInitParams *params)
 {
@@ -107,7 +107,7 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload *payload)
 
 // ParameterId에 매핑된 address, port, 레지스터 상 핀의 비트 위치를 찾아야 함
 // 현재 핀 상태에 따라 수정된 핀의 값을 Mcp23017 드라이버에게 넘겨 값을 업데이트하라고 함
-static TaskStatus RenderLed(Parameter *parameter, Mcp23017GpioId gpio_id)
+static TaskStatus RenderLed(Parameter *parameter, Mcp23017GpioPinMask gpio_id)
 {
     ParameterPinMapEntry *entry;
     osStatus_t os_status;
@@ -118,13 +118,14 @@ static TaskStatus RenderLed(Parameter *parameter, Mcp23017GpioId gpio_id)
         return TASK_STATUS_ERROR;
     }
     output = parameter->current == parameter->max ? UINT8_MAX : 0;
-    pin_state = entry->pin_register_mask & output;
+    pin_state = entry->gpio_pin_mask & output;
     os_status = osMutexAcquire(i2c1_mutex, 500UL);
     if (os_status != osOK) {
         return TASK_STATUS_ERROR;
     }
-    if (Mcp23017_UpdateOutputPinState(hi2c, entry->address, entry->port, entry->pin_register_mask,
+    if (Mcp23017_UpdateOutputPinState(hi2c, entry->address, entry->port, entry->gpio_pin_mask,
                                       pin_state) != MCP23017_STATUS_OK) {
+        os_status = osMutexRelease(i2c1_mutex);
         return TASK_STATUS_ERROR;
     }
     os_status = osMutexRelease(i2c1_mutex);

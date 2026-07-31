@@ -47,8 +47,6 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/types/parameter.c
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/configs/input_mcp23017_devices.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/configs/input_button_mapping.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.c
     
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/adc_input_task.c

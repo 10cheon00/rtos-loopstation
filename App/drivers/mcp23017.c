@@ -1,5 +1,8 @@
 #include "mcp23017.h"
 
+#include "mcp23017_gpio_table.h"
+#include "utils.h"
+
 #define IODIRA 0x0
 #define IODIRB 0x1
 #define GPINTENA 0x4
@@ -31,10 +34,15 @@
 
 #define MCP23017_TIMEOUT_MS 500
 
+static const Mcp23017AddressInterruptPinMap interrupt_pin_map[] = {
+    {.address = MCP23017_ADDRESS_0B100, .gpio_interrupt_pin = GPIO_PIN_0},
+    {.address = MCP23017_ADDRESS_0B101, .gpio_interrupt_pin = GPIO_PIN_1},
+};
+static const size_t interrupt_pin_map_count = ARRAY_COUNT(interrupt_pin_map);
+
 static Mcp23017Status Mcp23017_IsValidInitParams(Mcp23017InitParams *params)
 {
-    if (params != NULL && (params->hi2c != NULL && params->device_config_count > 0 &&
-                           params->device_configs != NULL)) {
+    if (params != NULL && (params->hi2c != NULL)) {
         return MCP23017_STATUS_OK;
     }
     return MCP23017_STATUS_ERROR;
@@ -56,14 +64,15 @@ Mcp23017Status Mcp23017_Init(Mcp23017InitParams *params)
     */
     I2C_HandleTypeDef *hi2c = params->hi2c;
     Mcp23017Status status;
+    Mcp23017Address address;
     uint8_t dummy;
+    Mcp23017GpioPinMask port_a_input_pin_mask, port_b_input_pin_mask;
 
-    for (uint8_t i = 0; i < params->device_config_count; i++) {
-        const Mcp23017DeviceConfig *info = &params->device_configs[i];
-        const uint8_t address = info->address;
-        const uint16_t pin_status = info->pin_status;
-        const uint8_t gpio_a_pin_status = (pin_status >> 8) & 0xFF,
-                      gpio_b_pin_status = pin_status & 0xFF;
+    for (size_t i = 0; i < interrupt_pin_map_count; i++) {
+        address = interrupt_pin_map[i].address;
+        port_a_input_pin_mask = Mcp23017GpioMap_GetInputPinMask(address, MCP23017_GPIO_PORT_A);
+        port_b_input_pin_mask = Mcp23017GpioMap_GetInputPinMask(address, MCP23017_GPIO_PORT_B);
+
         if (HAL_I2C_IsDeviceReady(hi2c, address << 1, 10, MCP23017_TIMEOUT_MS) != HAL_OK) {
             return MCP23017_STATUS_ERROR;
         };
@@ -83,19 +92,19 @@ Mcp23017Status Mcp23017_Init(Mcp23017InitParams *params)
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
-        status = Mcp23017_WriteRegister(hi2c, address, IODIRA, gpio_a_pin_status);
+        status = Mcp23017_WriteRegister(hi2c, address, IODIRA, port_a_input_pin_mask);
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
-        status = Mcp23017_WriteRegister(hi2c, address, IODIRB, gpio_b_pin_status);
+        status = Mcp23017_WriteRegister(hi2c, address, IODIRB, port_b_input_pin_mask);
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
-        status = Mcp23017_WriteRegister(hi2c, address, GPPUA, gpio_a_pin_status);
+        status = Mcp23017_WriteRegister(hi2c, address, GPPUA, port_a_input_pin_mask);
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
-        status = Mcp23017_WriteRegister(hi2c, address, GPPUB, gpio_b_pin_status);
+        status = Mcp23017_WriteRegister(hi2c, address, GPPUB, port_b_input_pin_mask);
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
@@ -115,11 +124,11 @@ Mcp23017Status Mcp23017_Init(Mcp23017InitParams *params)
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
-        status = Mcp23017_WriteRegister(hi2c, address, GPINTENA, gpio_a_pin_status);
+        status = Mcp23017_WriteRegister(hi2c, address, GPINTENA, port_a_input_pin_mask);
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
-        status = Mcp23017_WriteRegister(hi2c, address, GPINTENB, gpio_b_pin_status);
+        status = Mcp23017_WriteRegister(hi2c, address, GPINTENB, port_b_input_pin_mask);
         if (status == MCP23017_STATUS_ERROR) {
             return status;
         }
@@ -164,4 +173,15 @@ Mcp23017Status Mcp23017_UpdateOutputPinState(I2C_HandleTypeDef *hi2c, uint8_t ad
     value = (value & (uint8_t)~pin_register_mask) | pin_state;
 
     return Mcp23017_WriteRegister(hi2c, address, reg, value);
+}
+
+Mcp23017Status Mcp23017_GetMcp23017AddressFromInterruptPin(Mcp23017GpioInterruptPin gpio_interrupt_pin, uint8_t *address)
+{
+    for (size_t i = 0; i < interrupt_pin_map_count; i++) {
+        if (interrupt_pin_map[i].gpio_interrupt_pin == gpio_interrupt_pin) {
+            *address = interrupt_pin_map[i].address;
+            return MCP23017_STATUS_OK;
+        }
+    }
+    return MCP23017_STATUS_ERROR;
 }

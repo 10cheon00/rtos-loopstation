@@ -2,12 +2,13 @@
 
 #include "cmsis_os2.h"
 
-#include "input_button_mapping.h"
-#include "input_mcp23017_devices.h"
+// #include "input_button_mapping.h"
+// #include "input_mcp23017_devices.h"
 #include "input_initparams.h"
 #include "input_messages.h"
 #include "state_messages.h"
 #include "mcp23017.h"
+#include "mcp23017_gpio_table.h"
 
 static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;
@@ -16,9 +17,8 @@ static osMutexId_t i2c1_mutex;
 
 static TaskStatus HandleInputEvent(InputEvent *input_event);
 static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent);
-static TaskStatus FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address);
-static TaskStatus GetPinState(uint8_t address, uint16_t *button_id_mask, ButtonState *button_state);
-static TaskStatus FindButtonId(uint8_t address, uint16_t button_id_mask, ButtonId *button_id);
+static TaskStatus GetPinState(Mcp23017Address address, Mcp23017GpioPort *port,
+                              Mcp23017GpioPinMask *gpio_pin_mask, ButtonState *button_state);
 static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent *encoder_rotation_event);
 static TaskStatus HandleAdcConversionEvent(AdcConversionEvent *adc_conversion_event);
 
@@ -45,9 +45,7 @@ void InputTask_Init(void *argument)
     hi2c = params->hi2c;
     i2c1_mutex = params->i2c1_mutex;
 
-    Mcp23017InitParams mcp23017InitParams = {.hi2c = params->hi2c,
-                                             .device_configs = input_mcp23017_devices,
-                                             .device_config_count = input_mcp23017_device_count};
+    Mcp23017InitParams mcp23017InitParams = {.hi2c = params->hi2c};
     Mcp23017Status mcp23017Status = Mcp23017_Init(&mcp23017InitParams);
     if (mcp23017Status != MCP23017_STATUS_OK) {
         for (;;) {
@@ -87,19 +85,22 @@ static TaskStatus HandleInputEvent(InputEvent *input_event)
 
 // 인터럽트가 발생한 핀을 확인하고 핀 상태를 얻어낸다.
 // 핀 상태에 따라 상태 관리 태스크에게 메시지를 보낸다.
+// TODO:  버튼 입력 이벤트를 debouncing하여 잘못된 입력을 전달하지 않도록 검사하기
 static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
 {
     TickType_t timestamp_ticks = intEvent->timestamp_ticks;
-    uint16_t GPIO_Pin = intEvent->gpio_pin;
-    uint16_t button_id_mask;
-    uint8_t address;
-    ButtonState button_state;
+    Mcp23017GpioInterruptPin GPIO_Pin = intEvent->gpio_pin;
+    Mcp23017GpioPinMask gpio_pin_mask;
+    Mcp23017Address address;
+    Mcp23017GpioPort port;
+    Mcp23017GpioId gpio_id;
     ButtonId button_id;
+    ButtonState button_state;
     osStatus_t os_status;
     TaskStatus taskStatus;
 
-    taskStatus = FindI2cSlaveAddress(GPIO_Pin, &address);
-    if (taskStatus != TASK_STATUS_OK) {
+    Mcp23017_GetMcp23017AddressFromInterruptPin(GPIO_Pin, &address);
+    if (address == 0) {
         return TASK_STATUS_ERROR;
     }
 
@@ -107,14 +108,18 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     if (os_status != osOK) {
         return TASK_STATUS_ERROR;
     }
-    taskStatus = GetPinState(address, &button_id_mask, &button_state);
+    taskStatus = GetPinState(address, &port, &gpio_pin_mask, &button_state);
     osMutexRelease(i2c1_mutex);
     if (taskStatus != TASK_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
-    // TODO:  버튼 입력 이벤트를 debouncing하여 잘못된 입력을 전달하지 않도록 검사하기
 
-    taskStatus = FindButtonId(address, button_id_mask, &button_id);
+    gpio_id = Mcp23017GpioMap_GetMcp23017GpioId(address, port, gpio_pin_mask);
+    if (gpio_id == MCP23017_GPIO_ID_NONE) {
+        return TASK_STATUS_ERROR;
+    }
+
+    button_id = Mcp23017GpioMap_ConvertGpioIdToButtonId(gpio_id);
     ButtonPayload payload = {
         .id = button_id, .state = button_state, .timestamp_ticks = timestamp_ticks};
     StateEvent state_event = {.type = STATE_EVENT_BUTTON, .payload = {.button = payload}};
@@ -123,68 +128,40 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     return TASK_STATUS_OK;
 }
 
-static TaskStatus FindI2cSlaveAddress(uint16_t GPIO_Pin, uint8_t *address)
-{
-
-    for (uint8_t i = 0; i < input_mcp23017_device_count; i++) {
-        if (input_mcp23017_devices[i].gpio_pin == GPIO_Pin) {
-            *address = input_mcp23017_devices[i].address;
-            return TASK_STATUS_OK;
-        }
-    }
-    *address = 0;
-    return TASK_STATUS_ERROR;
-}
-
-static TaskStatus GetPinState(uint8_t address, uint16_t *button_id_mask, ButtonState *button_state)
+static TaskStatus GetPinState(Mcp23017Address address, Mcp23017GpioPort *port,
+                              Mcp23017GpioPinMask *gpio_pin_mask, ButtonState *button_state)
 {
     Mcp23017Status status;
+    uint8_t capture;
 
-    uint8_t flag_a, flag_b;
-    uint8_t capture_a, capture_b;
-    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTFA, &flag_a);
+    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTFA, gpio_pin_mask);
     if (status != MCP23017_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
-    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPA, &capture_a);
+    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPA, &capture);
     if (status != MCP23017_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
 
-    if (flag_a) {
-        *button_id_mask = flag_a << 0;
-        *button_state = flag_a & capture_a ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
+    if (*gpio_pin_mask != 0) {
+        *button_state = *gpio_pin_mask & capture ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
+        *port = MCP23017_GPIO_PORT_A;
         return TASK_STATUS_OK;
     }
 
-    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTFB, &flag_b);
+    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTFB, gpio_pin_mask);
 
     if (status != MCP23017_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
-    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPB, &capture_b);
+    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPB, &capture);
     if (status != MCP23017_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
-    if (flag_b) {
-        *button_id_mask = flag_b << 8;
-        *button_state = flag_b & capture_b ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
-    }
-    return TASK_STATUS_OK;
-}
-
-static TaskStatus FindButtonId(uint8_t address, uint16_t button_id_mask, ButtonId *button_id)
-{
-    uint8_t mapping_index = 0;
-    while (button_id_mask != 0 && (button_id_mask & 0x1) == 0) {
-        button_id_mask >>= 1;
-        mapping_index++;
-    }
-    for (uint8_t i = 0; i < input_button_mapping_count; i++) {
-        if (input_button_mappings[i].slave_address == address) {
-            *button_id = input_button_mappings[i].ids[mapping_index];
-            return TASK_STATUS_OK;
-        }
+    if (*gpio_pin_mask != 0) {
+        *button_state = *gpio_pin_mask & capture ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
+        *port = MCP23017_GPIO_PORT_B;
+        return TASK_STATUS_OK;
     }
     return TASK_STATUS_ERROR;
 }
