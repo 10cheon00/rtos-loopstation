@@ -5,8 +5,6 @@
 #include "panel_parameter_table.h"
 #include "loopstation_parameter_store.h"
 
-static void GetParametersFromUiPanelId(UiPanelId ui_panel_id, Parameter *parameters);
-
 void UiStateMachine_Init(UiStateMachine *ui_state_machine, UiStateMachineContext *context,
                          UiState *init_state)
 {
@@ -29,8 +27,4 @@ void UiStateMachine_TryTransition(UiStateMachine *ui_state_machine, UiActionId u
     // 전이가 안 된 경우에 대한 반환값 추가하기
 }
 
-void UiStateMachineContext_Init(UiStateMachineContext *ui_state_machine_context,
-                                osMessageQueueId_t display_command_queue)
-{
-    ui_state_machine_context->display_command_queue = display_command_queue;
-}
+void UiStateMachineContext_Init(UiStateMachineContext *ui_state_machine_context) {}

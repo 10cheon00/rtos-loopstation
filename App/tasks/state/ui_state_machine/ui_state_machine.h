@@ -6,11 +6,9 @@
 #include "ui_state.h"
 
 typedef struct {
-    osMessageQueueId_t display_command_queue;
 } UiStateMachineContext;
 
-void UiStateMachineContext_Init(UiStateMachineContext *ui_state_machine_context,
-                                osMessageQueueId_t display_command_queue);
+void UiStateMachineContext_Init(UiStateMachineContext *ui_state_machine_context);
 
 struct UiStateMachine {
     UiState *current_state;

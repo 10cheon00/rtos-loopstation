@@ -50,7 +50,7 @@ void StateTask_Init(void *argument)
     state_event_queue = params->state_event_queue;
     display_snapshot_mailbox = params->display_snapshot_mailbox;
 
-    UiStateMachineContext_Init(&ui_state_machine_context, display_snapshot_mailbox);
+    UiStateMachineContext_Init(&ui_state_machine_context);
 
     StateTask_Run();
 }
