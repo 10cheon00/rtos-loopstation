@@ -1,5 +1,5 @@
-#ifndef MCP23017_GPIO_TABLE_H
-#define MCP23017_GPIO_TABLE_H
+#ifndef MCP23017_GPIO_MAP_H
+#define MCP23017_GPIO_MAP_H
 
 #include <stddef.h>
 #include <stdint.h>

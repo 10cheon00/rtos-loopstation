@@ -6,7 +6,7 @@
 #include "display_initparams.h"
 #include "ui_panel_renderer.h"
 #include "mcp23017.h"
-#include "mcp23017_gpio_table.h"
+#include "mcp23017_gpio_map.h"
 
 #define DISPLAY_RENDER_FREQEUNCY_HZ (15UL)
 #define DISPLAY_RENDER_DELAY_MS (1000UL / DISPLAY_RENDER_FREQEUNCY_HZ)

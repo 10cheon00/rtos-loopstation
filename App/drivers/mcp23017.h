@@ -9,7 +9,7 @@ extern "C" {
 
 #include "stm32h7xx.h"
 
-#include "mcp23017_gpio_table.h"
+#include "mcp23017_gpio_map.h"
 
 #define MCP23017_CONTROL_REGISTER_INTFA 0xE
 #define MCP23017_CONTROL_REGISTER_INTFB 0xF

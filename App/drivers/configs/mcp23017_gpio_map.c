@@ -1,4 +1,4 @@
-#include "mcp23017_gpio_table.h"
+#include "mcp23017_gpio_map.h"
 
 #include "utils.h"
 
