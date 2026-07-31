@@ -25,6 +25,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "app_messages.h"
+#include "debug_fault.h"
 #include "display_initparams.h"
 #include "input_initparams.h"
 #include "adc_input_initparams.h"
@@ -109,6 +110,11 @@ const osMessageQueueAttr_t display_snapshot_mailbox_attributes = {
 osMessageQueueId_t state_event_queueHandle;
 const osMessageQueueAttr_t state_event_queue_attributes = {
   .name = "state_event_queue"
+};
+/* Definitions for i2c1_mutex */
+osMutexId_t i2c1_mutexHandle;
+const osMutexAttr_t i2c1_mutex_attributes = {
+  .name = "i2c1_mutex"
 };
 /* USER CODE BEGIN PV */
 static InputInitParams input_init_params;
@@ -228,6 +234,9 @@ int main(void)
 
   /* Init scheduler */
   osKernelInitialize();
+  /* Create the mutex(es) */
+  /* creation of i2c1_mutex */
+  i2c1_mutexHandle = osMutexNew(&i2c1_mutex_attributes);
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -255,6 +264,7 @@ int main(void)
   input_init_params.input_event_queue = input_event_queueHandle;
   input_init_params.state_event_queue = state_event_queueHandle;
   input_init_params.hi2c = &hi2c1;
+  input_init_params.i2c1_mutex = i2c1_mutexHandle;
 
   adc_input_init_params.hadc = &hadc1;
   adc_input_init_params.input_message_queue = input_event_queueHandle;
@@ -262,6 +272,7 @@ int main(void)
   display_init_params.display_snapshot_mailbox = display_snapshot_mailboxHandle;
   display_init_params.hspi = &hspi2;
   display_init_params.hi2c = &hi2c1;
+  display_init_params.i2c1_mutex = i2c1_mutexHandle;
   display_init_params.CS_Port = GMG12864_CS_GPIO_Port;
   display_init_params.CS_Pin = GMG12864_CS_Pin;
   display_init_params.RST_Port = GMG12864_RST_GPIO_Port;
@@ -862,6 +873,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+  DebugFault_CaptureSoftwareError(DEBUG_FAULT_REASON_ERROR_HANDLER);
   while (1) {
   }
   /* USER CODE END Error_Handler_Debug */

@@ -22,6 +22,7 @@
 #include "stm32h7xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "debug_fault.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,7 +74,17 @@ extern TIM_HandleTypeDef htim7;
 void NMI_Handler(void)
 {
   /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
-
+  __asm volatile(
+      "tst lr, #4                         \n"
+      "ite eq                             \n"
+      "mrseq r1, msp                      \n"
+      "mrsne r1, psp                      \n"
+      "mov r2, lr                         \n"
+      "movs r0, %[reason]                 \n"
+      "b DebugFault_CaptureException      \n"
+      :
+      : [reason] "I"(DEBUG_FAULT_REASON_NMI)
+      : "r0", "r1", "r2", "memory");
   /* USER CODE END NonMaskableInt_IRQn 0 */
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
    while (1)
@@ -88,7 +99,17 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
+  __asm volatile(
+      "tst lr, #4                         \n"
+      "ite eq                             \n"
+      "mrseq r1, msp                      \n"
+      "mrsne r1, psp                      \n"
+      "mov r2, lr                         \n"
+      "movs r0, %[reason]                 \n"
+      "b DebugFault_CaptureException      \n"
+      :
+      : [reason] "I"(DEBUG_FAULT_REASON_HARDFAULT)
+      : "r0", "r1", "r2", "memory");
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -103,7 +124,17 @@ void HardFault_Handler(void)
 void MemManage_Handler(void)
 {
   /* USER CODE BEGIN MemoryManagement_IRQn 0 */
-
+  __asm volatile(
+      "tst lr, #4                         \n"
+      "ite eq                             \n"
+      "mrseq r1, msp                      \n"
+      "mrsne r1, psp                      \n"
+      "mov r2, lr                         \n"
+      "movs r0, %[reason]                 \n"
+      "b DebugFault_CaptureException      \n"
+      :
+      : [reason] "I"(DEBUG_FAULT_REASON_MEMMANAGE)
+      : "r0", "r1", "r2", "memory");
   /* USER CODE END MemoryManagement_IRQn 0 */
   while (1)
   {
@@ -118,7 +149,17 @@ void MemManage_Handler(void)
 void BusFault_Handler(void)
 {
   /* USER CODE BEGIN BusFault_IRQn 0 */
-
+  __asm volatile(
+      "tst lr, #4                         \n"
+      "ite eq                             \n"
+      "mrseq r1, msp                      \n"
+      "mrsne r1, psp                      \n"
+      "mov r2, lr                         \n"
+      "movs r0, %[reason]                 \n"
+      "b DebugFault_CaptureException      \n"
+      :
+      : [reason] "I"(DEBUG_FAULT_REASON_BUSFAULT)
+      : "r0", "r1", "r2", "memory");
   /* USER CODE END BusFault_IRQn 0 */
   while (1)
   {
@@ -133,7 +174,17 @@ void BusFault_Handler(void)
 void UsageFault_Handler(void)
 {
   /* USER CODE BEGIN UsageFault_IRQn 0 */
-
+  __asm volatile(
+      "tst lr, #4                         \n"
+      "ite eq                             \n"
+      "mrseq r1, msp                      \n"
+      "mrsne r1, psp                      \n"
+      "mov r2, lr                         \n"
+      "movs r0, %[reason]                 \n"
+      "b DebugFault_CaptureException      \n"
+      :
+      : [reason] "I"(DEBUG_FAULT_REASON_USAGEFAULT)
+      : "r0", "r1", "r2", "memory");
   /* USER CODE END UsageFault_IRQn 0 */
   while (1)
   {
