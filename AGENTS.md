@@ -1,6 +1,6 @@
 ---
 title: Repository Instructions
-version: 0.3.0
+version: 0.4.0
 change_history:
   - date: 2026-07-08
     version: 0.1.0
@@ -11,6 +11,9 @@ change_history:
   - date: 2026-07-28
     version: 0.3.0
     summary: 기능 명세 인덱스 자동 갱신 hook 운영 규칙을 추가함
+  - date: 2026-07-31
+    version: 0.4.0
+    summary: 모든 문서 자동화 hook이 old 및 legacy 문서를 수정하지 않도록 제외 규칙을 명시함
 ---
 
 # Repository Instructions
@@ -36,10 +39,12 @@ Before finishing a documentation edit:
 When multiple Markdown files are changed, apply the version bump and `change_history` update independently to each changed file.
 
 The project-local Codex `Stop` hook runs `scripts/check-md-change-history.sh` to validate and, when possible, automatically fix missing Markdown frontmatter, `version`, and `change_history` entries.
+It must exclude files under `docs/old/`, `docs/old-2/`, and `docs/legacy_*/`.
 
 After that, the same `Stop` hook runs `scripts/update-feature-indexes.sh` to synchronize every `docs/3-Features/**/index.md` table with the feature specifications in its directory. It adds missing feature records and updates implementation status, verification status, and implementation dates from each feature specification.
+It must not traverse or update feature indexes under `docs/old/`, `docs/old-2/`, or `docs/legacy_*/`.
 
-Finally, the same `Stop` hook runs `scripts/update-doc-todo-index.sh` to regenerate `docs/todo_index.md`, which lists TODO items from Markdown files under `docs/` except `docs/legacy_v*/`.
+Finally, the same `Stop` hook runs `scripts/update-doc-todo-index.sh` to regenerate `docs/todo_index.md`, excluding Markdown files under `docs/old/`, `docs/old-2/`, and `docs/legacy_*/`.
 
 Frontmatter format:
 
@@ -54,4 +59,4 @@ change_history:
 ---
 ```
 
-Do not apply this rule to files under `docs/old/`.
+Do not apply this rule to files under `docs/old/`, `docs/old-2/`, or `docs/legacy_*/`.

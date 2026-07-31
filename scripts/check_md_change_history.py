@@ -7,6 +7,14 @@ from pathlib import Path
 
 
 DEFAULT_SUMMARY = "문서 변경 사항 반영"
+EXCLUDED_DIRECTORY_NAMES = {"old", "old-2"}
+
+
+def is_excluded(path):
+    return any(
+        part in EXCLUDED_DIRECTORY_NAMES or part.startswith("legacy_")
+        for part in path.parts
+    )
 
 
 def run_git(args):
@@ -26,9 +34,9 @@ def changed_markdown_files():
         path = line.strip()
         if not path:
             continue
-        if path.startswith("docs/old/"):
-            continue
         file_path = Path(path)
+        if is_excluded(file_path):
+            continue
         if file_path.exists() and file_path.suffix == ".md":
             files.append(file_path)
     return files

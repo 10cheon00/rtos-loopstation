@@ -11,6 +11,14 @@ INDEX_NAME = "index.md"
 COMPLETE_STATUSES = {"완료", "구현 완료", "검증 완료", "완료됨"}
 PARTIAL_IMPLEMENTATION_STATUSES = {"부분 구현"}
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+EXCLUDED_DIRECTORY_NAMES = {"old", "old-2"}
+
+
+def is_excluded(path):
+    return any(
+        part in EXCLUDED_DIRECTORY_NAMES or part.startswith("legacy_")
+        for part in path.parts
+    )
 
 
 def parse_args():
@@ -27,16 +35,25 @@ def parse_args():
 
 
 def feature_directories(root):
-    if not root.exists():
+    if not root.exists() or is_excluded(root):
         return []
-    return [root, *sorted(path for path in root.rglob("*") if path.is_dir())]
+    return [
+        root,
+        *sorted(
+            path
+            for path in root.rglob("*")
+            if path.is_dir() and not is_excluded(path)
+        ),
+    ]
 
 
 def feature_files(directory):
     return sorted(
         path
         for path in directory.glob("*.md")
-        if path.name != INDEX_NAME and path.name.startswith("FEAT-")
+        if not is_excluded(path)
+        and path.name != INDEX_NAME
+        and path.name.startswith("FEAT-")
     )
 
 
