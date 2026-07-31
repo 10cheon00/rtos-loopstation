@@ -10,8 +10,7 @@ static u8g2_t u8g2;
 
 static osMessageQueueId_t display_command_queue;
 
-static TaskStatus
-HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload);
+static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload);
 
 static int IsValidInitParams(const DisplayInitParams *params)
 {
@@ -66,10 +65,12 @@ void DisplayTask_Run(void)
 
 static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *ui_state_render_payload)
 {
+    UiPanelRenderFunction ui_panel_render_function;
     UiDrawingStatus ui_drawing_status;
 
-    ui_drawing_status = ui_panel_render_function_table[ui_state_render_payload->panel_id](
-        &u8g2, ui_state_render_payload->parameter);
+    ui_panel_render_function =
+        UiPanelRendererTable_GetUiPanelRenderFunction(ui_state_render_payload->panel_id);
+    ui_drawing_status = ui_panel_render_function(&u8g2, ui_state_render_payload->parameter);
 
     if (ui_drawing_status != UI_DRAWING_STATUS_OK) {
         return TASK_STATUS_ERROR;

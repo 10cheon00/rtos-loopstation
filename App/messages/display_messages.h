@@ -10,7 +10,7 @@
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS_TO_TICKS (pdMS_TO_TICKS(500UL))
 
 typedef enum {
-  DISPLAY_COMMAND_UI_STATE_RENDER = 0
+  DISPLAY_COMMAND_UI_STATE_RENDER = 0,
 } DisplayCommandType;
 
 typedef struct {

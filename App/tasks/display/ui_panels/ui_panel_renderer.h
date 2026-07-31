@@ -3,10 +3,11 @@
 
 #include "ui.h"
 #include "parameter.h"
+#include "parameter_id.h"
 #include "ui_panel_id.h"
 
-typedef UiDrawingStatus(*UiPanelRenderFunction)(u8g2_t*,Parameter*);
+typedef UiDrawingStatus (*UiPanelRenderFunction)(u8g2_t *, Parameter *);
 
-extern const UiPanelRenderFunction ui_panel_render_function_table[UI_PANEL_ID_COUNT];
+UiPanelRenderFunction UiPanelRendererTable_GetUiPanelRenderFunction(UiPanelId ui_panel_id);
 
 #endif

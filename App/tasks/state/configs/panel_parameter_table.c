@@ -32,3 +32,16 @@ ParameterId* PanelParameterTable_GetParameterIdsFromUiPanelId(UiPanelId ui_panel
     }
     return table[ui_panel_id];
 }
+
+// TODO:
+// 반환값을 1,0으로 하지 않고, 모든 코드들이 공유하는 반환값(HAL_StatusTypeDef같은거)을 정의하기
+uint8_t PanelParameterTable_IsParameterIdInTableFromUiPanelId(UiPanelId ui_panel_id,
+                                                              ParameterId parameter_id)
+{
+    for (uint8_t i = 0; i < UI_PANEL_MAX_PARAMETER_COUNT; i++) {
+        if (table[ui_panel_id][i] == parameter_id) {
+            return 1;
+        }
+    }
+    return 0;
+}
