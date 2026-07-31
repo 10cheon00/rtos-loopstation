@@ -15,6 +15,7 @@
 static u8g2_t u8g2;
 static osMessageQueueId_t display_snapshot_mailbox;
 static I2C_HandleTypeDef *hi2c;
+static osMutexId_t i2c1_mutex;
 
 static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *payload);
 static TaskStatus HandleLedRenderPayload(LedRenderPayload *payload);
@@ -24,8 +25,9 @@ static int IsValidInitParams(const DisplayInitParams *params)
 {
     return (params != 0) &&
            (params->display_snapshot_mailbox != 0 && params->hi2c != 0 && params->hspi != NULL &&
-            params->CS_Pin != 0 && params->CS_Port != NULL && params->RST_Pin != 0 &&
-            params->RST_Port != NULL && params->DC_Pin != 0 && params->DC_Port != NULL);
+            params->i2c1_mutex != NULL && params->CS_Pin != 0 && params->CS_Port != NULL &&
+            params->RST_Pin != 0 && params->RST_Port != NULL && params->DC_Pin != 0 &&
+            params->DC_Port != NULL);
 }
 
 void DisplayTask_Init(void *argument)
@@ -41,6 +43,7 @@ void DisplayTask_Init(void *argument)
 
     display_snapshot_mailbox = params->display_snapshot_mailbox;
     hi2c = params->hi2c;
+    i2c1_mutex = params->i2c1_mutex;
 
     Gmg12864Lcd_InitParams initparams = {.hspi = params->hspi,
                                          .CS_Pin = params->CS_Pin,
@@ -107,6 +110,7 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload *payload)
 static TaskStatus RenderLed(Parameter *parameter, Mcp23017GpioId gpio_id)
 {
     ParameterPinMapEntry *entry;
+    osStatus_t os_status;
     uint8_t pin_state, output;
 
     entry = Mcp23017GpioMap_GetEntry(gpio_id);
@@ -115,11 +119,15 @@ static TaskStatus RenderLed(Parameter *parameter, Mcp23017GpioId gpio_id)
     }
     output = parameter->current == parameter->max ? UINT8_MAX : 0;
     pin_state = entry->pin_register_mask & output;
-    if (Mcp23017_UpdateOutputPinState(hi2c, entry->address, entry->port,
-                                      entry->pin_register_mask, pin_state) !=
-        MCP23017_STATUS_OK) {
+    os_status = osMutexAcquire(i2c1_mutex, 500UL);
+    if (os_status != osOK) {
         return TASK_STATUS_ERROR;
     }
+    if (Mcp23017_UpdateOutputPinState(hi2c, entry->address, entry->port, entry->pin_register_mask,
+                                      pin_state) != MCP23017_STATUS_OK) {
+        return TASK_STATUS_ERROR;
+    }
+    os_status = osMutexRelease(i2c1_mutex);
 
     return TASK_STATUS_OK;
 }
