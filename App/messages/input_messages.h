@@ -7,7 +7,7 @@
 
 #include "knob_id.h"
 
-#define INPUT_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS (pdMS_TO_TICKS(500UL))
+#define INPUT_EVENT_QUEUE_TIMEOUT_500MS (500UL)
 
 typedef struct {
     TickType_t timestamp_ticks;

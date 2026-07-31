@@ -118,7 +118,7 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     ButtonPayload payload = {
         .id = button_id, .state = button_state, .timestamp_ticks = timestamp_ticks};
     StateEvent state_event = {.type = STATE_EVENT_BUTTON, .payload = {.button = payload}};
-    osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS);
+    osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
 
     return TASK_STATUS_OK;
 }
@@ -207,7 +207,7 @@ static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent *encoder_rotat
                         .timestamp_ticks = encoder_rotation_event->timestamp_ticks,
                     }}};
     input_task_context.previous_encoder_counter = encoder_rotation_event->encoder_counter;
-    osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS);
+    osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
 
     return TASK_STATUS_OK;
 }
@@ -220,7 +220,7 @@ static TaskStatus HandleAdcConversionEvent(AdcConversionEvent *adc_conversion_ev
                                        .knob_id = adc_conversion_event->knob_id,
                                        .adc_value = adc_conversion_event->adc_value}}};
 
-    osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS);
+    osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
 
     return TASK_STATUS_OK;
 }

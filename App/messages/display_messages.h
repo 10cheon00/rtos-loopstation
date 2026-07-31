@@ -8,7 +8,7 @@
 #include "button_id.h"
 #include "parameter.h"
 
-#define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS_TO_TICKS (pdMS_TO_TICKS(500UL))
+#define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
 typedef struct {
     UiPanelId panel_id;

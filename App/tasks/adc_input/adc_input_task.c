@@ -48,7 +48,7 @@ void AdcInputTask_Run() {
                 .adc_value = adc_values[i],
                 .knob_id = adc_rank_knob_table[i],
             };
-            osMessageQueuePut(input_message_queue, &input_event, 0, INPUT_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS);
+            osMessageQueuePut(input_message_queue, &input_event, 0, INPUT_EVENT_QUEUE_TIMEOUT_500MS);
         }
         HAL_ADC_Stop(hadc);
     }

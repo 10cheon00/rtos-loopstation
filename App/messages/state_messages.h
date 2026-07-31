@@ -6,7 +6,7 @@
 #include "button_id.h"
 #include "knob_id.h"
 
-#define STATE_EVENT_QUEUE_TIMEOUT_500MS_TO_TICKS (pdMS_TO_TICKS(500UL))
+#define STATE_EVENT_QUEUE_TIMEOUT_500MS (500UL)
 
 typedef enum {
   STATE_EVENT_BUTTON = 0,
