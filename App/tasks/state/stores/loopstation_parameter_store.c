@@ -21,7 +21,19 @@ static LoopStationParameterStore loopstation_parameter_store = {
             .max = 100,
             .current = 0,
             .type = PARAMETER_TYPE_SLIDER
-        }
+        },
+        [PARAMETER_ID_IFX_A_STATE] = {
+            .min = 0,
+            .max = 1,
+            .current = 0,
+            .type = PARAMETER_TYPE_TOGGLE
+        },
+        [PARAMETER_ID_TFX_A_STATE] = {
+            .min = 0,
+            .max = 1,
+            .current = 0,
+            .type = PARAMETER_TYPE_TOGGLE
+        },
     }};
 
 Parameter *LoopStationParameterStore_GetParameterFromParameterId(ParameterId parameter_id)

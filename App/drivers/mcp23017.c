@@ -14,7 +14,8 @@
 #define GPPUB 0xD
 #define _GPIOA 0x12
 #define _GPIOB 0x13
-
+#define OLATA 0x14
+#define OLATB 0x15
 #define INTCON_AGAINST_PREVIOUS_PIN_VALUE 0
 
 #define IOCON_BANK_0 0x00
@@ -136,7 +137,7 @@ Mcp23017Status Mcp23017_ReadRegister(I2C_HandleTypeDef *hi2c, uint8_t address, u
         return MCP23017_STATUS_OK;
     }
 
-    return MCP23017_STATUS_OK;
+    return MCP23017_STATUS_ERROR;
 }
 
 Mcp23017Status Mcp23017_WriteRegister(I2C_HandleTypeDef *hi2c, uint8_t address, uint8_t reg,
@@ -148,4 +149,19 @@ Mcp23017Status Mcp23017_WriteRegister(I2C_HandleTypeDef *hi2c, uint8_t address, 
         return MCP23017_STATUS_OK;
     }
     return MCP23017_STATUS_ERROR;
+}
+
+Mcp23017Status Mcp23017_UpdateOutputPinState(I2C_HandleTypeDef *hi2c, uint8_t address, uint8_t port,
+                                             uint8_t pin_register_mask, uint8_t pin_state)
+{
+    uint8_t value;
+    uint8_t reg = port == MCP23017_GPIO_PORT_A ? OLATA : OLATB;
+    Mcp23017Status status = Mcp23017_ReadRegister(hi2c, address, reg, &value);
+    if (status != MCP23017_STATUS_OK) {
+        return status;
+    }
+
+    value = (value & (uint8_t)~pin_register_mask) | pin_state;
+
+    return Mcp23017_WriteRegister(hi2c, address, reg, value);
 }

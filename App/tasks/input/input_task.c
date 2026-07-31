@@ -12,6 +12,7 @@
 static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;
 static I2C_HandleTypeDef *hi2c;
+static osMutexId_t i2c1_mutex;
 
 static TaskStatus HandleInputEvent(InputEvent *input_event);
 static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent);
@@ -26,7 +27,7 @@ static InputTaskContext input_task_context;
 static int IsValidInitParams(const InputInitParams *params)
 {
     return (params != 0) && (params->input_event_queue != 0 && params->state_event_queue != 0 &&
-                             params->hi2c != NULL);
+                             params->hi2c != NULL && params->i2c1_mutex != NULL);
 }
 
 void InputTask_Init(void *argument)
@@ -42,6 +43,7 @@ void InputTask_Init(void *argument)
     input_event_queue = params->input_event_queue;
     state_event_queue = params->state_event_queue;
     hi2c = params->hi2c;
+    i2c1_mutex = params->i2c1_mutex;
 
     Mcp23017InitParams mcp23017InitParams = {.hi2c = params->hi2c,
                                              .device_configs = input_mcp23017_devices,
@@ -93,6 +95,7 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     uint8_t address;
     ButtonState button_state;
     ButtonId button_id;
+    osStatus_t os_status;
     TaskStatus taskStatus;
 
     taskStatus = FindI2cSlaveAddress(GPIO_Pin, &address);
@@ -100,7 +103,12 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
         return TASK_STATUS_ERROR;
     }
 
+    os_status = osMutexAcquire(i2c1_mutex, 500UL);
+    if (os_status != osOK) {
+        return TASK_STATUS_ERROR;
+    }
     taskStatus = GetPinState(address, &button_id_mask, &button_state);
+    osMutexRelease(i2c1_mutex);
     if (taskStatus != TASK_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
