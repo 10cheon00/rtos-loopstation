@@ -40,6 +40,14 @@ static const Mcp23017AddressInterruptPinMap interrupt_pin_map[] = {
 };
 static const size_t interrupt_pin_map_count = ARRAY_COUNT(interrupt_pin_map);
 
+typedef enum {
+    MCP23017_INIT_STATUS_NOT_INITED = 0,
+    MCP23017_INIT_STATUS_ON_INIT,
+    MCP23017_INIT_STATUS_INITED,
+} Mcp23017_InitStatus;
+
+static Mcp23017_InitStatus init_status = MCP23017_INIT_STATUS_NOT_INITED;
+
 static Mcp23017Status Mcp23017_IsValidInitParams(Mcp23017InitParams *params)
 {
     if (params != NULL && (params->hi2c != NULL)) {
@@ -53,6 +61,10 @@ Mcp23017Status Mcp23017_Init(Mcp23017InitParams *params)
     if (Mcp23017_IsValidInitParams(params) != MCP23017_STATUS_OK) {
         return MCP23017_STATUS_ERROR;
     }
+    if (init_status == MCP23017_INIT_STATUS_INITED) {
+        return MCP23017_STATUS_OK;
+    }
+    init_status = MCP23017_INIT_STATUS_ON_INIT;
     /*
   1. IODIRA/IODIRB: 버튼 핀을 입력으로 설정
   2. GPPUA/GPPUB: 필요한 경우 버튼 입력 내부 pull-up 활성화
@@ -134,12 +146,18 @@ Mcp23017Status Mcp23017_Init(Mcp23017InitParams *params)
         }
     }
 
+    init_status = MCP23017_INIT_STATUS_INITED;
     return MCP23017_STATUS_OK;
 }
 
 Mcp23017Status Mcp23017_ReadRegister(I2C_HandleTypeDef *hi2c, uint8_t address, uint8_t reg,
                                      uint8_t *value)
 {
+    if (init_status == MCP23017_INIT_STATUS_NOT_INITED) {
+        Mcp23017InitParams params = {.hi2c = hi2c};
+        Mcp23017_Init(&params);
+    }
+
     HAL_StatusTypeDef status = HAL_I2C_Mem_Read(hi2c, address << 1, reg, I2C_MEMADD_SIZE_8BIT,
                                                 value, 1, MCP23017_TIMEOUT_MS);
     if (status == HAL_OK) {
@@ -152,6 +170,11 @@ Mcp23017Status Mcp23017_ReadRegister(I2C_HandleTypeDef *hi2c, uint8_t address, u
 Mcp23017Status Mcp23017_WriteRegister(I2C_HandleTypeDef *hi2c, uint8_t address, uint8_t reg,
                                       uint8_t value)
 {
+    if (init_status == MCP23017_INIT_STATUS_NOT_INITED) {
+        Mcp23017InitParams params = {.hi2c = hi2c};
+        Mcp23017_Init(&params);
+    }
+
     HAL_StatusTypeDef status = HAL_I2C_Mem_Write(hi2c, address << 1, reg, I2C_MEMADD_SIZE_8BIT,
                                                  &value, 1, MCP23017_TIMEOUT_MS);
     if (status == HAL_OK) {
@@ -175,7 +198,9 @@ Mcp23017Status Mcp23017_UpdateOutputPinState(I2C_HandleTypeDef *hi2c, uint8_t ad
     return Mcp23017_WriteRegister(hi2c, address, reg, value);
 }
 
-Mcp23017Status Mcp23017_GetMcp23017AddressFromInterruptPin(Mcp23017GpioInterruptPin gpio_interrupt_pin, uint8_t *address)
+Mcp23017Status
+Mcp23017_GetMcp23017AddressFromInterruptPin(Mcp23017GpioInterruptPin gpio_interrupt_pin,
+                                            uint8_t *address)
 {
     for (size_t i = 0; i < interrupt_pin_map_count; i++) {
         if (interrupt_pin_map[i].gpio_interrupt_pin == gpio_interrupt_pin) {
