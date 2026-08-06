@@ -57,6 +57,7 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/ui_home_panel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/ui_setting_panel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/ui_panel_renderer.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/widgets/knob_widget.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_parameter_table.c
@@ -71,6 +72,7 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864_lcd.c
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.c
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/configs/mcp23017_gpio_map.c
 )
 
@@ -85,6 +87,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores
