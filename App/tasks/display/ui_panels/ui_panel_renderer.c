@@ -2,11 +2,13 @@
 
 #include "ui_home_panel.h"
 #include "ui_setting_panel.h"
+#include "ui_system_setting_panel.h"
 
 static UiPanelRenderFunction ui_panel_render_function_table[UI_PANEL_ID_COUNT] = {
     [UI_PANEL_ID_NONE]=0,
     [UI_PANEL_ID_HOME]=Ui_DrawHomePanel,
     [UI_PANEL_ID_SETTING]=Ui_DrawSettingPanel,
+    [UI_PANEL_ID_SYSTEM_SETTING]=Ui_DrawSystemSettingPanel,
 };
 
 UiPanelRenderFunction UiPanelRendererTable_GetUiPanelRenderFunction(UiPanelId ui_panel_id)

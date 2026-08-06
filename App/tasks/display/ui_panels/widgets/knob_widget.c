@@ -28,7 +28,7 @@ void UiWidget_DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y, Parameter* para
     // 방향을 일치시키기 위해 계산
     angle = parameter->max - parameter->current + parameter->min;
     // 파라미터 값을 수학적 각도로 변환
-    angle = ((double)angle / (parameter->max - parameter->min)) * 270 - 45;
+    angle = (((double)angle - parameter->min) / (parameter->max - parameter->min)) * 270 - 45;
     cx = x + RADIUS;
     cy = y - RADIUS;
     x0 = cx + cosine(angle) * (RADIUS - 2);

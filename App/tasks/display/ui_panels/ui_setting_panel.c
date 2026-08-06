@@ -2,16 +2,12 @@
 
 UiDrawingStatus Ui_DrawSettingPanel(u8g2_t *u8g2, Parameter *parameters)
 {
-    char str[6];
-    
     u8g2_ClearBuffer(u8g2);
     u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
     u8g2_DrawStr(u8g2, 1, 6, "SETTING PANEL");
     u8g2_DrawLine(u8g2, 0, 7, 128, 7);
     UI_DrawArrowRight4x5(u8g2, 122, 6);
     u8g2_SetFont(u8g2, u8g2_font_tiny5_tr);
-    UI_ConvertNumberToString(parameters[0].current, str, 6);
-    u8g2_DrawStr(u8g2, 10, 15, str);
 
     u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
     u8g2_DrawGlyph(u8g2, 8, 40, 104);
