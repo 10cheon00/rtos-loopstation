@@ -4,7 +4,7 @@
 
 #include "display_messages.h"
 #include "display_initparams.h"
-#include "ui_panel_renderer.h"
+#include "ui_renderer_table.h"
 #include "mcp23017.h"
 #include "mcp23017_gpio_map.h"
 
@@ -84,7 +84,7 @@ static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *payload)
     UiPanelRenderFunction ui_panel_render_function;
     UiDrawingStatus ui_drawing_status;
 
-    ui_panel_render_function = UiPanelRendererTable_GetUiPanelRenderFunction(payload->panel_id);
+    ui_panel_render_function = UiRendererTable_GetUiPanelRenderFunction(payload->panel_id);
     ui_drawing_status = ui_panel_render_function(&u8g2, payload->parameters);
 
     if (ui_drawing_status != UI_DRAWING_STATUS_OK) {

@@ -1,6 +1,7 @@
-#include "ui_setting_panel.h"
+#include "ui_renderer_setting_panel.h"
 
 #include "knob_widget.h"
+#include "ui_renderer_utils.h"
 
 UiDrawingStatus Ui_DrawSystemSettingPanel(u8g2_t *u8g2, Parameter *parameters)
 {

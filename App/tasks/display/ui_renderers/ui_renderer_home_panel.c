@@ -1,4 +1,6 @@
-#include "ui_home_panel.h"
+#include "ui_renderer_home_panel.h"
+
+#include "ui_renderer_utils.h"
 
 UiDrawingStatus Ui_DrawHomePanel(u8g2_t *u8g2, Parameter *parameters)
 {
