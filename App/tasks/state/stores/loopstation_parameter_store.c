@@ -34,6 +34,12 @@ static LoopStationParameterStore loopstation_parameter_store = {
             .current = 0,
             .type = PARAMETER_TYPE_TOGGLE
         },
+        [PARAMETER_ID_SYSTEM_SETTING_LCD_CONSTRAST] = {
+            .min = 10,
+            .max = 80,
+            .current = 80,
+            .type = PARAMETER_TYPE_SLIDER
+        },
     }};
 
 Parameter *LoopStationParameterStore_GetParameterFromParameterId(ParameterId parameter_id)

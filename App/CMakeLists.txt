@@ -53,10 +53,13 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs/adc_rank_knob_table.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/ui.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/ui_home_panel.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/ui_setting_panel.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/ui_panel_renderer.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer_utils.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer_home_panel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer_setting_panel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer_system_setting_panel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs/ui_renderer_table.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/knob_widget.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/toggle_switch_widget.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_parameter_table.c
@@ -68,9 +71,11 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_panel_ui_state_table.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_home_panel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_setting_panel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_system_setting_panel.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864_lcd.c
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.c
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/configs/mcp23017_gpio_map.c
 )
 
@@ -84,7 +89,9 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_panels/
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores

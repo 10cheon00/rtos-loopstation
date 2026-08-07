@@ -2,8 +2,6 @@
 
 #include "cmsis_os2.h"
 
-// #include "input_button_mapping.h"
-// #include "input_mcp23017_devices.h"
 #include "input_initparams.h"
 #include "input_messages.h"
 #include "state_messages.h"
@@ -44,14 +42,6 @@ void InputTask_Init(void *argument)
     state_event_queue = params->state_event_queue;
     hi2c = params->hi2c;
     i2c1_mutex = params->i2c1_mutex;
-
-    Mcp23017InitParams mcp23017InitParams = {.hi2c = params->hi2c};
-    Mcp23017Status mcp23017Status = Mcp23017_Init(&mcp23017InitParams);
-    if (mcp23017Status != MCP23017_STATUS_OK) {
-        for (;;) {
-            osDelay(1);
-        }
-    }
 
     input_task_context.previous_encoder_counter = 0;
 
