@@ -1,6 +1,7 @@
 #include "ui_renderer_utils.h"
 
 #include "knob_widget.h"
+#include "toggle_switch_widget.h"
 #include "utils.h"
 
 #define SLOT_WIDTH 32
@@ -99,9 +100,8 @@ UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char 
         return status;
     }
 
-    x = parameter_width_table[index] + SLOT_WIDTH / 2 - WIDGET_WIDTH / 2;
-    y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING +
-        GRAPHIC_AREA_HEIGHT / 2 - WIDGET_HEIGHT / 2;
+    x = parameter_width_table[index];
+    y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING;
     status = DrawParameterWidget(u8g2, parameter, x, y);
     if (status != UI_DRAWING_STATUS_OK) {
         return status;
@@ -147,9 +147,12 @@ static UiDrawingStatus DrawParameterValue(u8g2_t *u8g2, Parameter *parameter, ui
 static UiDrawingStatus DrawParameterWidget(u8g2_t *u8g2, Parameter *parameter, uint8_t x, uint8_t y)
 {
     if (parameter->type == PARAMETER_TYPE_TOGGLE) {
-        // TODO:
-        // TOGGLE형 파라미터 위젯 구현하기
+        x = x + SLOT_WIDTH / 2 - TOGGLE_SWITCH_WIDGET_WIDTH / 2;
+        y = y + GRAPHIC_AREA_HEIGHT / 2 - TOGGLE_SWITCH_WIDGET_HEIGHT / 2;
+        UiWidget_DrawToggleSwitchWidget(u8g2, x, y, parameter);
     } else if (parameter->type == PARAMETER_TYPE_SLIDER) {
+        x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
+        y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
         UiWidget_DrawKnobWidget(u8g2, x, y, parameter);
     } else {
         // TODO:

@@ -11,6 +11,7 @@ UiDrawingStatus Ui_DrawSystemSettingPanel(u8g2_t *u8g2, Parameter *parameters)
 
     UI_DrawPanelLayout(u8g2, "SYSTEM SETTING", UI_ARROW_FLAG_NONE);
     UI_DrawParameter(u8g2, &parameters[0], "LCD CO-\nNSTRAST", UI_PANEL_SLOT_INDEX_A);
+    UI_DrawParameter(u8g2, &parameters[1], "LCD CO-\nNSTRAST", UI_PANEL_SLOT_INDEX_B);
     
     return UI_DRAWING_STATUS_OK;
 }
