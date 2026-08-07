@@ -10,6 +10,9 @@
 extern "C" {
 #endif
 
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
 typedef enum {
     GMG12864_LCD_STATUS_OK = 0,
     GMG12864_LCD_STATUS_ERROR
