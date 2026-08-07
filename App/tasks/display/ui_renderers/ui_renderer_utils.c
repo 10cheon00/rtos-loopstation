@@ -11,21 +11,24 @@
 #define ICON_WIDTH 16
 #define ICON_HEIGHT 16
 #define LABEL_HEIGHT (CHARACTER_HEIGHT + 1 + CHARACTER_HEIGHT)
-#define IMAGE_HEIGHT                                                                               \
+#define GRAPHIC_AREA_HEIGHT                                                                               \
     (SCREEN_HEIGHT - (PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT +            \
                       PARAMETER_PADDING + PARAMETER_PADDING + LABEL_HEIGHT + 1))
 
 /**
- * 파라미터 출력
+ * - 파라미터 출력
  * 값
- * 위젯
+ * 위젯 (그래픽 영역)
  * 라벨
- */
-/**
- * 메뉴 출력
+
+ * - 메뉴 출력
  * (없음)
- * 아이콘
+ * 아이콘 (그래픽 영역)
  * 라벨
+ *
+ * 좌표는 기본적으로 좌상단을 기준으로 출력한다.
+ * 이미지나 글씨는 좌하단을 기준으로 출력해야하므로,
+ *  기준 좌표를 좌상단으로 넘기면 출력을 처리하는 함수 내에서 좌하단으로 변환하여 출력한다.
  */
 
 static uint8_t parameter_width_table[UI_PANEL_SLOT_INDEX_COUNT] = {0, 0, 32, 64, 96, 0};
@@ -97,7 +100,7 @@ UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char 
 
     x = parameter_width_table[index] + 32 / 2 - WIDGET_WIDTH / 2;
     y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING +
-        IMAGE_HEIGHT / 2 - WIDGET_HEIGHT / 2;
+        GRAPHIC_AREA_HEIGHT / 2 - WIDGET_HEIGHT / 2;
     status = DrawParameterWidget(u8g2, parameter, x, y);
     if (status != UI_DRAWING_STATUS_OK) {
         return status;
@@ -178,7 +181,7 @@ UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const cha
 
     x = parameter_width_table[index] + 32 / 2 - ICON_WIDTH / 2;
     y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING +
-        IMAGE_HEIGHT / 2 - ICON_HEIGHT / 2;
+        GRAPHIC_AREA_HEIGHT / 2 - ICON_HEIGHT / 2;
     u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
     DrawPanelMenuIcon(u8g2, icon, x, y);
 
