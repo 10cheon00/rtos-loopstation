@@ -22,7 +22,6 @@ void UiWidget_DrawToggleSwitchWidget(u8g2_t *u8g2, uint8_t x, uint8_t y, Paramet
     } else {
         indicator_cy = y + PADDING;
     }
-    // u8g2_DrawDisc(u8g2, indicator_cx, indicator_cy, TOGGLE_SWITCH_INDICATOR_RADIUS, U8G2_DRAW_ALL);
     u8g2_DrawRBox(u8g2, indicator_cx, indicator_cy, TOGGLE_SWITCH_INDICATOR_WIDTH, TOGGLE_SWITCH_INDICATOR_HEIGHT, 2);
     u8g2_SetDrawColor(u8g2, 1);
 }
