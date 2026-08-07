@@ -12,7 +12,7 @@ UiDrawingStatus Ui_DrawSystemSettingPanel(u8g2_t *u8g2, Parameter *parameters)
     u8g2_ClearBuffer(u8g2);
     UI_DrawPanelLayout(u8g2, "SYSTEM SETTING", UI_ARROW_FLAG_NONE);
     
-    UI_DrawParameter(u8g2, &parameters[0], "LCD CO-\nNSTRAST", UI_DRAW_PARAMETER_INDEX_A);
+    UI_DrawParameter(u8g2, &parameters[0], "LCD CO-\nNSTRAST", UI_PANEL_SLOT_INDEX_A);
     // u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
     // UiWidget_DrawKnobWidget(u8g2, 8, 40, &parameters[0]);
     // u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);

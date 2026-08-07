@@ -29,8 +29,8 @@ void UiWidget_DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y, Parameter* para
     angle = parameter->max - parameter->current + parameter->min;
     // 파라미터 값을 수학적 각도로 변환
     angle = (((double)angle - parameter->min) / (parameter->max - parameter->min)) * 270 - 45;
-    cx = x + RADIUS;
-    cy = y - RADIUS;
+    cx = x + RADIUS + 1;
+    cy = y + RADIUS;
     x0 = cx + cosine(angle) * (RADIUS - 2);
     y0 = cy - sine(angle) * (RADIUS - 2);
     x3 = cx + cosine(angle) * 2;
@@ -54,7 +54,7 @@ void UiWidget_DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y, Parameter* para
     }
     
     u8g2_DrawDisc(u8g2, cx, cy, RADIUS, U8G2_DRAW_ALL);
-    u8g2_DrawBox(u8g2, cx + RADIUS + 1, cy + RADIUS, BOX_WIDTH, BOX_HEIGHT);
+    u8g2_DrawBox(u8g2, cx + RADIUS, cy + RADIUS, BOX_WIDTH, BOX_HEIGHT);
     u8g2_DrawBox(u8g2, cx - RADIUS - 1, cy + RADIUS, BOX_WIDTH, BOX_HEIGHT);
     u8g2_DrawBox(u8g2, x0, y0, BOX_WIDTH, BOX_HEIGHT);
     u8g2_SetDrawColor(u8g2, 0);

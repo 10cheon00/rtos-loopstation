@@ -8,14 +8,31 @@
 #define PANEL_LABEL_LINE_Y (PANEL_LABEL_HEIGHT + 1)
 #define PARAMETER_PADDING 2
 #define PARAMETER_VALUE_HEIGHT (CHARACTER_HEIGHT + 1 + CHARACTER_HEIGHT)
-#define PARAMETER_WIDGET_HEIGHT 20
+#define ICON_WIDTH 16
 #define ICON_HEIGHT 16
+#define LABEL_HEIGHT (CHARACTER_HEIGHT + 1 + CHARACTER_HEIGHT)
+#define IMAGE_HEIGHT                                                                               \
+    (SCREEN_HEIGHT - (PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT +            \
+                      PARAMETER_PADDING + PARAMETER_PADDING + LABEL_HEIGHT + 1))
 
-static uint8_t parameter_width_table[UI_DRAW_PARAMETER_INDEX_COUNT] = {0,      0 + 2,  32 + 2,
-                                                                       64 + 2, 96 + 2, 0};
-static uint8_t panel_menu_icon_table[UI_PANEL_MENU_ICON_COUNT] = {[UI_PANEL_MENU_ICON_NONE] = 0,
-                                                                  [UI_PANEL_MENU_ICON_SYSTEM] = 129,
-                                                                  [UI_PANEL_MENU_ICON_DEBUG] = 104};
+/**
+ * 파라미터 출력
+ * 값
+ * 위젯
+ * 라벨
+ */
+/**
+ * 메뉴 출력
+ * (없음)
+ * 아이콘
+ * 라벨
+ */
+
+static uint8_t parameter_width_table[UI_PANEL_SLOT_INDEX_COUNT] = {0, 0, 32, 64, 96, 0};
+static uint8_t panel_menu_icon_table[UI_PANEL_SLOT_ICON_ID_COUNT] = {
+    [UI_PANEL_SLOT_ICON_ID_NONE] = 0,
+    [UI_PANEL_SLOT_ICON_ID_SYSTEM] = 129,
+    [UI_PANEL_SLOT_ICON_ID_DEBUG] = 104};
 
 static void DrawArrowLeft4x5(u8g2_t *u8g2, uint8_t x, uint8_t y);
 static void DrawArrowRight4x5(u8g2_t *u8g2, uint8_t x, uint8_t y);
@@ -24,10 +41,11 @@ static UiDrawingStatus DrawParameterWidget(u8g2_t *u8g2, Parameter *parameter, u
                                            uint8_t y);
 static UiDrawingStatus DrawParameterLabel(u8g2_t *u8g2, const char *label, uint8_t x, uint8_t y);
 static void ConvertNumberToString(int32_t number, char *string, uint8_t string_length);
-static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, UiPanelMenuIcon icon, uint8_t x, uint8_t y);
+static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, UiPanelSlotIconId icon, uint8_t x,
+                                         uint8_t y);
 static UiDrawingStatus DrawPanelMenuLabel(u8g2_t *u8g2, const char *label, uint8_t x, uint8_t y);
-// TODO:
 
+// TODO:
 // 패널 이동 화살표 표시도 자동화할 수 있지 않을까?
 UiDrawingStatus UI_DrawPanelLayout(u8g2_t *u8g2, const char *panel_name, uint8_t arrow_flag)
 {
@@ -61,30 +79,33 @@ static void DrawArrowRight4x5(u8g2_t *u8g2, uint8_t x, uint8_t y)
 }
 
 UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char *label,
-                                 UiDrawParameterIndex index)
+                                 UiPanelSlotIndex index)
 {
     uint8_t x, y;
     UiDrawingStatus status;
 
-    if (index <= UI_DRAW_PARAMETER_INDEX_NONE || index >= UI_DRAW_PARAMETER_INDEX_COUNT) {
+    if (index <= UI_PANEL_SLOT_ICON_ID_NONE || index >= UI_PANEL_SLOT_INDEX_COUNT) {
         return UI_DRAWING_STATUS_ERROR;
     }
 
-    x = parameter_width_table[index];
+    x = parameter_width_table[index] + 1;
     y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING;
-
     status = DrawParameterValue(u8g2, parameter, x, y);
     if (status != UI_DRAWING_STATUS_OK) {
         return status;
     }
-    status =
-        DrawParameterWidget(u8g2, parameter, x, y + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING);
+
+    x = parameter_width_table[index] + 32 / 2 - WIDGET_WIDTH / 2;
+    y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING +
+        IMAGE_HEIGHT / 2 - WIDGET_HEIGHT / 2;
+    status = DrawParameterWidget(u8g2, parameter, x, y);
     if (status != UI_DRAWING_STATUS_OK) {
         return status;
     }
-    status = DrawParameterLabel(u8g2, label, x,
-                                y + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING +
-                                    PARAMETER_WIDGET_HEIGHT + PARAMETER_PADDING);
+
+    x = parameter_width_table[index] + 1;
+    y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
+    status = DrawParameterLabel(u8g2, label, x, y);
     return status;
 }
 
@@ -111,7 +132,7 @@ static UiDrawingStatus DrawParameterWidget(u8g2_t *u8g2, Parameter *parameter, u
         // TODO:
         // TOGGLE형 파라미터 위젯 구현하기
     } else if (parameter->type == PARAMETER_TYPE_SLIDER) {
-        UiWidget_DrawKnobWidget(u8g2, x, y + PARAMETER_WIDGET_HEIGHT, parameter);
+        UiWidget_DrawKnobWidget(u8g2, x, y, parameter);
     } else {
         // TODO:
         // RATE SLIDER형 파라미터 위젯 구현하기
@@ -147,25 +168,28 @@ static void ConvertNumberToString(int32_t number, char *string, uint8_t string_l
     }
 }
 
-UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelMenuIcon icon, const char *label,
-                                 UiDrawParameterIndex index)
+UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const char *label,
+                                 UiPanelSlotIndex index)
 {
     uint8_t x, y;
-    if (index <= UI_DRAW_PARAMETER_INDEX_NONE || index >= UI_DRAW_PARAMETER_INDEX_COUNT) {
+    if (index <= UI_PANEL_SLOT_ICON_ID_NONE || index >= UI_PANEL_SLOT_INDEX_COUNT) {
         return UI_DRAWING_STATUS_ERROR;
     }
 
-    x = parameter_width_table[index];
-    y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING;
-
+    x = parameter_width_table[index] + 32 / 2 - ICON_WIDTH / 2;
+    y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING +
+        IMAGE_HEIGHT / 2 - ICON_HEIGHT / 2;
     u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
     DrawPanelMenuIcon(u8g2, icon, x, y);
+
+    x = parameter_width_table[index] + 1;
+    y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
     u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
-    DrawPanelMenuLabel(u8g2, label, x, y + +PARAMETER_WIDGET_HEIGHT + PARAMETER_PADDING);
+    DrawPanelMenuLabel(u8g2, label, x, y);
     return UI_DRAWING_STATUS_OK;
 }
 
-UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, UiPanelMenuIcon icon, uint8_t x, uint8_t y)
+UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, UiPanelSlotIconId icon, uint8_t x, uint8_t y)
 {
     uint8_t icon_encoding = panel_menu_icon_table[icon];
     u8g2_DrawGlyph(u8g2, x, y + ICON_HEIGHT, icon_encoding);
@@ -175,7 +199,7 @@ UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, UiPanelMenuIcon icon, uint8_t x,
 
 UiDrawingStatus DrawPanelMenuLabel(u8g2_t *u8g2, const char *label, uint8_t x, uint8_t y)
 {
-    u8g2_DrawStr(u8g2, x, y, label);
+    u8g2_DrawStr(u8g2, x, y + CHARACTER_HEIGHT, label);
 
     return UI_DRAWING_STATUS_OK;
 }

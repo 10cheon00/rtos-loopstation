@@ -8,8 +8,10 @@ UiDrawingStatus Ui_DrawSettingPanel(u8g2_t *u8g2, Parameter *parameters)
 
     UI_DrawPanelLayout(u8g2, "SYSTEM", UI_ARROW_FLAG_RIGHT);
 
-    UI_DrawPanelMenu(u8g2, UI_PANEL_MENU_ICON_SYSTEM, "SYSTEM", UI_DRAW_PARAMETER_INDEX_A);
-    UI_DrawPanelMenu(u8g2, UI_PANEL_MENU_ICON_DEBUG, "DEBUG\nHW", UI_DRAW_PARAMETER_INDEX_B);
+    UI_DrawPanelMenu(u8g2, UI_PANEL_SLOT_ICON_ID_SYSTEM, "SYSTEM", UI_PANEL_SLOT_INDEX_A);
+    UI_DrawPanelMenu(u8g2, UI_PANEL_SLOT_ICON_ID_DEBUG, "DEBUG\nHW", UI_PANEL_SLOT_INDEX_B);
+    UI_DrawPanelMenu(u8g2, UI_PANEL_SLOT_ICON_ID_SYSTEM, "SYSTEM", UI_PANEL_SLOT_INDEX_C);
+    UI_DrawPanelMenu(u8g2, UI_PANEL_SLOT_ICON_ID_SYSTEM, "SYSTEM", UI_PANEL_SLOT_INDEX_D);
     // u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
     // u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
     // u8g2_DrawGlyph(u8g2, 8, 40, 104);
