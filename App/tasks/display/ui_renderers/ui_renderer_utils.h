@@ -14,7 +14,7 @@ typedef enum {
     UI_PANEL_SLOT_INDEX_C,
     UI_PANEL_SLOT_INDEX_D,
     UI_PANEL_SLOT_INDEX_COUNT,
-}UiPanelSlotIndex;
+} UiPanelSlotIndex;
 
 typedef enum {
     UI_PANEL_SLOT_ICON_ID_NONE = 0,
@@ -23,7 +23,9 @@ typedef enum {
     UI_PANEL_SLOT_ICON_ID_COUNT,
 } UiPanelSlotIconId;
 
-UiDrawingStatus UI_DrawPanelLayout(u8g2_t* u8g2, const char* panel_name, uint8_t arrow_flag);
-UiDrawingStatus UI_DrawParameter(u8g2_t* u8g2, Parameter* parameter, const char* label, UiPanelSlotIndex index);
-UiDrawingStatus UI_DrawPanelMenu(u8g2_t* u8g2, UiPanelSlotIconId icon, const char* label, UiPanelSlotIndex index);
+UiDrawingStatus UI_DrawPanelLayout(u8g2_t *u8g2, const char *panel_name, uint8_t arrow_flag);
+UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char *label,
+                                 UiPanelSlotIndex index);
+UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const char *label,
+                                 UiPanelSlotIndex index);
 #endif

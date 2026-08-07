@@ -3,6 +3,7 @@
 #include "knob_widget.h"
 #include "utils.h"
 
+#define SLOT_WIDTH 32
 #define CHARACTER_HEIGHT 5
 #define PANEL_LABEL_HEIGHT (CHARACTER_HEIGHT + 1)
 #define PANEL_LABEL_LINE_Y (PANEL_LABEL_HEIGHT + 1)
@@ -31,7 +32,8 @@
  *  기준 좌표를 좌상단으로 넘기면 출력을 처리하는 함수 내에서 좌하단으로 변환하여 출력한다.
  */
 
-static uint8_t parameter_width_table[UI_PANEL_SLOT_INDEX_COUNT] = {0, 0, 32, 64, 96, 0};
+static uint8_t parameter_width_table[UI_PANEL_SLOT_INDEX_COUNT] = {
+    0, 0, SLOT_WIDTH, SLOT_WIDTH * 2, SLOT_WIDTH * 3, 0};
 static uint8_t panel_menu_icon_table[UI_PANEL_SLOT_ICON_ID_COUNT] = {
     [UI_PANEL_SLOT_ICON_ID_NONE] = 0,
     [UI_PANEL_SLOT_ICON_ID_SYSTEM] = 129,
@@ -90,14 +92,14 @@ UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char 
         return UI_DRAWING_STATUS_ERROR;
     }
 
-    x = parameter_width_table[index] + 1;
+    x = parameter_width_table[index];
     y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING;
     status = DrawParameterValue(u8g2, parameter, x, y);
     if (status != UI_DRAWING_STATUS_OK) {
         return status;
     }
 
-    x = parameter_width_table[index] + 32 / 2 - WIDGET_WIDTH / 2;
+    x = parameter_width_table[index] + SLOT_WIDTH / 2 - WIDGET_WIDTH / 2;
     y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING +
         GRAPHIC_AREA_HEIGHT / 2 - WIDGET_HEIGHT / 2;
     status = DrawParameterWidget(u8g2, parameter, x, y);
@@ -105,7 +107,7 @@ UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char 
         return status;
     }
 
-    x = parameter_width_table[index] + 1;
+    x = parameter_width_table[index];
     y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
     status = DrawLabel(u8g2, label, x, y);
     return status;
@@ -114,13 +116,27 @@ UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char 
 static UiDrawingStatus DrawParameterValue(u8g2_t *u8g2, Parameter *parameter, uint8_t x, uint8_t y)
 {
     char str[5];
+    uint8_t string_width;
 
     if (parameter->type == PARAMETER_TYPE_TOGGLE) {
-        u8g2_DrawStr(u8g2, x, y + PARAMETER_VALUE_HEIGHT,
-                     parameter->current == parameter->max ? "ON" : "OFF");
+        if (parameter->current == parameter->max) {
+            str[0] = 'O';
+            str[1] = 'N';
+            str[2] = '\n';
+        } else {
+            str[0] = 'O';
+            str[1] = 'F';
+            str[2] = 'F';
+            str[3] = '\n';
+        }
+        u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
+        string_width = u8g2_GetStrWidth(u8g2, str);
+        u8g2_DrawStr(u8g2, x + SLOT_WIDTH / 2 - string_width / 2, y + PARAMETER_VALUE_HEIGHT, str);
     } else if (parameter->type == PARAMETER_TYPE_SLIDER) {
+        u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
         ConvertNumberToString(parameter->current, str, 5);
-        u8g2_DrawStr(u8g2, x, y + PARAMETER_VALUE_HEIGHT, str);
+        string_width = u8g2_GetStrWidth(u8g2, str);
+        u8g2_DrawStr(u8g2, x + SLOT_WIDTH / 2 - string_width / 2, y + PARAMETER_VALUE_HEIGHT, str);
     } else {
         // TODO:
         // RATE_SLIDER면 4,2,1,1/2~1/16,0~100와 같이 출력해야함.
@@ -146,6 +162,9 @@ static void ConvertNumberToString(int32_t number, char *string, uint8_t string_l
 {
     uint8_t i = 0, j = 0, is_negative = number < 0 ? 1 : 0;
     char c;
+    string[i] = '\0';
+    i++;
+    string[i] = '0';
     while (number != 0) {
         string[i] = number % 10 + '0';
         number /= 10;
@@ -172,23 +191,23 @@ UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const cha
         return UI_DRAWING_STATUS_ERROR;
     }
 
-    x = parameter_width_table[index] + 32 / 2 - ICON_WIDTH / 2;
+    x = parameter_width_table[index];
     y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING +
         GRAPHIC_AREA_HEIGHT / 2 - ICON_HEIGHT / 2;
-    u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
     DrawPanelMenuIcon(u8g2, icon, x, y);
 
-    x = parameter_width_table[index] + 1;
+    x = parameter_width_table[index];
     y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
-    u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
     DrawLabel(u8g2, label, x, y);
     return UI_DRAWING_STATUS_OK;
 }
 
 static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, UiPanelSlotIconId icon, uint8_t x, uint8_t y)
 {
-    uint8_t icon_encoding = panel_menu_icon_table[icon];
-    u8g2_DrawGlyph(u8g2, x, y + ICON_HEIGHT, icon_encoding);
+    uint8_t icon_encoding = panel_menu_icon_table[icon], glyph_width;
+    u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
+    glyph_width = u8g2_GetGlyphWidth(u8g2, icon_encoding);
+    u8g2_DrawGlyph(u8g2, x + SLOT_WIDTH / 2 - glyph_width / 2, y + ICON_HEIGHT, icon_encoding);
 
     return UI_DRAWING_STATUS_OK;
 }
@@ -196,7 +215,8 @@ static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, UiPanelSlotIconId icon, u
 static UiDrawingStatus DrawLabel(u8g2_t *u8g2, const char *label, uint8_t x, uint8_t y)
 {
     const char *first_line = label, *second_line;
-    char *p = (char*)label;
+    char *p = (char *)label;
+    uint8_t string_width;
     while (1) {
         if (*p == '\0') {
             second_line = p;
@@ -209,9 +229,13 @@ static UiDrawingStatus DrawLabel(u8g2_t *u8g2, const char *label, uint8_t x, uin
         p++;
     }
 
-    u8g2_DrawStr(u8g2, x, y + CHARACTER_HEIGHT, first_line);
+    u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
+    string_width = u8g2_GetStrWidth(u8g2, first_line);
+    u8g2_DrawStr(u8g2, x + SLOT_WIDTH / 2 - string_width / 2, y + CHARACTER_HEIGHT, first_line);
     if (*second_line) {
-        u8g2_DrawStr(u8g2, x, y + CHARACTER_HEIGHT + 1 + CHARACTER_HEIGHT, second_line);
+        string_width = u8g2_GetStrWidth(u8g2, second_line);
+        u8g2_DrawStr(u8g2, x + SLOT_WIDTH / 2 - string_width / 2,
+                     y + CHARACTER_HEIGHT + 1 + CHARACTER_HEIGHT, second_line);
     }
     return UI_DRAWING_STATUS_OK;
 }
