@@ -12,6 +12,8 @@
 #include "ui_state_machine.h"
 #include "ui_panel_ui_state_table.h"
 #include "button_ui_action_map.h"
+#include "track_state_machine.h"
+#include "button_track_action_map.h"
 
 static StateTaskContext state_task_context;
 
@@ -20,6 +22,9 @@ static osMessageQueueId_t display_snapshot_mailbox = 0;
 
 static UiStateMachine ui_state_machine;
 static UiStateMachineContext ui_state_machine_context;
+
+static TrackStateMachine track_state_machine[TRACK_COUNT];
+static TrackStateMachineContext track_state_machine_context[TRACK_COUNT];
 
 static TaskStatus TryUpdateParameter(StateEvent *state_event);
 static TaskStatus TryUpdateParameterFromButton(ButtonPayload *button_payload);
@@ -30,6 +35,8 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
                                               StateEvent *state_event);
 static UiActionId GetUiActionIdFromButtonId(ButtonId button_id);
 static TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine);
+static TaskStatus TryTransitionTrackStateMachine(TrackStateMachine *track_state_machine,
+                                                 StateEvent *state_event, uint8_t track_index);
 
 static int IsValidInitParams(const StateInitParams *params)
 {
@@ -51,6 +58,9 @@ void StateTask_Init(void *argument)
     display_snapshot_mailbox = params->display_snapshot_mailbox;
 
     UiStateMachineContext_Init(&ui_state_machine_context);
+    for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+        TrackStateMachineContext_Init(&track_state_machine_context[i]);
+    }
 
     StateTask_Run();
 }
@@ -63,6 +73,10 @@ void StateTask_Run(void)
 
     UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context,
                         UiPanelUiStateTable_GetUiStateFromUiPanelId(UI_PANEL_ID_HOME));
+    for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+        TrackStateMachine_Init(&track_state_machine[i], &track_state_machine_context[i],
+                               TRACK_STATE_ID_IDLE);
+    }
     UpdateDisplaySnapshotMailbox(&ui_state_machine);
 
     for (;;) {
@@ -70,8 +84,12 @@ void StateTask_Run(void)
         if (os_status == osOK) {
             TryUpdateParameter(&state_event);
             TryTransitionUiStateMachine(&ui_state_machine, &state_event);
-
+            for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+                TryTransitionTrackStateMachine(&track_state_machine[i], &state_event, i);
+            }
             if (task_status != TASK_STATUS_OK) {
+                // TODO:
+                // 처리 실패에 대한 예외처리 구현하기
             }
             UpdateDisplaySnapshotMailbox(&ui_state_machine);
         }
@@ -123,13 +141,13 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload *button_payload)
             Parameter_ToggleValue(parameter);
             return TASK_STATUS_OK;
         }
-    } else if (button_payload->id == BUTTON_ID_IFX_A_TOGGLE){
+    } else if (button_payload->id == BUTTON_ID_IFX_A_TOGGLE) {
         parameter = LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_IFX_A_STATE);
         if (parameter != NULL) {
             Parameter_ToggleValue(parameter);
             return TASK_STATUS_OK;
         }
-    } else if (button_payload->id == BUTTON_ID_TFX_A_TOGGLE){
+    } else if (button_payload->id == BUTTON_ID_TFX_A_TOGGLE) {
         parameter = LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_TFX_A_STATE);
         if (parameter != NULL) {
             Parameter_ToggleValue(parameter);
@@ -217,20 +235,52 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine)
 {
     ParameterId *parameter_ids =
         PanelParameterTable_GetParameterIds(ui_state_machine->current_state->ui_panel_id);
-    Parameter *parameter;
-
+    TrackStateId track_state_ids[TRACK_COUNT];
     DisplaySnapshot snapshot = {
         .ui_state = {.panel_id = ui_state_machine->current_state->ui_panel_id}};
+
     for (size_t i = 0; i < UI_PANEL_MAX_PARAMETER_COUNT; i++) {
-        snapshot.ui_state.parameters[i] = *LoopStationParameterStore_GetParameterFromParameterId(parameter_ids[i]);
+        snapshot.ui_state.parameters[i] =
+            *LoopStationParameterStore_GetParameterFromParameterId(parameter_ids[i]);
     }
-    // TODO:
-    // LED와 관련된 정보도 같이 전송하도록 구현하기
     snapshot.led = (LedRenderPayload){
-        .ifx_a_state = *LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_IFX_A_STATE),
-        .tfx_a_state = *LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_TFX_A_STATE),
+        .ifx_a_state =
+            *LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_IFX_A_STATE),
+        .tfx_a_state =
+            *LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_TFX_A_STATE),
     };
-    
+    for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+        snapshot.led.track_state[i] = track_state_machine->current_state->id;
+    }
+
     xQueueOverwrite(display_snapshot_mailbox, &snapshot);
+    return TASK_STATUS_OK;
+}
+
+TaskStatus TryTransitionTrackStateMachine(TrackStateMachine *state_machine, StateEvent *state_event,
+                                          uint8_t track_index)
+{
+
+    ButtonPayload *button_payload;
+    TrackActionId action_id;
+
+    // 1. 버튼 입력일때에만 트랙 상태를 바꿈
+    if (state_event->type != STATE_EVENT_BUTTON) {
+        return TASK_STATUS_ERROR;
+    }
+    button_payload = &state_event->payload.button;
+
+    // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
+    if (button_payload->state != BUTTON_STATE_PRESSED) {
+        return TASK_STATUS_ERROR;
+    }
+
+    // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
+    action_id = ButtonTrackActionMap_GetTrackActionId(button_payload->id);
+    if (action_id == TRACK_ACTION_ID_NONE) {
+        return TASK_STATUS_ERROR;
+    }
+    TrackStateMachine_TryTransition(state_machine, action_id);
+
     return TASK_STATUS_OK;
 }

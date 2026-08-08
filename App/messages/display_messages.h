@@ -7,6 +7,7 @@
 #include "ui_panel_id.h"
 #include "button_id.h"
 #include "parameter.h"
+#include "track_state.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
@@ -20,6 +21,7 @@ typedef struct {
     // LED와 관련된 설정 구현하기
     Parameter ifx_a_state;
     Parameter tfx_a_state;
+    TrackStateId track_state[TRACK_COUNT];
 } LedRenderPayload;
 
 typedef struct {

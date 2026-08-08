@@ -48,7 +48,7 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/types/parameter.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.c
-    
+
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/adc_input_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs/adc_rank_knob_table.c
 
@@ -65,7 +65,19 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_parameter_table.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/panel_parameter_table.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_ui_action_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_track_action_map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.c
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_id_state_table.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_idle.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_recording.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_stopped.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_playing.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_overdubbing.c
+
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/ui_state_machine.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_panel_ui_state_table.c
@@ -98,6 +110,9 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/utils

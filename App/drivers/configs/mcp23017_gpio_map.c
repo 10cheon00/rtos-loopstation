@@ -1,6 +1,7 @@
 #include "mcp23017_gpio_map.h"
 
 #include "utils.h"
+#include "track_state.h"
 
 #define INDEX_TO_MASK(index) ((Mcp23017GpioPinMask)1 << index)
 
@@ -48,6 +49,27 @@ static ParameterPinMapEntry parameter_pin_map[] = {
         .gpio_type = MCP23017_GPIO_TYPE_INPUT,
     },
     {
+        .gpio_id = MCP23017_GPIO_ID_LED_TRACK_1_RED,
+        .address = MCP23017_ADDRESS_0B101,
+        .port = MCP23017_GPIO_PORT_A,
+        .gpio_pin_mask = INDEX_TO_MASK(3),
+        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
+    },
+    {
+        .gpio_id = MCP23017_GPIO_ID_LED_TRACK_1_GREEN,
+        .address = MCP23017_ADDRESS_0B101,
+        .port = MCP23017_GPIO_PORT_A,
+        .gpio_pin_mask = INDEX_TO_MASK(4),
+        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
+    },
+    {
+        .gpio_id = MCP23017_GPIO_ID_LED_TRACK_1_BLUE,
+        .address = MCP23017_ADDRESS_0B101,
+        .port = MCP23017_GPIO_PORT_A,
+        .gpio_pin_mask = INDEX_TO_MASK(5),
+        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
+    },
+    {
         .gpio_id = MCP23017_GPIO_ID_BUTTON_LEFT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_B,
@@ -81,13 +103,6 @@ static ParameterPinMapEntry parameter_pin_map[] = {
         .port = MCP23017_GPIO_PORT_B,
         .gpio_pin_mask = INDEX_TO_MASK(4),
         .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
-    },
-    {
-        .gpio_id = MCP23017_GPIO_ID_BUTTON_TFX_A_TOGGLE,
-        .address = MCP23017_ADDRESS_0B101,
-        .port = MCP23017_GPIO_PORT_B,
-        .gpio_pin_mask = INDEX_TO_MASK(5),
-        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
     },
 };
 
@@ -127,10 +142,60 @@ static const ButtonId gpio_pin_button_table[MCP23017_GPIO_ID_COUNT] = {
     [MCP23017_GPIO_ID_BUTTON_TRACK_5_EDIT] = BUTTON_ID_TRACK_5_EDIT,
     [MCP23017_GPIO_ID_BUTTON_TRACK_5_PLAY_RECORD] = BUTTON_ID_TRACK_5_PLAY_RECORD,
     [MCP23017_GPIO_ID_BUTTON_TRACK_5_STOP] = BUTTON_ID_TRACK_5_STOP,
+    [MCP23017_GPIO_ID_LED_TRACK_1_RED] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_1_GREEN] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_1_BLUE] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_2_RED] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_2_GREEN] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_2_BLUE] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_3_RED] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_3_GREEN] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_3_BLUE] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_4_RED] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_4_GREEN] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_4_BLUE] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_5_RED] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_5_GREEN] = BUTTON_ID_NONE,
+    [MCP23017_GPIO_ID_LED_TRACK_5_BLUE] = BUTTON_ID_NONE,
+};
+
+// TODO:
+// TRACK_COUNT를 얻기 위해 track_state.h를 인클루드하는게 맞을까?
+static Mcp23017GpioId track_led_gpio_table[TRACK_COUNT][TRACK_LED_COLOR_COUNT] = {
+    {0, MCP23017_GPIO_ID_LED_TRACK_1_RED, MCP23017_GPIO_ID_LED_TRACK_1_GREEN,
+     MCP23017_GPIO_ID_LED_TRACK_1_BLUE},
+    {0, MCP23017_GPIO_ID_LED_TRACK_2_RED, MCP23017_GPIO_ID_LED_TRACK_2_GREEN,
+     MCP23017_GPIO_ID_LED_TRACK_2_BLUE},
+    {0, MCP23017_GPIO_ID_LED_TRACK_3_RED, MCP23017_GPIO_ID_LED_TRACK_3_GREEN,
+     MCP23017_GPIO_ID_LED_TRACK_3_BLUE},
+    {0, MCP23017_GPIO_ID_LED_TRACK_4_RED, MCP23017_GPIO_ID_LED_TRACK_4_GREEN,
+     MCP23017_GPIO_ID_LED_TRACK_4_BLUE},
+    {0, MCP23017_GPIO_ID_LED_TRACK_5_RED, MCP23017_GPIO_ID_LED_TRACK_5_GREEN,
+     MCP23017_GPIO_ID_LED_TRACK_5_BLUE},
 };
 
 ParameterPinMapEntry *Mcp23017GpioMap_GetEntry(Mcp23017GpioId gpio_id)
 {
+    for (size_t i = 0; i < parameter_pin_map_count; i++) {
+        if (parameter_pin_map[i].gpio_id == gpio_id) {
+            return &parameter_pin_map[i];
+        }
+    }
+    return NULL;
+}
+
+ParameterPinMapEntry *Mcp23017GpioMap_GetTrackLedEntry(uint8_t track_index, TrackLedColor color)
+{
+
+    Mcp23017GpioId gpio_id;
+    // TODO:
+    // 하드코딩이므로 고쳐야함
+    if (track_index < 0 || track_index >= TRACK_COUNT || color < TRACK_LED_COLOR_NONE ||
+        color >= TRACK_LED_COLOR_COUNT) {
+        return NULL;
+    }
+    gpio_id = track_led_gpio_table[track_index][color];
+
     for (size_t i = 0; i < parameter_pin_map_count; i++) {
         if (parameter_pin_map[i].gpio_id == gpio_id) {
             return &parameter_pin_map[i];
