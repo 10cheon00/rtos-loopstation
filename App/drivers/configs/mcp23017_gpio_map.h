@@ -43,6 +43,21 @@ enum {
     MCP23017_GPIO_ID_BUTTON_TRACK_5_EDIT,
     MCP23017_GPIO_ID_BUTTON_TRACK_5_PLAY_RECORD,
     MCP23017_GPIO_ID_BUTTON_TRACK_5_STOP,
+    MCP23017_GPIO_ID_LED_TRACK_1_RED,
+    MCP23017_GPIO_ID_LED_TRACK_1_GREEN,
+    MCP23017_GPIO_ID_LED_TRACK_1_BLUE,
+    MCP23017_GPIO_ID_LED_TRACK_2_RED,
+    MCP23017_GPIO_ID_LED_TRACK_2_GREEN,
+    MCP23017_GPIO_ID_LED_TRACK_2_BLUE,
+    MCP23017_GPIO_ID_LED_TRACK_3_RED,
+    MCP23017_GPIO_ID_LED_TRACK_3_GREEN,
+    MCP23017_GPIO_ID_LED_TRACK_3_BLUE,
+    MCP23017_GPIO_ID_LED_TRACK_4_RED,
+    MCP23017_GPIO_ID_LED_TRACK_4_GREEN,
+    MCP23017_GPIO_ID_LED_TRACK_4_BLUE,
+    MCP23017_GPIO_ID_LED_TRACK_5_RED,
+    MCP23017_GPIO_ID_LED_TRACK_5_GREEN,
+    MCP23017_GPIO_ID_LED_TRACK_5_BLUE,
     MCP23017_GPIO_ID_COUNT,
 };
 
@@ -56,6 +71,14 @@ typedef enum  {
     MCP23017_GPIO_TYPE_OUTPUT,
 } Mcp23017GpioType;
 
+typedef enum {
+    TRACK_LED_COLOR_NONE = 0,
+    TRACK_LED_COLOR_RED,
+    TRACK_LED_COLOR_GREEN,
+    TRACK_LED_COLOR_BLUE,
+    TRACK_LED_COLOR_COUNT,
+} TrackLedColor;
+
 typedef struct {
     Mcp23017Address address;
     Mcp23017GpioPort port;
@@ -65,6 +88,7 @@ typedef struct {
 } ParameterPinMapEntry;
 
 ParameterPinMapEntry *Mcp23017GpioMap_GetEntry(Mcp23017GpioId gpio_id);
+ParameterPinMapEntry *Mcp23017GpioMap_GetTrackLedEntry(uint8_t track_index, TrackLedColor color);
 Mcp23017GpioId Mcp23017GpioMap_GetMcp23017GpioId(Mcp23017Address address, Mcp23017GpioPort port, Mcp23017GpioPinMask gpio_pin_mask);
 Mcp23017GpioPinMask Mcp23017GpioMap_GetInputPinMask(Mcp23017Address address, Mcp23017GpioPort port);
 ButtonId Mcp23017GpioMap_ConvertGpioIdToButtonId(Mcp23017GpioId gpio_id);
