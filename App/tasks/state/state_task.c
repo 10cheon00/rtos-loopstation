@@ -14,11 +14,15 @@
 #include "button_ui_action_map.h"
 #include "track_state_machine.h"
 #include "button_track_action_map.h"
+#include "system_state_machine.h"
 
 static StateTaskContext state_task_context;
 
 static osMessageQueueId_t state_event_queue = 0;
 static osMessageQueueId_t display_snapshot_mailbox = 0;
+
+static SystemStateMachine system_state_machine;
+static SystemStateMachineContext system_state_machine_context;
 
 static UiStateMachine ui_state_machine;
 static UiStateMachineContext ui_state_machine_context;
@@ -26,6 +30,7 @@ static UiStateMachineContext ui_state_machine_context;
 static TrackStateMachine track_state_machine[TRACK_COUNT];
 static TrackStateMachineContext track_state_machine_context[TRACK_COUNT];
 
+static void InitStateMachines();
 static TaskStatus TryUpdateParameter(StateEvent *state_event);
 static TaskStatus TryUpdateParameterFromButton(ButtonPayload *button_payload);
 static TaskStatus
@@ -71,16 +76,18 @@ void StateTask_Run(void)
     osStatus_t os_status;
     TaskStatus task_status;
 
-    UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context,
-                        UiPanelUiStateTable_GetUiStateFromUiPanelId(UI_PANEL_ID_HOME));
-    for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-        TrackStateMachine_Init(&track_state_machine[i], &track_state_machine_context[i],
-                               TRACK_STATE_ID_IDLE);
-    }
-    UpdateDisplaySnapshotMailbox(&ui_state_machine);
+    InitStateMachines();
 
     for (;;) {
         os_status = osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
+        if (system_state_machine.current_state->id == SYSTEM_STATE_ID_ERROR) {
+            // TODO:
+            // 시스템 검증 결과에 오류가 있으면 이를 사용자에게 알려야 함.
+            // 지금은 임시로 그냥 무한루프 처리를 했음
+            for (;;) {
+                osDelay(1);
+            }
+        }
         if (os_status == osOK) {
             TryUpdateParameter(&state_event);
             TryTransitionUiStateMachine(&ui_state_machine, &state_event);
@@ -94,6 +101,20 @@ void StateTask_Run(void)
             UpdateDisplaySnapshotMailbox(&ui_state_machine);
         }
     }
+}
+
+static void InitStateMachines()
+{
+    SystemStateMachine_Init(&system_state_machine, &system_state_machine_context,
+                            SYSTEM_STATE_ID_NOT_INITED);
+
+    UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context,
+                        UiPanelUiStateTable_GetUiStateFromUiPanelId(UI_PANEL_ID_HOME));
+    for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+        TrackStateMachine_Init(&track_state_machine[i], &track_state_machine_context[i],
+                               TRACK_STATE_ID_IDLE);
+    }
+    UpdateDisplaySnapshotMailbox(&ui_state_machine);
 }
 
 static TaskStatus TryUpdateParameter(StateEvent *state_event)

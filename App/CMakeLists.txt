@@ -68,6 +68,14 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_track_action_map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.c
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine_context.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs/system_state_table.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_not_inited.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_running.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_error.c
+    
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_id_state_table.c
@@ -101,22 +109,25 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/utils
-    ${CMAKE_CURRENT_SOURCE_DIR}/
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(loopstation_app PUBLIC
