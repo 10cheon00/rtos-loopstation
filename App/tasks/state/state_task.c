@@ -233,23 +233,13 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
     }
 
     // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
-    ui_action_id = GetUiActionIdFromButtonId(button_payload->id);
+    ui_action_id = ButtonUiActionMap_Get(button_payload->id);
     if (ui_action_id == UI_ACTION_NONE) {
         return TASK_STATUS_ERROR;
     }
     UiStateMachine_TryTransition(ui_state_machine, ui_action_id);
 
     return TASK_STATUS_OK;
-}
-
-static UiActionId GetUiActionIdFromButtonId(ButtonId button_id)
-{
-    for (size_t i = 0; i < button_ui_action_map_count; i++) {
-        if (button_id == button_ui_action_map[i].button_id) {
-            return button_ui_action_map[i].ui_action_id;
-        }
-    }
-    return UI_ACTION_NONE;
 }
 
 TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine)

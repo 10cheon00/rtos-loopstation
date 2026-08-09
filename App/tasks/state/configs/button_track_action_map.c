@@ -1,20 +1,24 @@
 #include "button_track_action_map.h"
 
-#include "utils.h"
+#include "config_map.h"
+#include "config_validator.h"
 
-static ButtonTrackActionMapEntry button_track_action_map[] = {
-    {.button_id = BUTTON_ID_TRACK_1_PLAY_RECORD, .track_action_id = TRACK_ACTION_ID_ENTER_RECORD_PLAY},
-    {.button_id = BUTTON_ID_TRACK_1_STOP, .track_action_id = TRACK_ACTION_ID_ENTER_STOP},
+static ConfigMapEntry button_track_action_entries[] = {
+    {.key = BUTTON_ID_TRACK_1_PLAY_RECORD, .value = TRACK_ACTION_ID_ENTER_RECORD_PLAY},
+    {.key = BUTTON_ID_TRACK_1_STOP, .value = TRACK_ACTION_ID_ENTER_STOP},
 };
 
-static size_t button_track_action_map_count = ARRAY_COUNT(button_track_action_map);
+static ConfigMap button_track_action_map = {.entries = button_track_action_entries,
+                                            .count = ARRAY_COUNT(button_track_action_entries)};
+// 생성한 map을 설정 검증자에 등록한다.
+ConfigValidator_REGISTER(&button_track_action_map, ButtonId, TrackActionId);
 
 TrackActionId ButtonTrackActionMap_GetTrackActionId(ButtonId id)
 {
-    for (size_t i=0; i<button_track_action_map_count;i++) {
-        if (button_track_action_map[i].button_id == id) {
-            return button_track_action_map[i].track_action_id;
-        }
+    TrackActionId track_action_id;
+    if (ConfigMap_Get(&button_track_action_map, id, (Value_t *)&track_action_id) ==
+        CONFIG_MAP_RESULT_OK) {
+        return track_action_id;
     }
     return TRACK_ACTION_ID_NONE;
 }

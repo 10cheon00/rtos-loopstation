@@ -95,8 +95,10 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864_lcd.c
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.c
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/configs/mcp23017_gpio_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/config_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/config_validator.c
 )
 
 target_include_directories(loopstation_app PUBLIC

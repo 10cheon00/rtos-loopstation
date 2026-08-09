@@ -7,4 +7,6 @@
 
 double cosine(int16_t angle);
 double sine(int16_t angle);
+uint32_t djb2(const char* string);
+
 #endif
