@@ -104,6 +104,13 @@ static ParameterPinMapEntry parameter_pin_map[] = {
         .gpio_pin_mask = INDEX_TO_MASK(4),
         .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
     },
+    {
+        .gpio_id = MCP23017_GPIO_ID_BUTTON_TFX_A_TOGGLE,
+        .address = MCP23017_ADDRESS_0B101,
+        .port = MCP23017_GPIO_PORT_B,
+        .gpio_pin_mask = INDEX_TO_MASK(5),
+        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
+    },
 };
 
 static const size_t parameter_pin_map_count = ARRAY_COUNT(parameter_pin_map);
