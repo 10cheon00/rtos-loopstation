@@ -20,14 +20,13 @@ static ConfigMap button_ui_action_map = {
     .entries = button_ui_action_entries,
 };
 
-ConfigValidator_REGISTER(&button_ui_action_map, ButtnId, UiActionId);
+ConfigValidator_REGISTER(&button_ui_action_map, ButtonId, UiActionId);
 
 UiActionId ButtonUiActionMap_Get(UiActionId id)
 {
-    UiActionId ui_action_id;
-    if (ConfigMap_Get(&button_ui_action_map, id, (Value_t *)&ui_action_id) ==
-        CONFIG_MAP_RESULT_OK) {
-        return ui_action_id;
+    Value_t value;
+    if (ConfigMap_Get(&button_ui_action_map, id, &value) == CONFIG_MAP_RESULT_OK) {
+        return (UiActionId)value;
     }
     return UI_ACTION_NONE;
 }
