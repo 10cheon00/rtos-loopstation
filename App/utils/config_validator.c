@@ -32,12 +32,12 @@ static void GenerateConfigMapGraph(ConfigMapGraph *graph);
 static void TopologySort(ConfigMapGraph *graph);
 static ConfigValidatorResult Dfs(ConfigMapGraphNode *node);
 
-Hash ConfigValidator_TypeToHash(const char *type_name)
+Hash_t ConfigValidator_TypeToHash(const char *type_name)
 {
     return djb2(type_name);
 }
 
-ConfigValidatorResult ConfigValidator_AddConfigMap(ConfigMap *map, Hash key_hash, Hash value_hash)
+ConfigValidatorResult ConfigValidator_AddConfigMap(ConfigMap *map, Hash_t key_hash, Hash_t value_hash)
 {
     if (config_map_validation_subject_count == CONFIG_MAP_VALIDATION_NODE_COUNT) {
         return CONFIG_MAP_RESULT_ERROR;
@@ -93,8 +93,8 @@ static void TopologySort(ConfigMapGraph *graph)
 
     for (size_t i = 0; i < config_map_validation_subject_count; i++) {
         for (size_t j = i + 1; j < config_map_validation_subject_count; j++) {
-            Hash map_a_value_hash = config_map_validation_subjects[i].value_hash;
-            Hash map_b_key_hash = config_map_validation_subjects[j].key_hash;
+            Hash_t map_a_value_hash = config_map_validation_subjects[i].value_hash;
+            Hash_t map_b_key_hash = config_map_validation_subjects[j].key_hash;
             if (map_a_value_hash == map_b_key_hash) {
                 graph->nodes[j].degree++;
                 // ConfigMap *map_a = config_map_validation_subjects[i].map;

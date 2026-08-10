@@ -8,18 +8,18 @@ typedef enum {
     CONFIG_VALIDATOR_RESULT_OK,
 } ConfigValidatorResult;
 
-typedef uint32_t Hash;
+typedef uint32_t Hash_t;
 
-Hash ConfigValidator_TypeToHash(const char *type_name);
+Hash_t ConfigValidator_TypeToHash(const char *type_name);
 // #define ConfigValidator_TYPE_TO_HASH(type) ConfigValidator_TypeToHash(#type)
 
 typedef struct {
     ConfigMap *map;
-    Hash key_hash;
-    Hash value_hash;
+    Hash_t key_hash;
+    Hash_t value_hash;
 } ConfigMapValidationSubject;
 
-ConfigValidatorResult ConfigValidator_AddConfigMap(ConfigMap *map, Hash key_hash, Hash value_hash);
+ConfigValidatorResult ConfigValidator_AddConfigMap(ConfigMap *map, Hash_t key_hash, Hash_t value_hash);
 
 #define MACRO_CONCATENATE_IMPL(A, B) A##B
 #define MACRO_CONCATENATE_IMPL2(A, B, C) A##B##C
