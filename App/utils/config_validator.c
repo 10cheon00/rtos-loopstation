@@ -37,13 +37,20 @@ Hash_t ConfigValidator_TypeToHash(const char *type_name)
     return djb2(type_name);
 }
 
-ConfigValidatorResult ConfigValidator_AddConfigMap(ConfigMap *map, Hash_t key_hash, Hash_t value_hash)
+ConfigValidatorResult ConfigValidator_AddConfigMap(ConfigMap *map, Hash_t key_hash,
+                                                   Hash_t value_hash, const char *map_name,
+                                                   const char *key_name, const char *value_name)
 {
     if (config_map_validation_subject_count == CONFIG_MAP_VALIDATION_NODE_COUNT) {
         return CONFIG_MAP_RESULT_ERROR;
     }
     config_map_validation_subjects[config_map_validation_subject_count++] =
-        (ConfigMapValidationSubject){.map = map, .key_hash = key_hash, .value_hash = value_hash};
+        (ConfigMapValidationSubject){.map = map,
+                                     .key_hash = key_hash,
+                                     .value_hash = value_hash,
+                                     .map_name = map_name,
+                                     .key_name = key_name,
+                                     .value_name = value_name};
     return CONFIG_MAP_RESULT_OK;
 }
 
