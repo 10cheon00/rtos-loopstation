@@ -29,10 +29,10 @@ static ParameterId ui_panel_system_setting_params[UI_PANEL_MAX_PARAMETER_COUNT] 
 };
 
 static ConfigMapEntry panel_parameter_config_map_entries[] = {
-    {.key = UI_PANEL_ID_NONE, .value = (uint32_t)ui_panel_none_params},
-    {.key = UI_PANEL_ID_HOME, .value = (uint32_t)ui_panel_home_params},
-    {.key = UI_PANEL_ID_SETTING, .value = (uint32_t)ui_panel_setting_params},
-    {.key = UI_PANEL_ID_SYSTEM_SETTING, .value = (uint32_t)ui_panel_system_setting_params}};
+    {.key = UI_PANEL_ID_NONE, .value = (Value_t)ui_panel_none_params},
+    {.key = UI_PANEL_ID_HOME, .value = (Value_t)ui_panel_home_params},
+    {.key = UI_PANEL_ID_SETTING, .value = (Value_t)ui_panel_setting_params},
+    {.key = UI_PANEL_ID_SYSTEM_SETTING, .value = (Value_t)ui_panel_system_setting_params}};
 
 static ConfigMap panel_parameter_config_map = {.entries = panel_parameter_config_map_entries,
                                                .count =

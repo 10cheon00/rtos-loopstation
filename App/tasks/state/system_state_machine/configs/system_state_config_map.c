@@ -7,9 +7,9 @@
 #include "config_validator.h"
 
 static ConfigMapEntry system_state_config_map_entries[] = {
-    {.key = SYSTEM_STATE_ID_NOT_INITED, .value = (uint32_t)&SYSTEM_STATE_NOT_INITED},
-    {.key = SYSTEM_STATE_ID_RUNNING, .value = (uint32_t)&SYSTEM_STATE_RUNNING},
-    {.key = SYSTEM_STATE_ID_ERROR, .value = (uint32_t)&SYSTEM_STATE_ERROR},
+    {.key = SYSTEM_STATE_ID_NOT_INITED, .value = (Value_t)&SYSTEM_STATE_NOT_INITED},
+    {.key = SYSTEM_STATE_ID_RUNNING, .value = (Value_t)&SYSTEM_STATE_RUNNING},
+    {.key = SYSTEM_STATE_ID_ERROR, .value = (Value_t)&SYSTEM_STATE_ERROR},
 };
 
 static ConfigMap system_state_map = {
