@@ -1,13 +1,13 @@
 #include "system_state_machine.h"
 
-#include "system_state_table.h"
+#include "system_state_config_map.h"
 
 void SystemStateMachine_Init(SystemStateMachine *state_machine, SystemStateMachineContext *context,
                              SystemStateId init_state_id)
 {
     SystemState *next_state;
     state_machine->context = context;
-    next_state = SystemStateTable_GetSystemState(init_state_id);
+    next_state = SystemStateConfigMap_Get(init_state_id);
     if (next_state != NULL) {
         state_machine->current_state = next_state;
         SystemStateMachine_TriggerOnEnter(state_machine);
@@ -22,7 +22,7 @@ void SystemStateMachine_TryTransition(SystemStateMachine *state_machine, SystemA
     if (next_state_id == SYSTEM_STATE_ID_NONE) {
         return;
     }
-    next_state = SystemStateTable_GetSystemState(next_state_id);
+    next_state = SystemStateConfigMap_Get(next_state_id);
     if (next_state != NULL) {
         state_machine->current_state = next_state;
         SystemStateMachine_TriggerOnEnter(state_machine);

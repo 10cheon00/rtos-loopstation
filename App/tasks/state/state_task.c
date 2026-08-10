@@ -10,10 +10,10 @@
 #include "state_messages.h"
 #include "state_initparams.h"
 #include "ui_state_machine.h"
-#include "ui_panel_ui_state_table.h"
-#include "button_ui_action_map.h"
+#include "ui_panel_ui_state_config_map.h"
+#include "button_ui_action_config_map.h"
 #include "track_state_machine.h"
-#include "button_track_action_map.h"
+#include "button_track_action_config_map.h"
 #include "system_state_machine.h"
 
 static StateTaskContext state_task_context;
@@ -109,7 +109,7 @@ static void InitStateMachines()
                             SYSTEM_STATE_ID_NOT_INITED);
 
     UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context,
-                        UiPanelUiStateTable_GetUiStateFromUiPanelId(UI_PANEL_ID_HOME));
+                        UiPanelUiStateConfigMap_Get(UI_PANEL_ID_HOME));
     for (uint8_t i = 0; i < TRACK_COUNT; i++) {
         TrackStateMachine_Init(&track_state_machine[i], &track_state_machine_context[i],
                                TRACK_STATE_ID_IDLE);
@@ -153,7 +153,7 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload *button_payload)
         // TODO:
         // Encoder_A~D 모두 처리 가능하게 해야함
         ui_panel_id = ui_state_machine.current_state->ui_panel_id;
-        parameter_id = PanelParameterTable_GetParameterId(ui_panel_id, 0);
+        parameter_id = PanelParameterConfigMap_GetByParameterIndex(ui_panel_id, 0);
         if (parameter_id == PARAMETER_ID_NONE) {
             return TASK_STATUS_ERROR;
         }
@@ -189,7 +189,7 @@ TaskStatus TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder
 
     encoder_id = encoder_rotation_payload->encoder_id;
     ui_panel_id = ui_state_machine.current_state->ui_panel_id;
-    parameter_id = PanelParameterTable_GetParameterId(ui_panel_id, encoder_id);
+    parameter_id = PanelParameterConfigMap_GetByParameterIndex(ui_panel_id, encoder_id);
     if (parameter_id == PARAMETER_ID_NONE) {
         return TASK_STATUS_ERROR;
     }
@@ -233,7 +233,7 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
     }
 
     // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
-    ui_action_id = ButtonUiActionMap_Get(button_payload->id);
+    ui_action_id = ButtonUiActionConfigMap_Get(button_payload->id);
     if (ui_action_id == UI_ACTION_NONE) {
         return TASK_STATUS_ERROR;
     }
@@ -245,7 +245,7 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
 TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine)
 {
     ParameterId *parameter_ids =
-        PanelParameterTable_GetParameterIds(ui_state_machine->current_state->ui_panel_id);
+        PanelParameterConfigMap_Get(ui_state_machine->current_state->ui_panel_id);
     TrackStateId track_state_ids[TRACK_COUNT];
     DisplaySnapshot snapshot = {
         .ui_state = {.panel_id = ui_state_machine->current_state->ui_panel_id}};
@@ -287,7 +287,7 @@ TaskStatus TryTransitionTrackStateMachine(TrackStateMachine *state_machine, Stat
     }
 
     // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
-    action_id = ButtonTrackActionMap_GetTrackActionId(button_payload->id);
+    action_id = ButtonTrackActionConfigMap_Get(button_payload->id);
     if (action_id == TRACK_ACTION_ID_NONE) {
         return TASK_STATUS_ERROR;
     }

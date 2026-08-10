@@ -1,4 +1,4 @@
-#include "button_track_action_map.h"
+#include "button_track_action_config_map.h"
 
 #include "config_map.h"
 #include "config_validator.h"
@@ -13,7 +13,7 @@ static ConfigMap button_track_action_map = {.entries = button_track_action_entri
 // 생성한 map을 설정 검증자에 등록한다.
 ConfigValidator_REGISTER(&button_track_action_map, ButtonId, TrackActionId);
 
-TrackActionId ButtonTrackActionMap_GetTrackActionId(ButtonId id)
+TrackActionId ButtonTrackActionConfigMap_Get(ButtonId id)
 {
     TrackActionId track_action_id;
     if (ConfigMap_Get(&button_track_action_map, id, (Value_t *)&track_action_id) ==

@@ -1,5 +1,5 @@
-#ifndef UI_RENDERER_TABLE_H
-#define UI_RENDERER_TABLE_H
+#ifndef UI_RENDERER_CONFIG_MAP_H
+#define UI_RENDERER_CONFIG_MAP_H
 
 #include "ui_renderer_utils.h"
 #include "parameter.h"
