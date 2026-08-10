@@ -79,7 +79,6 @@ void StateTask_Run(void)
     InitStateMachines();
 
     for (;;) {
-        os_status = osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
         if (system_state_machine.current_state->id == SYSTEM_STATE_ID_ERROR) {
             // TODO:
             // 시스템 검증 결과에 오류가 있으면 이를 사용자에게 알려야 함.
@@ -88,6 +87,7 @@ void StateTask_Run(void)
                 osDelay(1);
             }
         }
+        os_status = osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
         if (os_status == osOK) {
             TryUpdateParameter(&state_event);
             TryTransitionUiStateMachine(&ui_state_machine, &state_event);

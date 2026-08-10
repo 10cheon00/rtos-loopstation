@@ -59,5 +59,6 @@ typedef struct {
 } ConfigMap;
 
 ConfigMapResult ConfigMap_Get(ConfigMap *map, Key_t key, Value_t *value);
+ConfigMapResult ConfigMap_Contains(ConfigMap *map, Key_t key);
 
 #endif

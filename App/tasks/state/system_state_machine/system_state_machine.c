@@ -31,5 +31,8 @@ void SystemStateMachine_TryTransition(SystemStateMachine *state_machine, SystemA
 
 void SystemStateMachine_TriggerOnEnter(SystemStateMachine *state_machine)
 {
-    state_machine->current_state->OnEnter(state_machine->context);
+    SystemStateOnEnterResult result = state_machine->current_state->OnEnter(state_machine->context);
+    if (result.is_transition_requested) {
+        SystemStateMachine_TryTransition(state_machine, result.action_id);
+    }
 }
