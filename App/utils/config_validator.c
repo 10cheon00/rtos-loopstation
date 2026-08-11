@@ -28,13 +28,26 @@ typedef struct {
     size_t node_count;
 } ConfigMapGraph;
 
+typedef struct {
+    ConfigMapGraphEdge *edge;
+    Value_t value; // 맵에 존재하지 않는 키
+} ConfigValidatorLog;
+
+// 검증 목록
 static ConfigMapValidationSubject config_map_validation_subjects[CONFIG_MAP_VALIDATION_NODE_COUNT];
 static size_t config_map_validation_subject_count = 0;
 
+// 간선 메모리 풀
 static ConfigMapGraphEdge config_graph_map_graph_edge_pool[CONFIG_MAP_GRAPH_EDGE_COUNT];
 static size_t config_graph_map_graph_edge_pool_count = 0;
 
+// 그래프
 static ConfigMapGraph graph;
+
+// 로그
+#define LOG_COUNT 128
+static ConfigValidatorLog logs[LOG_COUNT];
+static size_t log_count = 0;
 
 // 검증에 사용할 큐 자료구조
 #define QUEUE_CAPACITY (CONFIG_MAP_VALIDATION_NODE_COUNT + 1)
@@ -54,13 +67,14 @@ static void InitConfigMapGraph();
 static void TopologySort();
 static ConfigValidatorResult Validate();
 static ConfigValidatorResult ValidateEdgeKeyCoverage(ConfigMapGraphNode *node);
-
+static void AddConfigValidatorLog(ConfigMapGraphEdge *edge, Value_t value);
 Hash_t ConfigValidator_TypeToHash(const char *type_name)
 {
     return djb2(type_name);
 }
 
-static void InitQueue() {
+static void InitQueue()
+{
     queue_front = 0;
     queue_rear = 0;
 }
@@ -126,6 +140,7 @@ ConfigValidatorResult ConfigValidator_Validate()
 static void InitConfigMapGraph()
 {
     graph.node_count = 0;
+    log_count = 0;
 
     // Node 생성
     // 노드는 위상 정렬에 필요하며, 탐색을 시작할 노드들을 선택하기위해 필요하다.
@@ -174,7 +189,7 @@ static ConfigValidatorResult Validate()
 {
     ConfigValidatorResult result = CONFIG_VALIDATOR_RESULT_OK;
     ConfigMapGraphNode *node;
-    
+
     InitQueue();
     for (size_t i = 0; i < graph.node_count; i++) {
         if (graph.nodes[i].degree == 0 && graph.nodes[i].edge_count > 0) {
@@ -185,8 +200,6 @@ static ConfigValidatorResult Validate()
         node = DequeuConfigMapGraphNode();
 
         if (ValidateEdgeKeyCoverage(node) == CONFIG_VALIDATOR_RESULT_ERROR) {
-            // TODO:
-            // 설정 오류 로그 남기기
             result = CONFIG_VALIDATOR_RESULT_ERROR;
         }
     }
@@ -199,6 +212,7 @@ ConfigValidatorResult ValidateEdgeKeyCoverage(ConfigMapGraphNode *node)
     ConfigMapGraphEdge *edge;
     ConfigMapGraphNode *from, *to;
     Value_t value;
+    ConfigValidatorResult result = CONFIG_VALIDATOR_RESULT_OK;
     for (size_t i = 0; i < node->edge_count; i++) {
         edge = node->edges[i];
         from = edge->from;
@@ -208,7 +222,8 @@ ConfigValidatorResult ValidateEdgeKeyCoverage(ConfigMapGraphNode *node)
             if (ConfigMap_Contains(to->map, (Key_t)value) != CONFIG_MAP_RESULT_OK) {
                 // TODO:
                 // 설정 오류 발생
-                return CONFIG_VALIDATOR_RESULT_ERROR;
+                AddConfigValidatorLog(edge, value);
+                result = CONFIG_VALIDATOR_RESULT_ERROR;
             }
         }
         to->degree--;
@@ -216,5 +231,9 @@ ConfigValidatorResult ValidateEdgeKeyCoverage(ConfigMapGraphNode *node)
             EnqueueConfigMapGraphNode(to);
         }
     }
-    return CONFIG_VALIDATOR_RESULT_OK;
+    return result;
+}
+
+void AddConfigValidatorLog(ConfigMapGraphEdge *edge, Value_t value) {
+    logs[log_count++] = (ConfigValidatorLog){.edge = edge, .value = value};
 }
