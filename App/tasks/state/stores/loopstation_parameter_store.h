@@ -1,7 +1,7 @@
 #ifndef LOOPSTATION_PARAMETER_STORE_H
 #define LOOPSTATION_PARAMETER_STORE_H
 
-#include "panel_parameter_table.h"
+#include "panel_parameter_config_map.h"
 
 /**
  * TODO:

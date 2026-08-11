@@ -27,12 +27,12 @@ typedef enum {
     TRACK_ACTION_ID_COUNT,
 } TrackActionId;
 
-typedef void (*OnEnterFunction)(TrackStateMachineContext *);
+typedef void (*TrackStateOnEnterFunction)(TrackStateMachineContext *);
 
 typedef struct {
     TrackStateId id;
     TrackStateId *transition_table;
-    OnEnterFunction OnEnter;
+    TrackStateOnEnterFunction OnEnter;
 } TrackState;
 
 TrackStateId TrackState_GetTrackStateId(TrackState *track_state, TrackActionId action_id);

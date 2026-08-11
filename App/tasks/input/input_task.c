@@ -109,7 +109,7 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
         return TASK_STATUS_ERROR;
     }
 
-    button_id = Mcp23017GpioMap_ConvertGpioIdToButtonId(gpio_id);
+    button_id = Mcp23017GpioMap_Get(gpio_id);
     ButtonPayload payload = {
         .id = button_id, .state = button_state, .timestamp_ticks = timestamp_ticks};
     StateEvent state_event = {.type = STATE_EVENT_BUTTON, .payload = {.button = payload}};
