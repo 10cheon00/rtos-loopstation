@@ -18,7 +18,7 @@ typedef struct {
 struct ConfigMapGraphNode {
     // 이 맵의 값 타입을 키 타입으로 쓰는 맵들로 향하는 간선
     ConfigMapGraphEdge *edges[CONFIG_MAP_GRAPH_EDGE_COUNT];
-    ConfigMap *map;
+    ConfigMapValidationSubject *subject;
     size_t edge_count;
     size_t degree;
 };
@@ -29,8 +29,8 @@ typedef struct {
 } ConfigMapGraph;
 
 typedef struct {
-    ConfigMapGraphEdge *edge;
-    Value_t value; // 맵에 존재하지 않는 키
+    Value_t value;                       // 맵에 존재하지 않는 키
+    ConfigMapValidationSubject *subject; // value를 키로 갖지 않는 ConfigMap
 } ConfigValidatorLog;
 
 // 검증 목록
@@ -67,7 +67,8 @@ static void InitConfigMapGraph();
 static void TopologySort();
 static ConfigValidatorResult Validate();
 static ConfigValidatorResult ValidateEdgeKeyCoverage(ConfigMapGraphNode *node);
-static void AddConfigValidatorLog(ConfigMapGraphEdge *edge, Value_t value);
+static void AddConfigValidatorLog(ConfigMapValidationSubject *subject, Value_t value);
+
 Hash_t ConfigValidator_TypeToHash(const char *type_name)
 {
     return djb2(type_name);
@@ -148,7 +149,7 @@ static void InitConfigMapGraph()
     // validation_subject다.
     for (size_t i = 0; i < config_map_validation_subject_count; i++) {
         graph.nodes[graph.node_count++] = (ConfigMapGraphNode){
-            .degree = 0, .edge_count = 0, .map = config_map_validation_subjects[i].map};
+            .degree = 0, .edge_count = 0, .subject = &config_map_validation_subjects[i]};
     }
 }
 
@@ -217,12 +218,10 @@ ConfigValidatorResult ValidateEdgeKeyCoverage(ConfigMapGraphNode *node)
         edge = node->edges[i];
         from = edge->from;
         to = edge->to;
-        for (ConfigMapCount_t j = 0; j < from->map->count; j++) {
-            value = from->map->entries[j].value;
-            if (ConfigMap_Contains(to->map, (Key_t)value) != CONFIG_MAP_RESULT_OK) {
-                // TODO:
-                // 설정 오류 발생
-                AddConfigValidatorLog(edge, value);
+        for (ConfigMapCount_t j = 0; j < from->subject->map->count; j++) {
+            value = from->subject->map->entries[j].value;
+            if (ConfigMap_Contains(to->subject->map, (Key_t)value) != CONFIG_MAP_RESULT_OK) {
+                AddConfigValidatorLog(to->subject, value);
                 result = CONFIG_VALIDATOR_RESULT_ERROR;
             }
         }
@@ -234,6 +233,7 @@ ConfigValidatorResult ValidateEdgeKeyCoverage(ConfigMapGraphNode *node)
     return result;
 }
 
-void AddConfigValidatorLog(ConfigMapGraphEdge *edge, Value_t value) {
-    logs[log_count++] = (ConfigValidatorLog){.edge = edge, .value = value};
+static void AddConfigValidatorLog(ConfigMapValidationSubject *subject, Value_t value)
+{
+    logs[log_count++] = (ConfigValidatorLog){.subject = subject, .value = value};
 }
