@@ -30,6 +30,7 @@ typedef enum {
     BUTTON_ID_TRACK_5_EDIT,
     BUTTON_ID_TRACK_5_PLAY_RECORD,
     BUTTON_ID_TRACK_5_STOP,
+    BUTTON_ID_COUNT,
 } ButtonId;
 
 typedef enum {

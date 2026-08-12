@@ -6,6 +6,6 @@
 #include "button_id.h"
 #include "ui_state.h"
 
-UiActionId ButtonUiActionConfigMap_Get(UiActionId ui_action_id);
+UiActionId ButtonUiActionConfigMap_Get(ButtonId ui_action_id);
 
 #endif

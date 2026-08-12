@@ -2,6 +2,7 @@
 #define CONFIG_VALIDATOR_H
 
 #include "config_map.h"
+#include "config_table.h"
 
 typedef enum {
     CONFIG_VALIDATOR_RESULT_ERROR = 0,
@@ -40,11 +41,15 @@ ConfigValidatorResult ConfigValidator_AddConfigMap(ConfigMap *map, Hash_t key_ha
                                      ConfigValidator_TypeToHash(#ValueType), #map_pointer,         \
                                      #KeyType, #ValueType);                                        \
     }
+
+ConfigValidatorResult ConfigValidator_Validate();
 /**
  * 검사 항목
- * 1. 테이블에 값이 있는지 검사
- * 2. 
+ * 1. 필수 등록 항목 검사
+ * 2. 값 유효 범위 검사
+ * 3. UiActionId와 TrackActionId의 유효한 값을 갖는 키들이 서로 배타관계에 있는지, 그리고 두 집합의
+ * 합집합이 ButtonId인지 검사
  */
-ConfigValidatorResult ConfigValidator_Validate();
+ConfigValidatorResult ConfigValidator_ValidateConfigTable();
 
 #endif

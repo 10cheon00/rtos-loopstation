@@ -64,8 +64,8 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_parameter_config_table.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/panel_parameter_config_table.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_ui_action_config_map.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_track_action_config_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_ui_action_config_table.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_track_action_config_table.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine.c
