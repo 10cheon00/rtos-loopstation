@@ -1,5 +1,5 @@
-#ifndef ADC_RANK_KNOB_MAP_H
-#define ADC_RANK_KNOB_MAP_H
+#ifndef ADC_RANK_KNOB_CONFIG_TABLE_H
+#define ADC_RANK_KNOB_CONFIG_TABLE_H
 
 #include "stm32h7xx.h"
 #include "knob_id.h"

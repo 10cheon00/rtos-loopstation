@@ -12,8 +12,6 @@ struct ConfigMapTreeNode {
     // 이 맵의 키 타입을 값으로 쓰는 부모 노드.
     ConfigMapTreeNode *parent;
     ConfigMapValidationSubject *subject;
-#define CONFIG_MAP_GRAPH_NODE_DEGREE_MAX SIZE_MAX
-    size_t depth; // 이 값이 UINT32_MAX면 깊이가 계산되지 않은 것임
     bool coverage_checked;
 };
 
@@ -39,25 +37,10 @@ static ConfigMapTree tree;
 static ConfigValidatorLog logs[LOG_COUNT];
 static size_t log_count = 0;
 
-// 검증에 사용할 스택 자료구조
-#define STACK_CAPACITY (CONFIG_MAP_VALIDATION_NODE_COUNT + 1)
-typedef struct {
-    ConfigMapTreeNode *array[STACK_CAPACITY];
-    size_t top;
-} Stack;
-
-static Stack key_coverage_stack;
-
-static void InitStack(Stack *stack);
-static void PushStack(Stack *stack, ConfigMapTreeNode *node);
-static ConfigMapTreeNode *PopStack(Stack *stack);
-static bool IsStackFull(Stack *stack);
-static bool IsStackEmpty(Stack *stack);
-
 static void InitConfigMapTree();
 static void TopologySort();
 static ConfigValidatorResult Validate();
-static ConfigValidatorResult ValidateKeyCoverage(ConfigMapTreeNode *node);
+static void ValidateKeyCoverage(ConfigMapTreeNode *node);
 static void AddConfigValidatorLog(ConfigMapValidationSubject *subject, Value_t value);
 
 Hash_t ConfigValidator_TypeToHash(const char *type_name)
@@ -94,37 +77,6 @@ ConfigValidatorResult ConfigValidator_Validate()
     return Validate();
 }
 
-void InitStack(Stack *stack)
-{
-    stack->top = 0;
-}
-
-void PushStack(Stack *stack, ConfigMapTreeNode *node)
-{
-    if (IsStackFull(stack)) {
-        return;
-    }
-    stack->array[stack->top++] = node;
-}
-
-ConfigMapTreeNode *PopStack(Stack *stack)
-{
-    if (IsStackEmpty(stack)) {
-        return NULL;
-    }
-    return stack->array[--stack->top];
-}
-
-bool IsStackFull(Stack *stack)
-{
-    return stack->top == STACK_CAPACITY;
-}
-
-bool IsStackEmpty(Stack *stack)
-{
-    return stack->top == 0;
-}
-
 static void InitConfigMapTree()
 {
     tree.node_count = 0;
@@ -136,8 +88,7 @@ static void InitConfigMapTree()
     // validation_subject다.
     for (size_t i = 0; i < config_map_validation_subject_count; i++) {
         tree.nodes[tree.node_count++] =
-            (ConfigMapTreeNode){.depth = 0,
-                                .parent = NULL,
+            (ConfigMapTreeNode){.parent = NULL,
                                 .subject = &config_map_validation_subjects[i],
                                 .coverage_checked = false};
     }
@@ -163,60 +114,25 @@ static void TopologySort()
     }
 }
 
+/**
+ * 한 맵의 모든 값이 한 번이라도 다른 맵의 키로 사용되었는지 검사한다.
+ *
+ */
 static ConfigValidatorResult Validate()
 {
-    ConfigValidatorResult result = CONFIG_VALIDATOR_RESULT_OK;
-
     // 커버리지 검사를 수행하지 않은 모든 노드에 대해 커버리지 검사를 수행
     for (size_t i = 0; i < tree.node_count; i++) {
-        if (tree.nodes[i].parent == NULL) {
-            tree.nodes[i].coverage_checked = true;
-            continue;
-        }
-        if (tree.nodes[i].coverage_checked) {
-            continue;
-        }
-        if (ValidateKeyCoverage(&tree.nodes[i]) == CONFIG_VALIDATOR_RESULT_ERROR) {
-            result = CONFIG_VALIDATOR_RESULT_ERROR;
-        }
+        ValidateKeyCoverage(&tree.nodes[i]);
     }
-    return result;
+    if (log_count > 0) {
+        return CONFIG_VALIDATOR_RESULT_ERROR;
+    }
+    return CONFIG_VALIDATOR_RESULT_OK;
 }
 
-/**
- * 현재 노드에서 루트 노드까지 이동하며 커버리지 검사를 한 노드를 만나거나, 루트 노드에 도달할
- * 때까지 스택에 담는다. 스택에서 꺼낸 노드와 노드의 부모 간 커버리지 검사를 수행한다. 수행 후에는
- * 노드에 커버리지 검사를 수행했음을 표시한다.
- */
-ConfigValidatorResult ValidateKeyCoverage(ConfigMapTreeNode *node)
+static void ValidateKeyCoverage(ConfigMapTreeNode *node)
 {
     ConfigValidatorResult result = CONFIG_VALIDATOR_RESULT_OK;
-    ConfigMapTreeNode *parent, *child;
-    ConfigMapTreeNode *iter = node;
-    ConfigMap *parent_map, *child_map;
-    Value_t value;
-    
-    InitStack(&key_coverage_stack);
-    while (iter->parent != NULL && !iter->coverage_checked) {
-        PushStack(&key_coverage_stack, iter);
-        iter = iter->parent;
-    }
-    while (!IsStackEmpty(&key_coverage_stack)) {
-        child = PopStack(&key_coverage_stack);
-        parent = child->parent;
-        parent_map = parent->subject->map;
-        child_map = child->subject->map;
-        for (size_t i = 0; i < parent_map->count; i++) {
-            value = parent_map->entries[i].value;
-            if (ConfigMap_Contains(child_map, (Key_t)value) != CONFIG_MAP_RESULT_OK) {
-                result = CONFIG_VALIDATOR_RESULT_ERROR;
-                AddConfigValidatorLog(child->subject, value);
-            }
-        }
-        child->coverage_checked = true;
-    }
-
-    return result;
 }
 
 static void AddConfigValidatorLog(ConfigMapValidationSubject *subject, Value_t value)

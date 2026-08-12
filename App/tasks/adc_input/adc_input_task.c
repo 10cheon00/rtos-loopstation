@@ -4,7 +4,7 @@
 #include "FreeRTOS.h"
 #include "stm32h7xx.h"
 
-#include "adc_rank_knob_config_map.h"
+#include "adc_rank_knob_config_table.h"
 #include "adc_input_initparams.h"
 #include "input_messages.h"
 

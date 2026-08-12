@@ -4,7 +4,7 @@
 
 #include "display_messages.h"
 #include "display_initparams.h"
-#include "ui_renderer_config_map.h"
+#include "ui_renderer_config_table.h"
 #include "mcp23017.h"
 #include "mcp23017_gpio_map.h"
 

@@ -1,0 +1,22 @@
+#include "knob_parameter_config_table.h"
+
+#include "config_table.h"
+
+#define ENTRIES                                                                                     \
+    ConfigTable_1D_ENTRY(KNOB_ID_NONE, PARAMETER_ID_NONE),                                         \
+        ConfigTable_1D_ENTRY(KNOB_ID_IFX, PARAMETER_ID_IFX_KNOB),                                  \
+        ConfigTable_1D_ENTRY(KNOB_ID_TFX, PARAMETER_ID_TFX_KNOB),                                  \
+        ConfigTable_1D_ENTRY(KNOB_ID_TRACK_1_VOLUME_FADER, PARAMETER_ID_TRACK_1_VOLUME),
+
+ConfigTable_1D_DECLARE_TABLE(KnobId, ParameterId, PARAMETER_ID_COUNT, ENTRIES);
+#undef ENTRIES
+
+// ConfigValidator_REGISTER(&knob_parameter_config_map, KnobId, ParameterId);
+
+ParameterId KnobParameterConfigMap_Get(KnobId knob_id)
+{
+    if (knob_id <= KNOB_ID_NONE || knob_id >= KNOB_ID_COUNT) {
+        return PARAMETER_ID_NONE;
+    }
+    return ConfigTable_1D_GET(KnobId, ParameterId, knob_id);
+}

@@ -50,27 +50,27 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/adc_input_task.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs/adc_rank_knob_config_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs/adc_rank_knob_config_table.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer_utils.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer_home_panel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer_setting_panel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer_system_setting_panel.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs/ui_renderer_config_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs/ui_renderer_config_table.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/knob_widget.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/toggle_switch_widget.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_parameter_config_map.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/panel_parameter_config_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_parameter_config_table.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/panel_parameter_config_table.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_ui_action_config_map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_track_action_config_map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine_context.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs/system_state_config_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs/system_state_config_table.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_not_inited.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_running.c
@@ -78,7 +78,7 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_id_state_config_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_id_state_config_table.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_idle.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_recording.c
@@ -88,7 +88,7 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/ui_state_machine.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_panel_ui_state_config_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_panel_ui_state_config_table.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_home_panel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_setting_panel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_system_setting_panel.c

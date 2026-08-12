@@ -1,5 +1,5 @@
-#ifndef SYSTEM_STATE_CONFIG_MAP_H
-#define SYSTEM_STATE_CONFIG_MAP_H
+#ifndef SYSTEM_STATE_CONFIG_TABLE_H
+#define SYSTEM_STATE_CONFIG_TABLE_H
 
 #include "system_state.h"
 

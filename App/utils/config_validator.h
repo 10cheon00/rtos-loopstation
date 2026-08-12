@@ -41,10 +41,9 @@ ConfigValidatorResult ConfigValidator_AddConfigMap(ConfigMap *map, Hash_t key_ha
                                      #KeyType, #ValueType);                                        \
     }
 /**
- * 모든 enum에 대한 엔트리가 맵에 있는지 검사하는 것 (X)
- * 현재 맵의 값 타입을 다른 맵의 키 타입으로 사용할 때, 현재 맵에 존재하는 값이 다른 맵의 키로
- * 사용되지 않는지 검사하는 것 (O)
- * 이를 위해서는 설정 등록 시 키와 값을 저장하여 다른 맵과의 관계 그래프를 만들어야 한다.
+ * 검사 항목
+ * 1. 테이블에 값이 있는지 검사
+ * 2. 
  */
 ConfigValidatorResult ConfigValidator_Validate();
 

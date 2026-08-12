@@ -1,8 +1,8 @@
 #include "ui_state_machine.h"
 
 #include "display_messages.h"
-#include "ui_panel_ui_state_config_map.h"
-#include "panel_parameter_config_map.h"
+#include "ui_panel_ui_state_config_table.h"
+#include "panel_parameter_config_table.h"
 #include "loopstation_parameter_store.h"
 
 void UiStateMachine_Init(UiStateMachine *ui_state_machine, UiStateMachineContext *context,

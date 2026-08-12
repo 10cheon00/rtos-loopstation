@@ -10,7 +10,7 @@
 #include "state_messages.h"
 #include "state_initparams.h"
 #include "ui_state_machine.h"
-#include "ui_panel_ui_state_config_map.h"
+#include "ui_panel_ui_state_config_table.h"
 #include "button_ui_action_config_map.h"
 #include "track_state_machine.h"
 #include "button_track_action_config_map.h"
@@ -83,9 +83,9 @@ void StateTask_Run(void)
             // TODO:
             // 시스템 검증 결과에 오류가 있으면 이를 사용자에게 알려야 함.
             // 지금은 임시로 그냥 무한루프 처리를 했음
-            for (;;) {
-                osDelay(1);
-            }
+            // for (;;) {
+            //     osDelay(1);
+            // }
         }
         os_status = osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
         if (os_status == osOK) {
