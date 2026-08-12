@@ -41,7 +41,7 @@ void AdcInputTask_Run()
         last_wake_ticks = osKernelGetTickCount();
 
         HAL_ADC_Start(hadc);
-        AdcRankKnobConfigMap_Foreach(ScanAllAdcAndSendMessages);
+        AdcRankKnobConfigTable_Foreach(ScanAllAdcAndSendMessages);
         HAL_ADC_Stop(hadc);
     }
 }

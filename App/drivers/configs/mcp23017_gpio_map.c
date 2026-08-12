@@ -191,7 +191,7 @@ Mcp23017GpioPinMask Mcp23017GpioMap_GetInputPinMask(Mcp23017Address address, Mcp
  * 따라서 입력용 Gpio들을 ButtonId로 변환시켜주려면 테이블이 필요하다.
  * 이 테이블은 수동으로 컨버팅한다.
  */
-#define ENTRIES                                                                                     \
+#define ENTRIES                                                                                    \
     ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_NONE, BUTTON_ID_NONE),                                   \
         ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_IFX_A, BUTTON_ID_NONE),                          \
         ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TFX_A, BUTTON_ID_NONE),                          \
@@ -235,5 +235,5 @@ ButtonId Mcp23017GpioMap_Get(Mcp23017GpioId gpio_id)
     if (gpio_id <= MCP23017_GPIO_ID_NONE || gpio_id >= MCP23017_GPIO_ID_COUNT) {
         return MCP23017_GPIO_ID_NONE;
     }
-    return ConfigTable_NAME(Mcp23017GpioId, ButtonId)[gpio_id];
+    return ConfigTable_1D_GET(Mcp23017GpioId, ButtonId, gpio_id);
 }
