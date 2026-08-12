@@ -6,9 +6,9 @@
 #include "config_table.h"
 
 #define ENTRIES                                                                                    \
-    ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_NOT_INITED, &SYSTEM_STATE_NOT_INITED),                    \
-        ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_RUNNING, &SYSTEM_STATE_RUNNING),                      \
-        ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_ERROR, &SYSTEM_STATE_ERROR),
+    ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_NOT_INITED, (Value_t)&SYSTEM_STATE_NOT_INITED),                    \
+        ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_RUNNING, (Value_t)&SYSTEM_STATE_RUNNING),                      \
+        ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_ERROR, (Value_t)&SYSTEM_STATE_ERROR),
 
 ConfigTable_1D_DECLARE_TABLE(SystemStateId, SystemStatePointer, SYSTEM_STATE_ID_COUNT, ENTRIES);
 #undef ENTRIES
@@ -20,5 +20,5 @@ SystemStatePointer SystemStateConfigMap_Get(SystemStateId id)
     if (id <= SYSTEM_STATE_ID_NONE || id >= SYSTEM_STATE_ID_COUNT) {
         return NULL;
     }
-    return ConfigTable_1D_GET(SystemStateId, SystemStatePointer, id);
+    return (SystemStatePointer)ConfigTable_1D_GET(SystemStateId, SystemStatePointer, id);
 }

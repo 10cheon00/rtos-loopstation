@@ -8,12 +8,12 @@
 #include "config_table.h"
 
 #define ENTRIES                                                                                    \
-    ConfigTable_1D_ENTRY(TRACK_STATE_ID_NONE, NULL),                                               \
-        ConfigTable_1D_ENTRY(TRACK_STATE_ID_IDLE, &TRACK_STATE_IDLE),                              \
-        ConfigTable_1D_ENTRY(TRACK_STATE_ID_RECORDING, &TRACK_STATE_RECORDING),                    \
-        ConfigTable_1D_ENTRY(TRACK_STATE_ID_STOPPED, &TRACK_STATE_STOPPED),                        \
-        ConfigTable_1D_ENTRY(TRACK_STATE_ID_PLAYING, &TRACK_STATE_PLAYING),                        \
-        ConfigTable_1D_ENTRY(TRACK_STATE_ID_OVERDUBBING, &TRACK_STATE_OVERDUBBING),
+    ConfigTable_1D_ENTRY(TRACK_STATE_ID_NONE, (Value_t)NULL),                                      \
+        ConfigTable_1D_ENTRY(TRACK_STATE_ID_IDLE, (Value_t) & TRACK_STATE_IDLE),                   \
+        ConfigTable_1D_ENTRY(TRACK_STATE_ID_RECORDING, (Value_t) & TRACK_STATE_RECORDING),         \
+        ConfigTable_1D_ENTRY(TRACK_STATE_ID_STOPPED, (Value_t) & TRACK_STATE_STOPPED),             \
+        ConfigTable_1D_ENTRY(TRACK_STATE_ID_PLAYING, (Value_t) & TRACK_STATE_PLAYING),             \
+        ConfigTable_1D_ENTRY(TRACK_STATE_ID_OVERDUBBING, (Value_t) & TRACK_STATE_OVERDUBBING),
 
 ConfigTable_1D_DECLARE_TABLE(TrackStateId, TrackStatePointer, TRACK_STATE_ID_COUNT, ENTRIES);
 #undef ENTRIES
@@ -25,5 +25,5 @@ TrackStatePointer TrackIdStateConfigMap_Get(TrackStateId id)
     if (id <= TRACK_STATE_ID_NONE || id >= TRACK_STATE_ID_COUNT) {
         return NULL;
     }
-    return ConfigTable_NAME(TrackStateId, TrackStatePointer)[id];
+    return (TrackStatePointer)ConfigTable_1D_GET(TrackStateId, TrackStatePointer, id);
 }

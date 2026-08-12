@@ -5,11 +5,11 @@
 #include "ui_renderer_system_setting_panel.h"
 #include "config_table.h"
 
-#define ENTRIES                                                                                     \
-    ConfigTable_1D_ENTRY(UI_PANEL_ID_NONE, NULL),                                                  \
-        ConfigTable_1D_ENTRY(UI_PANEL_ID_HOME, Ui_DrawHomePanel),                                  \
-        ConfigTable_1D_ENTRY(UI_PANEL_ID_SETTING, Ui_DrawSettingPanel),                            \
-        ConfigTable_1D_ENTRY(UI_PANEL_ID_SYSTEM_SETTING, Ui_DrawSystemSettingPanel),
+#define ENTRIES                                                                                    \
+    ConfigTable_1D_ENTRY(UI_PANEL_ID_NONE, (Value_t)NULL),                                         \
+        ConfigTable_1D_ENTRY(UI_PANEL_ID_HOME, (Value_t)Ui_DrawHomePanel),                         \
+        ConfigTable_1D_ENTRY(UI_PANEL_ID_SETTING, (Value_t)Ui_DrawSettingPanel),                   \
+        ConfigTable_1D_ENTRY(UI_PANEL_ID_SYSTEM_SETTING, (Value_t)Ui_DrawSystemSettingPanel),
 
 ConfigTable_1D_DECLARE_TABLE(UiPanelId, UiPanelRenderFunction, UI_PANEL_ID_COUNT, ENTRIES);
 #undef ENTRIES
@@ -21,5 +21,5 @@ UiPanelRenderFunction UiRendererTable_GetUiPanelRenderFunction(UiPanelId ui_pane
     if (ui_panel_id <= UI_PANEL_ID_NONE || ui_panel_id >= UI_PANEL_ID_COUNT) {
         return NULL;
     }
-    return ConfigTable_NAME(UiPanelId, UiPanelRenderFunction)[ui_panel_id];
+    return (UiPanelRenderFunction)ConfigTable_1D_GET(UiPanelId, UiPanelRenderFunction, ui_panel_id);
 }

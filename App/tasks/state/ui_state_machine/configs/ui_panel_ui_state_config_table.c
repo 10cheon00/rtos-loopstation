@@ -7,10 +7,11 @@
 #include "config_table.h"
 
 #define ENTRIES                                                                                    \
-    ConfigTable_1D_ENTRY(UI_PANEL_ID_NONE, 0),                                                     \
-        ConfigTable_1D_ENTRY(UI_PANEL_ID_HOME, &UI_STATE_HOME_PANEL),                              \
-        ConfigTable_1D_ENTRY(UI_PANEL_ID_SETTING, &UI_STATE_SETTING_PANEL),                        \
-        ConfigTable_1D_ENTRY(UI_PANEL_ID_SYSTEM_SETTING, &UI_STATE_SYSTEM_SETTING_PANEL),
+    ConfigTable_1D_ENTRY(UI_PANEL_ID_NONE, (Value_t)NULL),                                         \
+        ConfigTable_1D_ENTRY(UI_PANEL_ID_HOME, (Value_t) & UI_STATE_HOME_PANEL),                   \
+        ConfigTable_1D_ENTRY(UI_PANEL_ID_SETTING, (Value_t) & UI_STATE_SETTING_PANEL),             \
+        ConfigTable_1D_ENTRY(UI_PANEL_ID_SYSTEM_SETTING,                                           \
+                             (Value_t) & UI_STATE_SYSTEM_SETTING_PANEL),
 
 ConfigTable_1D_DECLARE_TABLE(UiPanelId, UiStatePointer, UI_PANEL_ID_COUNT, ENTRIES);
 
@@ -18,9 +19,8 @@ ConfigTable_1D_DECLARE_TABLE(UiPanelId, UiStatePointer, UI_PANEL_ID_COUNT, ENTRI
 
 UiStatePointer UiPanelUiStateConfigMap_Get(UiPanelId id)
 {
-    if (id <= UI_PANEL_ID_NONE || id >= UI_PANEL_ID_COUNT)
-    {
+    if (id <= UI_PANEL_ID_NONE || id >= UI_PANEL_ID_COUNT) {
         return NULL;
     }
-    return ConfigTable_1D_GET(UiPanelId, UiStatePointer, id);
+    return (UiStatePointer)ConfigTable_1D_GET(UiPanelId, UiStatePointer, id);
 }
