@@ -8,23 +8,30 @@ typedef enum {
     CONFIG_VALIDATOR_RESULT_OK,
 } ConfigValidatorResult;
 
+typedef enum {
+    CONFIG_TABLE_TYPE_NO_EMPTY_VALUE,
+    CONFIG_TABLE_TYPE_ALLOW_EMPTY_VALUE,
+} ConfigTableType;
+
 typedef struct {
     Value_t *config_table;
     Value_t value_min;
     Value_t value_max;
     Key_t table_count;
     const char *config_table_name;
+    ConfigTableType type;
 } ConfigTableValidationSubject;
 
 #define ConfigValidator_REGISTER_CONFIG_TABLE_1D(KEY_TYPE, VALUE_TYPE, TABLE_COUNT, VALUE_MIN,     \
-                                                 VALUE_MAX)                                        \
+                                                 VALUE_MAX, CONFIG_TABLE_TYPE)                     \
     static ConfigTableValidationSubject CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE),       \
                                                      _validation_subject) = {                      \
         .config_table = ConfigTable_NAME(KEY_TYPE, VALUE_TYPE),                                    \
         .table_count = TABLE_COUNT,                                                                \
         .value_min = VALUE_MIN,                                                                    \
         .value_max = VALUE_MAX,                                                                    \
-        .config_table_name = VARIABLE_TO_STR(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE))};             \
+        .config_table_name = VARIABLE_TO_STR(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE)),              \
+        .type = CONFIG_TABLE_TYPE};                                                                \
     __attribute__((constructor, used)) static void CONCATENATE2(                                   \
         ConfigValidator_REGISTER_CONFIG_TABLE__, ConfigTable_NAME(KEY_TYPE, VALUE_TYPE))()         \
     {                                                                                              \
@@ -33,22 +40,6 @@ typedef struct {
     }
 
 void ConfigValidator_RegisterConfigTableValidationSubject(ConfigTableValidationSubject *subject);
-
-typedef struct {
-    ConfigTableValidationSubject *subject;
-    uint8_t option_flag;
-} ConfigTableKeySetOption;
-
-#define ConfigValidator_REGISTER_CONFIG_TABLE_KEY_SET(KEY_TYPE, VALUE_TYPE, KEY_OPTION)            \
-    static ConfigTableKeySetOption CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE),            \
-                                                _key_set_option) = {};                             \
-    __attribute__((constructor, used)) static void CONCATENATE2(                                   \
-        ConfigValidator_REGISTER_CONFIG_TABLE_KEY_SET, ConfigTable_NAME(KEY_TYPE, VALUE_TYPE))()   \
-    {                                                                                              \
-        ConfigValidator_RegisterConfigTableKeySetOption(                                           \
-            &CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE), _key_set_option));               \
-    }
-void ConfigValidator_RegisterConfigTableKeySetOption(ConfigTableKeySetOption *option);
 
 ConfigValidatorResult ConfigValidator_Validate();
 /**

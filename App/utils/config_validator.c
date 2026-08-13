@@ -10,8 +10,6 @@
 
 static ConfigTableValidationSubject *subjects[CONFIG_TABLE_VALIDATION_SUBJECT_COUNT_MAX];
 static size_t subject_count = 0;
-static ConfigTableKeySetOption *key_set_options[CONFIG_TABLE_KEY_SET_OPTION_COUNT_MAX];
-static size_t key_set_option_count = 0;
 
 static ConfigValidatorResult ValidateConfigTable();
 static ConfigValidatorResult
@@ -21,11 +19,6 @@ static void AddValidationLog();
 void ConfigValidator_RegisterConfigTableValidationSubject(ConfigTableValidationSubject *subject)
 {
     subjects[subject_count++] = subject;
-}
-
-void ConfigValidator_RegisterConfigTableKeySetOption(ConfigTableKeySetOption *key_set_option)
-{
-    key_set_options[key_set_option_count++] = key_set_option;
 }
 
 ConfigValidatorResult ConfigValidator_Validate()
@@ -38,10 +31,13 @@ static ConfigValidatorResult ValidateConfigTable()
 {
     ConfigValidatorResult result1, result2;
     for (size_t i = 0; i < subject_count; i++) {
-        result1 = ValidateConfigTableValueValidity(subjects[i]);
+        if (subjects[i]->type == CONFIG_TABLE_TYPE_NO_EMPTY_VALUE) {
+            result1 = ValidateConfigTableValueValidity(subjects[i]);
+        }
     }
-    // TODO: 
-    // 
+    // TODO:
+    // 여러 테이블의 합집합 커버리지 검사
+    // enum Id를 모두 사용하지 않는 테이블에 대해서 정보를 등록하는 것으로..?
     return result1 == CONFIG_VALIDATOR_RESULT_OK && result2 == CONFIG_VALIDATOR_RESULT_OK;
 }
 
