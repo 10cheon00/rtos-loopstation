@@ -1,8 +1,9 @@
 #include "knob_parameter_config_table.h"
 
 #include "config_table.h"
+#include "config_validator.h"
 
-#define ENTRIES                                                                                     \
+#define ENTRIES                                                                                    \
     ConfigTable_1D_ENTRY(KNOB_ID_NONE, PARAMETER_ID_NONE),                                         \
         ConfigTable_1D_ENTRY(KNOB_ID_IFX, PARAMETER_ID_IFX_KNOB),                                  \
         ConfigTable_1D_ENTRY(KNOB_ID_TFX, PARAMETER_ID_TFX_KNOB),                                  \
@@ -11,7 +12,8 @@
 ConfigTable_1D_DECLARE_TABLE(KnobId, ParameterId, PARAMETER_ID_COUNT, ENTRIES);
 #undef ENTRIES
 
-// ConfigValidator_REGISTER(&knob_parameter_config_map, KnobId, ParameterId);
+ConfigValidator_REGISTER_CONFIG_TABLE_1D(KnobId, ParameterId, KNOB_ID_COUNT, PARAMETER_ID_NONE,
+                                         PARAMETER_ID_COUNT, CONFIG_TABLE_TYPE_NO_NULL_VALUE);
 
 ParameterId KnobParameterConfigMap_Get(KnobId knob_id)
 {

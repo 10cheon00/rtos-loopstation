@@ -9,8 +9,8 @@ typedef enum {
 } ConfigValidatorResult;
 
 typedef enum {
-    CONFIG_TABLE_TYPE_NO_EMPTY_VALUE,
-    CONFIG_TABLE_TYPE_ALLOW_EMPTY_VALUE,
+    CONFIG_TABLE_TYPE_NO_NULL_VALUE,
+    CONFIG_TABLE_TYPE_ALLOW_NULL_VALUE,
 } ConfigTableType;
 
 typedef struct {
@@ -18,43 +18,44 @@ typedef struct {
     Value_t value_min;
     Value_t value_max;
     Key_t table_count;
-    const char *config_table_name;
     ConfigTableType type;
+    const char *config_table_name;
+    Hash_t key_hash;
+    Hash_t value_hash;
 } ConfigTableValidationSubject;
 
-#define ConfigValidator_REGISTER_CONFIG_TABLE_1D(KEY_TYPE, VALUE_TYPE, TABLE_COUNT, VALUE_MIN,     \
-                                                 VALUE_MAX, CONFIG_TABLE_TYPE)                     \
-    static ConfigTableValidationSubject CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE),       \
-                                                     _validation_subject) = {                      \
-        .config_table = ConfigTable_NAME(KEY_TYPE, VALUE_TYPE),                                    \
-        .table_count = TABLE_COUNT,                                                                \
-        .value_min = VALUE_MIN,                                                                    \
-        .value_max = VALUE_MAX,                                                                    \
-        .config_table_name = VARIABLE_TO_STR(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE)),              \
-        .type = CONFIG_TABLE_TYPE};                                                                \
-    __attribute__((constructor, used)) static void CONCATENATE2(                                   \
-        ConfigValidator_REGISTER_CONFIG_TABLE__, ConfigTable_NAME(KEY_TYPE, VALUE_TYPE))()         \
-    {                                                                                              \
-        ConfigValidator_RegisterConfigTableValidationSubject(                                      \
-            &CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE), _validation_subject));           \
+// 테이블과 테이블 간 커버리지 검사를 할 때, 값이 한 번이라도 키로 사용된 경우와 모든 키가 값으로
+// 존재하는지 검사
+typedef struct {
+    ConfigTableValidationSubject *source;
+    ConfigTableValidationSubject *target;
+} ConfigTableCoverageValidationSubject;
+
+#define ConfigValidator_REGISTER_CONFIG_TABLE_1D(KEY_TYPE, VALUE_TYPE, TABLE_COUNT, VALUE_MIN,                              \
+                                                 VALUE_MAX, CONFIG_TABLE_TYPE)                                              \
+    static ConfigTableValidationSubject CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE),                                \
+                                                     _validation_subject) = {                                               \
+        .config_table = ConfigTable_NAME(KEY_TYPE, VALUE_TYPE),                                                             \
+        .value_min = VALUE_MIN,                                                                                             \
+        .value_max = VALUE_MAX,                                                                                             \
+        .table_count = TABLE_COUNT,                                                                                         \
+        .type = CONFIG_TABLE_TYPE,                                                                                          \
+        .config_table_name = VARIABLE_TO_STR(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE)),                                       \
+    };                                                                                                                      \
+    __attribute__((constructor, used)) static void CONCATENATE2(                                                            \
+        ConfigValidator_REGISTER_CONFIG_TABLE__, ConfigTable_NAME(KEY_TYPE, VALUE_TYPE))()                                  \
+    {                                                                                                                       \
+        ConfigTableValidationSubject *subject = &CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE), _validation_subject); \
+        subject->key_hash = djb2(VARIABLE_TO_STR(KEY_TYPE));                                                                \
+        subject->value_hash = djb2(VARIABLE_TO_STR(VALUE_TYPE));                                                            \
+        ConfigValidator_RegisterConfigTableValidationSubject(subject);                                                     \
     }
 
 void ConfigValidator_RegisterConfigTableValidationSubject(ConfigTableValidationSubject *subject);
 
 ConfigValidatorResult ConfigValidator_Validate();
-/**
- * ConfigTable 검사 항목
- * 1. 값 유효 범위 검사(이 검사를 하게 되면 값 범위를 조사하여 필수 등록 값이 등록되어 있는지 확인
- 가능)
- * 2. 여러 테이블의 합집합 커버리지
- * - 값이 한 번이라도 키로 사용된 경우
- *      - B.key ∪ C.key ∪ ... = A.value
- * - 값이 한 번이라도 키로 사용되었고, 키로 사용한 테이블이 유일한 경우
- *      - B.key ∪ C.key ∪ ... = A.value
- *      - B.key ∩ C.key ∩ ... = ∅
- * - 값이 한 번이라도 키로 사용되지 않아도 괜찮은 경우
- *      - 이건 KeySetOption을 등록하지 않은 경우에 해당
- */
-ConfigValidatorResult ConfigValidator_ValidateConfigTable();
 
+typedef struct {
+    const char* message;
+}ConfigValidatorLog;
 #endif

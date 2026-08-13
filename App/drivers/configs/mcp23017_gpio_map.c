@@ -232,7 +232,7 @@ ConfigTable_1D_DECLARE_TABLE(Mcp23017GpioId, ButtonId, MCP23017_GPIO_ID_COUNT, E
 
 ConfigValidator_REGISTER_CONFIG_TABLE_1D(Mcp23017GpioId, ButtonId, MCP23017_GPIO_ID_COUNT,
                                          BUTTON_ID_NONE, BUTTON_ID_COUNT,
-                                         CONFIG_TABLE_TYPE_NO_EMPTY_VALUE);
+                                         CONFIG_TABLE_TYPE_NO_NULL_VALUE);
 
 ButtonId Mcp23017GpioMap_Get(Mcp23017GpioId gpio_id)
 {

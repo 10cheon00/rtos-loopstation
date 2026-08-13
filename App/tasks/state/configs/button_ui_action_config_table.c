@@ -1,6 +1,7 @@
 #include "button_ui_action_config_table.h"
 
 #include "config_table.h"
+#include "config_validator.h"
 
 #define ENTRIES                                                                                    \
     ConfigTable_1D_ENTRY(BUTTON_ID_LEFT, UI_ACTION_NAVIGATE_LEFT),                                 \
@@ -17,7 +18,8 @@
 ConfigTable_1D_DECLARE_TABLE(ButtonId, UiActionId, BUTTON_ID_COUNT, ENTRIES);
 #undef ENTRIES
 
-// ConfigValidator_REGISTER(&button_ui_action_map, ButtonId, UiActionId);
+ConfigValidator_REGISTER_CONFIG_TABLE_1D(ButtonId, UiActionId, BUTTON_ID_COUNT, UI_ACTION_NONE,
+                                         UI_ACTION_COUNT, CONFIG_TABLE_TYPE_NO_NULL_VALUE);
 
 UiActionId ButtonUiActionConfigMap_Get(ButtonId id)
 {

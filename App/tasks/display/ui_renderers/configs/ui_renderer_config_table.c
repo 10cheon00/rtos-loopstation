@@ -4,6 +4,7 @@
 #include "ui_renderer_setting_panel.h"
 #include "ui_renderer_system_setting_panel.h"
 #include "config_table.h"
+#include "config_validator.h"
 
 #define ENTRIES                                                                                    \
     ConfigTable_1D_ENTRY(UI_PANEL_ID_NONE, (Value_t)NULL),                                         \
@@ -14,7 +15,8 @@
 ConfigTable_1D_DECLARE_TABLE(UiPanelId, UiPanelRenderFunction, UI_PANEL_ID_COUNT, ENTRIES);
 #undef ENTRIES
 
-// ConfigValidator_REGISTER(&ui_panel_render_function_config_map, UiPanelId, UiPanelRenderFunction);
+ConfigValidator_REGISTER_CONFIG_TABLE_1D(UiPanelId, UiPanelRenderFunction, UI_PANEL_ID_COUNT, 0,
+                                         UINT32_MAX, CONFIG_TABLE_TYPE_NO_NULL_VALUE);
 
 UiPanelRenderFunction UiRendererTable_GetUiPanelRenderFunction(UiPanelId ui_panel_id)
 {

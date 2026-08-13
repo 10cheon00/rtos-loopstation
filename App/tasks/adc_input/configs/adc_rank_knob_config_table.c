@@ -1,8 +1,8 @@
 #include "adc_rank_knob_config_table.h"
 
 #include "utils.h"
-#include "config_validator.h"
 #include "config_table.h"
+#include "config_validator.h"
 
 /**
  * 이 테이블의 길이는 hadc1.Init.NbrOfConversion과 같아야 한다.
@@ -13,10 +13,11 @@
     ConfigTable_1D_ENTRY(0, KNOB_ID_IFX), ConfigTable_1D_ENTRY(1, KNOB_ID_TFX),                    \
         ConfigTable_1D_ENTRY(2, KNOB_ID_TRACK_1_VOLUME_FADER)
 
-ConfigTable_1D_DECLARE_TABLE(AdcRank_t, KnobId, KNOB_ID_COUNT, ENTRIES);
+ConfigTable_1D_DECLARE_TABLE(AdcRank_t, KnobId, 3, ENTRIES);
 #undef ENTRIES
 
-// ConfigValidator_REGISTER(&adc_rank_knob_config_map, AdcRank_t, KnobId);
+ConfigValidator_REGISTER_CONFIG_TABLE_1D(AdcRank_t, KnobId, 3, KNOB_ID_NONE, KNOB_ID_COUNT,
+                                         CONFIG_TABLE_TYPE_NO_NULL_VALUE);
 
 void AdcRankKnobConfigTable_Foreach(AdcRankKnobConfigMapCallbackFunction CallbackFunction)
 {

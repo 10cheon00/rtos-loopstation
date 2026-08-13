@@ -6,6 +6,7 @@
 #include "track_state_playing.h"
 #include "track_state_overdubbing.h"
 #include "config_table.h"
+#include "config_validator.h"
 
 #define ENTRIES                                                                                    \
     ConfigTable_1D_ENTRY(TRACK_STATE_ID_NONE, (Value_t)NULL),                                      \
@@ -18,7 +19,8 @@
 ConfigTable_1D_DECLARE_TABLE(TrackStateId, TrackStatePointer, TRACK_STATE_ID_COUNT, ENTRIES);
 #undef ENTRIES
 
-// ConfigValidator_REGISTER(&track_id_state_config_map, TrackStateId, TrackStatePointer);
+ConfigValidator_REGISTER_CONFIG_TABLE_1D(TrackStateId, TrackStatePointer, TRACK_STATE_ID_COUNT, 0,
+                                         UINT32_MAX, CONFIG_TABLE_TYPE_NO_NULL_VALUE);
 
 TrackStatePointer TrackIdStateConfigMap_Get(TrackStateId id)
 {
