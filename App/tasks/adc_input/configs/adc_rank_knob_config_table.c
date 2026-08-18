@@ -21,7 +21,12 @@ ConfigValidator_REGISTER_CONFIG_TABLE_1D(AdcRank_t, KnobId, 3, KNOB_ID_NONE, KNO
 
 void AdcRankKnobConfigTable_Foreach(AdcRankKnobConfigMapCallbackFunction CallbackFunction)
 {
-    for (AdcRank_t i = 0; i < KNOB_ID_COUNT; i++) {
+    // TODO:
+    // 하드웨어적으로 등록된 adc 채널에 대해서만 수행하도록 임시 수정
+    for (AdcRank_t i = 0; i < 5; i++) {
+        if (i == ID_NONE || i == ID_NULL) {
+            continue;
+        }
         CallbackFunction((AdcRank_t)i, ConfigTable_NAME(AdcRank_t, KnobId)[i]);
     }
 }

@@ -71,4 +71,6 @@ typedef struct {
         Value_t value;
     } key_or_value;
 } ConfigValidatorLog;
+
+ConfigValidatorLog *ConfigValidator_GetLog();
 #endif

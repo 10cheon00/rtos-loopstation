@@ -83,9 +83,9 @@ void StateTask_Run(void)
             // TODO:
             // 시스템 검증 결과에 오류가 있으면 이를 사용자에게 알려야 함.
             // 지금은 임시로 그냥 무한루프 처리를 했음
-            // for (;;) {
-            //     osDelay(1);
-            // }
+            for (;;) {
+                osDelay(1);
+            }
         }
         os_status = osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
         if (os_status == osOK) {

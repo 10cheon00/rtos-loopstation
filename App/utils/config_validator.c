@@ -49,6 +49,11 @@ ConfigValidatorResult ConfigValidator_Validate()
     return result;
 }
 
+ConfigValidatorLog* ConfigValidator_GetLog()
+{
+    return logs;
+}
+
 /**
  * ConfigTable 검사 항목
  * 1. 값 유효 범위 검사(이 검사를 하게 되면 값 범위를 조사하여 필수 등록 값이 등록되어
