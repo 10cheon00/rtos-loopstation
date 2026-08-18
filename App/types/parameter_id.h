@@ -1,7 +1,7 @@
 #ifndef PARAMETER_ID_H 
 #define PARAMETER_ID_H
 
-#include "id_enum.h"
+#include "id.h"
 
 typedef enum {
     PARAMETER_ID_NONE = ID_NONE,

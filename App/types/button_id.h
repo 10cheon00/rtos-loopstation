@@ -2,9 +2,11 @@
 #define BUTTON_ID_H
 
 #include <stdint.h>
+#include "id.h"
 
 typedef enum {
-    BUTTON_ID_NONE = 0,
+    BUTTON_ID_NONE = ID_NONE,
+    BUTTON_ID_NULL = ID_NULL,
     BUTTON_ID_LEFT,
     BUTTON_ID_RIGHT,
     BUTTON_ID_ENTER,

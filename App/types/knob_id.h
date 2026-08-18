@@ -1,8 +1,11 @@
 #ifndef KNOB_ID_H
 #define KNOB_ID_H
 
+#include "id.h"
+
 typedef enum {
-    KNOB_ID_NONE = 0,
+    KNOB_ID_NONE = ID_NONE,
+    KNOB_ID_NULL = ID_NULL,
     KNOB_ID_IFX,
     KNOB_ID_TFX,
     KNOB_ID_TRACK_1_VOLUME_FADER,

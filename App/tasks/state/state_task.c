@@ -234,7 +234,7 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
 
     // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
     ui_action_id = ButtonUiActionConfigMap_Get(button_payload->id);
-    if (ui_action_id == UI_ACTION_NONE) {
+    if (ui_action_id == UI_ACTION_ID_NONE) {
         return TASK_STATUS_ERROR;
     }
     UiStateMachine_TryTransition(ui_state_machine, ui_action_id);

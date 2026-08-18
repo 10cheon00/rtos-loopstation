@@ -7,7 +7,8 @@
 #include "config_validator.h"
 
 #define ENTRIES                                                                                    \
-    ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_NOT_INITED, (Value_t) & SYSTEM_STATE_NOT_INITED),         \
+    ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_NONE, (Value_t)NULL),                                     \
+        ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_NOT_INITED, (Value_t) & SYSTEM_STATE_NOT_INITED),     \
         ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_RUNNING, (Value_t) & SYSTEM_STATE_RUNNING),           \
         ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_ERROR, (Value_t) & SYSTEM_STATE_ERROR),
 

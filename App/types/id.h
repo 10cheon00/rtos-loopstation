@@ -1,5 +1,5 @@
-#ifndef ID_ENUM_H
-#define ID_ENUM_H
+#ifndef ID_H
+#define ID_H
 
 #define ID_NONE 0
 #define ID_NULL 1

@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "id_enum.h"
+#include "id.h"
 #include "config_table.h"
 
 #define CONFIG_TABLE_VALIDATION_SUBJECT_COUNT_MAX 16
@@ -32,7 +32,9 @@ static void AddCoverageValidationSubject(ConfigTableValidationSubject *source_su
 static void ValidateConfigTableCoverageValidity();
 static void ValidateAllTargetTableKeyInSourceTable(ConfigTableValidationSubject *source,
                                                    ConfigTableValidationSubject *target);
-static void AddValidationLog();
+static void ValidateAllSourceValueInTargetSubjects(ConfigTableValidationSubject *source);
+static void AddValidationLog(ConfigTableValidationSubject *subject, ConfigValidatorLogType type,
+                             Key_t key, Value_t value);
 static bool IsValidValue(ConfigTableValidationSubject *subject, Value_t value);
 
 void ConfigValidator_RegisterConfigTableValidationSubject(ConfigTableValidationSubject *subject)
@@ -70,20 +72,10 @@ static ConfigValidatorResult ValidateConfigTable()
 static void ValidateConfigTableValueValidity(ConfigTableValidationSubject *subject)
 {
     Value_t value;
-    for (Key_t i = 0; i < subject->table_count; i++) {
-        value = subject->config_table[i];
-        // TODO:
-        // 테이블 정책에 따라 다르게 검사해야하는데, NULL값을 허용하는지 이미 조건으로 주지 않나..?
-        if (table_subject_pointers[i]->type == CONFIG_TABLE_TYPE_NO_NULL_VALUE) {
-            if (!IsValidValue(subject, value)) {
-                // TODO:
-                //  로그남기기
-                AddValidationLog();
-            }
-        } else {
-            if (value != ID_NULL && !IsValidValue(subject, value)) {
-                AddValidationLog();
-            }
+    for (Key_t key = ID_NONE + 1; key < subject->table_count; key++) {
+        value = subject->config_table[key];
+        if (!IsValidValue(subject, value)) {
+            AddValidationLog(subject, CONFIG_VALIDATOR_LOG_TYPE_INVALID_VALUE, 0, value);
         }
     }
 }
@@ -113,9 +105,24 @@ static void AddCoverageValidationSubject(ConfigTableValidationSubject *source,
 
 static void ValidateConfigTableCoverageValidity()
 {
+    bool already_checked;
     for (size_t i = 0; i < coverage_subject_count; i++) {
         ValidateAllTargetTableKeyInSourceTable(coverage_subjects[i].source,
                                                coverage_subjects[i].target);
+    }
+    for (size_t i = 0; i < coverage_subject_count; i++) {
+        // i보다 이전 항목들은 이미 검사를 완료한 source이므로 건너뛰기
+        already_checked = false;
+        for (size_t j = 0; j < i; j++) {
+            if (coverage_subjects[i].source == coverage_subjects[j].source) {
+                already_checked = true;
+                break;
+            }
+        }
+        if (already_checked) {
+            continue;
+        }
+        ValidateAllSourceValueInTargetSubjects(coverage_subjects[i].source);
     }
 }
 
@@ -123,10 +130,10 @@ static void ValidateAllTargetTableKeyInSourceTable(ConfigTableValidationSubject 
                                                    ConfigTableValidationSubject *target)
 {
     bool is_equal;
-    for (Key_t target_key = 0; target_key < target->table_count; target_key++) {
+    for (Key_t target_key = ID_NONE + 1; target_key < target->table_count; target_key++) {
         if (IsValidValue(target, target_key)) {
             is_equal = false;
-            for (Key_t source_key = ID_NULL; source_key < source->table_count; source_key++) {
+            for (Key_t source_key = ID_NONE + 1; source_key < source->table_count; source_key++) {
                 if (!IsValidValue(source, source_key)) {
                     continue;
                 }
@@ -136,17 +143,57 @@ static void ValidateAllTargetTableKeyInSourceTable(ConfigTableValidationSubject 
                 }
             }
             if (!is_equal) {
-                // TODO:
-                //  로그남기기
-                AddValidationLog();
+                AddValidationLog(target, CONFIG_VALIDATOR_LOG_TYPE_NO_TARGET_KEY_IN_SOURCE_VALUES,
+                                 target_key, 0);
             }
         }
     }
 }
 
-static void AddValidationLog() {}
+static void ValidateAllSourceValueInTargetSubjects(ConfigTableValidationSubject *source)
+{
+    Key_t target_key;
+    Value_t source_value;
+    ConfigTableValidationSubject *target;
+    for (Key_t key = 0; key < source->table_count; key++) {
+        source_value = source->config_table[key];
+        if (!IsValidValue(source, source_value)) {
+            continue;
+        }
+        for (size_t i = 0; i < coverage_subject_count; i++) {
+            target = coverage_subjects[i].target;
+            if (coverage_subjects[i].source == source) {
+                // value가 key로 존재하는건지 확인
+                target_key = (Key_t)source_value;
+                if (!IsValidValue(target, target->config_table[target_key])) {
+                    AddValidationLog(source,
+                                     CONFIG_VALIDATOR_LOG_TYPE_NO_SOURCE_VALUE_IN_ANY_TARGET_KEYS,
+                                     0, source_value);
+                }
+            }
+        }
+    }
+}
+
+static void AddValidationLog(ConfigTableValidationSubject *subject, ConfigValidatorLogType type,
+                             Key_t key, Value_t value)
+{
+    logs[log_count].subject = subject;
+    logs[log_count].type = type;
+    if (type == CONFIG_VALIDATOR_LOG_TYPE_NO_SOURCE_VALUE_IN_ANY_TARGET_KEYS) {
+        logs[log_count].key_or_value.value = value;
+    } else if (type == CONFIG_VALIDATOR_LOG_TYPE_NO_TARGET_KEY_IN_SOURCE_VALUES) {
+        logs[log_count].key_or_value.key = key;
+    } else {
+        logs[log_count].key_or_value.value = value;
+    }
+    log_count++;
+}
 
 static bool IsValidValue(ConfigTableValidationSubject *subject, Value_t value)
 {
+    if (subject->type == CONFIG_TABLE_TYPE_ALLOW_NULL_VALUE) {
+        return value == ID_NULL || subject->value_min <= value && subject->value_max >= value;
+    }
     return subject->value_min <= value && subject->value_max >= value;
 }
