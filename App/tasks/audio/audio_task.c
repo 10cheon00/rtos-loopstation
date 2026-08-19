@@ -12,6 +12,6 @@ void AudioTask_Init(void *arguments) {
 
 static void Run() {
     for (;;) {
-
+        osDelay(1);
     }
 }
