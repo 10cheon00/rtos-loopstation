@@ -29,6 +29,7 @@
 #include "display_initparams.h"
 #include "input_initparams.h"
 #include "adc_input_initparams.h"
+#include "audio_initparams.h"
 #include "state_initparams.h"
 /* USER CODE END Includes */
 
@@ -96,6 +97,13 @@ const osThreadAttr_t adcInputTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityAboveNormal,
 };
+/* Definitions for audioTask */
+osThreadId_t audioTaskHandle;
+const osThreadAttr_t audioTask_attributes = {
+  .name = "audioTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityRealtime,
+};
 /* Definitions for input_event_queue */
 osMessageQueueId_t input_event_queueHandle;
 const osMessageQueueAttr_t input_event_queue_attributes = {
@@ -111,6 +119,11 @@ osMessageQueueId_t state_event_queueHandle;
 const osMessageQueueAttr_t state_event_queue_attributes = {
   .name = "state_event_queue"
 };
+/* Definitions for audio_event_queue */
+osMessageQueueId_t audio_event_queueHandle;
+const osMessageQueueAttr_t audio_event_queue_attributes = {
+  .name = "audio_event_queue"
+};
 /* Definitions for i2c1_mutex */
 osMutexId_t i2c1_mutexHandle;
 const osMutexAttr_t i2c1_mutex_attributes = {
@@ -121,6 +134,7 @@ static InputInitParams input_init_params;
 static DisplayInitParams display_init_params;
 static StateInitParams state_init_params;
 static AdcInputInitParams adc_input_init_params;
+static AudioInitParams audio_init_params;
 
 /* USER CODE END PV */
 
@@ -141,6 +155,7 @@ extern void InputTask_Init(void *argument);
 extern void DisplayTask_Init(void *argument);
 extern void StateTask_Init(void *argument);
 extern void AdcInputTask_Init(void *argument);
+extern void AudioTask_Init(void *argument);
 
 /* USER CODE BEGIN PFP */
 // 이 함수는 전역 콜백 함수 이므로, 여기서는 애플리케이션에게 
@@ -262,6 +277,9 @@ int main(void)
   /* creation of state_event_queue */
   state_event_queueHandle = osMessageQueueNew (16, sizeof(StateEvent), &state_event_queue_attributes);
 
+  /* creation of audio_event_queue */
+  audio_event_queueHandle = osMessageQueueNew (16, sizeof(AudioEvent), &audio_event_queue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   input_init_params.input_event_queue = input_event_queueHandle;
   input_init_params.state_event_queue = state_event_queueHandle;
@@ -301,6 +319,9 @@ int main(void)
 
   /* creation of adcInputTask */
   adcInputTaskHandle = osThreadNew(AdcInputTask_Init, (void*) &adc_input_init_params, &adcInputTask_attributes);
+
+  /* creation of audioTask */
+  audioTaskHandle = osThreadNew(AudioTask_Init, (void*) &audio_init_params, &audioTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

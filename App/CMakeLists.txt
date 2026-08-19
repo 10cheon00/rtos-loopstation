@@ -52,6 +52,8 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/adc_input_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs/adc_rank_knob_config_table.c
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_task.c
+
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer.c
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs/ui_state_label_config_table.c
@@ -106,6 +108,8 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs
