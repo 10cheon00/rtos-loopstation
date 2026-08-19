@@ -2,7 +2,7 @@
 
 #include "utils.h"
 #include "track_state.h"
-#include "config_map.h"
+#include "config_table.h"
 #include "config_validator.h"
 
 #define INDEX_TO_MASK(index) ((Mcp23017GpioPinMask)1 << index)
@@ -117,65 +117,6 @@ static ParameterPinMapEntry parameter_pin_map[] = {
 
 static const size_t parameter_pin_map_count = ARRAY_COUNT(parameter_pin_map);
 
-/**
- * Mcp23017GpioId는 ButtonId와 유사하지만 입력 + 출력용 Gpio들을 모두 모은 것이다.
- * 따라서 입력용 Gpio들을 ButtonId로 변환시켜주려면 테이블이 필요하다.
- * 이 테이블은 수동으로 컨버팅한다.
- */
-
-static ConfigMapEntry gpio_pin_button_config_map_entries[] = {
-    {.key = MCP23017_GPIO_ID_NONE, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_IFX_A, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TFX_A, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_BUTTON_LEFT, .value = BUTTON_ID_LEFT},
-    {.key = MCP23017_GPIO_ID_BUTTON_RIGHT, .value = BUTTON_ID_RIGHT},
-    {.key = MCP23017_GPIO_ID_BUTTON_ENTER, .value = BUTTON_ID_ENTER},
-    {.key = MCP23017_GPIO_ID_BUTTON_EXIT, .value = BUTTON_ID_EXIT},
-    {.key = MCP23017_GPIO_ID_BUTTON_ENCODER_A_PUSH, .value = BUTTON_ID_ENCODER_A_PUSH},
-    {.key = MCP23017_GPIO_ID_BUTTON_ENCODER_B_PUSH, .value = BUTTON_ID_ENCODER_B_PUSH},
-    {.key = MCP23017_GPIO_ID_BUTTON_ENCODER_C_PUSH, .value = BUTTON_ID_ENCODER_C_PUSH},
-    {.key = MCP23017_GPIO_ID_BUTTON_ENCODER_D_PUSH, .value = BUTTON_ID_ENCODER_D_PUSH},
-    {.key = MCP23017_GPIO_ID_BUTTON_IFX_A_TOGGLE, .value = BUTTON_ID_IFX_A_TOGGLE},
-    {.key = MCP23017_GPIO_ID_BUTTON_TFX_A_TOGGLE, .value = BUTTON_ID_TFX_A_TOGGLE},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_1_EDIT, .value = BUTTON_ID_TRACK_1_EDIT},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_1_PLAY_RECORD, .value = BUTTON_ID_TRACK_1_PLAY_RECORD},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_1_STOP, .value = BUTTON_ID_TRACK_1_STOP},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_2_EDIT, .value = BUTTON_ID_TRACK_2_EDIT},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_2_PLAY_RECORD, .value = BUTTON_ID_TRACK_2_PLAY_RECORD},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_2_STOP, .value = BUTTON_ID_TRACK_2_STOP},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_3_EDIT, .value = BUTTON_ID_TRACK_3_EDIT},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_3_PLAY_RECORD, .value = BUTTON_ID_TRACK_3_PLAY_RECORD},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_3_STOP, .value = BUTTON_ID_TRACK_3_STOP},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_4_EDIT, .value = BUTTON_ID_TRACK_4_EDIT},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_4_PLAY_RECORD, .value = BUTTON_ID_TRACK_4_PLAY_RECORD},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_4_STOP, .value = BUTTON_ID_TRACK_4_STOP},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_5_EDIT, .value = BUTTON_ID_TRACK_5_EDIT},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_5_PLAY_RECORD, .value = BUTTON_ID_TRACK_5_PLAY_RECORD},
-    {.key = MCP23017_GPIO_ID_BUTTON_TRACK_5_STOP, .value = BUTTON_ID_TRACK_5_STOP},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_1_RED, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_1_GREEN, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_1_BLUE, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_2_RED, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_2_GREEN, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_2_BLUE, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_3_RED, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_3_GREEN, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_3_BLUE, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_4_RED, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_4_GREEN, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_4_BLUE, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_5_RED, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_5_GREEN, .value = BUTTON_ID_NONE},
-    {.key = MCP23017_GPIO_ID_LED_TRACK_5_BLUE, .value = BUTTON_ID_NONE}
-};
-
-static ConfigMap gpio_pin_button_config_map = {
-    .entries = gpio_pin_button_config_map_entries,
-    .count = ARRAY_COUNT(gpio_pin_button_config_map_entries)
-};
-
-ConfigValidator_REGISTER(&gpio_pin_button_config_map, Mcp23017GpioId, ButtonId);
-
 // TODO:
 // TRACK_COUNT를 얻기 위해 track_state.h를 인클루드하는게 맞을까?
 static Mcp23017GpioId track_led_gpio_table[TRACK_COUNT][TRACK_LED_COLOR_COUNT] = {
@@ -246,11 +187,72 @@ Mcp23017GpioPinMask Mcp23017GpioMap_GetInputPinMask(Mcp23017Address address, Mcp
     return input_pin_mask;
 }
 
+/**
+ * Mcp23017GpioId는 ButtonId와 유사하지만 입력 + 출력용 Gpio들을 모두 모은 것이다.
+ * 따라서 입력용 Gpio들을 ButtonId로 변환시켜주려면 테이블이 필요하다.
+ * 이 테이블은 수동으로 컨버팅한다.
+ */
+#define ENTRIES                                                                                    \
+    ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_NONE, BUTTON_ID_NONE),                                   \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_IFX_A, BUTTON_ID_NULL),                          \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TFX_A, BUTTON_ID_NULL),                          \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_LEFT, BUTTON_ID_LEFT),                        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_RIGHT, BUTTON_ID_RIGHT),                      \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_ENTER, BUTTON_ID_ENTER),                      \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_EXIT, BUTTON_ID_EXIT),                        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_ENCODER_A_PUSH, BUTTON_ID_ENCODER_A_PUSH),    \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_ENCODER_B_PUSH, BUTTON_ID_ENCODER_B_PUSH),    \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_ENCODER_C_PUSH, BUTTON_ID_ENCODER_C_PUSH),    \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_ENCODER_D_PUSH, BUTTON_ID_ENCODER_D_PUSH),    \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_IFX_A_TOGGLE, BUTTON_ID_IFX_A_TOGGLE),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TFX_A_TOGGLE, BUTTON_ID_TFX_A_TOGGLE),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_1_EDIT, BUTTON_ID_TRACK_1_EDIT),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_1_PLAY_RECORD,                          \
+                             BUTTON_ID_TRACK_1_PLAY_RECORD),                                       \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_1_STOP, BUTTON_ID_TRACK_1_STOP),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_2_EDIT, BUTTON_ID_TRACK_2_EDIT),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_2_PLAY_RECORD,                          \
+                             BUTTON_ID_TRACK_2_PLAY_RECORD),                                       \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_2_STOP, BUTTON_ID_TRACK_2_STOP),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_3_EDIT, BUTTON_ID_TRACK_3_EDIT),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_3_PLAY_RECORD,                          \
+                             BUTTON_ID_TRACK_3_PLAY_RECORD),                                       \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_3_STOP, BUTTON_ID_TRACK_3_STOP),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_4_EDIT, BUTTON_ID_TRACK_4_EDIT),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_4_PLAY_RECORD,                          \
+                             BUTTON_ID_TRACK_4_PLAY_RECORD),                                       \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_4_STOP, BUTTON_ID_TRACK_4_STOP),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_5_EDIT, BUTTON_ID_TRACK_5_EDIT),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_5_PLAY_RECORD,                          \
+                             BUTTON_ID_TRACK_5_PLAY_RECORD),                                       \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_BUTTON_TRACK_5_STOP, BUTTON_ID_TRACK_5_STOP),        \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_1_RED, BUTTON_ID_NULL),                    \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_1_GREEN, BUTTON_ID_NULL),                  \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_1_BLUE, BUTTON_ID_NULL),                   \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_2_RED, BUTTON_ID_NULL),                    \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_2_GREEN, BUTTON_ID_NULL),                  \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_2_BLUE, BUTTON_ID_NULL),                   \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_3_RED, BUTTON_ID_NULL),                    \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_3_GREEN, BUTTON_ID_NULL),                  \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_3_BLUE, BUTTON_ID_NULL),                   \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_4_RED, BUTTON_ID_NULL),                    \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_4_GREEN, BUTTON_ID_NULL),                  \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_4_BLUE, BUTTON_ID_NULL),                   \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_5_RED, BUTTON_ID_NULL),                    \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_5_GREEN, BUTTON_ID_NULL),                  \
+        ConfigTable_1D_ENTRY(MCP23017_GPIO_ID_LED_TRACK_5_BLUE, BUTTON_ID_NULL),
+
+ConfigTable_1D_DECLARE_TABLE(Mcp23017GpioId, ButtonId, MCP23017_GPIO_ID_COUNT, ENTRIES);
+#undef ENTRIES
+
+ConfigValidator_REGISTER_CONFIG_TABLE_1D(Mcp23017GpioId, ButtonId, MCP23017_GPIO_ID_COUNT,
+                                         BUTTON_ID_NULL, BUTTON_ID_COUNT,
+                                         CONFIG_TABLE_TYPE_ALLOW_NULL_VALUE);
+
 ButtonId Mcp23017GpioMap_Get(Mcp23017GpioId gpio_id)
 {
-    Value_t value;
-    if (ConfigMap_Get(&gpio_pin_button_config_map, gpio_id, &value) != CONFIG_MAP_RESULT_OK) {
-        return BUTTON_ID_NONE;
+    if (gpio_id <= MCP23017_GPIO_ID_NONE || gpio_id >= MCP23017_GPIO_ID_COUNT) {
+        return MCP23017_GPIO_ID_NONE;
     }
-    return (ButtonId)value;
+    return ConfigTable_1D_GET(Mcp23017GpioId, ButtonId, gpio_id);
 }

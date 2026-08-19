@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+#include "id.h"
 #include "state_id.h"
 #include "track_state_machine_context.h"
 
@@ -11,7 +12,7 @@
 typedef StateId TrackStateId;
 
 enum TrackStateId {
-    TRACK_STATE_ID_NONE = 0,
+    TRACK_STATE_ID_NONE = ID_NONE,
     TRACK_STATE_ID_IDLE,
     TRACK_STATE_ID_RECORDING,
     TRACK_STATE_ID_STOPPED,
@@ -21,7 +22,8 @@ enum TrackStateId {
 };
 
 typedef enum {
-    TRACK_ACTION_ID_NONE = 0,
+    TRACK_ACTION_ID_NONE = ID_NONE,
+    TRACK_ACTION_ID_NULL = ID_NULL,
     TRACK_ACTION_ID_ENTER_RECORD_PLAY,
     TRACK_ACTION_ID_ENTER_STOP,
     TRACK_ACTION_ID_COUNT,

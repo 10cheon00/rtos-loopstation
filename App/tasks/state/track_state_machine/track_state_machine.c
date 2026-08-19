@@ -1,6 +1,6 @@
 #include "track_state_machine.h"
 
-#include "track_id_state_config_map.h"
+#include "track_id_state_config_table.h"
 
 void TrackStateMachine_Init(TrackStateMachine *state_machine, TrackStateMachineContext *context,
                             TrackStateId init_state_id)

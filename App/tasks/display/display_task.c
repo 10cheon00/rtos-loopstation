@@ -4,11 +4,11 @@
 
 #include "display_messages.h"
 #include "display_initparams.h"
-#include "ui_renderer_config_map.h"
+#include "ui_renderer_config_table.h"
 #include "mcp23017.h"
 #include "mcp23017_gpio_map.h"
 
-#define DISPLAY_RENDER_FREQEUNCY_HZ (15UL)
+#define DISPLAY_RENDER_FREQEUNCY_HZ (100UL)
 #define DISPLAY_RENDER_DELAY_MS (1000UL / DISPLAY_RENDER_FREQEUNCY_HZ)
 #define DISPLAY_RENDER_DELAY_TICKS (pdMS_TO_TICKS(DISPLAY_RENDER_DELAY_MS))
 

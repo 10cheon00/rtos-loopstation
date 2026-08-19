@@ -1,6 +1,6 @@
 #include "system_state_machine.h"
 
-#include "system_state_config_map.h"
+#include "system_state_config_table.h"
 
 void SystemStateMachine_Init(SystemStateMachine *state_machine, SystemStateMachineContext *context,
                              SystemStateId init_state_id)

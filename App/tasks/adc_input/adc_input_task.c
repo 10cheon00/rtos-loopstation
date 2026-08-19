@@ -4,7 +4,7 @@
 #include "FreeRTOS.h"
 #include "stm32h7xx.h"
 
-#include "adc_rank_knob_config_map.h"
+#include "adc_rank_knob_config_table.h"
 #include "adc_input_initparams.h"
 #include "input_messages.h"
 
@@ -41,7 +41,7 @@ void AdcInputTask_Run()
         last_wake_ticks = osKernelGetTickCount();
 
         HAL_ADC_Start(hadc);
-        AdcRankKnobConfigMap_Foreach(ScanAllAdcAndSendMessages);
+        AdcRankKnobConfigTable_Foreach(ScanAllAdcAndSendMessages);
         HAL_ADC_Stop(hadc);
     }
 }

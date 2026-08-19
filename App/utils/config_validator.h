@@ -1,51 +1,76 @@
 #ifndef CONFIG_VALIDATOR_H
 #define CONFIG_VALIDATOR_H
 
-#include "config_map.h"
+#include "config_table.h"
 
 typedef enum {
     CONFIG_VALIDATOR_RESULT_ERROR = 0,
     CONFIG_VALIDATOR_RESULT_OK,
 } ConfigValidatorResult;
 
-typedef uint32_t Hash_t;
-
-Hash_t ConfigValidator_TypeToHash(const char *type_name);
+typedef enum {
+    CONFIG_TABLE_TYPE_NO_NULL_VALUE,
+    CONFIG_TABLE_TYPE_ALLOW_NULL_VALUE,
+} ConfigTableType;
 
 typedef struct {
-    ConfigMap *map;
+    Value_t *config_table;
+    Value_t value_min;
+    Value_t value_max;
+    Key_t table_count;
+    ConfigTableType type;
+    const char *config_table_name;
     Hash_t key_hash;
     Hash_t value_hash;
-    const char *map_name;   // 디버깅 편의를 위한 멤버
-    const char *key_name;   // 디버깅 편의를 위한 멤버
-    const char *value_name; // 디버깅 편의를 위한 멤버
-} ConfigMapValidationSubject;
+} ConfigTableValidationSubject;
 
-ConfigValidatorResult ConfigValidator_AddConfigMap(ConfigMap *map, Hash_t key_hash,
-                                                   Hash_t value_hash, const char *map_name,
-                                                   const char *key_name, const char *value_name);
+// 테이블과 테이블 간 커버리지 검사를 할 때, 값이 한 번이라도 키로 사용된 경우와 모든 키가 값으로
+// 존재하는지 검사
+typedef struct {
+    ConfigTableValidationSubject *source;
+    ConfigTableValidationSubject *target;
+} ConfigTableCoverageValidationSubject;
 
-#define MACRO_CONCATENATE_IMPL(A, B) A##B
-#define MACRO_CONCATENATE_IMPL2(A, B, C) A##B##C
-#define MACRO_CONCATENATE(A, B) MACRO_CONCATENATE_IMPL(A, B)
-#define MACRO_CONCATENATE2(A, B, C) MACRO_CONCATENATE_IMPL2(A, B, C)
-
-#define ConfigValidator_REGISTER(map_pointer, KeyType, ValueType)                                  \
-    __attribute__((constructor, used)) static void MACRO_CONCATENATE2(                             \
-        ConfigValidator_CreateMapAndRegisterToValidator_, KeyType, ValueType)();                   \
-    __attribute__((constructor, used)) static void MACRO_CONCATENATE2(                             \
-        ConfigValidator_CreateMapAndRegisterToValidator_, KeyType, ValueType)()                    \
+#define ConfigValidator_REGISTER_CONFIG_TABLE_1D(KEY_TYPE, VALUE_TYPE, TABLE_COUNT, VALUE_MIN,     \
+                                                 VALUE_MAX, CONFIG_TABLE_TYPE)                     \
+    static ConfigTableValidationSubject CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE),       \
+                                                     _validation_subject) = {                      \
+        .config_table = ConfigTable_NAME(KEY_TYPE, VALUE_TYPE),                                    \
+        .value_min = VALUE_MIN,                                                                    \
+        .value_max = VALUE_MAX,                                                                    \
+        .table_count = TABLE_COUNT,                                                                \
+        .type = CONFIG_TABLE_TYPE,                                                                 \
+        .config_table_name = VARIABLE_TO_STR(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE)),              \
+    };                                                                                             \
+    __attribute__((constructor, used)) static void CONCATENATE2(                                   \
+        ConfigValidator_REGISTER_CONFIG_TABLE__, ConfigTable_NAME(KEY_TYPE, VALUE_TYPE))()         \
     {                                                                                              \
-        ConfigValidator_AddConfigMap(map_pointer, ConfigValidator_TypeToHash(#KeyType),            \
-                                     ConfigValidator_TypeToHash(#ValueType), #map_pointer,         \
-                                     #KeyType, #ValueType);                                        \
+        ConfigTableValidationSubject *subject =                                                    \
+            &CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE), _validation_subject);            \
+        subject->key_hash = djb2(VARIABLE_TO_STR(KEY_TYPE));                                       \
+        subject->value_hash = djb2(VARIABLE_TO_STR(VALUE_TYPE));                                   \
+        ConfigValidator_RegisterConfigTableValidationSubject(subject);                             \
     }
-/**
- * 모든 enum에 대한 엔트리가 맵에 있는지 검사하는 것 (X)
- * 현재 맵의 값 타입을 다른 맵의 키 타입으로 사용할 때, 현재 맵에 존재하는 값이 다른 맵의 키로
- * 사용되지 않는지 검사하는 것 (O)
- * 이를 위해서는 설정 등록 시 키와 값을 저장하여 다른 맵과의 관계 그래프를 만들어야 한다.
- */
+
+void ConfigValidator_RegisterConfigTableValidationSubject(ConfigTableValidationSubject *subject);
+
 ConfigValidatorResult ConfigValidator_Validate();
 
+typedef enum {
+    CONFIG_VALIDATOR_LOG_TYPE_NONE = 0,
+    CONFIG_VALIDATOR_LOG_TYPE_INVALID_VALUE,
+    CONFIG_VALIDATOR_LOG_TYPE_NO_TARGET_KEY_IN_SOURCE_VALUES,
+    CONFIG_VALIDATOR_LOG_TYPE_NO_SOURCE_VALUE_IN_ANY_TARGET_KEYS
+} ConfigValidatorLogType;
+
+typedef struct {
+    ConfigTableValidationSubject* subject;
+    ConfigValidatorLogType type;
+    union {
+        Key_t key;
+        Value_t value;
+    } key_or_value;
+} ConfigValidatorLog;
+
+ConfigValidatorLog *ConfigValidator_GetLog();
 #endif

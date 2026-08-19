@@ -102,10 +102,10 @@ double sine(int16_t angle)
     return sin_table[angle];
 }
 
-uint32_t djb2(const char* string)
+Hash_t djb2(const char* string)
 {
-    uint32_t hash = 5381;
-    int c;
+    Hash_t hash = 5381;
+    Hash_t c;
     while (c = *string++)
     {
         hash = (((hash << 5) + hash) + c) % UINT32_MAX;
