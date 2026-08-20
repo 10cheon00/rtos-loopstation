@@ -119,7 +119,6 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
                 .id = button_id, .state = button_state, .timestamp_ticks = timestamp_ticks};
             StateEvent state_event = {.type = STATE_EVENT_BUTTON, .payload = {.button = payload}};
             osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
-            break;
         }
         gpio_a_pin_mask >>= 1;
         index++;
@@ -137,7 +136,6 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
                 .id = button_id, .state = button_state, .timestamp_ticks = timestamp_ticks};
             StateEvent state_event = {.type = STATE_EVENT_BUTTON, .payload = {.button = payload}};
             osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
-            break;
         }
         gpio_b_pin_mask >>= 1;
         index++;
@@ -160,14 +158,14 @@ static TaskStatus GetPinState(Mcp23017Address address, Mcp23017GpioPinMask *gpio
         return TASK_STATUS_ERROR;
     }
 
-    if (gpio_a_pin_mask != 0) {
+    if (*gpio_a_pin_mask != 0) {
         status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPA, &capture);
         if (status != MCP23017_STATUS_OK) {
             return TASK_STATUS_ERROR;
         }
         *button_state = *gpio_a_pin_mask & capture ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
     }
-    if (gpio_b_pin_mask != 0) {
+    if (*gpio_b_pin_mask != 0) {
         status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPB, &capture);
         if (status != MCP23017_STATUS_OK) {
             return TASK_STATUS_ERROR;
