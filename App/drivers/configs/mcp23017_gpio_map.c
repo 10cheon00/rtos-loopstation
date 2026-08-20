@@ -10,108 +10,108 @@
 static ParameterPinMapEntry parameter_pin_map[] = {
     {
         .gpio_id = MCP23017_GPIO_ID_BUTTON_IFX_A_TOGGLE,
+        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
         .address = MCP23017_ADDRESS_0B100,
         .port = MCP23017_GPIO_PORT_B,
-        .gpio_pin_mask = INDEX_TO_MASK(2),
-        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
+        .pin_index = 2,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_LED_IFX_A,
+        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
         .address = MCP23017_ADDRESS_0B100,
         .port = MCP23017_GPIO_PORT_B,
-        .gpio_pin_mask = INDEX_TO_MASK(3),
-        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
+        .pin_index = 3,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_BUTTON_ENCODER_A_PUSH,
+        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
         .address = MCP23017_ADDRESS_0B100,
         .port = MCP23017_GPIO_PORT_B,
-        .gpio_pin_mask = INDEX_TO_MASK(4),
-        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
+        .pin_index = 4,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_BUTTON_TRACK_1_EDIT,
+        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_A,
-        .gpio_pin_mask = INDEX_TO_MASK(0),
-        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
+        .pin_index = 0,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_BUTTON_TRACK_1_PLAY_RECORD,
+        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_A,
-        .gpio_pin_mask = INDEX_TO_MASK(1),
-        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
+        .pin_index = 1,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_BUTTON_TRACK_1_STOP,
+        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_A,
-        .gpio_pin_mask = INDEX_TO_MASK(2),
-        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
+        .pin_index = 2,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_LED_TRACK_1_RED,
+        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_A,
-        .gpio_pin_mask = INDEX_TO_MASK(3),
-        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
+        .pin_index = 3,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_LED_TRACK_1_GREEN,
+        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_A,
-        .gpio_pin_mask = INDEX_TO_MASK(4),
-        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
+        .pin_index = 4,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_LED_TRACK_1_BLUE,
+        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_A,
-        .gpio_pin_mask = INDEX_TO_MASK(5),
-        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
+        .pin_index = 5,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_BUTTON_LEFT,
+        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_B,
-        .gpio_pin_mask = INDEX_TO_MASK(0),
-        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
+        .pin_index = 0,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_BUTTON_RIGHT,
+        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_B,
-        .gpio_pin_mask = INDEX_TO_MASK(1),
-        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
+        .pin_index = 1,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_BUTTON_ENTER,
+        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_B,
-        .gpio_pin_mask = INDEX_TO_MASK(2),
-        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
+        .pin_index = 2,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_BUTTON_EXIT,
+        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_B,
-        .gpio_pin_mask = INDEX_TO_MASK(3),
-        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
+        .pin_index = 3,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_LED_TFX_A,
+        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_B,
-        .gpio_pin_mask = INDEX_TO_MASK(4),
-        .gpio_type = MCP23017_GPIO_TYPE_OUTPUT,
+        .pin_index = 4,
     },
     {
         .gpio_id = MCP23017_GPIO_ID_BUTTON_TFX_A_TOGGLE,
+        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
         .address = MCP23017_ADDRESS_0B101,
         .port = MCP23017_GPIO_PORT_B,
-        .gpio_pin_mask = INDEX_TO_MASK(5),
-        .gpio_type = MCP23017_GPIO_TYPE_INPUT,
+        .pin_index = 5,
     },
 };
 
@@ -163,11 +163,11 @@ ParameterPinMapEntry *Mcp23017GpioMap_GetTrackLedEntry(uint8_t track_index, Trac
 }
 
 Mcp23017GpioId Mcp23017GpioMap_GetMcp23017GpioId(Mcp23017Address address, Mcp23017GpioPort port,
-                                                 Mcp23017GpioPinMask gpio_pin_mask)
+                                                 uint8_t pin_index)
 {
     for (size_t i = 0; i < parameter_pin_map_count; i++) {
         if (parameter_pin_map[i].address == address && parameter_pin_map[i].port == port &&
-            parameter_pin_map[i].gpio_pin_mask == gpio_pin_mask) {
+            parameter_pin_map[i].pin_index == pin_index) {
             return parameter_pin_map[i].gpio_id;
         }
     }
@@ -181,7 +181,7 @@ Mcp23017GpioPinMask Mcp23017GpioMap_GetInputPinMask(Mcp23017Address address, Mcp
     for (size_t i = 0; i < parameter_pin_map_count; i++) {
         if (parameter_pin_map[i].address == address && parameter_pin_map[i].port == port &&
             parameter_pin_map[i].gpio_type == MCP23017_GPIO_TYPE_INPUT) {
-            input_pin_mask |= parameter_pin_map[i].gpio_pin_mask;
+            input_pin_mask |= 1 << parameter_pin_map[i].pin_index;
         }
     }
     return input_pin_mask;

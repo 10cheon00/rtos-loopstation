@@ -80,16 +80,16 @@ typedef enum {
 } TrackLedColor;
 
 typedef struct {
-    Mcp23017Address address;
-    Mcp23017GpioPort port;
-    Mcp23017GpioPinMask gpio_pin_mask;
     Mcp23017GpioId gpio_id;
     Mcp23017GpioType gpio_type;
+    Mcp23017Address address;
+    Mcp23017GpioPort port;
+    uint8_t pin_index;
 } ParameterPinMapEntry;
 
 ParameterPinMapEntry *Mcp23017GpioMap_GetEntry(Mcp23017GpioId gpio_id);
 ParameterPinMapEntry *Mcp23017GpioMap_GetTrackLedEntry(uint8_t track_index, TrackLedColor color);
-Mcp23017GpioId Mcp23017GpioMap_GetMcp23017GpioId(Mcp23017Address address, Mcp23017GpioPort port, Mcp23017GpioPinMask gpio_pin_mask);
+Mcp23017GpioId Mcp23017GpioMap_GetMcp23017GpioId(Mcp23017Address address, Mcp23017GpioPort port, uint8_t pin_index);
 Mcp23017GpioPinMask Mcp23017GpioMap_GetInputPinMask(Mcp23017Address address, Mcp23017GpioPort port);
 ButtonId Mcp23017GpioMap_Get(Mcp23017GpioId gpio_id);
 #endif
