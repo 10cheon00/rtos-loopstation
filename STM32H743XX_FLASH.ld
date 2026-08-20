@@ -241,7 +241,13 @@ SECTIONS
     . = ALIGN(8);
   } >DTCMRAM
 
-
+  .ram_d2_area (NOLOAD) :
+  {
+    . = ALIGN(32);
+    *(.ram_d2)
+    *(.ram_d2*)
+    . = ALIGN(32);
+  } >RAM_D2
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

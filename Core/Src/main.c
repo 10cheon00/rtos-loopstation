@@ -54,6 +54,8 @@ I2C_HandleTypeDef hi2c1;
 
 SAI_HandleTypeDef hsai_BlockA1;
 SAI_HandleTypeDef hsai_BlockB1;
+DMA_HandleTypeDef hdma_sai1_a;
+DMA_HandleTypeDef hdma_sai1_b;
 
 SD_HandleTypeDef hsd1;
 
@@ -195,6 +197,54 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
     }
 }
 
+/**
+ * SAI DMA가 절반 완료되었거나, 전부 완료된 경우 오디오 태스크에 메시지를 보내 해당 이벤트에 대해
+ * 처리하도록 한다. ISR 내에서는 메시지만 보내고, 실제 처리는 태스크 안에서 수행하도록 제한한다.
+ */
+void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
+{
+    if (hsai == &hsai_BlockA1) {
+        AudioEvent audio_event = {
+            .type = AUDIO_EVENT_TYPE_SAI_DMA_CALLBACK,
+            .payload = {.sai_dma_event = {.type = SAI_DMA_TX_COMPLETE}}
+        };
+        (void)osMessageQueuePut(audio_event_queueHandle, &audio_event, 0U, 0U);
+    }
+}
+
+void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
+{
+    if (hsai == &hsai_BlockA1) {
+        AudioEvent audio_event = {
+            .type = AUDIO_EVENT_TYPE_SAI_DMA_CALLBACK,
+            .payload = {.sai_dma_event = {.type = SAI_DMA_TX_HALF_COMPLETE}}
+        };
+        (void)osMessageQueuePut(audio_event_queueHandle, &audio_event, 0U, 0U);
+    }
+}
+
+void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai)
+{
+    if (hsai == &hsai_BlockB1) {
+        AudioEvent audio_event = {
+            .type = AUDIO_EVENT_TYPE_SAI_DMA_CALLBACK,
+            .payload = {.sai_dma_event = {.type = SAI_DMA_RX_COMPLETE}}
+        };
+        (void)osMessageQueuePut(audio_event_queueHandle, &audio_event, 0U, 0U);
+    }
+}
+
+void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai)
+{
+    if (hsai == &hsai_BlockB1) {
+        AudioEvent audio_event = {
+            .type = AUDIO_EVENT_TYPE_SAI_DMA_CALLBACK,
+            .payload = {.sai_dma_event = {.type = SAI_DMA_RX_HALF_COMPLETE}}
+        };
+        (void)osMessageQueuePut(audio_event_queueHandle, &audio_event, 0U, 0U);
+    }
+}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -281,6 +331,10 @@ int main(void)
   audio_event_queueHandle = osMessageQueueNew (16, sizeof(AudioEvent), &audio_event_queue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
+  audio_init_params.audio_event_queue = audio_event_queueHandle;
+  audio_init_params.hsaiTx = &hsai_BlockA1;
+  audio_init_params.hsaiRx = &hsai_BlockB1;
+  
   input_init_params.input_event_queue = input_event_queueHandle;
   input_init_params.state_event_queue = state_event_queueHandle;
   input_init_params.hi2c = &hi2c1;
@@ -607,7 +661,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
   hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_32BIT, 2) != HAL_OK)
+  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -758,6 +812,12 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA1_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
+  /* DMA1_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
 
 }
 
