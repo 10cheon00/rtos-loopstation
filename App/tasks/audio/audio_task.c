@@ -1,7 +1,6 @@
 #include "audio_task.h"
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <string.h>
 
 #include "cmsis_os2.h"
@@ -22,23 +21,29 @@
  */
 #define INMP441_CHANNEL_INDEX 0U
 
-static SAI_HandleTypeDef *hsai_tx;
-static SAI_HandleTypeDef *hsai_rx;
-static osMessageQueueId_t audio_event_queue;
-
 typedef struct {
     bool rx_complete;
     bool tx_complete;
 } AudioDmaHalfState;
 
 static AudioDmaHalfState dma_half_state[AUDIO_BUFFER_HALF_COUNT];
+static SAI_HandleTypeDef *hsai_tx;
+static SAI_HandleTypeDef *hsai_rx;
+static osMessageQueueId_t audio_event_queue;
 
+/**
+ * Rx 버퍼에는 SAI RX에서 들어온 PCM 데이터가 담긴다. DMA가 이 버퍼의 절반을 채웠을 때 인터럽트가
+ * 발생하고, 채워진 버퍼의 절반을 Tx 버퍼로 옮긴다.
+ * Tx 버퍼를 읽을 DMA와 같은 영역을 읽지 않도록, 각 버퍼의 절반마다 플래그 변수를 두고 해당 버퍼의
+ * Rx와 Tx 플래그가 모두 활성화되어 있을 때 Rx 버퍼의 값을 Tx 버퍼의 값으로 옮기도록 한다.
+ * DMA를 쓰므로, SAI가 속한 D2 도메인에 있는 SRAM에 버퍼를 할당해야함.
+ */
 __attribute__((section(".ram_d2"), aligned(32))) static uint32_t rx_buffer[AUDIO_WORD_COUNT];
 __attribute__((section(".ram_d2"), aligned(32))) static uint32_t tx_buffer[AUDIO_WORD_COUNT];
 
 static bool IsValidInitParams(const AudioInitParams *params);
 static void CopyMicrophoneToStereo(size_t offset, size_t word_count);
-static void MarkDmaComplete(SaiDmaEventType event_type);
+static void HandleSaiDmaCallback(SaiDmaEventType event_type);
 static void TryProcessHalf(size_t half_index);
 static void Run(void);
 
@@ -65,22 +70,36 @@ static bool IsValidInitParams(const AudioInitParams *params)
            params->hsaiRx != NULL;
 }
 
-static void CopyMicrophoneToStereo(size_t offset, size_t word_count)
+static void Run(void)
 {
-    const size_t end = offset + word_count;
+    AudioEvent audio_event;
 
-    for (size_t index = offset; index < end; index += AUDIO_CHANNEL_COUNT) {
-        /*
-         * RX와 TX를 모두 24-bit I2S/32-bit slot으로 설정했으므로 INMP441에서
-         * 수신한 24-bit two's-complement sample을 별도 shift 없이 전달한다.
-         */
-        const uint32_t sample = rx_buffer[index + INMP441_CHANNEL_INDEX];
-        tx_buffer[index] = sample;
-        tx_buffer[index + 1U] = sample;
+    /* Synchronous RX가 master TX의 BCLK/LRCK를 사용하므로 RX를 먼저 arm한다. */
+    if (HAL_SAI_Receive_DMA(hsai_rx, (uint8_t *)rx_buffer, AUDIO_WORD_COUNT) != HAL_OK) {
+        for (;;) {
+            osDelay(1U);
+        }
+    }
+    if (HAL_SAI_Transmit_DMA(hsai_tx, (uint8_t *)tx_buffer, AUDIO_WORD_COUNT) != HAL_OK) {
+        (void)HAL_SAI_DMAStop(hsai_rx);
+        for (;;) {
+            osDelay(1U);
+        }
+    }
+
+    for (;;) {
+        if (osMessageQueueGet(audio_event_queue, &audio_event, NULL, osWaitForever) != osOK) {
+            continue;
+        }
+        if (audio_event.type != AUDIO_EVENT_TYPE_SAI_DMA_CALLBACK) {
+            continue;
+        }
+
+        HandleSaiDmaCallback(audio_event.payload.sai_dma_event.type);
     }
 }
 
-static void MarkDmaComplete(SaiDmaEventType event_type)
+static void HandleSaiDmaCallback(SaiDmaEventType event_type)
 {
     switch (event_type) {
     case SAI_DMA_RX_HALF_COMPLETE:
@@ -117,35 +136,17 @@ static void TryProcessHalf(size_t half_index)
     state->tx_complete = false;
 }
 
-static void Run(void)
+static void CopyMicrophoneToStereo(size_t offset, size_t word_count)
 {
-    AudioEvent audio_event;
+    const size_t end = offset + word_count;
 
-    memset(rx_buffer, 0, sizeof(rx_buffer));
-    memset(tx_buffer, 0, sizeof(tx_buffer));
-    memset(dma_half_state, 0, sizeof(dma_half_state));
-
-    /* Synchronous RX가 master TX의 BCLK/LRCK를 사용하므로 RX를 먼저 arm한다. */
-    if (HAL_SAI_Receive_DMA(hsai_rx, (uint8_t *)rx_buffer, AUDIO_WORD_COUNT) != HAL_OK) {
-        for (;;) {
-            osDelay(1U);
-        }
-    }
-    if (HAL_SAI_Transmit_DMA(hsai_tx, (uint8_t *)tx_buffer, AUDIO_WORD_COUNT) != HAL_OK) {
-        (void)HAL_SAI_DMAStop(hsai_rx);
-        for (;;) {
-            osDelay(1U);
-        }
-    }
-
-    for (;;) {
-        if (osMessageQueueGet(audio_event_queue, &audio_event, NULL, osWaitForever) != osOK) {
-            continue;
-        }
-        if (audio_event.type != AUDIO_EVENT_TYPE_SAI_DMA_CALLBACK) {
-            continue;
-        }
-
-        MarkDmaComplete(audio_event.payload.sai_dma_event.type);
+    for (size_t index = offset; index < end; index += AUDIO_CHANNEL_COUNT) {
+        /*
+         * RX와 TX를 모두 24-bit I2S/32-bit slot으로 설정했으므로 INMP441에서
+         * 수신한 24-bit two's-complement sample을 별도 shift 없이 전달한다.
+         */
+        const uint32_t sample = rx_buffer[index + INMP441_CHANNEL_INDEX];
+        tx_buffer[index] = sample;
+        tx_buffer[index + 1U] = sample;
     }
 }
