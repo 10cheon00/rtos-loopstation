@@ -123,36 +123,37 @@ static TaskStatus GetPinState(Mcp23017Address address, Mcp23017GpioPort *port,
 {
     Mcp23017Status status;
     uint8_t capture;
+    Mcp23017GpioPinMask gpio_a_pin_mask, gpio_b_pin_mask;
 
-    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTFA, gpio_pin_mask);
+    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTFA, &gpio_a_pin_mask);
     if (status != MCP23017_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
-    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPA, &capture);
+    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTFB, &gpio_b_pin_mask);
     if (status != MCP23017_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
 
-    if (*gpio_pin_mask != 0) {
-        *button_state = *gpio_pin_mask & capture ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
+    if (gpio_a_pin_mask != 0) {
+        status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPA, &capture);
+        if (status != MCP23017_STATUS_OK) {
+            return TASK_STATUS_ERROR;
+        }
+        *gpio_pin_mask = gpio_a_pin_mask;
+        *button_state = gpio_a_pin_mask & capture ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
         *port = MCP23017_GPIO_PORT_A;
         return TASK_STATUS_OK;
-    }
-
-    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTFB, gpio_pin_mask);
-
-    if (status != MCP23017_STATUS_OK) {
-        return TASK_STATUS_ERROR;
-    }
-    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPB, &capture);
-    if (status != MCP23017_STATUS_OK) {
-        return TASK_STATUS_ERROR;
-    }
-    if (*gpio_pin_mask != 0) {
-        *button_state = *gpio_pin_mask & capture ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
+    } else if (gpio_b_pin_mask != 0) {
+        status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPB, &capture);
+        if (status != MCP23017_STATUS_OK) {
+            return TASK_STATUS_ERROR;
+        }
+        *gpio_pin_mask = gpio_b_pin_mask;
+        *button_state = gpio_b_pin_mask & capture ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
         *port = MCP23017_GPIO_PORT_B;
         return TASK_STATUS_OK;
     }
+
     return TASK_STATUS_ERROR;
 }
 
