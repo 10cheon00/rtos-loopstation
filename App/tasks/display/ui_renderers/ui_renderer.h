@@ -13,6 +13,9 @@ typedef enum {
     UI_DRAWING_STATUS_ERROR,
 } UiDrawingStatus;
 
-typedef UiDrawingStatus (*UiPanelRenderFunction)(u8g2_t *, Parameter *);
+typedef UiDrawingStatus (*UiPanelRenderFunction)(u8g2_t *, Parameter *parameter_a,
+                                                 Parameter *parameter_b,
+                                                 Parameter *parameter_c,
+                                                 Parameter *parameter_d);
 
 #endif
