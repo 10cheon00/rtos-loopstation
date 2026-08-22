@@ -93,7 +93,7 @@ static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *payload)
     UiPanelRenderFunction ui_panel_render_function;
     UiDrawingStatus ui_drawing_status;
 
-    ui_panel_render_function = UiRendererTable_GetUiPanelRenderFunction(payload->panel_id);
+    ui_panel_render_function = UiRendererTable_GetUiPanelRenderFunction(payload->ui_state_id);
 
     u8g2_ClearBuffer(&u8g2);
     ui_drawing_status = ui_panel_render_function(&u8g2, payload->parameter_slots);

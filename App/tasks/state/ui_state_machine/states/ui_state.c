@@ -1,13 +1,13 @@
 #include "ui_state.h"
 
-UiPanelId UiState_GetUiPanelIdFromUiActionId(UiState* ui_state, UiActionId ui_action_id)
+UiStateId UiState_GetNextUiStateId(UiState* ui_state, UiActionId ui_action_id)
 {
     for (size_t i=0; i< ui_state->ui_transition_map_count; i++) {
         if (ui_state->ui_transition_map[i].ui_action_id == ui_action_id) {
-            return ui_state->ui_transition_map[i].next_ui_panel_id;
+            return ui_state->ui_transition_map[i].next_ui_state_id;
         }
     }
-    return UI_PANEL_ID_NONE;
+    return UI_STATE_ID_NONE;
 }
 
 ParameterSlotConfig *UiState_GetParameterSlots(UiState *ui_state)

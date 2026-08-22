@@ -1,0 +1,12 @@
+#ifndef UI_STATE_SLOT_INDEX_H
+#define UI_STATE_SLOT_INDEX_H
+
+typedef enum {
+    UI_STATE_SLOT_INDEX_A = 0,
+    UI_STATE_SLOT_INDEX_B,
+    UI_STATE_SLOT_INDEX_C,
+    UI_STATE_SLOT_INDEX_D,
+    UI_STATE_SLOT_INDEX_COUNT,
+} UiStateSlotIndex;
+
+#endif

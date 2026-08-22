@@ -2,7 +2,7 @@
 #define UI_RENDERER_UTILS_H
 
 #include "ui_renderer.h"
-#include "ui_panel_slot_index.h"
+#include "ui_state_slot_index.h"
 
 #define UI_ARROW_FLAG_NONE 0x0
 #define UI_ARROW_FLAG_LEFT 0x1
@@ -17,7 +17,7 @@ typedef enum {
 
 UiDrawingStatus UI_DrawPanelLayout(u8g2_t *u8g2, const char *panel_name, uint8_t arrow_flag);
 UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char *label,
-                                 UiPanelSlotIndex index);
+                                 UiStateSlotIndex index);
 UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const char *label,
-                                 UiPanelSlotIndex index);
+                                 UiStateSlotIndex index);
 #endif

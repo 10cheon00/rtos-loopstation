@@ -33,11 +33,11 @@
  *  기준 좌표를 좌상단으로 넘기면 출력을 처리하는 함수 내에서 좌하단으로 변환하여 출력한다.
  */
 
-static uint8_t parameter_width_table[UI_PANEL_SLOT_INDEX_COUNT] = {
-    [UI_PANEL_SLOT_INDEX_A] = 0,
-    [UI_PANEL_SLOT_INDEX_B] = SLOT_WIDTH,
-    [UI_PANEL_SLOT_INDEX_C] = SLOT_WIDTH * 2,
-    [UI_PANEL_SLOT_INDEX_D] = SLOT_WIDTH * 3,
+static uint8_t parameter_width_table[UI_STATE_SLOT_INDEX_COUNT] = {
+    [UI_STATE_SLOT_INDEX_A] = 0,
+    [UI_STATE_SLOT_INDEX_B] = SLOT_WIDTH,
+    [UI_STATE_SLOT_INDEX_C] = SLOT_WIDTH * 2,
+    [UI_STATE_SLOT_INDEX_D] = SLOT_WIDTH * 3,
 };
 static uint8_t panel_menu_icon_table[UI_PANEL_SLOT_ICON_ID_COUNT] = {
     [UI_PANEL_SLOT_ICON_ID_NONE] = 0,
@@ -88,12 +88,12 @@ static void DrawArrowRight4x5(u8g2_t *u8g2, uint8_t x, uint8_t y)
 }
 
 UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char *label,
-                                 UiPanelSlotIndex index)
+                                 UiStateSlotIndex index)
 {
     uint8_t x, y;
     UiDrawingStatus status;
 
-    if (index >= UI_PANEL_SLOT_INDEX_COUNT) {
+    if (index >= UI_STATE_SLOT_INDEX_COUNT) {
         return UI_DRAWING_STATUS_ERROR;
     }
 
@@ -191,10 +191,10 @@ static void ConvertNumberToString(int32_t number, char *string, uint8_t string_l
 }
 
 UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const char *label,
-                                 UiPanelSlotIndex index)
+                                 UiStateSlotIndex index)
 {
     uint8_t x, y;
-    if (index >= UI_PANEL_SLOT_INDEX_COUNT) {
+    if (index >= UI_STATE_SLOT_INDEX_COUNT) {
         return UI_DRAWING_STATUS_ERROR;
     }
 

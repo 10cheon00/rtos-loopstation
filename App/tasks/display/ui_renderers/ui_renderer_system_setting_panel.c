@@ -11,9 +11,9 @@ UiDrawingStatus Ui_DrawSystemSettingPanel(u8g2_t *u8g2, UiParameterRenderSlot *p
 
     UI_DrawPanelLayout(u8g2, "SYSTEM SETTING", UI_ARROW_FLAG_NONE);
     UI_DrawParameter(u8g2, &parameter_slots[0].parameter, parameter_slots[0].label,
-                     UI_PANEL_SLOT_INDEX_A);
+                     UI_STATE_SLOT_INDEX_A);
     UI_DrawParameter(u8g2, &parameter_slots[1].parameter, parameter_slots[1].label,
-                     UI_PANEL_SLOT_INDEX_B);
+                     UI_STATE_SLOT_INDEX_B);
     
     return UI_DRAWING_STATUS_OK;
 }

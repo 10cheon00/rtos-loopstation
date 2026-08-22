@@ -1,7 +1,7 @@
 #include "ui_state_machine.h"
 
 #include "display_messages.h"
-#include "ui_panel_ui_state_config_table.h"
+#include "ui_state_config_table.h"
 #include "loopstation_parameter_store.h"
 
 void UiStateMachine_Init(UiStateMachine *ui_state_machine, UiStateMachineContext *context,
@@ -13,12 +13,12 @@ void UiStateMachine_Init(UiStateMachine *ui_state_machine, UiStateMachineContext
 
 void UiStateMachine_TryTransition(UiStateMachine *ui_state_machine, UiActionId ui_action_id)
 {
-    UiPanelId next_ui_panel_id;
+    UiStateId next_ui_state_id;
     UiState *next_ui_state;
 
-    next_ui_panel_id =
-        UiState_GetUiPanelIdFromUiActionId(ui_state_machine->current_state, ui_action_id);
-    next_ui_state = UiPanelUiStateConfigMap_Get(next_ui_panel_id);
+    next_ui_state_id =
+        UiState_GetNextUiStateId(ui_state_machine->current_state, ui_action_id);
+    next_ui_state = UiStateConfigTable_Get(next_ui_state_id);
     if (next_ui_state != NULL) {
         ui_state_machine->current_state = next_ui_state;
     }

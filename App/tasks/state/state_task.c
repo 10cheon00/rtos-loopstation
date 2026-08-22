@@ -10,7 +10,7 @@
 #include "state_messages.h"
 #include "state_initparams.h"
 #include "ui_state_machine.h"
-#include "ui_panel_ui_state_config_table.h"
+#include "ui_state_config_table.h"
 #include "button_ui_action_config_table.h"
 #include "track_state_machine.h"
 #include "button_track_action_config_table.h"
@@ -110,7 +110,7 @@ static void InitStateMachines()
                             SYSTEM_STATE_ID_NOT_INITED);
 
     UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context,
-                        UiPanelUiStateConfigMap_Get(UI_PANEL_ID_HOME));
+                        UiStateConfigTable_Get(UI_STATE_ID_HOME));
     for (uint8_t i = 0; i < TRACK_COUNT; i++) {
         TrackStateMachine_Init(&track_state_machine[i], &track_state_machine_context[i],
                                TRACK_STATE_ID_IDLE);
@@ -247,10 +247,10 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine)
 {
     TrackStateId track_state_ids[TRACK_COUNT];
     DisplaySnapshot snapshot = {
-        .ui_state = {.panel_id = ui_state_machine->current_state->ui_panel_id}};
+        .ui_state = {.ui_state_id = ui_state_machine->current_state->ui_state_id}};
     ParameterSlotConfig *slots = UiState_GetParameterSlots(ui_state_machine->current_state);
     if (slots != NULL) {
-        for (size_t i = 0; i < UI_PANEL_SLOT_INDEX_COUNT; i++) {
+        for (size_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
             snapshot.ui_state.parameter_slots[i].parameter =
                 *LoopStationParameterStore_GetParameterFromParameterId(slots[i].id);
             snapshot.ui_state.parameter_slots[i].label = slots[i].label;

@@ -4,8 +4,8 @@
 #include "ui_renderer_utils.h"
 #include "parameter.h"
 #include "parameter_id.h"
-#include "ui_panel_id.h"
+#include "ui_state_id.h"
 
-UiPanelRenderFunction UiRendererTable_GetUiPanelRenderFunction(UiPanelId ui_panel_id);
+UiPanelRenderFunction UiRendererTable_GetUiPanelRenderFunction(UiStateId ui_state_id);
 
 #endif

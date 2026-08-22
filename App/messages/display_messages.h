@@ -4,11 +4,11 @@
 #include <stdint.h>
 
 #include "FreeRTOS.h"
-#include "ui_panel_id.h"
+#include "ui_state_id.h"
 #include "button_id.h"
 #include "parameter.h"
 #include "track_state.h"
-#include "ui_panel_slot_index.h"
+#include "ui_state_slot_index.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
@@ -18,8 +18,8 @@ typedef struct {
 } UiParameterRenderSlot;
 
 typedef struct {
-    UiPanelId panel_id;
-    UiParameterRenderSlot parameter_slots[UI_PANEL_SLOT_INDEX_COUNT];
+    UiStateId ui_state_id;
+    UiParameterRenderSlot parameter_slots[UI_STATE_SLOT_INDEX_COUNT];
 } UiStateRenderPayload;
 
 typedef struct {
