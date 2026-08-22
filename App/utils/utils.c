@@ -86,20 +86,34 @@ static double cos_table[360] = {
     0.98897,  0.99141,  0.99354,  0.99538,  0.99690,  0.99812,  0.99904,  0.99965,  0.99996,
 };
 
-double cosine(int16_t angle)
+double abs_double(double d)
 {
-    if (angle < 0 || angle >= 360) {
-        angle = (angle % 360 + 360) % 360;
-    }
-    return cos_table[angle];
+    return d > 0.0 ? d : -d;
 }
 
-double sine(int16_t angle)
+int16_t abs_int16(int16_t n)
 {
-    if (angle < 0 || angle >= 360) {
-        angle = (angle % 360 + 360) % 360;
+    return n > 0 ? n : -n;
+}
+
+double cosine(int16_t degree)
+{
+    if (degree < 0 || degree >= 360) {
+        degree = (degree % 360 + 360) % 360;
     }
-    return sin_table[angle];
+    return cos_table[degree];
+}
+
+double sine(int16_t degree)
+{
+    if (degree < 0 || degree >= 360) {
+        degree = (degree % 360 + 360) % 360;
+    }
+    return sin_table[degree];
+}
+
+double tangent(int16_t degree) {
+    return sine(degree) / cosine(degree);
 }
 
 Hash_t djb2(const char* string)
