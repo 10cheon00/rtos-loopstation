@@ -102,7 +102,8 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
         return TASK_STATUS_ERROR;
     }
     // 한 MCP23017의 두 포트를 모두 조회하여 활성화된 여러 입력핀들을 모두 처리
-    taskStatus = GetPinState(address, &gpio_a_pin_mask, &gpio_b_pin_mask, &gpio_a_state, &gpio_b_state);
+    taskStatus =
+        GetPinState(address, &gpio_a_pin_mask, &gpio_b_pin_mask, &gpio_a_state, &gpio_b_state);
     osMutexRelease(i2c1_mutex);
     if (taskStatus != TASK_STATUS_OK) {
         return TASK_STATUS_ERROR;
@@ -182,10 +183,17 @@ static TaskStatus SendButtonPayload(Mcp23017Address address, Mcp23017GpioId gpio
     StateEvent state_event = {.type = STATE_EVENT_BUTTON, .payload = {.button = payload}};
     osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
 
-    // TODO:
-    // 엔코더 버튼 인덱스가 하드코딩되어 있음
     if (button_id == BUTTON_ID_ENCODER_A_PUSH) {
-        input_task_context.encoder_button_state[0] = button_state;
+        input_task_context.encoder_button_state[ENCODER_ID_A] = button_state;
+    }
+    if (button_id == BUTTON_ID_ENCODER_B_PUSH) {
+        input_task_context.encoder_button_state[ENCODER_ID_B] = button_state;
+    }
+    if (button_id == BUTTON_ID_ENCODER_C_PUSH) {
+        input_task_context.encoder_button_state[ENCODER_ID_C] = button_state;
+    }
+    if (button_id == BUTTON_ID_ENCODER_D_PUSH) {
+        input_task_context.encoder_button_state[ENCODER_ID_D] = button_state;
     }
     return TASK_STATUS_OK;
 }
