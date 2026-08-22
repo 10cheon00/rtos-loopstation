@@ -8,12 +8,18 @@
 #include "button_id.h"
 #include "parameter.h"
 #include "track_state.h"
+#include "ui_panel_slot_index.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
 typedef struct {
+    Parameter parameter;
+    const char *label;
+} UiParameterRenderSlot;
+
+typedef struct {
     UiPanelId panel_id;
-    Parameter parameters[4];
+    UiParameterRenderSlot parameter_slots[UI_PANEL_SLOT_INDEX_COUNT];
 } UiStateRenderPayload;
 
 typedef struct {

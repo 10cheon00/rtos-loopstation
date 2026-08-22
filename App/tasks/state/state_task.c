@@ -239,15 +239,17 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
 
 TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine)
 {
-    ParameterId *parameter_ids =
+    const PanelParameterConfig *parameter_config =
         PanelParameterConfigMap_Get(ui_state_machine->current_state->ui_panel_id);
     TrackStateId track_state_ids[TRACK_COUNT];
     DisplaySnapshot snapshot = {
         .ui_state = {.panel_id = ui_state_machine->current_state->ui_panel_id}};
 
-    for (size_t i = 0; i < UI_PANEL_MAX_PARAMETER_COUNT; i++) {
-        snapshot.ui_state.parameters[i] =
-            *LoopStationParameterStore_GetParameterFromParameterId(parameter_ids[i]);
+    for (size_t i = 0; i < UI_PANEL_SLOT_INDEX_COUNT; i++) {
+        snapshot.ui_state.parameter_slots[i].parameter =
+            *LoopStationParameterStore_GetParameterFromParameterId(
+                parameter_config->slots[i].parameter_id);
+        snapshot.ui_state.parameter_slots[i].label = parameter_config->slots[i].label;
     }
     snapshot.led = (LedRenderPayload){
         .ifx_a_state =

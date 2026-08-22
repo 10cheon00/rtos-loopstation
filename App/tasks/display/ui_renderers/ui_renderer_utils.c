@@ -34,7 +34,11 @@
  */
 
 static uint8_t parameter_width_table[UI_PANEL_SLOT_INDEX_COUNT] = {
-    0, 0, SLOT_WIDTH, SLOT_WIDTH * 2, SLOT_WIDTH * 3, 0};
+    [UI_PANEL_SLOT_INDEX_A] = 0,
+    [UI_PANEL_SLOT_INDEX_B] = SLOT_WIDTH,
+    [UI_PANEL_SLOT_INDEX_C] = SLOT_WIDTH * 2,
+    [UI_PANEL_SLOT_INDEX_D] = SLOT_WIDTH * 3,
+};
 static uint8_t panel_menu_icon_table[UI_PANEL_SLOT_ICON_ID_COUNT] = {
     [UI_PANEL_SLOT_ICON_ID_NONE] = 0,
     [UI_PANEL_SLOT_ICON_ID_SYSTEM] = 129,
@@ -89,7 +93,7 @@ UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char 
     uint8_t x, y;
     UiDrawingStatus status;
 
-    if (index <= UI_PANEL_SLOT_ICON_ID_NONE || index >= UI_PANEL_SLOT_INDEX_COUNT) {
+    if (index >= UI_PANEL_SLOT_INDEX_COUNT) {
         return UI_DRAWING_STATUS_ERROR;
     }
 
@@ -190,7 +194,7 @@ UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const cha
                                  UiPanelSlotIndex index)
 {
     uint8_t x, y;
-    if (index <= UI_PANEL_SLOT_ICON_ID_NONE || index >= UI_PANEL_SLOT_INDEX_COUNT) {
+    if (index >= UI_PANEL_SLOT_INDEX_COUNT) {
         return UI_DRAWING_STATUS_ERROR;
     }
 

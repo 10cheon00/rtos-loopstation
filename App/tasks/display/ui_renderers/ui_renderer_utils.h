@@ -2,19 +2,11 @@
 #define UI_RENDERER_UTILS_H
 
 #include "ui_renderer.h"
+#include "ui_panel_slot_index.h"
 
 #define UI_ARROW_FLAG_NONE 0x0
 #define UI_ARROW_FLAG_LEFT 0x1
 #define UI_ARROW_FLAG_RIGHT 0x2
-
-typedef enum {
-    UI_PANEL_SLOT_INDEX_NONE = 0,
-    UI_PANEL_SLOT_INDEX_A,
-    UI_PANEL_SLOT_INDEX_B,
-    UI_PANEL_SLOT_INDEX_C,
-    UI_PANEL_SLOT_INDEX_D,
-    UI_PANEL_SLOT_INDEX_COUNT,
-} UiPanelSlotIndex;
 
 typedef enum {
     UI_PANEL_SLOT_ICON_ID_NONE = 0,

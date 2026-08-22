@@ -6,11 +6,19 @@
 #include "parameter.h"
 #include "parameter_id.h"
 #include "ui_panel_id.h"
+#include "ui_panel_slot_index.h"
 
-#define UI_PANEL_MAX_PARAMETER_COUNT 4
-typedef ParameterId *UiPanelParameters;
+typedef struct {
+    ParameterId parameter_id;
+    const char *label;
+} PanelParameterSlotConfig;
 
-ParameterId PanelParameterConfigMap_GetByParameterIndex(UiPanelId ui_panel_id, uint8_t index);
-UiPanelParameters PanelParameterConfigMap_Get(UiPanelId ui_panel_id);
+typedef struct {
+    PanelParameterSlotConfig slots[UI_PANEL_SLOT_INDEX_COUNT];
+} PanelParameterConfig;
+
+ParameterId PanelParameterConfigMap_GetByParameterIndex(UiPanelId ui_panel_id,
+                                                        UiPanelSlotIndex index);
+const PanelParameterConfig *PanelParameterConfigMap_Get(UiPanelId ui_panel_id);
 
 #endif

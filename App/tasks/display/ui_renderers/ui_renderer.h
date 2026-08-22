@@ -2,6 +2,7 @@
 #define UI_RENDERER_H
 
 #include "gmg12864_lcd.h"
+#include "display_messages.h"
 #include "parameter.h"
 #include "parameter_id.h"
 #include "ui_panel_id.h"
@@ -13,9 +14,6 @@ typedef enum {
     UI_DRAWING_STATUS_ERROR,
 } UiDrawingStatus;
 
-typedef UiDrawingStatus (*UiPanelRenderFunction)(u8g2_t *, Parameter *parameter_a,
-                                                 Parameter *parameter_b,
-                                                 Parameter *parameter_c,
-                                                 Parameter *parameter_d);
+typedef UiDrawingStatus (*UiPanelRenderFunction)(u8g2_t *, UiParameterRenderSlot *);
 
 #endif
