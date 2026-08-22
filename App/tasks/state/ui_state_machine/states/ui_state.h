@@ -33,10 +33,13 @@ typedef struct {
 
 typedef ParameterSlotConfig* (*ParameterSlotConfigGetterFunction)();
 
+typedef void (*UiStateOnUiActionEventFunction)(UiActionId);
+
 typedef struct {
     UiTransitionMapEntry* ui_transition_map;
     size_t ui_transition_map_count;
     ParameterSlotConfigGetterFunction parameter_slot_getter_function;
+    UiStateOnUiActionEventFunction OnUiActionEvent;
     UiStateId ui_state_id;
 } UiState;
 

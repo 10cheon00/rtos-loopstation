@@ -16,8 +16,13 @@ void UiStateMachine_TryTransition(UiStateMachine *ui_state_machine, UiActionId u
     UiStateId next_ui_state_id;
     UiState *next_ui_state;
 
-    next_ui_state_id =
-        UiState_GetNextUiStateId(ui_state_machine->current_state, ui_action_id);
+    if (ui_state_machine->current_state->OnUiActionEvent != NULL) {
+        ui_state_machine->current_state->OnUiActionEvent(ui_action_id);
+    }
+    next_ui_state_id = UiState_GetNextUiStateId(ui_state_machine->current_state, ui_action_id);
+    if (next_ui_state_id == UI_STATE_ID_NONE) {
+        return;
+    }
     next_ui_state = UiStateConfigTable_Get(next_ui_state_id);
     if (next_ui_state != NULL) {
         ui_state_machine->current_state = next_ui_state;
