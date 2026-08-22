@@ -185,7 +185,6 @@ TaskStatus TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder
     ParameterId parameter_id;
     Parameter *parameter;
     uint8_t encoder_id;
-    int8_t delta = 1, scale = 1;
 
     encoder_id = encoder_rotation_payload->encoder_id;
     ui_panel_id = ui_state_machine.current_state->ui_panel_id;
@@ -198,11 +197,7 @@ TaskStatus TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder
         Parameter_ToggleValue(parameter);
         return TASK_STATUS_OK;
     } else if (parameter->type == PARAMETER_TYPE_SLIDER) {
-        if (state_task_context.encoder_button_state_snapshot == BUTTON_STATE_PRESSED) {
-            scale = 10;
-        }
-        delta = encoder_rotation_payload->delta;
-        Parameter_AddValue(parameter, delta * scale);
+        Parameter_AddValue(parameter, encoder_rotation_payload->delta);
         return TASK_STATUS_OK;
     }
     return TASK_STATUS_ERROR;

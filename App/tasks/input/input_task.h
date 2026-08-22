@@ -8,9 +8,10 @@ extern "C" {
 #include <stdint.h>
 
 #include "app.h"
+#include "button_id.h"
 
 typedef struct {
-    uint32_t previous_encoder_counter;
+    ButtonState encoder_button_state[4]; // TODO: 매직 넘버 지우기
 } InputTaskContext;
 
 void InputTask_Init(void *argument);
