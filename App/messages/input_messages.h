@@ -22,12 +22,12 @@ typedef enum {
 
 typedef enum {
     ENCODER_ROTATE_CLOCKWISE = 0,
-    ENCODER_ROTATE_COUNTER_CLOCKWISE = 0,
+    ENCODER_ROTATE_COUNTER_CLOCKWISE,
 } EncoderRotationDirection;
 
 typedef struct {
     TickType_t timestamp_ticks; // for debugging only
-    uint32_t encoder_counter;
+    EncoderRotationDirection direction;
     uint8_t encoder_id;
 } EncoderRotationEvent;
 

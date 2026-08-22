@@ -16,7 +16,10 @@ static osMutexId_t i2c1_mutex;
 static TaskStatus HandleInputEvent(InputEvent *input_event);
 static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent);
 static TaskStatus GetPinState(Mcp23017Address address, Mcp23017GpioPinMask *gpio_a_pin_mask,
-                              Mcp23017GpioPinMask *gpio_b_pin_mask, ButtonState *button_state);
+                              Mcp23017GpioPinMask *gpio_b_pin_mask,
+                              Mcp23017GpioPinMask *gpio_a_state, Mcp23017GpioPinMask *gpio_b_state);
+static TaskStatus SendButtonPayload(Mcp23017Address address, Mcp23017GpioId gpio_id,
+                                    ButtonState button_state, TickType_t timestamp_ticks);
 static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent *encoder_rotation_event);
 static TaskStatus HandleAdcConversionEvent(AdcConversionEvent *adc_conversion_event);
 
@@ -42,8 +45,6 @@ void InputTask_Init(void *argument)
     state_event_queue = params->state_event_queue;
     hi2c = params->hi2c;
     i2c1_mutex = params->i2c1_mutex;
-
-    input_task_context.previous_encoder_counter = 0;
 
     InputTask_Run();
 }
@@ -82,6 +83,7 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     Mcp23017Address address;
     Mcp23017GpioInterruptPin GPIO_Pin = intEvent->gpio_pin;
     Mcp23017GpioPinMask gpio_a_pin_mask, gpio_b_pin_mask;
+    Mcp23017GpioPinMask gpio_a_state, gpio_b_state;
 
     Mcp23017GpioId gpio_id;
     ButtonId button_id;
@@ -100,7 +102,7 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
         return TASK_STATUS_ERROR;
     }
     // 한 MCP23017의 두 포트를 모두 조회하여 활성화된 여러 입력핀들을 모두 처리
-    taskStatus = GetPinState(address, &gpio_a_pin_mask, &gpio_b_pin_mask, &button_state);
+    taskStatus = GetPinState(address, &gpio_a_pin_mask, &gpio_b_pin_mask, &gpio_a_state, &gpio_b_state);
     osMutexRelease(i2c1_mutex);
     if (taskStatus != TASK_STATUS_OK) {
         return TASK_STATUS_ERROR;
@@ -113,14 +115,11 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
             if (gpio_id == MCP23017_GPIO_ID_NONE) {
                 return TASK_STATUS_ERROR;
             }
-
-            button_id = Mcp23017GpioMap_Get(gpio_id);
-            ButtonPayload payload = {
-                .id = button_id, .state = button_state, .timestamp_ticks = timestamp_ticks};
-            StateEvent state_event = {.type = STATE_EVENT_BUTTON, .payload = {.button = payload}};
-            osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
+            button_state = (gpio_a_state & 0x1) ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
+            SendButtonPayload(address, gpio_id, button_state, timestamp_ticks);
         }
         gpio_a_pin_mask >>= 1;
+        gpio_a_state >>= 1;
         index++;
     }
     index = 0;
@@ -130,21 +129,19 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
             if (gpio_id == MCP23017_GPIO_ID_NONE) {
                 return TASK_STATUS_ERROR;
             }
-
-            button_id = Mcp23017GpioMap_Get(gpio_id);
-            ButtonPayload payload = {
-                .id = button_id, .state = button_state, .timestamp_ticks = timestamp_ticks};
-            StateEvent state_event = {.type = STATE_EVENT_BUTTON, .payload = {.button = payload}};
-            osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
+            button_state = (gpio_b_state & 0x1) ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
+            SendButtonPayload(address, gpio_id, button_state, timestamp_ticks);
         }
         gpio_b_pin_mask >>= 1;
+        gpio_b_state >>= 1;
         index++;
     }
     return TASK_STATUS_OK;
 }
 
 static TaskStatus GetPinState(Mcp23017Address address, Mcp23017GpioPinMask *gpio_a_pin_mask,
-                              Mcp23017GpioPinMask *gpio_b_pin_mask, ButtonState *button_state)
+                              Mcp23017GpioPinMask *gpio_b_pin_mask,
+                              Mcp23017GpioPinMask *gpio_a_state, Mcp23017GpioPinMask *gpio_b_state)
 {
     Mcp23017Status status;
     uint8_t capture;
@@ -159,41 +156,57 @@ static TaskStatus GetPinState(Mcp23017Address address, Mcp23017GpioPinMask *gpio
     }
 
     if (*gpio_a_pin_mask != 0) {
-        status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPA, &capture);
+        status =
+            Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPA, gpio_a_state);
         if (status != MCP23017_STATUS_OK) {
             return TASK_STATUS_ERROR;
         }
-        *button_state = *gpio_a_pin_mask & capture ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
     }
     if (*gpio_b_pin_mask != 0) {
-        status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPB, &capture);
+        status =
+            Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPB, gpio_b_state);
         if (status != MCP23017_STATUS_OK) {
             return TASK_STATUS_ERROR;
         }
-        *button_state = *gpio_b_pin_mask & capture ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
     }
 
     return TASK_STATUS_OK;
 }
 
+static TaskStatus SendButtonPayload(Mcp23017Address address, Mcp23017GpioId gpio_id,
+                                    ButtonState button_state, TickType_t timestamp_ticks)
+{
+    ButtonId button_id = Mcp23017GpioMap_Get(gpio_id);
+    ButtonPayload payload = {
+        .id = button_id, .state = button_state, .timestamp_ticks = timestamp_ticks};
+    StateEvent state_event = {.type = STATE_EVENT_BUTTON, .payload = {.button = payload}};
+    osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
+
+    // TODO:
+    // 엔코더 버튼 인덱스가 하드코딩되어 있음
+    if (button_id == BUTTON_ID_ENCODER_A_PUSH) {
+        input_task_context.encoder_button_state[0] = button_state;
+    }
+    return TASK_STATUS_OK;
+}
+
 static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent *encoder_rotation_event)
 {
-    uint16_t current = encoder_rotation_event->encoder_counter;
-    uint16_t previous = input_task_context.previous_encoder_counter;
-    uint16_t unsigned_delta = (uint16_t)(current - previous);
-    int32_t delta = (int32_t)unsigned_delta;
-    if (unsigned_delta > INT16_MAX) {
-        delta = (int32_t)unsigned_delta - 65536;
+    uint8_t encoder_id = encoder_rotation_event->encoder_id;
+    int32_t delta = 1;
+    if (encoder_rotation_event->direction == ENCODER_ROTATE_COUNTER_CLOCKWISE) {
+        delta = -1;
     }
-
+    if (input_task_context.encoder_button_state[encoder_id] == BUTTON_STATE_PRESSED) {
+        delta *= 10;
+    }
     StateEvent state_event = {
         .type = STATE_EVENT_ENCODER_ROTATION,
         .payload = {.encoder_rotation = {
                         .delta = delta,
-                        .encoder_id = encoder_rotation_event->encoder_id,
+                        .encoder_id = encoder_id,
                         .timestamp_ticks = encoder_rotation_event->timestamp_ticks,
                     }}};
-    input_task_context.previous_encoder_counter = encoder_rotation_event->encoder_counter;
     osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
 
     return TASK_STATUS_OK;

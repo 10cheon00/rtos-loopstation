@@ -169,7 +169,9 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
             .payload = {
                 .encoder_rotation_event = (EncoderRotationEvent){
                     .timestamp_ticks = osKernelGetTickCount(),
-                    .encoder_counter = htim->Instance->CNT,
+                    .direction = __HAL_TIM_IS_TIM_COUNTING_DOWN(htim) ? 
+                        ENCODER_ROTATE_COUNTER_CLOCKWISE :
+                        ENCODER_ROTATE_CLOCKWISE,
                     .encoder_id = 0 // TODO: 엔코더 번호도 enum으로 관리하기
                 }
             }
