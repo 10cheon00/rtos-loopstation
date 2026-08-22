@@ -15,6 +15,7 @@
 #include "track_state_machine.h"
 #include "button_track_action_config_table.h"
 #include "system_state_machine.h"
+#include "encoder_id.h"
 
 static StateTaskContext state_task_context;
 
@@ -135,10 +136,9 @@ static TaskStatus TryUpdateParameter(StateEvent *state_event)
  * */
 static TaskStatus TryUpdateParameterFromButton(ButtonPayload *button_payload)
 {
-    UiPanelId ui_panel_id;
     ParameterId parameter_id;
     Parameter *parameter;
-
+    ParameterSlotConfig *slots;
     if (button_payload->state != BUTTON_STATE_PRESSED) {
         return TASK_STATUS_ERROR;
     }
@@ -149,11 +149,14 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload *button_payload)
         return TASK_STATUS_ERROR;
     }
 
+    slots = UiState_GetParameterSlots(ui_state_machine.current_state);
+    if (slots == NULL) {
+        return TASK_STATUS_OK;
+    }
     if (button_payload->id == BUTTON_ID_ENCODER_A_PUSH) {
         // TODO:
         // Encoder_A~D 모두 처리 가능하게 해야함
-        ui_panel_id = ui_state_machine.current_state->ui_panel_id;
-        parameter_id = PanelParameterConfigMap_GetByParameterIndex(ui_panel_id, 0);
+        parameter_id = slots[ENCODER_ID_A].id;
         if (parameter_id == PARAMETER_ID_NONE) {
             return TASK_STATUS_ERROR;
         }
@@ -181,14 +184,17 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload *button_payload)
 
 TaskStatus TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder_rotation_payload)
 {
-    UiPanelId ui_panel_id;
     ParameterId parameter_id;
     Parameter *parameter;
-    uint8_t encoder_id;
+    ParameterSlotConfig *slots;
+    EncoderId encoder_id;
 
     encoder_id = encoder_rotation_payload->encoder_id;
-    ui_panel_id = ui_state_machine.current_state->ui_panel_id;
-    parameter_id = PanelParameterConfigMap_GetByParameterIndex(ui_panel_id, encoder_id);
+    slots = UiState_GetParameterSlots(ui_state_machine.current_state);
+    if (slots == NULL) {
+        return TASK_STATUS_OK;
+    }
+    parameter_id = slots[encoder_id].id;
     if (parameter_id == PARAMETER_ID_NONE) {
         return TASK_STATUS_ERROR;
     }
@@ -239,17 +245,16 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
 
 TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine)
 {
-    const PanelParameterConfig *parameter_config =
-        PanelParameterConfigMap_Get(ui_state_machine->current_state->ui_panel_id);
     TrackStateId track_state_ids[TRACK_COUNT];
     DisplaySnapshot snapshot = {
         .ui_state = {.panel_id = ui_state_machine->current_state->ui_panel_id}};
-
-    for (size_t i = 0; i < UI_PANEL_SLOT_INDEX_COUNT; i++) {
-        snapshot.ui_state.parameter_slots[i].parameter =
-            *LoopStationParameterStore_GetParameterFromParameterId(
-                parameter_config->slots[i].parameter_id);
-        snapshot.ui_state.parameter_slots[i].label = parameter_config->slots[i].label;
+    ParameterSlotConfig *slots = UiState_GetParameterSlots(ui_state_machine->current_state);
+    if (slots != NULL) {
+        for (size_t i = 0; i < UI_PANEL_SLOT_INDEX_COUNT; i++) {
+            snapshot.ui_state.parameter_slots[i].parameter =
+                *LoopStationParameterStore_GetParameterFromParameterId(slots[i].id);
+            snapshot.ui_state.parameter_slots[i].label = slots[i].label;
+        }
     }
     snapshot.led = (LedRenderPayload){
         .ifx_a_state =

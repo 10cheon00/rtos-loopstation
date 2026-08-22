@@ -3,18 +3,12 @@
 
 #include <stddef.h>
 
-#include "parameter.h"
-#include "parameter_id.h"
+#include "parameter_slot.h"
 #include "ui_panel_id.h"
 #include "ui_panel_slot_index.h"
 
 typedef struct {
-    ParameterId parameter_id;
-    const char *label;
-} PanelParameterSlotConfig;
-
-typedef struct {
-    PanelParameterSlotConfig slots[UI_PANEL_SLOT_INDEX_COUNT];
+    ParameterSlotConfig slots[UI_PANEL_SLOT_INDEX_COUNT];
 } PanelParameterConfig;
 
 ParameterId PanelParameterConfigMap_GetByParameterIndex(UiPanelId ui_panel_id,

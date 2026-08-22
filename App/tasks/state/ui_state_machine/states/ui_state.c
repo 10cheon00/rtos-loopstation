@@ -9,3 +9,11 @@ UiPanelId UiState_GetUiPanelIdFromUiActionId(UiState* ui_state, UiActionId ui_ac
     }
     return UI_PANEL_ID_NONE;
 }
+
+ParameterSlotConfig *UiState_GetParameterSlots(UiState *ui_state)
+{
+    if (ui_state->parameter_slot_getter_function == NULL) {
+        return NULL;
+    }
+    return ui_state->parameter_slot_getter_function();
+}

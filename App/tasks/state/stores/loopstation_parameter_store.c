@@ -1,5 +1,7 @@
 #include "loopstation_parameter_store.h"
 
+#include <stddef.h>
+
 static LoopStationParameterStore loopstation_parameter_store = {
     .parameters = {
         [PARAMETER_ID_NONE] = {.min = 0, .max = 0, .current = 0, .type = PARAMETER_TYPE_SLIDER},

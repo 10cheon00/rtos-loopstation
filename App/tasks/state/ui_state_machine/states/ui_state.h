@@ -5,6 +5,7 @@
 
 #include "id.h"
 #include "ui_panel_id.h"
+#include "parameter_slot.h"
 
 typedef enum {
     UI_ACTION_ID_NONE = ID_NONE,
@@ -30,12 +31,17 @@ typedef struct {
     UiPanelId next_ui_panel_id;
 } UiTransitionMapEntry;
 
+typedef ParameterSlotConfig* (*ParameterSlotConfigGetterFunction)();
+
 typedef struct {
     UiTransitionMapEntry* ui_transition_map;
+    ParameterSlotConfigGetterFunction parameter_slot_getter_function;
     size_t ui_transition_map_count;
     UiPanelId ui_panel_id;
 } UiState;
 
 UiPanelId UiState_GetUiPanelIdFromUiActionId(UiState* ui_state, UiActionId ui_action_id);
+
+ParameterSlotConfig* UiState_GetParameterSlots(UiState* ui_state);
 
 #endif

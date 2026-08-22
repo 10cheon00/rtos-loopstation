@@ -200,7 +200,7 @@ static TaskStatus SendButtonPayload(Mcp23017Address address, Mcp23017GpioId gpio
 
 static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent *encoder_rotation_event)
 {
-    uint8_t encoder_id = encoder_rotation_event->encoder_id;
+    EncoderId encoder_id = encoder_rotation_event->encoder_id;
     int32_t delta = 1;
     if (encoder_rotation_event->direction == ENCODER_ROTATE_COUNTER_CLOCKWISE) {
         delta = -1;
