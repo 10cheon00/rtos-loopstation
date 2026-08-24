@@ -2,7 +2,6 @@
 
 #include "display_messages.h"
 #include "ui_state_config_table.h"
-#include "loopstation_parameter_store.h"
 
 void UiStateMachine_Init(UiStateMachine *ui_state_machine, UiStateMachineContext *context,
                          UiState *init_state)
@@ -11,15 +10,15 @@ void UiStateMachine_Init(UiStateMachine *ui_state_machine, UiStateMachineContext
     ui_state_machine->current_state = init_state;
 }
 
-void UiStateMachine_TryTransition(UiStateMachine *ui_state_machine, UiActionId ui_action_id)
+void UiStateMachine_TryTransition(UiStateMachine *ui_state_machine, UiStateId next_ui_state_id)
 {
-    UiStateId next_ui_state_id;
     UiState *next_ui_state;
 
-    if (ui_state_machine->current_state->OnUiActionEvent != NULL) {
-        ui_state_machine->current_state->OnUiActionEvent(ui_action_id);
-    }
-    next_ui_state_id = UiState_GetNextUiStateId(ui_state_machine->current_state, ui_action_id);
+    /** 
+     * 전이의 경우는 두 가지
+     * 전역으로 이동하는 전이 -> UI_ACTION_ID를 전달할 필요 없이 바로 UiState*를 얻어와 전이
+     * 상위 패널로 이동하는 전이 -> 어떤 자료구조를 통해 상위 UiState*를 얻어와 전이
+     */
     if (next_ui_state_id == UI_STATE_ID_NONE) {
         return;
     }
@@ -27,8 +26,6 @@ void UiStateMachine_TryTransition(UiStateMachine *ui_state_machine, UiActionId u
     if (next_ui_state != NULL) {
         ui_state_machine->current_state = next_ui_state;
     }
-    // TODO:
-    // 전이가 안 된 경우에 대한 반환값 추가하기
 }
 
 void UiStateMachineContext_Init(UiStateMachineContext *ui_state_machine_context) {}

@@ -1,8 +1,11 @@
-#include "ui_renderer_utils.h"
+#include "ui_renderer.h"
 
 #include "knob_widget.h"
 #include "toggle_switch_widget.h"
 #include "utils.h"
+
+#define UI_ARROW_FLAG_LEFT 0x1
+#define UI_ARROW_FLAG_RIGHT 0x2
 
 #define SLOT_WIDTH 32
 #define CHARACTER_HEIGHT 5
@@ -39,10 +42,11 @@ static uint8_t parameter_width_table[UI_STATE_SLOT_INDEX_COUNT] = {
     [UI_STATE_SLOT_INDEX_C] = SLOT_WIDTH * 2,
     [UI_STATE_SLOT_INDEX_D] = SLOT_WIDTH * 3,
 };
-static uint8_t panel_menu_icon_table[UI_PANEL_SLOT_ICON_ID_COUNT] = {
-    [UI_PANEL_SLOT_ICON_ID_NONE] = 0,
-    [UI_PANEL_SLOT_ICON_ID_SYSTEM] = 129,
-    [UI_PANEL_SLOT_ICON_ID_DEBUG] = 104};
+static uint8_t panel_menu_icon_table[MENU_ICON_ID_COUNT] = {
+    [MENU_ICON_ID_NONE] = 0,
+    [MENU_ICON_ID_SYSTEM] = 129,
+    [MENU_ICON_ID_DEBUG] = 104,
+};
 
 static void DrawArrowLeft4x5(u8g2_t *u8g2, uint8_t x, uint8_t y);
 static void DrawArrowRight4x5(u8g2_t *u8g2, uint8_t x, uint8_t y);
@@ -50,8 +54,7 @@ static UiDrawingStatus DrawParameterValue(u8g2_t *u8g2, Parameter *parameter, ui
 static UiDrawingStatus DrawParameterWidget(u8g2_t *u8g2, Parameter *parameter, uint8_t x,
                                            uint8_t y);
 static void ConvertNumberToString(int32_t number, char *string, uint8_t string_length);
-static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, UiPanelSlotIconId icon, uint8_t x,
-                                         uint8_t y);
+static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, MenuIconId icon, uint8_t x, uint8_t y);
 static UiDrawingStatus DrawLabel(u8g2_t *u8g2, const char *label, uint8_t x, uint8_t y);
 
 // TODO:
@@ -190,7 +193,7 @@ static void ConvertNumberToString(int32_t number, char *string, uint8_t string_l
     }
 }
 
-UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const char *label,
+UiDrawingStatus UI_DrawMenu(u8g2_t *u8g2, MenuIconId icon_id, const char *label,
                                  UiStateSlotIndex index)
 {
     uint8_t x, y;
@@ -201,7 +204,7 @@ UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const cha
     x = parameter_width_table[index];
     y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING +
         GRAPHIC_AREA_HEIGHT / 2 - ICON_HEIGHT / 2;
-    DrawPanelMenuIcon(u8g2, icon, x, y);
+    DrawPanelMenuIcon(u8g2, icon_id, x, y);
 
     x = parameter_width_table[index];
     y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
@@ -209,9 +212,9 @@ UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const cha
     return UI_DRAWING_STATUS_OK;
 }
 
-static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, UiPanelSlotIconId icon, uint8_t x, uint8_t y)
+static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, MenuIconId icon_id, uint8_t x, uint8_t y)
 {
-    uint8_t icon_encoding = panel_menu_icon_table[icon], glyph_width;
+    uint8_t icon_encoding = panel_menu_icon_table[icon_id], glyph_width;
     u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
     glyph_width = u8g2_GetGlyphWidth(u8g2, icon_encoding);
     u8g2_DrawGlyph(u8g2, x + SLOT_WIDTH / 2 - glyph_width / 2, y + ICON_HEIGHT, icon_encoding);

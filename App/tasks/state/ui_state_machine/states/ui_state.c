@@ -1,19 +1,9 @@
 #include "ui_state.h"
 
-UiStateId UiState_GetNextUiStateId(UiState* ui_state, UiActionId ui_action_id)
+PanelSlot *UiState_GetPanelSlot(UiState *ui_state, UiStateSlotIndex id)
 {
-    for (size_t i=0; i< ui_state->ui_transition_map_count; i++) {
-        if (ui_state->ui_transition_map[i].ui_action_id == ui_action_id) {
-            return ui_state->ui_transition_map[i].next_ui_state_id;
-        }
-    }
-    return UI_STATE_ID_NONE;
-}
-
-ParameterSlotConfig *UiState_GetParameterSlots(UiState *ui_state)
-{
-    if (ui_state->parameter_slot_getter_function == NULL) {
+    if (id < UI_STATE_SLOT_INDEX_A || id >= UI_STATE_SLOT_INDEX_COUNT) {
         return NULL;
     }
-    return ui_state->parameter_slot_getter_function();
+    return &ui_state->panel_slots[ui_state->page_index * 4 + (uint8_t)id];
 }

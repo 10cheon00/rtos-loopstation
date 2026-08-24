@@ -1,11 +1,11 @@
-#ifndef PARAMETER_SLOT_H
-#define PARAMETER_SLOT_H
+#ifndef PARAMETER_DESCRIPTOR_H
+#define PARAMETER_DESCRIPTOR_H
 
 #include "parameter_id.h"
 
 typedef struct {
     ParameterId id;
     const char *label;
-} ParameterSlotConfig;
+} ParameterDescriptor;
 
 #endif

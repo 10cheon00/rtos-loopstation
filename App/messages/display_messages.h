@@ -4,23 +4,38 @@
 #include <stdint.h>
 
 #include "FreeRTOS.h"
+#include "ui_state.h"
 #include "ui_state_id.h"
 #include "button_id.h"
 #include "parameter.h"
 #include "track_state.h"
 #include "ui_state_slot_index.h"
+#include "menu_descriptor.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
 typedef struct {
     Parameter parameter;
     const char *label;
-} UiParameterRenderSlot;
+} ParameterRenderPayload;
+
+typedef struct {
+    MenuIconId icon_id;
+    const char *label;
+} MenuRenderPayload;
+
+typedef struct {
+    PanelSlotType type;
+    union {
+        MenuRenderPayload menu;
+        ParameterRenderPayload parameter;
+    } data;
+} PanelSlotRenderPayload;
 
 typedef struct {
     UiStateId ui_state_id;
-    UiParameterRenderSlot parameter_slots[UI_STATE_SLOT_INDEX_COUNT];
-} UiStateRenderPayload;
+    PanelSlotRenderPayload slot_render_payloads[UI_STATE_SLOT_INDEX_COUNT]; 
+} PanelRenderPayload;
 
 typedef struct {
     // TODO:
@@ -31,7 +46,7 @@ typedef struct {
 } LedRenderPayload;
 
 typedef struct {
-    UiStateRenderPayload ui_state;
+    PanelRenderPayload panel;
     LedRenderPayload led;
 } DisplaySnapshot;
 

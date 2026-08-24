@@ -1,12 +1,14 @@
 #include "display_task.h"
 
 #include "cmsis_os2.h"
+#include "u8g2.h"
 
 #include "display_messages.h"
 #include "display_initparams.h"
-#include "ui_renderer_config_table.h"
 #include "mcp23017.h"
 #include "mcp23017_gpio_map.h"
+#include "ui_renderer.h"
+#include "ui_state_label_config_table.h"
 
 #define DISPLAY_RENDER_FREQEUNCY_HZ (100UL)
 #define DISPLAY_RENDER_DELAY_MS (1000UL / DISPLAY_RENDER_FREQEUNCY_HZ)
@@ -25,7 +27,7 @@ static uint8_t track_led_rgb_table[TRACK_STATE_ID_COUNT][TRACK_LED_COLOR_COUNT] 
     [TRACK_STATE_ID_OVERDUBBING] = {0, UINT8_MAX, UINT8_MAX, 0},
 };
 
-static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *payload);
+static TaskStatus HandlePanelRenderPayload(PanelRenderPayload *payload);
 static TaskStatus HandleLedRenderPayload(LedRenderPayload *payload);
 static TaskStatus RenderFxLed(Parameter *parameter, Mcp23017GpioId gpio_id);
 static TaskStatus RenderTrackLed(TrackStateId state_id, uint8_t track_index);
@@ -83,23 +85,32 @@ void DisplayTask_Run(void)
         osDelayUntil(next_wake_ticks);
         last_wake_ticks = osKernelGetTickCount();
         osMessageQueueGet(display_snapshot_mailbox, &snapshot, NULL, 0);
-        HandleUiStateRenderPayload(&snapshot.ui_state);
+        HandlePanelRenderPayload(&snapshot.panel);
         HandleLedRenderPayload(&snapshot.led);
     }
 }
 
-static TaskStatus HandleUiStateRenderPayload(UiStateRenderPayload *payload)
+static TaskStatus HandlePanelRenderPayload(PanelRenderPayload *panel_render_payload)
 {
-    UiPanelRenderFunction ui_panel_render_function;
-    UiDrawingStatus ui_drawing_status;
-
-    ui_panel_render_function = UiRendererTable_GetUiPanelRenderFunction(payload->ui_state_id);
-
     u8g2_ClearBuffer(&u8g2);
-    ui_drawing_status = ui_panel_render_function(&u8g2, payload->parameter_slots);
-    if (ui_drawing_status != UI_DRAWING_STATUS_OK) {
-        return TASK_STATUS_ERROR;
+
+    const char *panel_label = UiStateLabelConfigTable_Get(panel_render_payload->ui_state_id);
+    UI_DrawPanelLayout(&u8g2, panel_label, 0);
+
+    for (uint8_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
+        PanelSlotRenderPayload *payload = &panel_render_payload->slot_render_payloads[i];
+        if (payload->type == PANEL_SLOT_TYPE_MENU) {
+            MenuRenderPayload *menu_render_payload = &payload->data.menu;
+            UI_DrawMenu(&u8g2, menu_render_payload->icon_id, menu_render_payload->label,
+                        (UiStateSlotIndex)i);
+        } else if (panel_render_payload->slot_render_payloads[i].type ==
+                   PANEL_SLOT_TYPE_PARAMETER) {
+                       ParameterRenderPayload *parameter_render_payload = &payload->data.parameter;
+            UI_DrawParameter(&u8g2, &parameter_render_payload->parameter,
+                             parameter_render_payload->label, (UiStateSlotIndex)i);
+        }
     }
+
     u8g2_SendBuffer(&u8g2);
 
     return TASK_STATUS_OK;

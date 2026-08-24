@@ -2,11 +2,22 @@
 
 #include "utils.h"
 
-static UiTransitionMapEntry transition_map[] = {
-    {.ui_action_id = UI_ACTION_ID_NAVIGATE_LEFT, .next_ui_state_id = UI_STATE_ID_SETTING},
+static PanelSlot panel_slots[4] = {
+    {
+        .type = PANEL_SLOT_TYPE_NONE,
+    },
+    {
+        .type = PANEL_SLOT_TYPE_NONE,
+    },
+    {
+        .type = PANEL_SLOT_TYPE_NONE,
+    },
+    {
+        .type = PANEL_SLOT_TYPE_NONE,
+    },
 };
 
-UiState UI_STATE_HOME_PANEL = {.ui_transition_map = transition_map,
-                               .ui_transition_map_count =
-                                   ARRAY_COUNT(transition_map),
-                               .ui_state_id = UI_STATE_ID_HOME};
+UiState UI_STATE_HOME_PANEL = {
+    .panel_slots = panel_slots,
+    .ui_state_id = UI_STATE_ID_HOME,
+};

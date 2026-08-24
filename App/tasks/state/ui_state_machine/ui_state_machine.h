@@ -17,6 +17,6 @@ struct UiStateMachine {
 
 void UiStateMachine_Init(UiStateMachine *ui_state_machine, UiStateMachineContext *context,
                          UiState *init_state);
-void UiStateMachine_TryTransition(UiStateMachine *ui_state_machine, UiActionId ui_action_id);
+void UiStateMachine_TryTransition(UiStateMachine *ui_state_machine, UiStateId next_ui_state_id);
 
 #endif

@@ -11,11 +11,12 @@
 #include "state_initparams.h"
 #include "ui_state_machine.h"
 #include "ui_state_config_table.h"
-#include "button_ui_action_config_table.h"
+#include "global_ui_transition_config_table.h"
 #include "track_state_machine.h"
 #include "button_track_action_config_table.h"
 #include "system_state_machine.h"
 #include "encoder_id.h"
+#include "ui_state_navigation_tree.h"
 
 static StateTaskContext state_task_context;
 
@@ -39,7 +40,6 @@ TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder_rotation_p
 static TaskStatus TryUpdateParameterFromAdc(StateEvent *state_event);
 static TaskStatus TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
                                               StateEvent *state_event);
-static UiActionId GetUiActionIdFromButtonId(ButtonId button_id);
 static TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine);
 static TaskStatus TryTransitionTrackStateMachine(TrackStateMachine *track_state_machine,
                                                  StateEvent *state_event, uint8_t track_index);
@@ -138,7 +138,8 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload *button_payload)
 {
     ParameterId parameter_id;
     Parameter *parameter;
-    ParameterSlotConfig *slots;
+    PanelSlot *panel_slot;
+
     if (button_payload->state != BUTTON_STATE_PRESSED) {
         return TASK_STATUS_ERROR;
     }
@@ -149,30 +150,27 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload *button_payload)
         return TASK_STATUS_ERROR;
     }
 
-    slots = UiState_GetParameterSlots(ui_state_machine.current_state);
-    if (slots == NULL) {
-        return TASK_STATUS_OK;
-    }
     if (button_payload->id == BUTTON_ID_ENCODER_A_PUSH) {
         // TODO:
         // Encoder_A~D 모두 처리 가능하게 해야함
-        parameter_id = slots[ENCODER_ID_A].id;
+        panel_slot = UiState_GetPanelSlot(ui_state_machine.current_state, UI_STATE_SLOT_INDEX_A);
+        parameter_id = panel_slot->data.parameter.id;
         if (parameter_id == PARAMETER_ID_NONE) {
             return TASK_STATUS_ERROR;
         }
-        parameter = LoopStationParameterStore_GetParameterFromParameterId(parameter_id);
+        parameter = LoopStationParameterStore_Get(parameter_id);
         if (parameter->type == PARAMETER_TYPE_TOGGLE) {
             Parameter_ToggleValue(parameter);
             return TASK_STATUS_OK;
         }
     } else if (button_payload->id == BUTTON_ID_IFX_A_TOGGLE) {
-        parameter = LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_IFX_A_STATE);
+        parameter = LoopStationParameterStore_Get(PARAMETER_ID_IFX_A_STATE);
         if (parameter != NULL) {
             Parameter_ToggleValue(parameter);
             return TASK_STATUS_OK;
         }
     } else if (button_payload->id == BUTTON_ID_TFX_A_TOGGLE) {
-        parameter = LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_TFX_A_STATE);
+        parameter = LoopStationParameterStore_Get(PARAMETER_ID_TFX_A_STATE);
         if (parameter != NULL) {
             Parameter_ToggleValue(parameter);
             return TASK_STATUS_OK;
@@ -186,19 +184,20 @@ TaskStatus TryUpdateParameterFromEncoderRotation(EncoderRotationPayload *encoder
 {
     ParameterId parameter_id;
     Parameter *parameter;
-    ParameterSlotConfig *slots;
+    PanelSlot *slot;
     EncoderId encoder_id;
 
     encoder_id = encoder_rotation_payload->encoder_id;
-    slots = UiState_GetParameterSlots(ui_state_machine.current_state);
-    if (slots == NULL) {
+    slot = UiState_GetPanelSlot(ui_state_machine.current_state, (UiStateSlotIndex)encoder_id);
+    if (slot == NULL || slot->type == PANEL_SLOT_TYPE_MENU) {
         return TASK_STATUS_OK;
     }
-    parameter_id = slots[encoder_id].id;
+
+    parameter_id = slot->data.parameter.id;
     if (parameter_id == PARAMETER_ID_NONE) {
         return TASK_STATUS_ERROR;
     }
-    parameter = LoopStationParameterStore_GetParameterFromParameterId(parameter_id);
+    parameter = LoopStationParameterStore_Get(parameter_id);
     if (parameter->type == PARAMETER_TYPE_TOGGLE) {
         Parameter_ToggleValue(parameter);
         return TASK_STATUS_OK;
@@ -219,45 +218,77 @@ TaskStatus TryUpdateParameterFromAdc(StateEvent *state_event)
 static TaskStatus TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
                                               StateEvent *state_event)
 {
-    ButtonPayload *button_payload;
-    UiActionId ui_action_id;
+    // TODO:
+    // 좌우 버튼이 페이지 이동에만 사용되므로, 여기서 일어나는 전이들은 대부분 System, Loop, IFX
+    // A/B/C, TFX A/B/C와 같이 특정 메뉴로 바로 이동하는 전역 버튼으로 발생하거나 Exit 버튼과 같이
+    // 상위 메뉴로 이동하는 버튼으로 발생한다.
+    // 그러므로, 버튼에 따라서 패널 전이를 하거나 패널 내 페이지 이동을 하도록 요청하면 된다.
+    // 패널 전이도 사실상 전역 이동, 상위 패널로 이동밖에 없으니까 기존에 transition_map 대신 상태
+    // 머신에서 전역으로 판단하는게 나을것 같다.
+    ButtonId button_id;
+    UiStateId next_ui_state_id = UI_STATE_ID_NONE;
+    PanelSlot *panel_slot;
 
     // 1. 버튼 입력일때에만 패널이 바뀜
     if (state_event->type != STATE_EVENT_BUTTON) {
         return TASK_STATUS_ERROR;
     }
-    button_payload = &state_event->payload.button;
-
+    button_id = state_event->payload.button.id;
     // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
-    if (button_payload->state != BUTTON_STATE_PRESSED) {
+    if (state_event->payload.button.state != BUTTON_STATE_PRESSED) {
         return TASK_STATUS_ERROR;
     }
 
-    // 3. 버튼에 할당된 UI_ACTION_ID값을 상태 머신에 넘겨 전이 시도
-    ui_action_id = ButtonUiActionConfigMap_Get(button_payload->id);
-    UiStateMachine_TryTransition(ui_state_machine, ui_action_id);
+    if (button_id == BUTTON_ID_EXIT) {
+        // 3. exit 버튼이라면 상위 패널로 이동 가능한지 판단 후 전이
+        next_ui_state_id =
+            UiStateNavigationTree_GetParent(ui_state_machine->current_state->ui_state_id);
+    } else if (button_id == BUTTON_ID_ENCODER_A_PUSH) {
+        // 4. 엔코더 푸시 버튼이라면 현재 UiState가 보여주는 슬롯에 따라 전이
+        panel_slot = UiState_GetPanelSlot(ui_state_machine->current_state, UI_STATE_SLOT_INDEX_A);
+        if (panel_slot->type == PANEL_SLOT_TYPE_MENU) {
+            next_ui_state_id = panel_slot->data.menu.state_id;
+        }
+    } else if (button_id == BUTTON_ID_ENCODER_B_PUSH) {
+    } else if (button_id == BUTTON_ID_ENCODER_C_PUSH) {
+    } else if (button_id == BUTTON_ID_ENCODER_D_PUSH) {
+    } else {
+        // 5. 전역 버튼이라면 전역 패널 전이 테이블에 따라 전이
+        next_ui_state_id = GlobalUiTransitionConfigTable_Get(button_id);
+    }
+    if (next_ui_state_id != UI_STATE_ID_NONE) {
+        UiStateMachine_TryTransition(ui_state_machine, next_ui_state_id);
+    }
 
     return TASK_STATUS_OK;
 }
 
 TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine)
 {
-    TrackStateId track_state_ids[TRACK_COUNT];
-    DisplaySnapshot snapshot = {
-        .ui_state = {.ui_state_id = ui_state_machine->current_state->ui_state_id}};
-    ParameterSlotConfig *slots = UiState_GetParameterSlots(ui_state_machine->current_state);
-    if (slots != NULL) {
-        for (size_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
-            snapshot.ui_state.parameter_slots[i].parameter =
-                *LoopStationParameterStore_GetParameterFromParameterId(slots[i].id);
-            snapshot.ui_state.parameter_slots[i].label = slots[i].label;
+    PanelSlot *slot;
+    DisplaySnapshot snapshot;
+
+    snapshot.panel.ui_state_id = ui_state_machine->current_state->ui_state_id;
+    for (size_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
+        slot = UiState_GetPanelSlot(ui_state_machine->current_state, (UiStateSlotIndex)i);
+        
+        snapshot.panel.slot_render_payloads[i].type = slot->type;
+        if (slot->type == PANEL_SLOT_TYPE_MENU) {
+            snapshot.panel.slot_render_payloads[i].data.menu = (MenuRenderPayload){
+                .icon_id = slot->data.menu.icon_id,
+                .label = slot->data.menu.label,
+            };
+        } else if (slot->type == PANEL_SLOT_TYPE_PARAMETER) {
+            Parameter *parameter = LoopStationParameterStore_Get(slot->data.parameter.id);
+            snapshot.panel.slot_render_payloads[i].data.parameter = (ParameterRenderPayload){
+                .parameter = *parameter,
+                .label = slot->data.parameter.label,
+            };
         }
     }
     snapshot.led = (LedRenderPayload){
-        .ifx_a_state =
-            *LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_IFX_A_STATE),
-        .tfx_a_state =
-            *LoopStationParameterStore_GetParameterFromParameterId(PARAMETER_ID_TFX_A_STATE),
+        .ifx_a_state = *LoopStationParameterStore_Get(PARAMETER_ID_IFX_A_STATE),
+        .tfx_a_state = *LoopStationParameterStore_Get(PARAMETER_ID_TFX_A_STATE),
     };
     for (uint8_t i = 0; i < TRACK_COUNT; i++) {
         snapshot.led.track_state[i] = track_state_machine->current_state->id;

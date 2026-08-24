@@ -15,6 +15,6 @@ typedef struct {
     Parameter parameters[PARAMETER_ID_COUNT];
 } LoopStationParameterStore;
 
-Parameter *LoopStationParameterStore_GetParameterFromParameterId(ParameterId parameter_id);
+Parameter *LoopStationParameterStore_Get(ParameterId parameter_id);
 
 #endif
