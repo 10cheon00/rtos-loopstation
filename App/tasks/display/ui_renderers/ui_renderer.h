@@ -16,7 +16,7 @@ typedef enum {
 
 typedef UiDrawingStatus (*UiPanelRenderFunction)(u8g2_t *, ParameterRenderPayload *);
 
-UiDrawingStatus UI_DrawPanelLayout(u8g2_t *u8g2, const char *panel_name, uint8_t arrow_flag);
+UiDrawingStatus UI_DrawPanelLayout(u8g2_t *u8g2, const char *panel_name, PageNavigationFlag flag);
 UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char *label,
                                  UiStateSlotIndex index);
 UiDrawingStatus UI_DrawMenu(u8g2_t *u8g2, MenuIconId icon_id, const char *label,
