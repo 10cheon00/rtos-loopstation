@@ -276,11 +276,11 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine)
     snapshot.panel.ui_state_id = ui_state_machine->current_state->ui_state_id;
     snapshot.panel.page_navigation_flag = PAGE_NAVIGATION_FLAG_NONE;
     if (UiState_CanDecreasePageIndex(ui_state_machine->current_state)) {
-    snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_LEFT_ARROW;
-    } 
+        snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_LEFT_ARROW;
+    }
     if (UiState_CanIncreasePageIndex(ui_state_machine->current_state)) {
-    snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_RIGHT_ARROW;
-    } 
+        snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_RIGHT_ARROW;
+    }
     for (size_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
         slot = UiState_GetPanelSlot(ui_state_machine->current_state, (UiStateSlotIndex)i);
 
