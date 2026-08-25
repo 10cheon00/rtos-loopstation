@@ -29,11 +29,13 @@ typedef struct {
 typedef PanelSlot *(*UiStatePanelSlotGetterFunction)(UiStateSlotIndex id);
 
 typedef struct {
-    UiStateId ui_state_id;
-    uint8_t page_index;
     PanelSlot *panel_slots;
+    UiStateId ui_state_id;
+    uint8_t panel_slot_count;
+    uint8_t page_index;
 } UiState;
 
 PanelSlot *UiState_GetPanelSlot(UiState *ui_state, UiStateSlotIndex id);
-
+void UiState_IncreasePageIndex(UiState *ui_state);
+void UiState_DecreasePageIndex(UiState *ui_state);
 #endif

@@ -243,8 +243,13 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
         // 3. exit 버튼이라면 상위 패널로 이동 가능한지 판단 후 전이
         next_ui_state_id =
             UiStateNavigationTree_GetParent(ui_state_machine->current_state->ui_state_id);
+    } else if (button_id == BUTTON_ID_LEFT) {
+        // 4. 좌우 버튼인 경우 페이지 증가
+        UiState_IncreasePageIndex(ui_state_machine->current_state);
+    } else if (button_id == BUTTON_ID_RIGHT) {
+        UiState_DecreasePageIndex(ui_state_machine->current_state);
     } else if (button_id == BUTTON_ID_ENCODER_A_PUSH) {
-        // 4. 엔코더 푸시 버튼이라면 현재 UiState가 보여주는 슬롯에 따라 전이
+        // 5. 엔코더 푸시 버튼이라면 현재 UiState가 보여주는 슬롯에 따라 전이
         panel_slot = UiState_GetPanelSlot(ui_state_machine->current_state, UI_STATE_SLOT_INDEX_A);
         if (panel_slot->type == PANEL_SLOT_TYPE_MENU) {
             next_ui_state_id = panel_slot->data.menu.state_id;
@@ -253,7 +258,7 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine *ui_state_machine,
     } else if (button_id == BUTTON_ID_ENCODER_C_PUSH) {
     } else if (button_id == BUTTON_ID_ENCODER_D_PUSH) {
     } else {
-        // 5. 전역 버튼이라면 전역 패널 전이 테이블에 따라 전이
+        // 6. 전역 버튼이라면 전역 패널 전이 테이블에 따라 전이
         next_ui_state_id = GlobalUiTransitionConfigTable_Get(button_id);
     }
     if (next_ui_state_id != UI_STATE_ID_NONE) {
@@ -271,7 +276,7 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine)
     snapshot.panel.ui_state_id = ui_state_machine->current_state->ui_state_id;
     for (size_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
         slot = UiState_GetPanelSlot(ui_state_machine->current_state, (UiStateSlotIndex)i);
-        
+
         snapshot.panel.slot_render_payloads[i].type = slot->type;
         if (slot->type == PANEL_SLOT_TYPE_MENU) {
             snapshot.panel.slot_render_payloads[i].data.menu = (MenuRenderPayload){
