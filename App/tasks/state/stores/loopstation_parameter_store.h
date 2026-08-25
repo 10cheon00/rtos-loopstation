@@ -1,7 +1,8 @@
 #ifndef LOOPSTATION_PARAMETER_STORE_H
 #define LOOPSTATION_PARAMETER_STORE_H
 
-#include "panel_parameter_config_table.h"
+#include "parameter.h"
+#include "parameter_id.h"
 
 /**
  * TODO:
@@ -14,6 +15,6 @@ typedef struct {
     Parameter parameters[PARAMETER_ID_COUNT];
 } LoopStationParameterStore;
 
-Parameter *LoopStationParameterStore_GetParameterFromParameterId(ParameterId parameter_id);
+Parameter *LoopStationParameterStore_Get(ParameterId parameter_id);
 
 #endif

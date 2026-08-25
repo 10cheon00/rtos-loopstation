@@ -2,40 +2,43 @@
 #define UI_STATE_H
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #include "id.h"
-#include "ui_panel_id.h"
-
-typedef enum {
-    UI_ACTION_ID_NONE = ID_NONE,
-    UI_ACTION_ID_NULL = ID_NULL,
-    UI_ACTION_ID_NAVIGATE_LEFT,
-    UI_ACTION_ID_NAVIGATE_RIGHT,
-    UI_ACTION_ID_ENTER,
-    UI_ACTION_ID_ENTER_ENCODER_A,
-    UI_ACTION_ID_ENTER_ENCODER_B,
-    UI_ACTION_ID_ENTER_ENCODER_C,
-    UI_ACTION_ID_ENTER_ENCODER_D,
-    UI_ACTION_ID_EXIT,
-    UI_ACTION_ID_TO_IFX,
-    UI_ACTION_ID_TO_TFX,
-    UI_ACTION_ID_COUNT
-} UiActionId;
+#include "ui_state_id.h"
+#include "parameter_descriptor.h"
+#include "menu_descriptor.h"
+#include "ui_state_slot_index.h"
 
 /* 순환 참조를 막기 위한 전방 선언 */
 typedef struct UiStateMachine UiStateMachine;
 
-typedef struct {
-    UiActionId ui_action_id;
-    UiPanelId next_ui_panel_id;
-} UiTransitionMapEntry;
+typedef enum {
+    PANEL_SLOT_TYPE_NONE = 0,
+    PANEL_SLOT_TYPE_MENU,
+    PANEL_SLOT_TYPE_PARAMETER,
+} PanelSlotType;
 
 typedef struct {
-    UiTransitionMapEntry* ui_transition_map;
-    size_t ui_transition_map_count;
-    UiPanelId ui_panel_id;
+    PanelSlotType type;
+    union {
+        MenuDescriptor menu;
+        ParameterDescriptor parameter;
+    } data;
+} PanelSlot;
+
+typedef PanelSlot *(*UiStatePanelSlotGetterFunction)(UiStateSlotIndex id);
+
+typedef struct {
+    PanelSlot *panel_slots;
+    UiStateId ui_state_id;
+    uint8_t page_index;
+    uint8_t panel_slot_count;
 } UiState;
 
-UiPanelId UiState_GetUiPanelIdFromUiActionId(UiState* ui_state, UiActionId ui_action_id);
-
+PanelSlot *UiState_GetPanelSlot(UiState *ui_state, UiStateSlotIndex id);
+void UiState_IncreasePageIndex(UiState *ui_state);
+bool UiState_CanIncreasePageIndex(UiState *ui_state);
+void UiState_DecreasePageIndex(UiState *ui_state);
+bool UiState_CanDecreasePageIndex(UiState *ui_state);
 #endif

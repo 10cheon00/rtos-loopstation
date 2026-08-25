@@ -1,4 +1,4 @@
-#include "ui_renderer_utils.h"
+#include "ui_renderer.h"
 
 #include "knob_widget.h"
 #include "toggle_switch_widget.h"
@@ -33,12 +33,17 @@
  *  기준 좌표를 좌상단으로 넘기면 출력을 처리하는 함수 내에서 좌하단으로 변환하여 출력한다.
  */
 
-static uint8_t parameter_width_table[UI_PANEL_SLOT_INDEX_COUNT] = {
-    0, 0, SLOT_WIDTH, SLOT_WIDTH * 2, SLOT_WIDTH * 3, 0};
-static uint8_t panel_menu_icon_table[UI_PANEL_SLOT_ICON_ID_COUNT] = {
-    [UI_PANEL_SLOT_ICON_ID_NONE] = 0,
-    [UI_PANEL_SLOT_ICON_ID_SYSTEM] = 129,
-    [UI_PANEL_SLOT_ICON_ID_DEBUG] = 104};
+static uint8_t parameter_width_table[UI_STATE_SLOT_INDEX_COUNT] = {
+    [UI_STATE_SLOT_INDEX_A] = 0,
+    [UI_STATE_SLOT_INDEX_B] = SLOT_WIDTH,
+    [UI_STATE_SLOT_INDEX_C] = SLOT_WIDTH * 2,
+    [UI_STATE_SLOT_INDEX_D] = SLOT_WIDTH * 3,
+};
+static uint8_t panel_menu_icon_table[MENU_ICON_ID_COUNT] = {
+    [MENU_ICON_ID_NONE] = 0,
+    [MENU_ICON_ID_SYSTEM] = 129,
+    [MENU_ICON_ID_DEBUG] = 104,
+};
 
 static void DrawArrowLeft4x5(u8g2_t *u8g2, uint8_t x, uint8_t y);
 static void DrawArrowRight4x5(u8g2_t *u8g2, uint8_t x, uint8_t y);
@@ -46,22 +51,21 @@ static UiDrawingStatus DrawParameterValue(u8g2_t *u8g2, Parameter *parameter, ui
 static UiDrawingStatus DrawParameterWidget(u8g2_t *u8g2, Parameter *parameter, uint8_t x,
                                            uint8_t y);
 static void ConvertNumberToString(int32_t number, char *string, uint8_t string_length);
-static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, UiPanelSlotIconId icon, uint8_t x,
-                                         uint8_t y);
+static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, MenuIconId icon, uint8_t x, uint8_t y);
 static UiDrawingStatus DrawLabel(u8g2_t *u8g2, const char *label, uint8_t x, uint8_t y);
 
 // TODO:
 // 패널 이동 화살표 표시도 자동화할 수 있지 않을까?
-UiDrawingStatus UI_DrawPanelLayout(u8g2_t *u8g2, const char *panel_name, uint8_t arrow_flag)
+UiDrawingStatus UI_DrawPanelLayout(u8g2_t *u8g2, const char *panel_name, PageNavigationFlag flag)
 {
     u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
     u8g2_ClearBuffer(u8g2);
     u8g2_DrawStr(u8g2, 1, PANEL_LABEL_HEIGHT, panel_name);
     u8g2_DrawLine(u8g2, 0, PANEL_LABEL_LINE_Y, SCREEN_WIDTH, PANEL_LABEL_LINE_Y);
-    if (arrow_flag & UI_ARROW_FLAG_LEFT) {
+    if (flag & PAGE_NAVIGATION_FLAG_LEFT_ARROW) {
         DrawArrowLeft4x5(u8g2, 117, PANEL_LABEL_HEIGHT);
     }
-    if (arrow_flag & UI_ARROW_FLAG_RIGHT) {
+    if (flag & PAGE_NAVIGATION_FLAG_RIGHT_ARROW) {
         DrawArrowRight4x5(u8g2, 122, PANEL_LABEL_HEIGHT);
     }
     return UI_DRAWING_STATUS_OK;
@@ -84,12 +88,12 @@ static void DrawArrowRight4x5(u8g2_t *u8g2, uint8_t x, uint8_t y)
 }
 
 UiDrawingStatus UI_DrawParameter(u8g2_t *u8g2, Parameter *parameter, const char *label,
-                                 UiPanelSlotIndex index)
+                                 UiStateSlotIndex index)
 {
     uint8_t x, y;
     UiDrawingStatus status;
 
-    if (index <= UI_PANEL_SLOT_ICON_ID_NONE || index >= UI_PANEL_SLOT_INDEX_COUNT) {
+    if (index >= UI_STATE_SLOT_INDEX_COUNT) {
         return UI_DRAWING_STATUS_ERROR;
     }
 
@@ -186,18 +190,18 @@ static void ConvertNumberToString(int32_t number, char *string, uint8_t string_l
     }
 }
 
-UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const char *label,
-                                 UiPanelSlotIndex index)
+UiDrawingStatus UI_DrawMenu(u8g2_t *u8g2, MenuIconId icon_id, const char *label,
+                            UiStateSlotIndex index)
 {
     uint8_t x, y;
-    if (index <= UI_PANEL_SLOT_ICON_ID_NONE || index >= UI_PANEL_SLOT_INDEX_COUNT) {
+    if (index >= UI_STATE_SLOT_INDEX_COUNT) {
         return UI_DRAWING_STATUS_ERROR;
     }
 
     x = parameter_width_table[index];
     y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT + PARAMETER_PADDING +
         GRAPHIC_AREA_HEIGHT / 2 - ICON_HEIGHT / 2;
-    DrawPanelMenuIcon(u8g2, icon, x, y);
+    DrawPanelMenuIcon(u8g2, icon_id, x, y);
 
     x = parameter_width_table[index];
     y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
@@ -205,9 +209,9 @@ UiDrawingStatus UI_DrawPanelMenu(u8g2_t *u8g2, UiPanelSlotIconId icon, const cha
     return UI_DRAWING_STATUS_OK;
 }
 
-static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, UiPanelSlotIconId icon, uint8_t x, uint8_t y)
+static UiDrawingStatus DrawPanelMenuIcon(u8g2_t *u8g2, MenuIconId icon_id, uint8_t x, uint8_t y)
 {
-    uint8_t icon_encoding = panel_menu_icon_table[icon], glyph_width;
+    uint8_t icon_encoding = panel_menu_icon_table[icon_id], glyph_width;
     u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
     glyph_width = u8g2_GetGlyphWidth(u8g2, icon_encoding);
     u8g2_DrawGlyph(u8g2, x + SLOT_WIDTH / 2 - glyph_width / 2, y + ICON_HEIGHT, icon_encoding);

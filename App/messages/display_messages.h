@@ -4,17 +4,46 @@
 #include <stdint.h>
 
 #include "FreeRTOS.h"
-#include "ui_panel_id.h"
+#include "ui_state.h"
+#include "ui_state_id.h"
 #include "button_id.h"
 #include "parameter.h"
 #include "track_state.h"
+#include "ui_state_slot_index.h"
+#include "menu_descriptor.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
+typedef uint8_t PageNavigationFlag;
+enum {
+    PAGE_NAVIGATION_FLAG_NONE = 0x0,
+    PAGE_NAVIGATION_FLAG_LEFT_ARROW = 0x1,
+    PAGE_NAVIGATION_FLAG_RIGHT_ARROW = 0x2,
+};
+
 typedef struct {
-    UiPanelId panel_id;
-    Parameter parameters[4];
-} UiStateRenderPayload;
+    Parameter parameter;
+    const char *label;
+} ParameterRenderPayload;
+
+typedef struct {
+    MenuIconId icon_id;
+    const char *label;
+} MenuRenderPayload;
+
+typedef struct {
+    PanelSlotType type;
+    union {
+        MenuRenderPayload menu;
+        ParameterRenderPayload parameter;
+    } data;
+} PanelSlotRenderPayload;
+
+typedef struct {
+    UiStateId ui_state_id;
+    PageNavigationFlag page_navigation_flag;
+    PanelSlotRenderPayload slot_render_payloads[UI_STATE_SLOT_INDEX_COUNT];
+} PanelRenderPayload;
 
 typedef struct {
     // TODO:
@@ -25,7 +54,7 @@ typedef struct {
 } LedRenderPayload;
 
 typedef struct {
-    UiStateRenderPayload ui_state;
+    PanelRenderPayload panel;
     LedRenderPayload led;
 } DisplaySnapshot;
 

@@ -11,8 +11,11 @@
 #define VARIABLE_TO_STR_IMPL(A) #A
 #define VARIABLE_TO_STR(A) VARIABLE_TO_STR_IMPL(A)
 
-double cosine(int16_t angle);
-double sine(int16_t angle);
+double abs_double(double d);
+int16_t abs_int16(int16_t n);
+double cosine(int16_t degree);
+double sine(int16_t degree);
+double tangent(int16_t degree);
 typedef uint32_t Hash_t;
 Hash_t djb2(const char *string);
 

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "button_id.h"
+#include "encoder_id.h"
 #include "knob_id.h"
 
 #define STATE_EVENT_QUEUE_TIMEOUT_500MS (500UL)
@@ -22,7 +23,7 @@ typedef struct {
 
 typedef struct {
     uint32_t timestamp_ticks;
-    uint8_t encoder_id;
+    EncoderId encoder_id;
     int32_t delta;
 } EncoderRotationPayload;
 

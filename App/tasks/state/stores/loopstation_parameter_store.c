@@ -1,5 +1,7 @@
 #include "loopstation_parameter_store.h"
 
+#include <stddef.h>
+
 static LoopStationParameterStore loopstation_parameter_store = {
     .parameters = {
         [PARAMETER_ID_NONE] = {.min = 0, .max = 0, .current = 0, .type = PARAMETER_TYPE_SLIDER},
@@ -42,7 +44,7 @@ static LoopStationParameterStore loopstation_parameter_store = {
         },
     }};
 
-Parameter *LoopStationParameterStore_GetParameterFromParameterId(ParameterId parameter_id)
+Parameter *LoopStationParameterStore_Get(ParameterId parameter_id)
 {
     if (parameter_id <= PARAMETER_ID_NONE || parameter_id >= PARAMETER_ID_COUNT) {
         return NULL;
