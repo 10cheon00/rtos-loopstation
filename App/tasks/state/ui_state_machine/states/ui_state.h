@@ -2,6 +2,7 @@
 #define UI_STATE_H
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #include "id.h"
 #include "ui_state_id.h"
@@ -37,5 +38,7 @@ typedef struct {
 
 PanelSlot *UiState_GetPanelSlot(UiState *ui_state, UiStateSlotIndex id);
 void UiState_IncreasePageIndex(UiState *ui_state);
+bool UiState_CanIncreasePageIndex(UiState *ui_state);
 void UiState_DecreasePageIndex(UiState *ui_state);
+bool UiState_CanDecreasePageIndex(UiState *ui_state);
 #endif

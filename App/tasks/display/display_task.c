@@ -95,7 +95,7 @@ static TaskStatus HandlePanelRenderPayload(PanelRenderPayload *panel_render_payl
     u8g2_ClearBuffer(&u8g2);
 
     const char *panel_label = UiStateLabelConfigTable_Get(panel_render_payload->ui_state_id);
-    UI_DrawPanelLayout(&u8g2, panel_label, 0);
+    UI_DrawPanelLayout(&u8g2, panel_label, panel_render_payload->page_navigation_flag);
 
     for (uint8_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
         PanelSlotRenderPayload *payload = &panel_render_payload->slot_render_payloads[i];

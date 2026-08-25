@@ -4,9 +4,6 @@
 #include "toggle_switch_widget.h"
 #include "utils.h"
 
-#define UI_ARROW_FLAG_LEFT 0x1
-#define UI_ARROW_FLAG_RIGHT 0x2
-
 #define SLOT_WIDTH 32
 #define CHARACTER_HEIGHT 5
 #define PANEL_LABEL_HEIGHT (CHARACTER_HEIGHT + 1)
@@ -59,16 +56,16 @@ static UiDrawingStatus DrawLabel(u8g2_t *u8g2, const char *label, uint8_t x, uin
 
 // TODO:
 // 패널 이동 화살표 표시도 자동화할 수 있지 않을까?
-UiDrawingStatus UI_DrawPanelLayout(u8g2_t *u8g2, const char *panel_name, uint8_t arrow_flag)
+UiDrawingStatus UI_DrawPanelLayout(u8g2_t *u8g2, const char *panel_name, PageNavigationFlag flag)
 {
     u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
     u8g2_ClearBuffer(u8g2);
     u8g2_DrawStr(u8g2, 1, PANEL_LABEL_HEIGHT, panel_name);
     u8g2_DrawLine(u8g2, 0, PANEL_LABEL_LINE_Y, SCREEN_WIDTH, PANEL_LABEL_LINE_Y);
-    if (arrow_flag & UI_ARROW_FLAG_LEFT) {
+    if (flag & PAGE_NAVIGATION_FLAG_LEFT_ARROW) {
         DrawArrowLeft4x5(u8g2, 117, PANEL_LABEL_HEIGHT);
     }
-    if (arrow_flag & UI_ARROW_FLAG_RIGHT) {
+    if (flag & PAGE_NAVIGATION_FLAG_RIGHT_ARROW) {
         DrawArrowRight4x5(u8g2, 122, PANEL_LABEL_HEIGHT);
     }
     return UI_DRAWING_STATUS_OK;
@@ -194,7 +191,7 @@ static void ConvertNumberToString(int32_t number, char *string, uint8_t string_l
 }
 
 UiDrawingStatus UI_DrawMenu(u8g2_t *u8g2, MenuIconId icon_id, const char *label,
-                                 UiStateSlotIndex index)
+                            UiStateSlotIndex index)
 {
     uint8_t x, y;
     if (index >= UI_STATE_SLOT_INDEX_COUNT) {

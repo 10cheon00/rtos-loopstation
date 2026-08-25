@@ -14,6 +14,13 @@
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
+typedef uint8_t PageNavigationFlag;
+enum {
+    PAGE_NAVIGATION_FLAG_NONE = 0x0,
+    PAGE_NAVIGATION_FLAG_LEFT_ARROW = 0x1,
+    PAGE_NAVIGATION_FLAG_RIGHT_ARROW = 0x2,
+};
+
 typedef struct {
     Parameter parameter;
     const char *label;
@@ -34,7 +41,8 @@ typedef struct {
 
 typedef struct {
     UiStateId ui_state_id;
-    PanelSlotRenderPayload slot_render_payloads[UI_STATE_SLOT_INDEX_COUNT]; 
+    PageNavigationFlag page_navigation_flag;
+    PanelSlotRenderPayload slot_render_payloads[UI_STATE_SLOT_INDEX_COUNT];
 } PanelRenderPayload;
 
 typedef struct {
