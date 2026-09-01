@@ -91,9 +91,10 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_system_setting_panel.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864_lcd.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/configs/mcp23017_gpio_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/mcp23017.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs/mcp23017_gpio_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/mutex_guard.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/config_validator.cpp
 )
 
@@ -123,7 +124,8 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
-    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/utils
     ${CMAKE_CURRENT_SOURCE_DIR}
 )

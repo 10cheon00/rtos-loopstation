@@ -10,14 +10,9 @@
 
 static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;
-static I2C_HandleTypeDef *hi2c;
-static osMutexId_t i2c1_mutex;
 
 static TaskStatus HandleInputEvent(InputEvent *input_event);
 static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent);
-static TaskStatus GetPinState(Mcp23017Address address, Mcp23017GpioPinMask *gpio_a_pin_mask,
-                              Mcp23017GpioPinMask *gpio_b_pin_mask,
-                              Mcp23017GpioPinMask *gpio_a_state, Mcp23017GpioPinMask *gpio_b_state);
 static TaskStatus SendButtonPayload(Mcp23017Address address, Mcp23017GpioId gpio_id,
                                     ButtonState button_state, TickType_t timestamp_ticks);
 static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent *encoder_rotation_event);
@@ -27,8 +22,7 @@ static InputTaskContext input_task_context;
 
 static int IsValidInitParams(const InputInitParams *params)
 {
-    return (params != 0) && (params->input_event_queue != 0 && params->state_event_queue != 0 &&
-                             params->hi2c != NULL && params->i2c1_mutex != NULL);
+    return (params != 0) && (params->input_event_queue != 0 && params->state_event_queue != 0);
 }
 
 void InputTask_Init(void *argument)
@@ -43,8 +37,6 @@ void InputTask_Init(void *argument)
 
     input_event_queue = params->input_event_queue;
     state_event_queue = params->state_event_queue;
-    hi2c = params->hi2c;
-    i2c1_mutex = params->i2c1_mutex;
 
     InputTask_Run();
 }
@@ -81,31 +73,27 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
 {
     TickType_t timestamp_ticks = intEvent->timestamp_ticks;
     Mcp23017Address address;
-    Mcp23017GpioInterruptPin GPIO_Pin = intEvent->gpio_pin;
-    Mcp23017GpioPinMask gpio_a_pin_mask, gpio_b_pin_mask;
-    Mcp23017GpioPinMask gpio_a_state, gpio_b_state;
+    Mcp23017InterruptPin GPIO_Pin = intEvent->gpio_pin;
+    Mcp23017PinMask gpio_a_pin_mask, gpio_b_pin_mask;
+    Mcp23017PinMask gpio_a_state, gpio_b_state;
+    Mcp23017InterruptSnapshot snapshot;
+    Mcp23017Status mcp23017_status;
 
     Mcp23017GpioId gpio_id;
-    ButtonId button_id;
     ButtonState button_state;
     osStatus_t os_status;
-    TaskStatus taskStatus;
     uint8_t index;
 
-    Mcp23017_GetMcp23017AddressFromInterruptPin(GPIO_Pin, &address);
+    Mcp23017Driver &driver = Mcp23017Driver::GetInstance();
+
+    driver.GetMcp23017AddressFromInterruptPin(GPIO_Pin, &address);
     if (address == 0) {
         return TASK_STATUS_ERROR;
     }
 
-    os_status = osMutexAcquire(i2c1_mutex, 500UL);
-    if (os_status != osOK) {
-        return TASK_STATUS_ERROR;
-    }
     // 한 MCP23017의 두 포트를 모두 조회하여 활성화된 여러 입력핀들을 모두 처리
-    taskStatus =
-        GetPinState(address, &gpio_a_pin_mask, &gpio_b_pin_mask, &gpio_a_state, &gpio_b_state);
-    osMutexRelease(i2c1_mutex);
-    if (taskStatus != TASK_STATUS_OK) {
+    mcp23017_status = driver.GetInterruptSnapshot(address, &snapshot);
+    if (mcp23017_status != Mcp23017Status::OK) {
         return TASK_STATUS_ERROR;
     }
 
@@ -113,7 +101,7 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     while (gpio_a_pin_mask != 0) {
         if ((gpio_a_pin_mask & 0x1) != 0) {
             gpio_id = Mcp23017GpioMap_GetMcp23017GpioId(address, MCP23017_GPIO_PORT_A, index);
-            if (gpio_id == MCP23017_GPIO_ID_NONE) {
+            if (gpio_id == Mcp23017GpioId::NONE) {
                 return TASK_STATUS_ERROR;
             }
             button_state = (gpio_a_state & 0x1) ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
@@ -127,7 +115,7 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
     while (gpio_b_pin_mask != 0) {
         if ((gpio_b_pin_mask & 0x1) != 0) {
             gpio_id = Mcp23017GpioMap_GetMcp23017GpioId(address, MCP23017_GPIO_PORT_B, index);
-            if (gpio_id == MCP23017_GPIO_ID_NONE) {
+            if (gpio_id == Mcp23017GpioId::NONE) {
                 return TASK_STATUS_ERROR;
             }
             button_state = (gpio_b_state & 0x1) ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
@@ -137,40 +125,6 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent *intEvent)
         gpio_b_state >>= 1;
         index++;
     }
-    return TASK_STATUS_OK;
-}
-
-static TaskStatus GetPinState(Mcp23017Address address, Mcp23017GpioPinMask *gpio_a_pin_mask,
-                              Mcp23017GpioPinMask *gpio_b_pin_mask,
-                              Mcp23017GpioPinMask *gpio_a_state, Mcp23017GpioPinMask *gpio_b_state)
-{
-    Mcp23017Status status;
-    uint8_t capture;
-
-    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTFA, gpio_a_pin_mask);
-    if (status != MCP23017_STATUS_OK) {
-        return TASK_STATUS_ERROR;
-    }
-    status = Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTFB, gpio_b_pin_mask);
-    if (status != MCP23017_STATUS_OK) {
-        return TASK_STATUS_ERROR;
-    }
-
-    if (*gpio_a_pin_mask != 0) {
-        status =
-            Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPA, gpio_a_state);
-        if (status != MCP23017_STATUS_OK) {
-            return TASK_STATUS_ERROR;
-        }
-    }
-    if (*gpio_b_pin_mask != 0) {
-        status =
-            Mcp23017_ReadRegister(hi2c, address, MCP23017_CONTROL_REGISTER_INTCAPB, gpio_b_state);
-        if (status != MCP23017_STATUS_OK) {
-            return TASK_STATUS_ERROR;
-        }
-    }
-
     return TASK_STATUS_OK;
 }
 

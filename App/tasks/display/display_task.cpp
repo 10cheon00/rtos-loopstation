@@ -18,18 +18,40 @@
 
 static u8g2_t u8g2;
 static osMessageQueueId_t display_snapshot_mailbox;
-static I2C_HandleTypeDef *hi2c;
-static osMutexId_t i2c1_mutex;
 
-using TrackLedRgb = std::array<uint8_t, TRACK_LED_COLOR_COUNT>;
-
+using TrackLedRgb = std::array<Mcp23017LedState, TRACK_LED_COLOR_COUNT>;
 static constexpr auto track_led_rgb_table = [] {
     std::array<TrackLedRgb, TRACK_STATE_ID_COUNT> values{};
-    values[TRACK_STATE_ID_IDLE] = {0, 0, 0, 0};
-    values[TRACK_STATE_ID_RECORDING] = {0, UINT8_MAX, 0, 0};
-    values[TRACK_STATE_ID_STOPPED] = {0, 0, 0, UINT8_MAX};
-    values[TRACK_STATE_ID_PLAYING] = {0, 0, UINT8_MAX, 0};
-    values[TRACK_STATE_ID_OVERDUBBING] = {0, UINT8_MAX, UINT8_MAX, 0};
+    values[TRACK_STATE_ID_IDLE] = {
+        Mcp23017LedState::OFF,
+        Mcp23017LedState::OFF,
+        Mcp23017LedState::OFF,
+        Mcp23017LedState::OFF,
+    };
+    values[TRACK_STATE_ID_RECORDING] = {
+        Mcp23017LedState::OFF,
+        Mcp23017LedState::ON,
+        Mcp23017LedState::OFF,
+        Mcp23017LedState::OFF,
+    };
+    values[TRACK_STATE_ID_STOPPED] = {
+        Mcp23017LedState::OFF,
+        Mcp23017LedState::OFF,
+        Mcp23017LedState::OFF,
+        Mcp23017LedState::ON,
+    };
+    values[TRACK_STATE_ID_PLAYING] = {
+        Mcp23017LedState::OFF,
+        Mcp23017LedState::OFF,
+        Mcp23017LedState::ON,
+        Mcp23017LedState::OFF,
+    };
+    values[TRACK_STATE_ID_OVERDUBBING] = {
+        Mcp23017LedState::OFF,
+        Mcp23017LedState::ON,
+        Mcp23017LedState::ON,
+        Mcp23017LedState::OFF,
+    };
     return values;
 }();
 
@@ -41,10 +63,9 @@ static TaskStatus RenderTrackLed(TrackStateId state_id, uint8_t track_index);
 static int IsValidInitParams(const DisplayInitParams *params)
 {
     return (params != 0) &&
-           (params->display_snapshot_mailbox != 0 && params->hi2c != 0 && params->hspi != NULL &&
-            params->i2c1_mutex != NULL && params->CS_Pin != 0 && params->CS_Port != NULL &&
-            params->RST_Pin != 0 && params->RST_Port != NULL && params->DC_Pin != 0 &&
-            params->DC_Port != NULL);
+           (params->display_snapshot_mailbox != 0 && params->hspi != NULL && params->CS_Pin != 0 &&
+            params->CS_Port != NULL && params->RST_Pin != 0 && params->RST_Port != NULL &&
+            params->DC_Pin != 0 && params->DC_Port != NULL);
 }
 
 void DisplayTask_Init(void *argument)
@@ -59,8 +80,6 @@ void DisplayTask_Init(void *argument)
     }
 
     display_snapshot_mailbox = params->display_snapshot_mailbox;
-    hi2c = params->hi2c;
-    i2c1_mutex = params->i2c1_mutex;
 
     Gmg12864Lcd_InitParams initparams = {
         .hspi = params->hspi,
@@ -126,10 +145,10 @@ static TaskStatus HandlePanelRenderPayload(PanelRenderPayload *panel_render_payl
 
 static TaskStatus HandleLedRenderPayload(LedRenderPayload *payload)
 {
-    if (RenderFxLed(&payload->ifx_a_state, MCP23017_GPIO_ID_LED_IFX_A) != TASK_STATUS_OK) {
+    if (RenderFxLed(&payload->ifx_a_state, Mcp23017GpioId::LED_IFX_A) != TASK_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
-    if (RenderFxLed(&payload->tfx_a_state, MCP23017_GPIO_ID_LED_TFX_A) != TASK_STATUS_OK) {
+    if (RenderFxLed(&payload->tfx_a_state, Mcp23017GpioId::LED_TFX_A) != TASK_STATUS_OK) {
         return TASK_STATUS_ERROR;
     }
     for (uint8_t i = 0; i < TRACK_COUNT; i++) {
@@ -144,40 +163,24 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload *payload)
 // 현재 핀 상태에 따라 수정된 핀의 값을 Mcp23017 드라이버에게 넘겨 값을 업데이트하라고 함
 static TaskStatus RenderFxLed(Parameter *parameter, Mcp23017GpioId gpio_id)
 {
-    ParameterPinMapEntry *entry;
-    osStatus_t os_status;
-    uint8_t pin_state, pin_register_mask;
-
-    entry = Mcp23017GpioMap_GetEntry(gpio_id);
+    ParameterPinMapEntry *entry = Mcp23017GpioMap_GetEntry(gpio_id);
     if (entry == NULL) {
         return TASK_STATUS_ERROR;
     }
-    pin_register_mask = 0x1 << entry->pin_index;
-    pin_state = (parameter->current == parameter->max ? UINT8_MAX : 0) & pin_register_mask;
-    os_status = osMutexAcquire(i2c1_mutex, 500UL);
-    if (os_status != osOK) {
+    Mcp23017LedState pin_state =
+        parameter->current == parameter->max ? Mcp23017LedState::ON : Mcp23017LedState::OFF;
+    Mcp23017Driver &driver = Mcp23017Driver::GetInstance();
+    if (driver.UpdateLedState(entry->address, gpio_id, pin_state) != Mcp23017Status::OK) {
         return TASK_STATUS_ERROR;
     }
-    if (Mcp23017_UpdateOutputPinState(hi2c, entry->address, entry->port, pin_register_mask,
-                                      pin_state) != MCP23017_STATUS_OK) {
-        os_status = osMutexRelease(i2c1_mutex);
-        return TASK_STATUS_ERROR;
-    }
-    os_status = osMutexRelease(i2c1_mutex);
 
     return TASK_STATUS_OK;
 }
 
 static TaskStatus RenderTrackLed(TrackStateId state_id, uint8_t track_index)
 {
-    osStatus_t os_status;
-    Mcp23017Status mcp23017_status;
-    ParameterPinMapEntry *red_entry, *blue_entry, *green_entry;
-    uint8_t red_pin_register_mask, green_pin_register_mask, blue_pin_register_mask;
-    uint8_t red_register_output;
-    uint8_t blue_register_output;
-    uint8_t green_register_output;
 
+    ParameterPinMapEntry *red_entry, *blue_entry, *green_entry;
     red_entry = Mcp23017GpioMap_GetTrackLedEntry(track_index, TRACK_LED_COLOR_RED);
     if (red_entry == NULL) {
         return TASK_STATUS_ERROR;
@@ -191,38 +194,26 @@ static TaskStatus RenderTrackLed(TrackStateId state_id, uint8_t track_index)
         return TASK_STATUS_ERROR;
     }
 
-    red_pin_register_mask = 1 << red_entry->pin_index;
-    green_pin_register_mask = 1 << green_entry->pin_index;
-    blue_pin_register_mask = 1 << blue_entry->pin_index;
-    red_register_output =
-        track_led_rgb_table[state_id][TRACK_LED_COLOR_RED] & red_pin_register_mask;
-    green_register_output =
-        track_led_rgb_table[state_id][TRACK_LED_COLOR_GREEN] & green_pin_register_mask;
-    blue_register_output =
-        track_led_rgb_table[state_id][TRACK_LED_COLOR_BLUE] & blue_pin_register_mask;
-
-    os_status = osMutexAcquire(i2c1_mutex, 500UL);
-    if (os_status != osOK) {
+    Mcp23017Driver &driver = Mcp23017Driver::GetInstance();
+    TrackLedPayload payload[3] = {
+        {
+            .address = red_entry->address,
+            .led_gpio_id = red_entry->gpio_id,
+            .led_state = track_led_rgb_table[state_id][TRACK_LED_COLOR_RED],
+        },
+        {
+            .address = green_entry->address,
+            .led_gpio_id = green_entry->gpio_id,
+            .led_state = track_led_rgb_table[state_id][TRACK_LED_COLOR_GREEN],
+        },
+        {
+            .address = blue_entry->address,
+            .led_gpio_id = blue_entry->gpio_id,
+            .led_state = track_led_rgb_table[state_id][TRACK_LED_COLOR_BLUE],
+        },
+    };
+    if (driver.UpdateTrackLedState(payload) != Mcp23017Status::OK) {
         return TASK_STATUS_ERROR;
     }
-    mcp23017_status = Mcp23017_UpdateOutputPinState(hi2c, red_entry->address, red_entry->port,
-                                                    red_pin_register_mask, red_register_output);
-    if (mcp23017_status != MCP23017_STATUS_OK) {
-        os_status = osMutexRelease(i2c1_mutex);
-        return TASK_STATUS_ERROR;
-    }
-    mcp23017_status = Mcp23017_UpdateOutputPinState(hi2c, green_entry->address, green_entry->port,
-                                                    green_pin_register_mask, green_register_output);
-    if (mcp23017_status != MCP23017_STATUS_OK) {
-        os_status = osMutexRelease(i2c1_mutex);
-        return TASK_STATUS_ERROR;
-    }
-    mcp23017_status = Mcp23017_UpdateOutputPinState(hi2c, blue_entry->address, blue_entry->port,
-                                                    blue_pin_register_mask, blue_register_output);
-    if (mcp23017_status != MCP23017_STATUS_OK) {
-        os_status = osMutexRelease(i2c1_mutex);
-        return TASK_STATUS_ERROR;
-    }
-    os_status = osMutexRelease(i2c1_mutex);
     return TASK_STATUS_OK;
 }
