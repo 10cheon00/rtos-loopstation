@@ -45,56 +45,56 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/csrc/u8x8_u8toa.c
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/fonts/u8g2_font_ref4x5_prop_v4_tr.c
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/types/parameter.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/types/parameter.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/adc_input_task.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs/adc_rank_knob_config_table.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/adc_input_task.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs/adc_rank_knob_config_table.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs/ui_state_label_config_table.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/knob_widget.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/toggle_switch_widget.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs/ui_state_label_config_table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/knob_widget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/toggle_switch_widget.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_parameter_config_table.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_track_action_config_table.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_parameter_config_table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_track_action_config_table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.cpp
     
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine_context.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs/system_state_config_table.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_not_inited.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_running.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_error.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine_context.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs/system_state_config_table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_not_inited.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_running.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_error.cpp
     
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_id_state_config_table.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_idle.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_recording.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_stopped.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_playing.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_overdubbing.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_id_state_config_table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_idle.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_recording.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_stopped.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_playing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_overdubbing.cpp
     
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/ui_state_machine.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/global_ui_transition_config_table.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_config_table.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_navigation_tree.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_home_panel.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_setting_panel.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_system_setting_panel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/ui_state_machine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/global_ui_transition_config_table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_config_table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_navigation_tree.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_home_panel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_setting_panel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_system_setting_panel.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864_lcd.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/configs/mcp23017_gpio_map.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/config_validator.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864_lcd.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/configs/mcp23017_gpio_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/config_validator.cpp
 )
 
 target_include_directories(loopstation_app PUBLIC
