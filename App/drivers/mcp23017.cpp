@@ -1,6 +1,5 @@
 #include "mcp23017.h"
 
-#include "mcp23017_gpio_map.h"
 #include "utils.h"
 
 #define IODIRA 0x0

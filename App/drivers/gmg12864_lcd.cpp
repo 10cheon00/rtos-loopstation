@@ -21,7 +21,7 @@ static uint8_t Gmg12864Lcd_u8g2MessageCallback(u8x8_t *u8x8, uint8_t msg, uint8_
         u8x8_gpio_SetCS(u8x8, u8x8->display_info->chip_disable_level);
         break;
     case U8X8_MSG_BYTE_SEND:
-        HAL_SPI_Transmit(hspi, arg_ptr, arg_int, GMG12864_TIMEOUT_MS);
+        HAL_SPI_Transmit(hspi, (const uint8_t *)arg_ptr, arg_int, GMG12864_TIMEOUT_MS);
         break;
     case U8X8_MSG_BYTE_SET_DC:
         u8x8_gpio_SetDC(u8x8, arg_int);

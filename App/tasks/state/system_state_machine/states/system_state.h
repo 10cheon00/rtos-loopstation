@@ -7,15 +7,15 @@
 #include "state_id.h"
 #include "system_state_machine_context.h"
 
-typedef StateId SystemStateId;
+// typedef StateId SystemStateId;
 
-enum SystemStateId {
+typedef enum {
     SYSTEM_STATE_ID_NONE = 0,
     SYSTEM_STATE_ID_NOT_INITED,
     SYSTEM_STATE_ID_RUNNING,
     SYSTEM_STATE_ID_ERROR,
     SYSTEM_STATE_ID_COUNT,
-};
+} SystemStateId;
 
 typedef enum {
     SYSTEM_ACTION_ID_NONE = 0,

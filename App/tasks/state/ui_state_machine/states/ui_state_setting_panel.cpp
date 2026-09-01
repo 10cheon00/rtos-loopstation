@@ -3,12 +3,13 @@
 #include "utils.h"
 
 static PanelSlot panel_slots[4] = {
-    {
-        .type = PANEL_SLOT_TYPE_MENU,
-        .data.menu = {.icon_id = MENU_ICON_ID_SYSTEM,
-                      .state_id = UI_STATE_ID_SYSTEM_SETTING,
-                      .label = "SYSTEM\nSETTING"},
-    },
+    {.type = PANEL_SLOT_TYPE_MENU,
+     .data =
+         {
+             .menu = (MenuDescriptor){.icon_id = MENU_ICON_ID_SYSTEM,
+                                      .state_id = UI_STATE_ID_SYSTEM_SETTING,
+                                      .label = "SYSTEM\nSETTING"},
+         }},
     {
         .type = PANEL_SLOT_TYPE_NONE,
     },

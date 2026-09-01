@@ -252,7 +252,7 @@ ConfigValidator_REGISTER_CONFIG_TABLE_1D(Mcp23017GpioId, ButtonId, MCP23017_GPIO
 ButtonId Mcp23017GpioMap_Get(Mcp23017GpioId gpio_id)
 {
     if (gpio_id <= MCP23017_GPIO_ID_NONE || gpio_id >= MCP23017_GPIO_ID_COUNT) {
-        return MCP23017_GPIO_ID_NONE;
+        return BUTTON_ID_NONE;
     }
     return ConfigTable_1D_GET(Mcp23017GpioId, ButtonId, gpio_id);
 }

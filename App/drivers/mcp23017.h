@@ -3,10 +3,6 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "stm32h7xx.h"
 
 #include "mcp23017_gpio_map.h"
@@ -41,8 +37,5 @@ Mcp23017Status Mcp23017_UpdateOutputPinState(I2C_HandleTypeDef *hi2c, uint8_t ad
                                              uint8_t pin_register_mask, uint8_t pin_state);
 Mcp23017Status Mcp23017_GetMcp23017AddressFromInterruptPin(Mcp23017GpioInterruptPin gpio_interrupt_pin, uint8_t *address);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif

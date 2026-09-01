@@ -21,7 +21,7 @@ typedef enum {
 
 typedef struct {
     PanelSlotType type;
-    union {
+    union Data {
         MenuDescriptor menu;
         ParameterDescriptor parameter;
     } data;

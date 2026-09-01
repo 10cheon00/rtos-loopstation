@@ -306,7 +306,7 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine *ui_state_machine)
         snapshot.led.track_state[i] = track_state_machine->current_state->id;
     }
 
-    xQueueOverwrite(display_snapshot_mailbox, &snapshot);
+    xQueueOverwrite((QueueHandle_t)display_snapshot_mailbox, &snapshot);
     return TASK_STATUS_OK;
 }
 

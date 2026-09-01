@@ -9,9 +9,9 @@
 
 #define TRACK_COUNT 1
 
-typedef StateId TrackStateId;
+// typedef StateId TrackStateId;
 
-enum TrackStateId {
+typedef enum {
     TRACK_STATE_ID_NONE = ID_NONE,
     TRACK_STATE_ID_IDLE,
     TRACK_STATE_ID_RECORDING,
@@ -19,7 +19,7 @@ enum TrackStateId {
     TRACK_STATE_ID_PLAYING,
     TRACK_STATE_ID_OVERDUBBING,
     TRACK_STATE_ID_COUNT,
-};
+} TrackStateId;
 
 typedef enum {
     TRACK_ACTION_ID_NONE = ID_NONE,
