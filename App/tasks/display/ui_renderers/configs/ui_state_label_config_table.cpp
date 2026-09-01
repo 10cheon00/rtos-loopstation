@@ -1,11 +1,15 @@
 #include "ui_state_label_config_table.h"
 
-static const char *table[UI_STATE_ID_COUNT] = {
-    [UI_STATE_ID_NONE] = "",
-    [UI_STATE_ID_HOME] = "HOME",
-    [UI_STATE_ID_SETTING] = "SETTING",
-    [UI_STATE_ID_SYSTEM_SETTING] = "SYSTEM SETTING",
-};
+#include <array>
+
+static constexpr auto table = [] {
+    std::array<const char *, UI_STATE_ID_COUNT> values{};
+    values[UI_STATE_ID_NONE] = "";
+    values[UI_STATE_ID_HOME] = "HOME";
+    values[UI_STATE_ID_SETTING] = "SETTING";
+    values[UI_STATE_ID_SYSTEM_SETTING] = "SYSTEM SETTING";
+    return values;
+}();
 
 const char *UiStateLabelConfigTable_Get(UiStateId id)
 {

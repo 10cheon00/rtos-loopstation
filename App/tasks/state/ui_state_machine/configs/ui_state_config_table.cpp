@@ -8,11 +8,11 @@
 #include "config_validator.h"
 
 #define ENTRIES                                                                                    \
-    ConfigTable_1D_ENTRY(UI_STATE_ID_NONE, (Value_t)NULL),                                        \
-        ConfigTable_1D_ENTRY(UI_STATE_ID_HOME, (Value_t) & UI_STATE_HOME_PANEL),                   \
-        ConfigTable_1D_ENTRY(UI_STATE_ID_SETTING, (Value_t) & UI_STATE_SETTING_PANEL),             \
+    ConfigTable_1D_ENTRY(UI_STATE_ID_NONE, nullptr),                                               \
+        ConfigTable_1D_ENTRY(UI_STATE_ID_HOME, &UI_STATE_HOME_PANEL),                              \
+        ConfigTable_1D_ENTRY(UI_STATE_ID_SETTING, &UI_STATE_SETTING_PANEL),                        \
         ConfigTable_1D_ENTRY(UI_STATE_ID_SYSTEM_SETTING,                                           \
-                             (Value_t) & UI_STATE_SYSTEM_SETTING_PANEL),
+                             &UI_STATE_SYSTEM_SETTING_PANEL)
 
 ConfigTable_1D_DECLARE_TABLE(UiStateId, UiStatePointer, UI_STATE_ID_COUNT, ENTRIES);
 
@@ -24,5 +24,5 @@ UiStatePointer UiStateConfigTable_Get(UiStateId id)
     if (id <= UI_STATE_ID_NONE || id >= UI_STATE_ID_COUNT) {
         return NULL;
     }
-    return (UiStatePointer)ConfigTable_1D_GET(UiStateId, UiStatePointer, id);
+    return ConfigTable_1D_GET(UiStateId, UiStatePointer, id);
 }

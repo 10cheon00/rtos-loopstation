@@ -179,7 +179,10 @@ static TaskStatus SendButtonPayload(Mcp23017Address address, Mcp23017GpioId gpio
 {
     ButtonId button_id = Mcp23017GpioMap_Get(gpio_id);
     ButtonPayload payload = {
-        .id = button_id, .state = button_state, .timestamp_ticks = timestamp_ticks};
+        .timestamp_ticks = timestamp_ticks,
+        .id = button_id,
+        .state = button_state,
+    };
     StateEvent state_event = {.type = STATE_EVENT_BUTTON, .payload = {.button = payload}};
     osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
 
@@ -211,9 +214,9 @@ static TaskStatus HandleEncoderRotationEvent(EncoderRotationEvent *encoder_rotat
     StateEvent state_event = {
         .type = STATE_EVENT_ENCODER_ROTATION,
         .payload = {.encoder_rotation = {
-                        .delta = delta,
-                        .encoder_id = encoder_id,
                         .timestamp_ticks = encoder_rotation_event->timestamp_ticks,
+                        .encoder_id = encoder_id,
+                        .delta = delta,
                     }}};
     osMessageQueuePut(state_event_queue, &state_event, 0, STATE_EVENT_QUEUE_TIMEOUT_500MS);
 

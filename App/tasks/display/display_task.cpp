@@ -1,5 +1,7 @@
 #include "display_task.h"
 
+#include <array>
+
 #include "cmsis_os2.h"
 #include "u8g2.h"
 
@@ -19,13 +21,17 @@ static osMessageQueueId_t display_snapshot_mailbox;
 static I2C_HandleTypeDef *hi2c;
 static osMutexId_t i2c1_mutex;
 
-static uint8_t track_led_rgb_table[TRACK_STATE_ID_COUNT][TRACK_LED_COLOR_COUNT] = {
-    [TRACK_STATE_ID_IDLE] = {0, 0, 0, 0},
-    [TRACK_STATE_ID_RECORDING] = {0, UINT8_MAX, 0, 0},
-    [TRACK_STATE_ID_STOPPED] = {0, 0, 0, UINT8_MAX},
-    [TRACK_STATE_ID_PLAYING] = {0, 0, UINT8_MAX, 0},
-    [TRACK_STATE_ID_OVERDUBBING] = {0, UINT8_MAX, UINT8_MAX, 0},
-};
+using TrackLedRgb = std::array<uint8_t, TRACK_LED_COLOR_COUNT>;
+
+static constexpr auto track_led_rgb_table = [] {
+    std::array<TrackLedRgb, TRACK_STATE_ID_COUNT> values{};
+    values[TRACK_STATE_ID_IDLE] = {0, 0, 0, 0};
+    values[TRACK_STATE_ID_RECORDING] = {0, UINT8_MAX, 0, 0};
+    values[TRACK_STATE_ID_STOPPED] = {0, 0, 0, UINT8_MAX};
+    values[TRACK_STATE_ID_PLAYING] = {0, 0, UINT8_MAX, 0};
+    values[TRACK_STATE_ID_OVERDUBBING] = {0, UINT8_MAX, UINT8_MAX, 0};
+    return values;
+}();
 
 static TaskStatus HandlePanelRenderPayload(PanelRenderPayload *payload);
 static TaskStatus HandleLedRenderPayload(LedRenderPayload *payload);
@@ -56,13 +62,15 @@ void DisplayTask_Init(void *argument)
     hi2c = params->hi2c;
     i2c1_mutex = params->i2c1_mutex;
 
-    Gmg12864Lcd_InitParams initparams = {.hspi = params->hspi,
-                                         .CS_Pin = params->CS_Pin,
-                                         .CS_Port = params->CS_Port,
-                                         .DC_Pin = params->DC_Pin,
-                                         .DC_Port = params->DC_Port,
-                                         .RST_Pin = params->RST_Pin,
-                                         .RST_Port = params->RST_Port};
+    Gmg12864Lcd_InitParams initparams = {
+        .hspi = params->hspi,
+        .CS_Pin = params->CS_Pin,
+        .RST_Pin = params->RST_Pin,
+        .DC_Pin = params->DC_Pin,
+        .CS_Port = params->CS_Port,
+        .RST_Port = params->RST_Port,
+        .DC_Port = params->DC_Port,
+    };
 
     Gmg12864LcdStatus status = Gmg12864Lcd_Init(&u8g2, &initparams);
     if (status != GMG12864_LCD_STATUS_OK) {
@@ -105,7 +113,7 @@ static TaskStatus HandlePanelRenderPayload(PanelRenderPayload *panel_render_payl
                         (UiStateSlotIndex)i);
         } else if (panel_render_payload->slot_render_payloads[i].type ==
                    PANEL_SLOT_TYPE_PARAMETER) {
-                       ParameterRenderPayload *parameter_render_payload = &payload->data.parameter;
+            ParameterRenderPayload *parameter_render_payload = &payload->data.parameter;
             UI_DrawParameter(&u8g2, &parameter_render_payload->parameter,
                              parameter_render_payload->label, (UiStateSlotIndex)i);
         }

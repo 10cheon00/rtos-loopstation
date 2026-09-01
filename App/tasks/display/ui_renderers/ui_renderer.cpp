@@ -1,5 +1,7 @@
 #include "ui_renderer.h"
 
+#include <array>
+
 #include "knob_widget.h"
 #include "toggle_switch_widget.h"
 #include "utils.h"
@@ -33,17 +35,22 @@
  *  기준 좌표를 좌상단으로 넘기면 출력을 처리하는 함수 내에서 좌하단으로 변환하여 출력한다.
  */
 
-static uint8_t parameter_width_table[UI_STATE_SLOT_INDEX_COUNT] = {
-    [UI_STATE_SLOT_INDEX_A] = 0,
-    [UI_STATE_SLOT_INDEX_B] = SLOT_WIDTH,
-    [UI_STATE_SLOT_INDEX_C] = SLOT_WIDTH * 2,
-    [UI_STATE_SLOT_INDEX_D] = SLOT_WIDTH * 3,
-};
-static uint8_t panel_menu_icon_table[MENU_ICON_ID_COUNT] = {
-    [MENU_ICON_ID_NONE] = 0,
-    [MENU_ICON_ID_SYSTEM] = 129,
-    [MENU_ICON_ID_DEBUG] = 104,
-};
+static constexpr auto parameter_width_table = [] {
+    std::array<uint8_t, UI_STATE_SLOT_INDEX_COUNT> values{};
+    values[UI_STATE_SLOT_INDEX_A] = 0;
+    values[UI_STATE_SLOT_INDEX_B] = SLOT_WIDTH;
+    values[UI_STATE_SLOT_INDEX_C] = SLOT_WIDTH * 2;
+    values[UI_STATE_SLOT_INDEX_D] = SLOT_WIDTH * 3;
+    return values;
+}();
+
+static constexpr auto panel_menu_icon_table = [] {
+    std::array<uint8_t, MENU_ICON_ID_COUNT> values{};
+    values[MENU_ICON_ID_NONE] = 0;
+    values[MENU_ICON_ID_SYSTEM] = 129;
+    values[MENU_ICON_ID_DEBUG] = 104;
+    return values;
+}();
 
 static void DrawArrowLeft4x5(u8g2_t *u8g2, uint8_t x, uint8_t y);
 static void DrawArrowRight4x5(u8g2_t *u8g2, uint8_t x, uint8_t y);

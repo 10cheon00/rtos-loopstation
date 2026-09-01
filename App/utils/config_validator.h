@@ -13,8 +13,10 @@ typedef enum {
     CONFIG_TABLE_TYPE_ALLOW_NULL_VALUE,
 } ConfigTableType;
 
+typedef Value_t (*ConfigTableValueGetter)(Key_t key);
+
 typedef struct {
-    Value_t *config_table;
+    ConfigTableValueGetter GetValue;
     Value_t value_min;
     Value_t value_max;
     Key_t table_count;
@@ -33,9 +35,13 @@ typedef struct {
 
 #define ConfigValidator_REGISTER_CONFIG_TABLE_1D(KEY_TYPE, VALUE_TYPE, TABLE_COUNT, VALUE_MIN,     \
                                                  VALUE_MAX, CONFIG_TABLE_TYPE)                     \
+    static Value_t CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE), _get_value)(Key_t key)     \
+    {                                                                                              \
+        return ConfigTable_ToValue(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE)[key]);                   \
+    }                                                                                              \
     static ConfigTableValidationSubject CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE),       \
                                                      _validation_subject) = {                      \
-        .config_table = ConfigTable_NAME(KEY_TYPE, VALUE_TYPE),                                    \
+        .GetValue = CONCATENATE2(ConfigTable_NAME(KEY_TYPE, VALUE_TYPE), _get_value),              \
         .value_min = VALUE_MIN,                                                                    \
         .value_max = VALUE_MAX,                                                                    \
         .table_count = TABLE_COUNT,                                                                \

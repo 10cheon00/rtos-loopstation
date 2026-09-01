@@ -78,7 +78,7 @@ static void ValidateConfigTableValueValidity(ConfigTableValidationSubject *subje
 {
     Value_t value;
     for (Key_t key = ID_NONE + 1; key < subject->table_count; key++) {
-        value = subject->config_table[key];
+        value = subject->GetValue(key);
         if (!IsValidValue(subject, value)) {
             AddValidationLog(subject, CONFIG_VALIDATOR_LOG_TYPE_INVALID_VALUE, 0, value);
         }
@@ -142,7 +142,7 @@ static void ValidateAllTargetTableKeyInSourceTable(ConfigTableValidationSubject 
                 if (!IsValidValue(source, source_key)) {
                     continue;
                 }
-                if (source->config_table[source_key] == target_key) {
+                if (source->GetValue(source_key) == target_key) {
                     is_equal = true;
                     break;
                 }
@@ -161,7 +161,7 @@ static void ValidateAllSourceValueInTargetSubjects(ConfigTableValidationSubject 
     Value_t source_value;
     ConfigTableValidationSubject *target;
     for (Key_t key = 0; key < source->table_count; key++) {
-        source_value = source->config_table[key];
+        source_value = source->GetValue(key);
         if (!IsValidValue(source, source_value)) {
             continue;
         }
@@ -170,7 +170,7 @@ static void ValidateAllSourceValueInTargetSubjects(ConfigTableValidationSubject 
             if (coverage_subjects[i].source == source) {
                 // value가 key로 존재하는건지 확인
                 target_key = (Key_t)source_value;
-                if (!IsValidValue(target, target->config_table[target_key])) {
+                if (!IsValidValue(target, target->GetValue(target_key))) {
                     AddValidationLog(source,
                                      CONFIG_VALIDATOR_LOG_TYPE_NO_SOURCE_VALUE_IN_ANY_TARGET_KEYS,
                                      0, source_value);

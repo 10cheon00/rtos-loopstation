@@ -1,17 +1,21 @@
 #include "system_state_not_inited.h"
 
+#include <array>
+
 #include "config_validator.h"
 
-static SystemStateId system_state_not_init_transition_table[SYSTEM_ACTION_ID_COUNT] = {
-    [SYSTEM_ACTION_ID_INITED] = SYSTEM_STATE_ID_RUNNING,
-    [SYSTEM_ACTION_ID_ERROR] = SYSTEM_STATE_ID_ERROR,
-};
+static constexpr auto system_state_not_init_transition_table = [] {
+    std::array<SystemStateId, SYSTEM_ACTION_ID_COUNT> values{};
+    values[SYSTEM_ACTION_ID_INITED] = SYSTEM_STATE_ID_RUNNING;
+    values[SYSTEM_ACTION_ID_ERROR] = SYSTEM_STATE_ID_ERROR;
+    return values;
+}();
 
 static SystemStateOnEnterResult SystemStateNotInited_OnEnter(SystemStateMachineContext *context);
 
 SystemState SYSTEM_STATE_NOT_INITED = {
     .id = SYSTEM_STATE_ID_NOT_INITED,
-    .transition_table = system_state_not_init_transition_table,
+    .transition_table = system_state_not_init_transition_table.data(),
     .OnEnter = SystemStateNotInited_OnEnter,
 };
 

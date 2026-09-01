@@ -1,14 +1,18 @@
 #include "system_state_running.h"
 
-static SystemStateId system_state_running_transition_table[SYSTEM_ACTION_ID_COUNT] = {
-    [SYSTEM_ACTION_ID_ERROR] = SYSTEM_STATE_ID_ERROR,
-};
+#include <array>
+
+static constexpr auto system_state_running_transition_table = [] {
+    std::array<SystemStateId, SYSTEM_ACTION_ID_COUNT> values{};
+    values[SYSTEM_ACTION_ID_ERROR] = SYSTEM_STATE_ID_ERROR;
+    return values;
+}();
 
 static SystemStateOnEnterResult SystemStateRunning_OnEnter(SystemStateMachineContext *context);
 
 SystemState SYSTEM_STATE_RUNNING = {
     .id = SYSTEM_STATE_ID_RUNNING,
-    .transition_table = system_state_running_transition_table,
+    .transition_table = system_state_running_transition_table.data(),
     .OnEnter = SystemStateRunning_OnEnter,
 };
 

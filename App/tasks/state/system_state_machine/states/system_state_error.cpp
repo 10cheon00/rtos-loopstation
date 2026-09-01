@@ -1,12 +1,15 @@
 #include "system_state_error.h"
 
+#include <array>
+
 static SystemStateOnEnterResult SystemStateError_OnEnter(SystemStateMachineContext *context);
 
-static SystemStateId system_state_error_transition_table[SYSTEM_ACTION_ID_COUNT] = {};
+static constexpr std::array<SystemStateId, SYSTEM_ACTION_ID_COUNT>
+    system_state_error_transition_table{};
 
 SystemState SYSTEM_STATE_ERROR = {
     .id = SYSTEM_STATE_ID_ERROR,
-    .transition_table = system_state_error_transition_table,
+    .transition_table = system_state_error_transition_table.data(),
     .OnEnter = SystemStateError_OnEnter,
 };
 

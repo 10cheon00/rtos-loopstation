@@ -12,7 +12,7 @@
         ConfigTable_1D_ENTRY(KNOB_ID_TRACK_2_VOLUME_FADER, PARAMETER_ID_NULL),                     \
         ConfigTable_1D_ENTRY(KNOB_ID_TRACK_3_VOLUME_FADER, PARAMETER_ID_NULL),                     \
         ConfigTable_1D_ENTRY(KNOB_ID_TRACK_4_VOLUME_FADER, PARAMETER_ID_NULL),                     \
-        ConfigTable_1D_ENTRY(KNOB_ID_TRACK_5_VOLUME_FADER, PARAMETER_ID_NULL),
+        ConfigTable_1D_ENTRY(KNOB_ID_TRACK_5_VOLUME_FADER, PARAMETER_ID_NULL)
 
 ConfigTable_1D_DECLARE_TABLE(KnobId, ParameterId, PARAMETER_ID_COUNT, ENTRIES);
 #undef ENTRIES

@@ -1,6 +1,8 @@
 #ifndef LOOPSTATION_PARAMETER_STORE_H
 #define LOOPSTATION_PARAMETER_STORE_H
 
+#include <array>
+
 #include "parameter.h"
 #include "parameter_id.h"
 
@@ -12,7 +14,7 @@
  * 저장소를 분리한다면 ParameterId도 저장소에 따라 분리해야한다.
  */
 typedef struct {
-    Parameter parameters[PARAMETER_ID_COUNT];
+    std::array<Parameter, PARAMETER_ID_COUNT> parameters;
 } LoopStationParameterStore;
 
 Parameter *LoopStationParameterStore_Get(ParameterId parameter_id);

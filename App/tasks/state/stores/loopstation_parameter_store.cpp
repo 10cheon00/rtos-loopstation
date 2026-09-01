@@ -2,47 +2,20 @@
 
 #include <stddef.h>
 
-static LoopStationParameterStore loopstation_parameter_store = {
-    .parameters = {
-        [PARAMETER_ID_NONE] = {.min = 0, .max = 0, .current = 0, .type = PARAMETER_TYPE_SLIDER},
-        [PARAMETER_ID_SETTING_PANEL_CURSOR] =
-            {
-                .min = 0,
-                .max = 100,
-                .current = 0,
-                .type = PARAMETER_TYPE_SLIDER,
-            },
-        [PARAMETER_ID_TFX_KNOB] = {
-            .min = 0,
-            .max = 100,
-            .current = 0,
-            .type = PARAMETER_TYPE_SLIDER
-        },
-        [PARAMETER_ID_IFX_KNOB] = {
-            .min = 0,
-            .max = 100,
-            .current = 0,
-            .type = PARAMETER_TYPE_SLIDER
-        },
-        [PARAMETER_ID_IFX_A_STATE] = {
-            .min = 0,
-            .max = 1,
-            .current = 0,
-            .type = PARAMETER_TYPE_TOGGLE
-        },
-        [PARAMETER_ID_TFX_A_STATE] = {
-            .min = 0,
-            .max = 1,
-            .current = 0,
-            .type = PARAMETER_TYPE_TOGGLE
-        },
-        [PARAMETER_ID_SYSTEM_SETTING_LCD_CONSTRAST] = {
-            .min = 10,
-            .max = 80,
-            .current = 80,
-            .type = PARAMETER_TYPE_SLIDER
-        },
-    }};
+static constexpr auto initial_parameters = [] {
+    std::array<Parameter, PARAMETER_ID_COUNT> values{};
+    values[PARAMETER_ID_NONE] = Parameter{0, 0, 0, PARAMETER_TYPE_SLIDER};
+    values[PARAMETER_ID_SETTING_PANEL_CURSOR] = Parameter{0, 100, 0, PARAMETER_TYPE_SLIDER};
+    values[PARAMETER_ID_TFX_KNOB] = Parameter{0, 100, 0, PARAMETER_TYPE_SLIDER};
+    values[PARAMETER_ID_IFX_KNOB] = Parameter{0, 100, 0, PARAMETER_TYPE_SLIDER};
+    values[PARAMETER_ID_IFX_A_STATE] = Parameter{0, 1, 0, PARAMETER_TYPE_TOGGLE};
+    values[PARAMETER_ID_TFX_A_STATE] = Parameter{0, 1, 0, PARAMETER_TYPE_TOGGLE};
+    values[PARAMETER_ID_SYSTEM_SETTING_LCD_CONSTRAST] =
+        Parameter{10, 80, 80, PARAMETER_TYPE_SLIDER};
+    return values;
+}();
+
+static LoopStationParameterStore loopstation_parameter_store{initial_parameters};
 
 Parameter *LoopStationParameterStore_Get(ParameterId parameter_id)
 {

@@ -33,7 +33,7 @@ typedef void (*TrackStateOnEnterFunction)(TrackStateMachineContext *);
 
 typedef struct {
     TrackStateId id;
-    TrackStateId *transition_table;
+    const TrackStateId *transition_table;
     TrackStateOnEnterFunction OnEnter;
 } TrackState;
 

@@ -33,7 +33,7 @@ typedef SystemStateOnEnterResult (*SystemStateOnEnterFunction)(SystemStateMachin
 
 typedef struct PredefineSystemState {
     SystemStateId id;
-    SystemStateId* transition_table;
+    const SystemStateId *transition_table;
     SystemStateOnEnterFunction OnEnter;
 } SystemState;
 

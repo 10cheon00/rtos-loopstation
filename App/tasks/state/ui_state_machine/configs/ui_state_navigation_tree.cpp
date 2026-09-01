@@ -1,11 +1,15 @@
 #include "ui_state_navigation_tree.h"
 
-static UiStateId parent[UI_STATE_ID_COUNT] = {
-    [UI_STATE_ID_NONE] = UI_STATE_ID_NONE,
-    [UI_STATE_ID_HOME] = UI_STATE_ID_NONE,
-    [UI_STATE_ID_SETTING] = UI_STATE_ID_HOME,
-    [UI_STATE_ID_SYSTEM_SETTING] = UI_STATE_ID_SETTING,
-};
+#include <array>
+
+static constexpr auto parent = [] {
+    std::array<UiStateId, UI_STATE_ID_COUNT> values{};
+    values[UI_STATE_ID_NONE] = UI_STATE_ID_NONE;
+    values[UI_STATE_ID_HOME] = UI_STATE_ID_NONE;
+    values[UI_STATE_ID_SETTING] = UI_STATE_ID_HOME;
+    values[UI_STATE_ID_SYSTEM_SETTING] = UI_STATE_ID_SETTING;
+    return values;
+}();
 
 UiStateId UiStateNavigationTree_GetParent(UiStateId id)
 {
