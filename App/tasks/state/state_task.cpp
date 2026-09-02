@@ -12,10 +12,13 @@
 #include "state_initparams.h"
 #include "state_messages.h"
 #include "system_state_machine.h"
+#include "track_config.h"
 #include "track_state_machine.h"
+#include "track_state_machine_context.h"
 #include "ui_state_config_table.h"
 #include "ui_state_machine.h"
 #include "ui_state_navigation_tree.h"
+#include "utils.h"
 
 static StateTaskContext state_task_context;
 
@@ -113,7 +116,7 @@ static void InitStateMachines() {
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     TrackStateMachine_Init(&track_state_machine[i],
                            &track_state_machine_context[i],
-                           TRACK_STATE_ID_IDLE);
+                           TrackStateId::IDLE);
   }
   UpdateDisplaySnapshotMailbox(&ui_state_machine);
 }
@@ -306,7 +309,7 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
       .tfx_a_state = *LoopStationParameterStore_Get(PARAMETER_ID_TFX_A_STATE),
   };
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    snapshot.led.track_state[i] = track_state_machine->current_state->id;
+    snapshot.led.track_state[i] = ConvertIdToIdRaw<TrackStateId, TrackStateIdRaw>(track_state_machine->current_state->id);
   }
 
   xQueueOverwrite((QueueHandle_t)display_snapshot_mailbox, &snapshot);

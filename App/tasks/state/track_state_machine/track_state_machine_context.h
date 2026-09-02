@@ -1,6 +1,10 @@
 #ifndef TRACK_STATE_MACHINE_CONTEXT_H
 #define TRACK_STATE_MACHINE_CONTEXT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "cmsis_os2.h"
 
 typedef struct {
@@ -10,5 +14,9 @@ typedef struct {
 } TrackStateMachineContext;
 
 void TrackStateMachineContext_Init(TrackStateMachineContext* context);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

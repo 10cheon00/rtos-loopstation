@@ -5,11 +5,14 @@
 #include "cmsis_os2.h"
 #include "display_initparams.h"
 #include "display_messages.h"
+#include "enum_map.hpp"
 #include "mcp23017.hpp"
 #include "mcp23017_gpio_map.hpp"
 #include "u8g2.h"
 #include "ui_renderer.h"
 #include "ui_state_label_config_table.h"
+#include "track_state_id.hpp"
+#include "utils.h"
 
 #define DISPLAY_RENDER_FREQEUNCY_HZ (100UL)
 #define DISPLAY_RENDER_DELAY_MS (1000UL / DISPLAY_RENDER_FREQEUNCY_HZ)
@@ -18,41 +21,45 @@
 static u8g2_t u8g2;
 static osMessageQueueId_t display_snapshot_mailbox;
 
-using TrackLedRgb = std::array<Mcp23017LedState, (size_t)TrackLedColor::COUNT>;
-static constexpr auto track_led_rgb_table = [] {
-  std::array<TrackLedRgb, TRACK_STATE_ID_COUNT> values{};
-  values[TRACK_STATE_ID_IDLE] = {
-      Mcp23017LedState::OFF,
-      Mcp23017LedState::OFF,
-      Mcp23017LedState::OFF,
-      Mcp23017LedState::OFF,
-  };
-  values[TRACK_STATE_ID_RECORDING] = {
-      Mcp23017LedState::OFF,
-      Mcp23017LedState::ON,
-      Mcp23017LedState::OFF,
-      Mcp23017LedState::OFF,
-  };
-  values[TRACK_STATE_ID_STOPPED] = {
-      Mcp23017LedState::OFF,
-      Mcp23017LedState::OFF,
-      Mcp23017LedState::OFF,
-      Mcp23017LedState::ON,
-  };
-  values[TRACK_STATE_ID_PLAYING] = {
-      Mcp23017LedState::OFF,
-      Mcp23017LedState::OFF,
-      Mcp23017LedState::ON,
-      Mcp23017LedState::OFF,
-  };
-  values[TRACK_STATE_ID_OVERDUBBING] = {
-      Mcp23017LedState::OFF,
-      Mcp23017LedState::ON,
-      Mcp23017LedState::ON,
-      Mcp23017LedState::OFF,
-  };
-  return values;
-}();
+struct TrackLedColorSet {
+  Mcp23017LedState red;
+  Mcp23017LedState green;
+  Mcp23017LedState blue;
+};
+
+static constexpr EnumMap<TrackStateId, TrackLedColorSet>
+    track_state_led_color_map{
+        EnumEntry{TrackStateId::IDLE,
+                  (TrackLedColorSet){
+                      Mcp23017LedState::OFF,
+                      Mcp23017LedState::OFF,
+                      Mcp23017LedState::OFF,
+                  }},
+        EnumEntry{TrackStateId::RECORDING,
+                  (TrackLedColorSet){
+                      Mcp23017LedState::ON,
+                      Mcp23017LedState::OFF,
+                      Mcp23017LedState::OFF,
+                  }},
+        EnumEntry{TrackStateId::STOPPED,
+                  (TrackLedColorSet){
+                      Mcp23017LedState::OFF,
+                      Mcp23017LedState::OFF,
+                      Mcp23017LedState::ON,
+                  }},
+        EnumEntry{TrackStateId::PLAYING,
+                  (TrackLedColorSet){
+                      Mcp23017LedState::OFF,
+                      Mcp23017LedState::ON,
+                      Mcp23017LedState::OFF,
+                  }},
+        EnumEntry{TrackStateId::OVERDUBBING,
+                  (TrackLedColorSet){
+                      Mcp23017LedState::ON,
+                      Mcp23017LedState::ON,
+                      Mcp23017LedState::OFF,
+                  }},
+    };
 
 static TaskStatus HandlePanelRenderPayload(PanelRenderPayload* payload);
 static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload);
@@ -154,7 +161,11 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload) {
     return TASK_STATUS_ERROR;
   }
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    if (RenderTrackLed(payload->track_state[i], i) != TASK_STATUS_OK) {
+    TrackStateId id;
+    if (!ConvertIdRawToId<TrackStateIdRaw, TrackStateId>(payload->track_state[i], &id)) {
+      return TASK_STATUS_ERROR;
+    }
+    if (RenderTrackLed(id, i) != TASK_STATUS_OK) {
       return TASK_STATUS_ERROR;
     }
   }
@@ -165,15 +176,14 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload) {
 // 현재 핀 상태에 따라 수정된 핀의 값을 Mcp23017 드라이버에게 넘겨 값을
 // 업데이트하라고 함
 static TaskStatus RenderFxLed(Parameter* parameter, Mcp23017GpioId gpio_id) {
-  ParameterPinMapEntry* entry = Mcp23017GpioMap_GetEntry(gpio_id);
-  if (entry == NULL) {
-    return TASK_STATUS_ERROR;
-  }
+  Mcp23017Driver& driver = Mcp23017Driver::GetInstance();
+  const Mcp23017GpioMap::PinConfigMap& pin_config_map = Mcp23017GpioMap::GetEnumMap();
+  const Mcp23017GpioMap::PinConfig& pin_config = pin_config_map.Get(gpio_id);
   Mcp23017LedState pin_state = parameter->current == parameter->max
                                    ? Mcp23017LedState::ON
                                    : Mcp23017LedState::OFF;
-  Mcp23017Driver& driver = Mcp23017Driver::GetInstance();
-  if (driver.UpdateLedState(entry->address, gpio_id, pin_state) !=
+
+  if (driver.UpdateLedState(pin_config.address, gpio_id, pin_state) !=
       Mcp23017Status::OK) {
     return TASK_STATUS_ERROR;
   }
@@ -182,41 +192,35 @@ static TaskStatus RenderFxLed(Parameter* parameter, Mcp23017GpioId gpio_id) {
 }
 
 static TaskStatus RenderTrackLed(TrackStateId state_id, uint8_t track_index) {
-  ParameterPinMapEntry *red_entry, *blue_entry, *green_entry;
-  red_entry = Mcp23017GpioMap_GetTrackLedEntry(track_index, TrackLedColor::RED);
-  if (red_entry == NULL) {
-    return TASK_STATUS_ERROR;
-  }
-  green_entry =
-      Mcp23017GpioMap_GetTrackLedEntry(track_index, TrackLedColor::GREEN);
-  if (green_entry == NULL) {
-    return TASK_STATUS_ERROR;
-  }
-  blue_entry =
-      Mcp23017GpioMap_GetTrackLedEntry(track_index, TrackLedColor::BLUE);
-  if (blue_entry == NULL) {
-    return TASK_STATUS_ERROR;
-  }
+  const Mcp23017GpioMap::PinConfig& red_entry =
+      Mcp23017GpioMap::GetTrackLedEntry(track_index,
+                                        Mcp23017GpioMap::TrackLedColor::RED);
+  const Mcp23017GpioMap::PinConfig& green_entry =
+      Mcp23017GpioMap::GetTrackLedEntry(track_index,
+                                        Mcp23017GpioMap::TrackLedColor::GREEN);
+  const Mcp23017GpioMap::PinConfig& blue_entry =
+      Mcp23017GpioMap::GetTrackLedEntry(track_index,
+                                        Mcp23017GpioMap::TrackLedColor::BLUE);
 
   Mcp23017Driver& driver = Mcp23017Driver::GetInstance();
   TrackLedPayload payload[3] = {
       {
-          .address = red_entry->address,
-          .led_gpio_id = red_entry->gpio_id,
-          .led_state =
-              track_led_rgb_table[state_id][(size_t)TrackLedColor::RED],
+          .address = red_entry.address,
+          .led_gpio_id = Mcp23017GpioMap::GetTrackLedGpioId(
+              track_index, Mcp23017GpioMap::TrackLedColor::RED),
+          .led_state = track_state_led_color_map[state_id].red,
       },
       {
-          .address = green_entry->address,
-          .led_gpio_id = green_entry->gpio_id,
-          .led_state =
-              track_led_rgb_table[state_id][(size_t)TrackLedColor::GREEN],
+          .address = green_entry.address,
+          .led_gpio_id = Mcp23017GpioMap::GetTrackLedGpioId(
+              track_index, Mcp23017GpioMap::TrackLedColor::GREEN),
+          .led_state = track_state_led_color_map[state_id].green,
       },
       {
-          .address = blue_entry->address,
-          .led_gpio_id = blue_entry->gpio_id,
-          .led_state =
-              track_led_rgb_table[state_id][(size_t)TrackLedColor::BLUE],
+          .address = blue_entry.address,
+          .led_gpio_id = Mcp23017GpioMap::GetTrackLedGpioId(
+              track_index, Mcp23017GpioMap::TrackLedColor::BLUE),
+          .led_state = track_state_led_color_map[state_id].blue,
       },
   };
   if (driver.UpdateTrackLedState(payload) != Mcp23017Status::OK) {

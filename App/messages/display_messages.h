@@ -7,10 +7,10 @@
 #include "button_id.h"
 #include "menu_descriptor.h"
 #include "parameter.h"
-#include "track_state.h"
 #include "ui_state.h"
 #include "ui_state_id.h"
 #include "ui_state_slot_index.h"
+#include "track_config.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
@@ -45,12 +45,17 @@ typedef struct {
   PanelSlotRenderPayload slot_render_payloads[UI_STATE_SLOT_INDEX_COUNT];
 } PanelRenderPayload;
 
+/**
+ * enum class로 구현된 TrackStateId를 C로 잠시 변환하는 DTO 역할을 맡기 위해 정의된 타입
+ */
+typedef uint16_t TrackStateIdRaw;
+
 typedef struct {
   // TODO:
   // LED와 관련된 설정 구현하기
   Parameter ifx_a_state;
   Parameter tfx_a_state;
-  TrackStateId track_state[TRACK_COUNT];
+  TrackStateIdRaw track_state[TRACK_COUNT];
 } LedRenderPayload;
 
 typedef struct {
