@@ -8,7 +8,6 @@ extern "C" {
 #include "app.h"
 
 void AdcInputTask_Init(void* arguments);
-void AdcInputTask_Run(void);
 
 #ifdef __cplusplus
 }

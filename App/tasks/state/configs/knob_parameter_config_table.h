@@ -5,7 +5,12 @@
 
 #include "knob_id.h"
 #include "parameter_id.h"
+#include "enum_map.hpp"
 
-ParameterId KnobParameterConfigMap_Get(KnobId knob_id);
+namespace KnobParameterConfig {
+    
+EnumMap<KnobId, ParameterId> GetEnumMap();
+
+}
 
 #endif

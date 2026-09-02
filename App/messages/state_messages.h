@@ -5,7 +5,6 @@
 
 #include "button_id.h"
 #include "encoder_id.h"
-#include "knob_id.h"
 
 #define STATE_EVENT_QUEUE_TIMEOUT_500MS (500UL)
 
@@ -27,9 +26,14 @@ typedef struct {
   int32_t delta;
 } EncoderRotationPayload;
 
+/**
+ * enum class로 구현된 KnobId C로 잠시 변환하는 DTO 역할을 맡기 위해 정의된 타입
+ */
+typedef uint8_t KnobIdRaw;
+
 typedef struct {
   uint32_t timestamp_ticks;
-  KnobId knob_id;
+  KnobIdRaw knob_id;
   uint16_t adc_value;
 } AdcConversionPayload;
 

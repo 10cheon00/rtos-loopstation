@@ -5,7 +5,6 @@
 
 #include "FreeRTOS.h"
 #include "encoder_id.h"
-#include "knob_id.h"
 
 #define INPUT_EVENT_QUEUE_TIMEOUT_500MS (500UL)
 
@@ -31,10 +30,15 @@ typedef struct {
   EncoderId encoder_id;
 } EncoderRotationEvent;
 
+/**
+ * enum class로 구현된 KnobId C로 잠시 변환하는 DTO 역할을 맡기 위해 정의된 타입
+ */
+typedef uint8_t KnobIdRaw;
+
 typedef struct {
   TickType_t timestamp_ticks;  // for debugging only
   uint16_t adc_value;
-  KnobId knob_id;
+  KnobIdRaw knob_id;
 } AdcConversionEvent;
 
 typedef struct {

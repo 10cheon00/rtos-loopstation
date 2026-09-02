@@ -1,19 +1,20 @@
 #ifndef KNOB_ID_H
 #define KNOB_ID_H
 
+#include <cstdint>
+
 #include "id.h"
 
-typedef enum {
-  KNOB_ID_NONE = ID_NONE,
-  KNOB_ID_NULL = ID_NULL,
-  KNOB_ID_IFX,
-  KNOB_ID_TFX,
-  KNOB_ID_TRACK_1_VOLUME_FADER,
-  KNOB_ID_TRACK_2_VOLUME_FADER,
-  KNOB_ID_TRACK_3_VOLUME_FADER,
-  KNOB_ID_TRACK_4_VOLUME_FADER,
-  KNOB_ID_TRACK_5_VOLUME_FADER,
-  KNOB_ID_COUNT,
-} KnobId;
+enum class KnobId : std::uint8_t {
+  NONE = ID_NONE,
+  IFX,
+  TFX,
+  TRACK_1_VOLUME_FADER,
+  TRACK_2_VOLUME_FADER,
+  TRACK_3_VOLUME_FADER,
+  TRACK_4_VOLUME_FADER,
+  TRACK_5_VOLUME_FADER,
+  COUNT,
+};
 
 #endif

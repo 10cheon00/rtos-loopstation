@@ -7,6 +7,7 @@
 #include "mcp23017_gpio_map.hpp"
 #include "mcp23017_gpio_to_button_map.hpp"
 #include "state_messages.h"
+#include "utils.h"
 
 static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;

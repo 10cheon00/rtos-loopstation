@@ -50,7 +50,7 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/adc_input_task.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs/adc_rank_knob_config_table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/configs/adc_rank_to_knob_map.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer.cpp
