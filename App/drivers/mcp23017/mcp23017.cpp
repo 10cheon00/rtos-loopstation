@@ -90,9 +90,11 @@ Mcp23017Status Mcp23017Driver::Initialize(I2C_HandleTypeDef* hi2c,
  */
 Mcp23017Status Mcp23017Driver::InternalInitialize(Mcp23017Address address) {
   Mcp23017PinMask port_a_input_pin_mask =
-      Mcp23017GpioMap_GetInputPinMask(address, MCP23017_GPIO_PORT_A);
+      Mcp23017GpioMap::GetInputPinMaskFromAddressAndPort(address,
+                                                         MCP23017_GPIO_PORT_A);
   Mcp23017PinMask port_b_input_pin_mask =
-      Mcp23017GpioMap_GetInputPinMask(address, MCP23017_GPIO_PORT_B);
+      Mcp23017GpioMap::GetInputPinMaskFromAddressAndPort(address,
+                                                         MCP23017_GPIO_PORT_B);
 
   if (HAL_I2C_IsDeviceReady(this->hi2c, address << 1, 10,
                             MCP23017_TIMEOUT_MS) != HAL_OK) {
@@ -245,19 +247,17 @@ Mcp23017Status Mcp23017Driver::GetMcp23017AddressFromInterruptPin(
 Mcp23017Status Mcp23017Driver::UpdateLedStateLocked(
     Mcp23017Address address, Mcp23017GpioId led_gpio_id,
     Mcp23017LedState led_state) {
-  Mcp23017Status status;
-  ParameterPinMapEntry* entry = Mcp23017GpioMap_GetEntry(led_gpio_id);
-  if (entry == NULL) {
-    return Mcp23017Status::ERROR;
-  }
-  Mcp23017Port port = entry->port;
+  const Mcp23017GpioMap::PinConfig& pin_config = Mcp23017GpioMap::GetEnumMap().Get(led_gpio_id);
+
+  Mcp23017Port port = pin_config.port;
 
   uint8_t reg = port == MCP23017_GPIO_PORT_A ? OLATA : OLATB, value;
-  status = this->ReadRegister(address, reg, &value);
+  Mcp23017Status status = this->ReadRegister(address, reg, &value);
   if (status != Mcp23017Status::OK) {
     return status;
   }
-  Mcp23017PinMask pin_register_mask = (Mcp23017PinMask)0x1 << entry->pin_index;
+  Mcp23017PinMask pin_register_mask = (Mcp23017PinMask)0x1
+                                      << pin_config.pin_index;
 
   value = (value & (uint8_t)~pin_register_mask) | (uint8_t)led_state;
 

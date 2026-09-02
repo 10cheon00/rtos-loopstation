@@ -1,0 +1,63 @@
+#include "mcp23017_gpio_to_button_map.hpp"
+
+#include "enum_map.hpp"
+
+/**
+ * Mcp23017GpioId는 ButtonId와 유사하지만 입력 + 출력용 Gpio들을 모두 모은
+ * 것이다. 따라서 입력용 Gpio들을 ButtonId로 변환시켜주려면 테이블이 필요하다.
+ * 이 테이블은 수동으로 컨버팅한다.
+ */
+static constexpr EnumMap<Mcp23017GpioId, ButtonId> gpio_to_button_map{
+    EnumEntry{Mcp23017GpioId::NONE, BUTTON_ID_NONE},
+    EnumEntry{Mcp23017GpioId::LED_IFX_A, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TFX_A, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::BUTTON_LEFT, BUTTON_ID_LEFT},
+    EnumEntry{Mcp23017GpioId::BUTTON_RIGHT, BUTTON_ID_RIGHT},
+    EnumEntry{Mcp23017GpioId::BUTTON_ENTER, BUTTON_ID_ENTER},
+    EnumEntry{Mcp23017GpioId::BUTTON_EXIT, BUTTON_ID_EXIT},
+    EnumEntry{Mcp23017GpioId::BUTTON_ENCODER_A_PUSH, BUTTON_ID_ENCODER_A_PUSH},
+    EnumEntry{Mcp23017GpioId::BUTTON_ENCODER_B_PUSH, BUTTON_ID_ENCODER_B_PUSH},
+    EnumEntry{Mcp23017GpioId::BUTTON_ENCODER_C_PUSH, BUTTON_ID_ENCODER_C_PUSH},
+    EnumEntry{Mcp23017GpioId::BUTTON_ENCODER_D_PUSH, BUTTON_ID_ENCODER_D_PUSH},
+    EnumEntry{Mcp23017GpioId::BUTTON_IFX_A_TOGGLE, BUTTON_ID_IFX_A_TOGGLE},
+    EnumEntry{Mcp23017GpioId::BUTTON_TFX_A_TOGGLE, BUTTON_ID_TFX_A_TOGGLE},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_1_EDIT, BUTTON_ID_TRACK_1_EDIT},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_1_PLAY_RECORD,
+              BUTTON_ID_TRACK_1_PLAY_RECORD},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_1_STOP, BUTTON_ID_TRACK_1_STOP},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_2_EDIT, BUTTON_ID_TRACK_2_EDIT},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_2_PLAY_RECORD,
+              BUTTON_ID_TRACK_2_PLAY_RECORD},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_2_STOP, BUTTON_ID_TRACK_2_STOP},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_3_EDIT, BUTTON_ID_TRACK_3_EDIT},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_3_PLAY_RECORD,
+              BUTTON_ID_TRACK_3_PLAY_RECORD},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_3_STOP, BUTTON_ID_TRACK_3_STOP},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_4_EDIT, BUTTON_ID_TRACK_4_EDIT},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_4_PLAY_RECORD,
+              BUTTON_ID_TRACK_4_PLAY_RECORD},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_4_STOP, BUTTON_ID_TRACK_4_STOP},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_5_EDIT, BUTTON_ID_TRACK_5_EDIT},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_5_PLAY_RECORD,
+              BUTTON_ID_TRACK_5_PLAY_RECORD},
+    EnumEntry{Mcp23017GpioId::BUTTON_TRACK_5_STOP, BUTTON_ID_TRACK_5_STOP},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_1_RED, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_1_GREEN, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_1_BLUE, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_2_RED, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_2_GREEN, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_2_BLUE, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_3_RED, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_3_GREEN, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_3_BLUE, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_4_RED, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_4_GREEN, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_4_BLUE, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_5_RED, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_5_GREEN, BUTTON_ID_NULL},
+    EnumEntry{Mcp23017GpioId::LED_TRACK_5_BLUE, BUTTON_ID_NULL},
+};
+
+ButtonId Mcp23017GpioToButtonMap::Get(Mcp23017GpioId gpio_id) {
+  return gpio_to_button_map[gpio_id];
+}

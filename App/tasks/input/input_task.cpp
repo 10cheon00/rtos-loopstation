@@ -5,6 +5,7 @@
 #include "input_messages.h"
 #include "mcp23017.hpp"
 #include "mcp23017_gpio_map.hpp"
+#include "mcp23017_gpio_to_button_map.hpp"
 #include "state_messages.h"
 
 static osMessageQueueId_t input_event_queue;
@@ -76,8 +77,6 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent* intEvent) {
   TickType_t timestamp_ticks = intEvent->timestamp_ticks;
   Mcp23017Address address;
   Mcp23017InterruptPin GPIO_Pin = intEvent->gpio_pin;
-  Mcp23017PinMask gpio_a_pin_mask, gpio_b_pin_mask;
-  Mcp23017PinMask gpio_a_state, gpio_b_state;
   Mcp23017InterruptSnapshot snapshot;
   Mcp23017Status mcp23017_status;
 
@@ -100,35 +99,37 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent* intEvent) {
   }
 
   index = 0;
-  while (gpio_a_pin_mask != 0) {
-    if ((gpio_a_pin_mask & 0x1) != 0) {
-      gpio_id = Mcp23017GpioMap_GetMcp23017GpioId(address, MCP23017_GPIO_PORT_A,
-                                                  index);
+  while (snapshot.port_a.pin_mask != 0) {
+    if ((snapshot.port_a.pin_mask & 0x1) != 0) {
+      gpio_id = Mcp23017GpioMap::FindGpioIdFromPinConfig(
+          address, MCP23017_GPIO_PORT_A, index);
       if (gpio_id == Mcp23017GpioId::NONE) {
         return TASK_STATUS_ERROR;
       }
-      button_state =
-          (gpio_a_state & 0x1) ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
+      button_state = (snapshot.port_a.captured_pin_states & 0x1)
+                         ? BUTTON_STATE_RELEASED
+                         : BUTTON_STATE_PRESSED;
       SendButtonPayload(address, gpio_id, button_state, timestamp_ticks);
     }
-    gpio_a_pin_mask >>= 1;
-    gpio_a_state >>= 1;
+    snapshot.port_a.pin_mask >>= 1;
+    snapshot.port_a.captured_pin_states >>= 1;
     index++;
   }
   index = 0;
-  while (gpio_b_pin_mask != 0) {
-    if ((gpio_b_pin_mask & 0x1) != 0) {
-      gpio_id = Mcp23017GpioMap_GetMcp23017GpioId(address, MCP23017_GPIO_PORT_B,
-                                                  index);
+  while (snapshot.port_b.pin_mask != 0) {
+    if ((snapshot.port_b.pin_mask & 0x1) != 0) {
+      gpio_id = Mcp23017GpioMap::FindGpioIdFromPinConfig(
+          address, MCP23017_GPIO_PORT_B, index);
       if (gpio_id == Mcp23017GpioId::NONE) {
         return TASK_STATUS_ERROR;
       }
-      button_state =
-          (gpio_b_state & 0x1) ? BUTTON_STATE_RELEASED : BUTTON_STATE_PRESSED;
+      button_state = (snapshot.port_b.captured_pin_states & 0x1)
+                         ? BUTTON_STATE_RELEASED
+                         : BUTTON_STATE_PRESSED;
       SendButtonPayload(address, gpio_id, button_state, timestamp_ticks);
     }
-    gpio_b_pin_mask >>= 1;
-    gpio_b_state >>= 1;
+    snapshot.port_b.pin_mask >>= 1;
+    snapshot.port_b.captured_pin_states >>= 1;
     index++;
   }
   return TASK_STATUS_OK;
@@ -138,14 +139,16 @@ static TaskStatus SendButtonPayload(Mcp23017Address address,
                                     Mcp23017GpioId gpio_id,
                                     ButtonState button_state,
                                     TickType_t timestamp_ticks) {
-  ButtonId button_id = Mcp23017GpioMap_Get(gpio_id);
+  ButtonId button_id = Mcp23017GpioToButtonMap::Get(gpio_id);
   ButtonPayload payload = {
       .timestamp_ticks = timestamp_ticks,
       .id = button_id,
       .state = button_state,
   };
   StateEvent state_event = {.type = STATE_EVENT_BUTTON,
-                            .payload = {.button = payload}};
+                            .payload = {
+                                .button = payload,
+                            }};
   osMessageQueuePut(state_event_queue, &state_event, 0,
                     STATE_EVENT_QUEUE_TIMEOUT_500MS);
 
