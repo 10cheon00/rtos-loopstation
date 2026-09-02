@@ -3,7 +3,7 @@
 
 #include "track_state.h"
 
-typedef TrackState *TrackStatePointer;
+typedef TrackState* TrackStatePointer;
 
 TrackStatePointer TrackIdStateConfigMap_Get(TrackStateId id);
 

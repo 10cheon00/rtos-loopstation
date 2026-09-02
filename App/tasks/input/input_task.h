@@ -12,10 +12,10 @@ extern "C" {
 #include "encoder_id.h"
 
 typedef struct {
-    ButtonState encoder_button_state[ENCODER_ID_COUNT];
+  ButtonState encoder_button_state[ENCODER_ID_COUNT];
 } InputTaskContext;
 
-void InputTask_Init(void *argument);
+void InputTask_Init(void* argument);
 void InputTask_Run(void);
 
 #ifdef __cplusplus

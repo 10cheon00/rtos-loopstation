@@ -3,12 +3,13 @@
 #include <array>
 
 static constexpr auto system_state_running_transition_table = [] {
-    std::array<SystemStateId, SYSTEM_ACTION_ID_COUNT> values{};
-    values[SYSTEM_ACTION_ID_ERROR] = SYSTEM_STATE_ID_ERROR;
-    return values;
+  std::array<SystemStateId, SYSTEM_ACTION_ID_COUNT> values{};
+  values[SYSTEM_ACTION_ID_ERROR] = SYSTEM_STATE_ID_ERROR;
+  return values;
 }();
 
-static SystemStateOnEnterResult SystemStateRunning_OnEnter(SystemStateMachineContext *context);
+static SystemStateOnEnterResult SystemStateRunning_OnEnter(
+    SystemStateMachineContext* context);
 
 SystemState SYSTEM_STATE_RUNNING = {
     .id = SYSTEM_STATE_ID_RUNNING,
@@ -16,8 +17,8 @@ SystemState SYSTEM_STATE_RUNNING = {
     .OnEnter = SystemStateRunning_OnEnter,
 };
 
-static SystemStateOnEnterResult SystemStateRunning_OnEnter(SystemStateMachineContext *context)
-{
-    return (SystemStateOnEnterResult){.action_id = SYSTEM_ACTION_ID_NONE,
-                                      .is_transition_requested = false};
+static SystemStateOnEnterResult SystemStateRunning_OnEnter(
+    SystemStateMachineContext* context) {
+  return (SystemStateOnEnterResult){.action_id = SYSTEM_ACTION_ID_NONE,
+                                    .is_transition_requested = false};
 }

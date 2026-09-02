@@ -3,6 +3,6 @@
 
 #include "ui_state_id.h"
 
-const char *UiStateLabelConfigTable_Get(UiStateId id);
+const char* UiStateLabelConfigTable_Get(UiStateId id);
 
 #endif

@@ -4,10 +4,10 @@
 #include <cstddef>
 
 enum class Mcp23017Status : uint8_t {
-    OK = 0,
-    NOT_INITED,
-    BUSY,
-    ERROR,
+  OK = 0,
+  NOT_INITED,
+  BUSY,
+  ERROR,
 };
 
 using Mcp23017Address = uint8_t;

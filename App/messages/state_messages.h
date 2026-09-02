@@ -22,15 +22,15 @@ typedef struct {
 } ButtonPayload;
 
 typedef struct {
-    uint32_t timestamp_ticks;
-    EncoderId encoder_id;
-    int32_t delta;
+  uint32_t timestamp_ticks;
+  EncoderId encoder_id;
+  int32_t delta;
 } EncoderRotationPayload;
 
 typedef struct {
-    uint32_t timestamp_ticks;
-    KnobId knob_id;
-    uint16_t adc_value;
+  uint32_t timestamp_ticks;
+  KnobId knob_id;
+  uint16_t adc_value;
 } AdcConversionPayload;
 
 typedef struct {

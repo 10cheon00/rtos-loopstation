@@ -1,5 +1,4 @@
 #ifndef PANEL_PARAMETER_SLOT_H
 #define PANEL_PARAMATER_SLOT_H
 
-
 #endif

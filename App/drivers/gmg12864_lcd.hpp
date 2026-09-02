@@ -13,22 +13,20 @@ extern "C" {
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
-enum class Gmg12864LcdStatus {
-    OK = 0,
-    ERROR
-};
+enum class Gmg12864LcdStatus { OK = 0, ERROR };
 
 struct Gmg12864Lcd_InitParams {
-    SPI_HandleTypeDef *hspi;
-    uint16_t CS_Pin;
-    uint16_t RST_Pin;
-    uint16_t DC_Pin;
-    GPIO_TypeDef *CS_Port;
-    GPIO_TypeDef *RST_Port;
-    GPIO_TypeDef *DC_Port;
+  SPI_HandleTypeDef* hspi;
+  uint16_t CS_Pin;
+  uint16_t RST_Pin;
+  uint16_t DC_Pin;
+  GPIO_TypeDef* CS_Port;
+  GPIO_TypeDef* RST_Port;
+  GPIO_TypeDef* DC_Port;
 };
 
-Gmg12864LcdStatus Gmg12864Lcd_Init(u8g2_t *u8g2, Gmg12864Lcd_InitParams *init_params);
+Gmg12864LcdStatus Gmg12864Lcd_Init(u8g2_t* u8g2,
+                                   Gmg12864Lcd_InitParams* init_params);
 
 #ifdef __cplusplus
 }

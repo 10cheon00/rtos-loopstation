@@ -17,6 +17,6 @@ double cosine(int16_t degree);
 double sine(int16_t degree);
 double tangent(int16_t degree);
 typedef uint32_t Hash_t;
-Hash_t djb2(const char *string);
+Hash_t djb2(const char* string);
 
 #endif

@@ -14,9 +14,9 @@
  * 저장소를 분리한다면 ParameterId도 저장소에 따라 분리해야한다.
  */
 typedef struct {
-    std::array<Parameter, PARAMETER_ID_COUNT> parameters;
+  std::array<Parameter, PARAMETER_ID_COUNT> parameters;
 } LoopStationParameterStore;
 
-Parameter *LoopStationParameterStore_Get(ParameterId parameter_id);
+Parameter* LoopStationParameterStore_Get(ParameterId parameter_id);
 
 #endif

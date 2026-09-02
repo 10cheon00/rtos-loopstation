@@ -4,8 +4,8 @@
 #include "parameter_id.h"
 
 typedef struct {
-    ParameterId id;
-    const char *label;
+  ParameterId id;
+  const char* label;
 } ParameterDescriptor;
 
 #endif

@@ -3,7 +3,7 @@
 
 #include "system_state.h"
 
-typedef SystemState *SystemStatePointer;
+typedef SystemState* SystemStatePointer;
 
 SystemStatePointer SystemStateConfigMap_Get(SystemStateId id);
 

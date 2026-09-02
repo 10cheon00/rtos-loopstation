@@ -4,9 +4,9 @@
 #include "config_validator.h"
 
 typedef struct {
-    ConfigValidatorLog *logs;
+  ConfigValidatorLog* logs;
 } SystemStateMachineContext;
 
-void SystemStateMachineContext_Init(SystemStateMachineContext *context);
+void SystemStateMachineContext_Init(SystemStateMachineContext* context);
 
 #endif

@@ -1,9 +1,9 @@
 #include "mcp23017_gpio_map.hpp"
 
-#include "utils.h"
-#include "track_state.h"
 #include "config_table.h"
 #include "config_validator.h"
+#include "track_state.h"
+#include "utils.h"
 
 #define INDEX_TO_MASK(index) ((Mcp23017GpioPinMask)1 << index)
 
@@ -119,9 +119,10 @@ static const size_t parameter_pin_map_count = ARRAY_COUNT(parameter_pin_map);
 
 // TODO:
 // TRACK_COUNT를 얻기 위해 track_state.h를 인클루드하는게 맞을까?
-static Mcp23017GpioId track_led_gpio_table[TRACK_COUNT][(size_t)TrackLedColor::COUNT] = {
-    {Mcp23017GpioId::NONE, Mcp23017GpioId::LED_TRACK_1_RED, Mcp23017GpioId::LED_TRACK_1_GREEN,
-     Mcp23017GpioId::LED_TRACK_1_BLUE},
+static Mcp23017GpioId track_led_gpio_table[TRACK_COUNT][(
+    size_t)TrackLedColor::COUNT] = {
+    {Mcp23017GpioId::NONE, Mcp23017GpioId::LED_TRACK_1_RED,
+     Mcp23017GpioId::LED_TRACK_1_GREEN, Mcp23017GpioId::LED_TRACK_1_BLUE},
     // {0, Mcp23017GpioId::LED_TRACK_2_RED, Mcp23017GpioId::LED_TRACK_2_GREEN,
     //  Mcp23017GpioId::LED_TRACK_2_BLUE},
     // {0, Mcp23017GpioId::LED_TRACK_3_RED, Mcp23017GpioId::LED_TRACK_3_GREEN,
@@ -132,125 +133,133 @@ static Mcp23017GpioId track_led_gpio_table[TRACK_COUNT][(size_t)TrackLedColor::C
     //  Mcp23017GpioId::LED_TRACK_5_BLUE},
 };
 
-ParameterPinMapEntry *Mcp23017GpioMap_GetEntry(Mcp23017GpioId gpio_id)
-{
-    for (size_t i = 0; i < parameter_pin_map_count; i++) {
-        if (parameter_pin_map[i].gpio_id == gpio_id) {
-            return &parameter_pin_map[i];
-        }
+ParameterPinMapEntry* Mcp23017GpioMap_GetEntry(Mcp23017GpioId gpio_id) {
+  for (size_t i = 0; i < parameter_pin_map_count; i++) {
+    if (parameter_pin_map[i].gpio_id == gpio_id) {
+      return &parameter_pin_map[i];
     }
-    return NULL;
+  }
+  return NULL;
 }
 
-ParameterPinMapEntry *Mcp23017GpioMap_GetTrackLedEntry(uint8_t track_index, TrackLedColor color)
-{
+ParameterPinMapEntry* Mcp23017GpioMap_GetTrackLedEntry(uint8_t track_index,
+                                                       TrackLedColor color) {
+  Mcp23017GpioId gpio_id;
+  gpio_id = track_led_gpio_table[track_index][(size_t)color];
 
-    Mcp23017GpioId gpio_id;
-    gpio_id = track_led_gpio_table[track_index][(size_t)color];
-
-    for (size_t i = 0; i < parameter_pin_map_count; i++) {
-        if (parameter_pin_map[i].gpio_id == gpio_id) {
-            return &parameter_pin_map[i];
-        }
+  for (size_t i = 0; i < parameter_pin_map_count; i++) {
+    if (parameter_pin_map[i].gpio_id == gpio_id) {
+      return &parameter_pin_map[i];
     }
-    return NULL;
+  }
+  return NULL;
 }
 
-Mcp23017GpioId Mcp23017GpioMap_GetMcp23017GpioId(Mcp23017Address address, Mcp23017Port port,
-                                                 uint8_t pin_index)
-{
-    for (size_t i = 0; i < parameter_pin_map_count; i++) {
-        if (parameter_pin_map[i].address == address && parameter_pin_map[i].port == port &&
-            parameter_pin_map[i].pin_index == pin_index) {
-            return parameter_pin_map[i].gpio_id;
-        }
+Mcp23017GpioId Mcp23017GpioMap_GetMcp23017GpioId(Mcp23017Address address,
+                                                 Mcp23017Port port,
+                                                 uint8_t pin_index) {
+  for (size_t i = 0; i < parameter_pin_map_count; i++) {
+    if (parameter_pin_map[i].address == address &&
+        parameter_pin_map[i].port == port &&
+        parameter_pin_map[i].pin_index == pin_index) {
+      return parameter_pin_map[i].gpio_id;
     }
-    return Mcp23017GpioId::NONE;
+  }
+  return Mcp23017GpioId::NONE;
 }
 
-Mcp23017PinMask Mcp23017GpioMap_GetInputPinMask(Mcp23017Address address, Mcp23017Port port)
-{
-    Mcp23017PinMask input_pin_mask = 0;
+Mcp23017PinMask Mcp23017GpioMap_GetInputPinMask(Mcp23017Address address,
+                                                Mcp23017Port port) {
+  Mcp23017PinMask input_pin_mask = 0;
 
-    for (size_t i = 0; i < parameter_pin_map_count; i++) {
-        if (parameter_pin_map[i].address == address && parameter_pin_map[i].port == port &&
-            parameter_pin_map[i].gpio_type == Mcp23017GpioType::INPUT) {
-            input_pin_mask |= 1 << parameter_pin_map[i].pin_index;
-        }
+  for (size_t i = 0; i < parameter_pin_map_count; i++) {
+    if (parameter_pin_map[i].address == address &&
+        parameter_pin_map[i].port == port &&
+        parameter_pin_map[i].gpio_type == Mcp23017GpioType::INPUT) {
+      input_pin_mask |= 1 << parameter_pin_map[i].pin_index;
     }
-    return input_pin_mask;
+  }
+  return input_pin_mask;
 }
 
-Mcp23017Port Mcp23017GpioMap_GetPortFromAddressAndGpioId(Mcp23017Address address,
-                                                         Mcp23017GpioId gpio_id)
-{
-    for (size_t i = 0; i < parameter_pin_map_count; i++) {
-        if (parameter_pin_map[i].address == address && parameter_pin_map[i].gpio_id == gpio_id) {
-            return parameter_pin_map[i].port;
-        }
+Mcp23017Port Mcp23017GpioMap_GetPortFromAddressAndGpioId(
+    Mcp23017Address address, Mcp23017GpioId gpio_id) {
+  for (size_t i = 0; i < parameter_pin_map_count; i++) {
+    if (parameter_pin_map[i].address == address &&
+        parameter_pin_map[i].gpio_id == gpio_id) {
+      return parameter_pin_map[i].port;
     }
-    // TODO:
-    // 반환값이 항상 올바른 것이 아니므로, Status를 반환하도록 전부 고치기?
-    return (Mcp23017Port)0xFF;
+  }
+  // TODO:
+  // 반환값이 항상 올바른 것이 아니므로, Status를 반환하도록 전부 고치기?
+  return (Mcp23017Port)0xFF;
 }
 
 /**
- * Mcp23017GpioId는 ButtonId와 유사하지만 입력 + 출력용 Gpio들을 모두 모은 것이다.
- * 따라서 입력용 Gpio들을 ButtonId로 변환시켜주려면 테이블이 필요하다.
+ * Mcp23017GpioId는 ButtonId와 유사하지만 입력 + 출력용 Gpio들을 모두 모은
+ * 것이다. 따라서 입력용 Gpio들을 ButtonId로 변환시켜주려면 테이블이 필요하다.
  * 이 테이블은 수동으로 컨버팅한다.
  */
 static constexpr auto gpio_to_button_map = [] {
-    std::array<ButtonId, (size_t)(Mcp23017GpioId::COUNT)> values{};
-    values[(size_t)Mcp23017GpioId::NONE] = BUTTON_ID_NONE;
-    values[(size_t)Mcp23017GpioId::LED_IFX_A] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TFX_A] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::BUTTON_LEFT] = BUTTON_ID_LEFT;
-    values[(size_t)Mcp23017GpioId::BUTTON_RIGHT] = BUTTON_ID_RIGHT;
-    values[(size_t)Mcp23017GpioId::BUTTON_ENTER] = BUTTON_ID_ENTER;
-    values[(size_t)Mcp23017GpioId::BUTTON_EXIT] = BUTTON_ID_EXIT;
-    values[(size_t)Mcp23017GpioId::BUTTON_ENCODER_A_PUSH] = BUTTON_ID_ENCODER_A_PUSH;
-    values[(size_t)Mcp23017GpioId::BUTTON_ENCODER_B_PUSH] = BUTTON_ID_ENCODER_B_PUSH;
-    values[(size_t)Mcp23017GpioId::BUTTON_ENCODER_C_PUSH] = BUTTON_ID_ENCODER_C_PUSH;
-    values[(size_t)Mcp23017GpioId::BUTTON_ENCODER_D_PUSH] = BUTTON_ID_ENCODER_D_PUSH;
-    values[(size_t)Mcp23017GpioId::BUTTON_IFX_A_TOGGLE] = BUTTON_ID_IFX_A_TOGGLE;
-    values[(size_t)Mcp23017GpioId::BUTTON_TFX_A_TOGGLE] = BUTTON_ID_TFX_A_TOGGLE;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_1_EDIT] = BUTTON_ID_TRACK_1_EDIT;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_1_PLAY_RECORD] = BUTTON_ID_TRACK_1_PLAY_RECORD;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_1_STOP] = BUTTON_ID_TRACK_1_STOP;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_2_EDIT] = BUTTON_ID_TRACK_2_EDIT;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_2_PLAY_RECORD] = BUTTON_ID_TRACK_2_PLAY_RECORD;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_2_STOP] = BUTTON_ID_TRACK_2_STOP;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_3_EDIT] = BUTTON_ID_TRACK_3_EDIT;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_3_PLAY_RECORD] = BUTTON_ID_TRACK_3_PLAY_RECORD;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_3_STOP] = BUTTON_ID_TRACK_3_STOP;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_4_EDIT] = BUTTON_ID_TRACK_4_EDIT;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_4_PLAY_RECORD] = BUTTON_ID_TRACK_4_PLAY_RECORD;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_4_STOP] = BUTTON_ID_TRACK_4_STOP;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_5_EDIT] = BUTTON_ID_TRACK_5_EDIT;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_5_PLAY_RECORD] = BUTTON_ID_TRACK_5_PLAY_RECORD;
-    values[(size_t)Mcp23017GpioId::BUTTON_TRACK_5_STOP] = BUTTON_ID_TRACK_5_STOP;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_1_RED] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_1_GREEN] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_1_BLUE] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_2_RED] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_2_GREEN] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_2_BLUE] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_3_RED] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_3_GREEN] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_3_BLUE] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_4_RED] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_4_GREEN] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_4_BLUE] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_5_RED] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_5_GREEN] = BUTTON_ID_NULL;
-    values[(size_t)Mcp23017GpioId::LED_TRACK_5_BLUE] = BUTTON_ID_NULL;
-    return values;
+  std::array<ButtonId, (size_t)(Mcp23017GpioId::COUNT)> values{};
+  values[(size_t)Mcp23017GpioId::NONE] = BUTTON_ID_NONE;
+  values[(size_t)Mcp23017GpioId::LED_IFX_A] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TFX_A] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::BUTTON_LEFT] = BUTTON_ID_LEFT;
+  values[(size_t)Mcp23017GpioId::BUTTON_RIGHT] = BUTTON_ID_RIGHT;
+  values[(size_t)Mcp23017GpioId::BUTTON_ENTER] = BUTTON_ID_ENTER;
+  values[(size_t)Mcp23017GpioId::BUTTON_EXIT] = BUTTON_ID_EXIT;
+  values[(size_t)Mcp23017GpioId::BUTTON_ENCODER_A_PUSH] =
+      BUTTON_ID_ENCODER_A_PUSH;
+  values[(size_t)Mcp23017GpioId::BUTTON_ENCODER_B_PUSH] =
+      BUTTON_ID_ENCODER_B_PUSH;
+  values[(size_t)Mcp23017GpioId::BUTTON_ENCODER_C_PUSH] =
+      BUTTON_ID_ENCODER_C_PUSH;
+  values[(size_t)Mcp23017GpioId::BUTTON_ENCODER_D_PUSH] =
+      BUTTON_ID_ENCODER_D_PUSH;
+  values[(size_t)Mcp23017GpioId::BUTTON_IFX_A_TOGGLE] = BUTTON_ID_IFX_A_TOGGLE;
+  values[(size_t)Mcp23017GpioId::BUTTON_TFX_A_TOGGLE] = BUTTON_ID_TFX_A_TOGGLE;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_1_EDIT] = BUTTON_ID_TRACK_1_EDIT;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_1_PLAY_RECORD] =
+      BUTTON_ID_TRACK_1_PLAY_RECORD;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_1_STOP] = BUTTON_ID_TRACK_1_STOP;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_2_EDIT] = BUTTON_ID_TRACK_2_EDIT;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_2_PLAY_RECORD] =
+      BUTTON_ID_TRACK_2_PLAY_RECORD;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_2_STOP] = BUTTON_ID_TRACK_2_STOP;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_3_EDIT] = BUTTON_ID_TRACK_3_EDIT;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_3_PLAY_RECORD] =
+      BUTTON_ID_TRACK_3_PLAY_RECORD;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_3_STOP] = BUTTON_ID_TRACK_3_STOP;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_4_EDIT] = BUTTON_ID_TRACK_4_EDIT;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_4_PLAY_RECORD] =
+      BUTTON_ID_TRACK_4_PLAY_RECORD;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_4_STOP] = BUTTON_ID_TRACK_4_STOP;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_5_EDIT] = BUTTON_ID_TRACK_5_EDIT;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_5_PLAY_RECORD] =
+      BUTTON_ID_TRACK_5_PLAY_RECORD;
+  values[(size_t)Mcp23017GpioId::BUTTON_TRACK_5_STOP] = BUTTON_ID_TRACK_5_STOP;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_1_RED] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_1_GREEN] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_1_BLUE] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_2_RED] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_2_GREEN] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_2_BLUE] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_3_RED] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_3_GREEN] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_3_BLUE] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_4_RED] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_4_GREEN] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_4_BLUE] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_5_RED] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_5_GREEN] = BUTTON_ID_NULL;
+  values[(size_t)Mcp23017GpioId::LED_TRACK_5_BLUE] = BUTTON_ID_NULL;
+  return values;
 }();
 
-ButtonId Mcp23017GpioMap_Get(Mcp23017GpioId gpio_id)
-{
-    if (gpio_id <= Mcp23017GpioId::NONE || gpio_id >= Mcp23017GpioId::COUNT) {
-        return BUTTON_ID_NONE;
-    }
-    return gpio_to_button_map[(size_t)gpio_id];
+ButtonId Mcp23017GpioMap_Get(Mcp23017GpioId gpio_id) {
+  if (gpio_id <= Mcp23017GpioId::NONE || gpio_id >= Mcp23017GpioId::COUNT) {
+    return BUTTON_ID_NONE;
+  }
+  return gpio_to_button_map[(size_t)gpio_id];
 }
