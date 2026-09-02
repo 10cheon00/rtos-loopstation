@@ -6,16 +6,14 @@
 #include "stm32h7xx.h"
 #include "u8g2.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace Gmg12864 {
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
-enum class Gmg12864LcdStatus { OK = 0, ERROR };
+enum class LcdStatus { OK = 0, ERROR };
 
-struct Gmg12864Lcd_InitParams {
+struct InitParams {
   SPI_HandleTypeDef* hspi;
   uint16_t CS_Pin;
   uint16_t RST_Pin;
@@ -25,11 +23,8 @@ struct Gmg12864Lcd_InitParams {
   GPIO_TypeDef* DC_Port;
 };
 
-Gmg12864LcdStatus Gmg12864Lcd_Init(u8g2_t* u8g2,
-                                   Gmg12864Lcd_InitParams* init_params);
+LcdStatus Init(u8g2_t* u8g2, InitParams* init_params);
 
-#ifdef __cplusplus
-}
-#endif
+}  // namespace Gmg12864
 
 #endif

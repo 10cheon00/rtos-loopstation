@@ -8,7 +8,6 @@ extern "C" {
 #include "app.h"
 
 void DisplayTask_Init(void* argument);
-void DisplayTask_Run(void);
 
 #ifdef __cplusplus
 }

@@ -61,6 +61,7 @@ static constexpr EnumMap<TrackStateId, TrackLedColorSet>
                   }},
     };
 
+static void Run(void);
 static TaskStatus HandlePanelRenderPayload(PanelRenderPayload* payload);
 static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload);
 static TaskStatus RenderFxLed(Parameter* parameter, Mcp23017::GpioId gpio_id);
@@ -86,7 +87,7 @@ void DisplayTask_Init(void* argument) {
 
   display_snapshot_mailbox = params->display_snapshot_mailbox;
 
-  Gmg12864Lcd_InitParams initparams = {
+  Gmg12864::InitParams initparams = {
       .hspi = params->hspi,
       .CS_Pin = params->CS_Pin,
       .RST_Pin = params->RST_Pin,
@@ -96,18 +97,18 @@ void DisplayTask_Init(void* argument) {
       .DC_Port = params->DC_Port,
   };
 
-  Gmg12864LcdStatus status = Gmg12864Lcd_Init(&u8g2, &initparams);
-  if (status != Gmg12864LcdStatus::OK) {
+  Gmg12864::LcdStatus status = Gmg12864::Init(&u8g2, &initparams);
+  if (status != Gmg12864::LcdStatus::OK) {
     // TODO: 초기화 단계에서 오류 발생 시 처리 흐름에 대해 요구사항에서 정의하기
     for (;;) {
       osDelay(1);
     }
   }
 
-  DisplayTask_Run();
+  Run();
 }
 
-void DisplayTask_Run(void) {
+static void Run(void) {
   TickType_t last_wake_ticks = 0, next_wake_ticks;
   DisplaySnapshot snapshot;
 

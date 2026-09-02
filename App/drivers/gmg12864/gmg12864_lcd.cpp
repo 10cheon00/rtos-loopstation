@@ -1,9 +1,9 @@
 #include "gmg12864_lcd.hpp"
 
+namespace Gmg12864 {
 #define GMG12864_TIMEOUT_MS 1000
 
-static int Gmg12864LcdStatus_IsValidInitParams(
-    const Gmg12864Lcd_InitParams* params) {
+static int Gmg12864LcdStatus_IsValidInitParams(const InitParams* params) {
   return (params != 0) && (params->hspi != NULL && params->CS_Pin != 0 &&
                            params->CS_Port != NULL && params->RST_Pin != 0 &&
                            params->RST_Port != NULL && params->DC_Pin != 0 &&
@@ -12,7 +12,7 @@ static int Gmg12864LcdStatus_IsValidInitParams(
 
 static uint8_t Gmg12864Lcd_u8g2MessageCallback(u8x8_t* u8x8, uint8_t msg,
                                                uint8_t arg_int, void* arg_ptr) {
-  Gmg12864Lcd_InitParams* params = (Gmg12864Lcd_InitParams*)u8x8->user_ptr;
+  InitParams* params = (InitParams*)u8x8->user_ptr;
   SPI_HandleTypeDef* hspi = params->hspi;
 
   switch (msg) {
@@ -41,7 +41,7 @@ static uint8_t Gmg12864Lcd_u8g2MessageCallback(u8x8_t* u8x8, uint8_t msg,
 static uint8_t Gmg12864Lcd_u8g2GpioAndDelayCallback(u8x8_t* u8x8, uint8_t msg,
                                                     uint8_t arg_int,
                                                     void* arg_ptr) {
-  Gmg12864Lcd_InitParams* params = (Gmg12864Lcd_InitParams*)u8x8->user_ptr;
+  InitParams* params = (InitParams*)u8x8->user_ptr;
   uint32_t i = 0;
   switch (msg) {
     case U8X8_MSG_GPIO_AND_DELAY_INIT:
@@ -79,10 +79,9 @@ static uint8_t Gmg12864Lcd_u8g2GpioAndDelayCallback(u8x8_t* u8x8, uint8_t msg,
   return 1;
 }
 
-Gmg12864LcdStatus Gmg12864Lcd_Init(u8g2_t* u8g2,
-                                   Gmg12864Lcd_InitParams* params) {
+LcdStatus Init(u8g2_t* u8g2, InitParams* params) {
   if (!(u8g2 != NULL && Gmg12864LcdStatus_IsValidInitParams(params))) {
-    return Gmg12864LcdStatus::ERROR;
+    return LcdStatus::ERROR;
   }
   u8x8_SetUserPtr(&u8g2->u8x8, params);
 
@@ -93,5 +92,7 @@ Gmg12864LcdStatus Gmg12864Lcd_Init(u8g2_t* u8g2,
   u8g2_SetPowerSave(u8g2, 0);
   u8g2_SetContrast(u8g2, 80);
 
-  return Gmg12864LcdStatus::OK;
+  return LcdStatus::OK;
 }
+
+}  // namespace Gmg12864
