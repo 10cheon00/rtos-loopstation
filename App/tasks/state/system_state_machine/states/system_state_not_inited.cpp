@@ -2,7 +2,6 @@
 
 #include <array>
 
-#include "config_validator.h"
 #include "mcp23017.hpp"
 
 static constexpr auto system_state_not_init_transition_table = [] {
