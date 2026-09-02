@@ -1,4 +1,4 @@
-#include "gmg12864_lcd.h"
+#include "gmg12864_lcd.hpp"
 
 #define GMG12864_TIMEOUT_MS 1000
 

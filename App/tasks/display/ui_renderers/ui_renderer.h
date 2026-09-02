@@ -1,7 +1,7 @@
 #ifndef UI_RENDERER_H
 #define UI_RENDERER_H
 
-#include "gmg12864_lcd.h"
+#include "gmg12864_lcd.hpp"
 #include "display_messages.h"
 #include "parameter.h"
 #include "parameter_id.h"
