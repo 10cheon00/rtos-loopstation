@@ -9,23 +9,7 @@
 #include "mcp23017_gpio_id.hpp"
 #include "mcp23017_types.hpp"
 
-#define MCP23017_ADDRESS_0B100 (0x20 | 0b100)
-#define MCP23017_ADDRESS_0B101 (0x20 | 0b101)
-
-#define MCP23017_GPIO_PORT_A 0x0
-#define MCP23017_GPIO_PORT_B 0x1
-
-namespace Mcp23017GpioMap {
-
-enum class Address : Mcp23017Address {
-  b100 = (0x20 | 0b100),
-  b101 = (0x20 | 0b101),
-};
-
-enum class Port : Mcp23017Port {
-  A = 0x0,
-  B = 0x1,
-};
+namespace Mcp23017 {
 
 enum class GpioType {
   INPUT = 0,
@@ -42,19 +26,20 @@ enum class TrackLedColor {
 
 struct PinConfig {
   GpioType gpio_type;
-  Mcp23017Address address;
-  Mcp23017Port port;
-  std::uint8_t pin_index;
+  Address address;
+  Port port;
+  PinIndex pin_index;
 };
 
-using PinConfigMap = EnumMap<Mcp23017GpioId, PinConfig>;
+using PinConfigMap = EnumMap<Mcp23017::GpioId, PinConfig>;
 
-const PinConfigMap& GetEnumMap();
+const PinConfigMap& GetPinConfigMap();
 const PinConfig& GetTrackLedEntry(std::uint8_t track_index,
                                   TrackLedColor color);
-Mcp23017GpioId GetTrackLedGpioId(std::uint8_t track_index, TrackLedColor color);
-Mcp23017GpioId FindGpioIdFromPinConfig(Mcp23017Address address, Mcp23017Port port, std::uint8_t pin_index);
-Mcp23017PinMask GetInputPinMaskFromAddressAndPort(Mcp23017Address address, Mcp23017Port port);
-}  // namespace Mcp23017GpioMap
+GpioId GetTrackLedGpioId(std::uint8_t track_index, TrackLedColor color);
+GpioId FindGpioIdFromPinConfig(Address address, Port port, PinIndex pin_index);
+PinMask GetInputPinMaskFromAddressAndPort(Address address, Port port);
+
+}  // namespace Mcp23017
 
 #endif

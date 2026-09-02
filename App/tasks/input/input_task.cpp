@@ -13,8 +13,8 @@ static osMessageQueueId_t state_event_queue;
 
 static TaskStatus HandleInputEvent(InputEvent* input_event);
 static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent* intEvent);
-static TaskStatus SendButtonPayload(Mcp23017Address address,
-                                    Mcp23017GpioId gpio_id,
+static TaskStatus SendButtonPayload(Mcp23017::Address address,
+                                    Mcp23017::GpioId gpio_id,
                                     ButtonState button_state,
                                     TickType_t timestamp_ticks);
 static TaskStatus HandleEncoderRotationEvent(
@@ -75,35 +75,34 @@ static TaskStatus HandleInputEvent(InputEvent* input_event) {
 // 검사하기
 static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent* intEvent) {
   TickType_t timestamp_ticks = intEvent->timestamp_ticks;
-  Mcp23017Address address;
-  Mcp23017InterruptPin GPIO_Pin = intEvent->gpio_pin;
-  Mcp23017InterruptSnapshot snapshot;
-  Mcp23017Status mcp23017_status;
+  Mcp23017::Address address;
+  Mcp23017::InterruptPin GPIO_Pin = intEvent->gpio_pin;
+  Mcp23017::InterruptSnapshot snapshot;
+  Mcp23017::Status mcp23017_status;
 
-  Mcp23017GpioId gpio_id;
+  Mcp23017::GpioId gpio_id;
   ButtonState button_state;
   osStatus_t os_status;
   uint8_t index;
 
-  Mcp23017Driver& driver = Mcp23017Driver::GetInstance();
+  Mcp23017::Driver& driver = Mcp23017::Driver::GetInstance();
 
   driver.GetMcp23017AddressFromInterruptPin(GPIO_Pin, &address);
-  if (address == 0) {
+  if (address == Mcp23017::Address::NONE) {
     return TASK_STATUS_ERROR;
   }
 
   // 한 MCP23017의 두 포트를 모두 조회하여 활성화된 여러 입력핀들을 모두 처리
   mcp23017_status = driver.GetInterruptSnapshot(address, &snapshot);
-  if (mcp23017_status != Mcp23017Status::OK) {
+  if (mcp23017_status != Mcp23017::Status::OK) {
     return TASK_STATUS_ERROR;
   }
 
   index = 0;
   while (snapshot.port_a.pin_mask != 0) {
     if ((snapshot.port_a.pin_mask & 0x1) != 0) {
-      gpio_id = Mcp23017GpioMap::FindGpioIdFromPinConfig(
-          address, MCP23017_GPIO_PORT_A, index);
-      if (gpio_id == Mcp23017GpioId::NONE) {
+      gpio_id = FindGpioIdFromPinConfig(address, Mcp23017::Port::A, index);
+      if (gpio_id == Mcp23017::GpioId::NONE) {
         return TASK_STATUS_ERROR;
       }
       button_state = (snapshot.port_a.captured_pin_states & 0x1)
@@ -118,9 +117,8 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent* intEvent) {
   index = 0;
   while (snapshot.port_b.pin_mask != 0) {
     if ((snapshot.port_b.pin_mask & 0x1) != 0) {
-      gpio_id = Mcp23017GpioMap::FindGpioIdFromPinConfig(
-          address, MCP23017_GPIO_PORT_B, index);
-      if (gpio_id == Mcp23017GpioId::NONE) {
+      gpio_id = FindGpioIdFromPinConfig(address, Mcp23017::Port::B, index);
+      if (gpio_id == Mcp23017::GpioId::NONE) {
         return TASK_STATUS_ERROR;
       }
       button_state = (snapshot.port_b.captured_pin_states & 0x1)
@@ -135,8 +133,8 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent* intEvent) {
   return TASK_STATUS_OK;
 }
 
-static TaskStatus SendButtonPayload(Mcp23017Address address,
-                                    Mcp23017GpioId gpio_id,
+static TaskStatus SendButtonPayload(Mcp23017::Address address,
+                                    Mcp23017::GpioId gpio_id,
                                     ButtonState button_state,
                                     TickType_t timestamp_ticks) {
   ButtonId button_id = Mcp23017GpioToButtonMap::Get(gpio_id);

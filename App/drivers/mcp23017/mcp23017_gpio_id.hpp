@@ -3,7 +3,9 @@
 
 #include <cstdint>
 
-enum class Mcp23017GpioId : uint8_t {
+namespace Mcp23017 {
+
+enum class GpioId : std::uint8_t {
   NONE = 0,
   LED_IFX_A,
   LED_TFX_A,
@@ -49,5 +51,7 @@ enum class Mcp23017GpioId : uint8_t {
   LED_TRACK_5_BLUE,
   COUNT,
 };
+
+}
 
 #endif

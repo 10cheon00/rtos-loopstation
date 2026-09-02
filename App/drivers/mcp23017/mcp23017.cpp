@@ -40,43 +40,44 @@
 
 #define MCP23017_TIMEOUT_MS 500
 
-static const Mcp23017AddressInterruptPinMap interrupt_pin_map[] = {
-    {.address = MCP23017_ADDRESS_0B100, .gpio_interrupt_pin = GPIO_PIN_0},
-    {.address = MCP23017_ADDRESS_0B101, .gpio_interrupt_pin = GPIO_PIN_1},
+namespace Mcp23017 {
+
+static const AddressInterruptPinMap interrupt_pin_map[] = {
+    {.address = Address::b100, .gpio_interrupt_pin = GPIO_PIN_0},
+    {.address = Address::b101, .gpio_interrupt_pin = GPIO_PIN_1},
 };
 static const size_t interrupt_pin_map_count = ARRAY_COUNT(interrupt_pin_map);
 
-Mcp23017Status Mcp23017Driver::Initialize(I2C_HandleTypeDef* hi2c,
-                                          osSemaphoreId_t i2c_mutex) {
+Status Driver::Initialize(I2C_HandleTypeDef* hi2c, osSemaphoreId_t i2c_mutex) {
   MutexGuard lock{i2c_mutex, pdMS_TO_TICKS(500UL)};
   if (!lock.is_acquired()) {
-    this->init_status = Mcp23017InitStatus::NOT_INITED;
-    return Mcp23017Status::BUSY;
+    this->init_status = InitStatus::NOT_INITED;
+    return Status::BUSY;
   }
 
-  if (init_status == Mcp23017InitStatus::INITED) {
-    return Mcp23017Status::OK;
+  if (init_status == InitStatus::INITED) {
+    return Status::OK;
   }
   if (hi2c == nullptr || i2c_mutex == nullptr) {
-    return Mcp23017Status::ERROR;
+    return Status::ERROR;
   }
-  this->init_status = Mcp23017InitStatus::ON_INIT;
+  this->init_status = InitStatus::ON_INIT;
   this->hi2c = hi2c;
   this->i2c_mutex = i2c_mutex;
 
   for (size_t i = 0; i < interrupt_pin_map_count; i++) {
-    Mcp23017Address address = interrupt_pin_map[i].address;
+    Address address = interrupt_pin_map[i].address;
 
-    if (this->InternalInitialize(address) != Mcp23017Status::OK) {
-      init_status = Mcp23017InitStatus::NOT_INITED;
-      return Mcp23017Status::ERROR;
+    if (this->InternalInitialize(address) != Status::OK) {
+      init_status = InitStatus::NOT_INITED;
+      return Status::ERROR;
     }
     // TODO:
     // Mcp23017 모듈 일부가 초기화되지 않을 수 있으므로 로그를 남기기
   }
 
-  init_status = Mcp23017InitStatus::INITED;
-  return Mcp23017Status::OK;
+  init_status = InitStatus::INITED;
+  return Status::OK;
 }
 
 /**
@@ -88,111 +89,109 @@ Mcp23017Status Mcp23017Driver::Initialize(I2C_HandleTypeDef* hi2c,
  * 6. GPIOA/GPIOB를 읽어 이전 상태와 pending interrupt 초기화
  * 7. GPINTENA/GPINTENB: 버튼 핀의 interrupt-on-change 활성화
  */
-Mcp23017Status Mcp23017Driver::InternalInitialize(Mcp23017Address address) {
-  Mcp23017PinMask port_a_input_pin_mask =
-      Mcp23017GpioMap::GetInputPinMaskFromAddressAndPort(address,
-                                                         MCP23017_GPIO_PORT_A);
-  Mcp23017PinMask port_b_input_pin_mask =
-      Mcp23017GpioMap::GetInputPinMaskFromAddressAndPort(address,
-                                                         MCP23017_GPIO_PORT_B);
+Status Driver::InternalInitialize(Address address) {
+  PinMask port_a_input_pin_mask =
+      GetInputPinMaskFromAddressAndPort(address, Port::A);
+  PinMask port_b_input_pin_mask =
+      GetInputPinMaskFromAddressAndPort(address, Port::B);
 
-  if (HAL_I2C_IsDeviceReady(this->hi2c, address << 1, 10,
-                            MCP23017_TIMEOUT_MS) != HAL_OK) {
-    return Mcp23017Status::ERROR;
+  if (HAL_I2C_IsDeviceReady(this->hi2c, static_cast<std::uint8_t>(address) << 1,
+                            10, MCP23017_TIMEOUT_MS) != HAL_OK) {
+    return Status::ERROR;
   }
 
-  Mcp23017Status status = WriteRegister(address, GPINTENA, 0);
-  if (status == Mcp23017Status::ERROR) {
+  Status status = WriteRegister(address, GPINTENA, 0);
+  if (status == Status::ERROR) {
     return status;
   }
   status = WriteRegister(address, GPINTENB, 0);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   status = WriteRegister(address, IOCONA, IOCON_SETTING);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   status = WriteRegister(address, IOCONB, IOCON_SETTING);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   status = WriteRegister(address, IODIRA, port_a_input_pin_mask);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   status = WriteRegister(address, IODIRB, port_b_input_pin_mask);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   status = WriteRegister(address, GPPUA, port_a_input_pin_mask);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   status = WriteRegister(address, GPPUB, port_b_input_pin_mask);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   status = WriteRegister(address, INTCONA, INTCON_AGAINST_PREVIOUS_PIN_VALUE);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   status = WriteRegister(address, INTCONB, INTCON_AGAINST_PREVIOUS_PIN_VALUE);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   uint8_t dummy;
   status = ReadRegister(address, _GPIOA, &dummy);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   status = ReadRegister(address, _GPIOB, &dummy);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   status = WriteRegister(address, GPINTENA, port_a_input_pin_mask);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
   status = WriteRegister(address, GPINTENB, port_b_input_pin_mask);
-  if (status == Mcp23017Status::ERROR) {
+  if (status == Status::ERROR) {
     return status;
   }
-  return Mcp23017Status::OK;
+  return Status::OK;
 }
 
-Mcp23017Status Mcp23017Driver::GetInterruptSnapshot(
-    Mcp23017Address address, Mcp23017InterruptSnapshot* snapshot) {
-  if (this->init_status != Mcp23017InitStatus::INITED) {
-    return Mcp23017Status::NOT_INITED;
+Status Driver::GetInterruptSnapshot(Address address,
+                                    InterruptSnapshot* snapshot) {
+  if (this->init_status != InitStatus::INITED) {
+    return Status::NOT_INITED;
   }
 
   MutexGuard lock{i2c_mutex, 500UL};
   if (!lock.is_acquired()) {
-    return Mcp23017Status::BUSY;
+    return Status::BUSY;
   }
 
-  Mcp23017Status status;
+  Status status;
   status = this->ReadRegister(address, INTFA, &snapshot->port_a.pin_mask);
-  if (status != Mcp23017Status::OK) {
+  if (status != Status::OK) {
     return status;
   }
   status = this->ReadRegister(address, INTFB, &snapshot->port_b.pin_mask);
-  if (status != Mcp23017Status::OK) {
+  if (status != Status::OK) {
     return status;
   }
 
   if (snapshot->port_a.pin_mask != 0) {
     status = this->ReadRegister(address, INTCAPA,
                                 &snapshot->port_a.captured_pin_states);
-    if (status != Mcp23017Status::OK) {
+    if (status != Status::OK) {
       return status;
     }
   }
   if (snapshot->port_b.pin_mask != 0) {
     status = this->ReadRegister(address, INTCAPB,
                                 &snapshot->port_b.captured_pin_states);
-    if (status != Mcp23017Status::OK) {
+    if (status != Status::OK) {
       return status;
     }
   }
@@ -200,88 +199,85 @@ Mcp23017Status Mcp23017Driver::GetInterruptSnapshot(
   return status;
 }
 
-Mcp23017Status Mcp23017Driver::UpdateLedState(Mcp23017Address address,
-                                              Mcp23017GpioId led_gpio_id,
-                                              Mcp23017LedState led_state) {
-  if (this->init_status != Mcp23017InitStatus::INITED) {
-    return Mcp23017Status::NOT_INITED;
+Status Driver::UpdateLedState(Address address, GpioId led_gpio_id,
+                              LedState led_state) {
+  if (this->init_status != InitStatus::INITED) {
+    return Status::NOT_INITED;
   }
 
   MutexGuard lock{i2c_mutex, 500UL};
   if (!lock.is_acquired()) {
-    return Mcp23017Status::BUSY;
+    return Status::BUSY;
   }
   return UpdateLedStateLocked(address, led_gpio_id, led_state);
 }
 
-Mcp23017Status Mcp23017Driver::UpdateTrackLedState(TrackLedPayload payload[3]) {
-  if (this->init_status != Mcp23017InitStatus::INITED) {
-    return Mcp23017Status::NOT_INITED;
+Status Driver::UpdateTrackLedState(TrackLedPayload payload[3]) {
+  if (this->init_status != InitStatus::INITED) {
+    return Status::NOT_INITED;
   }
 
   MutexGuard lock{i2c_mutex, 500UL};
   if (!lock.is_acquired()) {
-    return Mcp23017Status::BUSY;
+    return Status::BUSY;
   }
 
   for (uint8_t i = 0; i < 3; i++) {
     if (UpdateLedStateLocked(payload[i].address, payload[i].led_gpio_id,
-                             payload[i].led_state) != Mcp23017Status::OK) {
-      return Mcp23017Status::ERROR;
+                             payload[i].led_state) != Status::OK) {
+      return Status::ERROR;
     }
   }
-  return Mcp23017Status::OK;
+  return Status::OK;
 }
 
-Mcp23017Status Mcp23017Driver::GetMcp23017AddressFromInterruptPin(
-    Mcp23017InterruptPin gpio_interrupt_pin, Mcp23017Address* address) {
+Status Driver::GetMcp23017AddressFromInterruptPin(
+    InterruptPin gpio_interrupt_pin, Address* address) {
   for (size_t i = 0; i < interrupt_pin_map_count; i++) {
     if (interrupt_pin_map[i].gpio_interrupt_pin == gpio_interrupt_pin) {
       *address = interrupt_pin_map[i].address;
-      return Mcp23017Status::OK;
+      return Status::OK;
     }
   }
-  return Mcp23017Status::ERROR;
+  return Status::ERROR;
 }
 
-Mcp23017Status Mcp23017Driver::UpdateLedStateLocked(
-    Mcp23017Address address, Mcp23017GpioId led_gpio_id,
-    Mcp23017LedState led_state) {
-  const Mcp23017GpioMap::PinConfig& pin_config = Mcp23017GpioMap::GetEnumMap().Get(led_gpio_id);
+Status Driver::UpdateLedStateLocked(Address address, GpioId led_gpio_id,
+                                    LedState led_state) {
+  const PinConfig& pin_config = GetPinConfigMap().Get(led_gpio_id);
 
-  Mcp23017Port port = pin_config.port;
+  Port port = pin_config.port;
 
-  uint8_t reg = port == MCP23017_GPIO_PORT_A ? OLATA : OLATB, value;
-  Mcp23017Status status = this->ReadRegister(address, reg, &value);
-  if (status != Mcp23017Status::OK) {
+  uint8_t reg = port == Port::A ? OLATA : OLATB, value;
+  Status status = this->ReadRegister(address, reg, &value);
+  if (status != Status::OK) {
     return status;
   }
-  Mcp23017PinMask pin_register_mask = (Mcp23017PinMask)0x1
-                                      << pin_config.pin_index;
+  PinMask pin_register_mask = (PinMask)0x1 << pin_config.pin_index;
 
   value = (value & (uint8_t)~pin_register_mask) | (uint8_t)led_state;
 
   return this->WriteRegister(address, reg, value);
 }
 
-Mcp23017Status Mcp23017Driver::ReadRegister(Mcp23017Address address,
-                                            uint8_t reg, uint8_t* value) {
+Status Driver::ReadRegister(Address address, uint8_t reg, uint8_t* value) {
   HAL_StatusTypeDef status =
-      HAL_I2C_Mem_Read(hi2c, address << 1, reg, I2C_MEMADD_SIZE_8BIT, value, 1,
-                       MCP23017_TIMEOUT_MS);
+      HAL_I2C_Mem_Read(hi2c, static_cast<std::uint8_t>(address) << 1, reg,
+                       I2C_MEMADD_SIZE_8BIT, value, 1, MCP23017_TIMEOUT_MS);
   if (status == HAL_OK) {
-    return Mcp23017Status::OK;
+    return Status::OK;
   }
-  return Mcp23017Status::ERROR;
+  return Status::ERROR;
 }
 
-Mcp23017Status Mcp23017Driver::WriteRegister(Mcp23017Address address,
-                                             uint8_t reg, uint8_t value) {
+Status Driver::WriteRegister(Address address, uint8_t reg, uint8_t value) {
   HAL_StatusTypeDef status =
-      HAL_I2C_Mem_Write(hi2c, address << 1, reg, I2C_MEMADD_SIZE_8BIT, &value,
-                        1, MCP23017_TIMEOUT_MS);
+      HAL_I2C_Mem_Write(hi2c, static_cast<std::uint8_t>(address) << 1, reg,
+                        I2C_MEMADD_SIZE_8BIT, &value, 1, MCP23017_TIMEOUT_MS);
   if (status == HAL_OK) {
-    return Mcp23017Status::OK;
+    return Status::OK;
   }
-  return Mcp23017Status::ERROR;
+  return Status::ERROR;
 }
+
+}  // namespace Mcp23017

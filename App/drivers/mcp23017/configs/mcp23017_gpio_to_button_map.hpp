@@ -6,7 +6,7 @@
 
 namespace Mcp23017GpioToButtonMap {
 
-ButtonId Get(Mcp23017GpioId gpio_id);
+ButtonId Get(Mcp23017::GpioId gpio_id);
 
 }
 

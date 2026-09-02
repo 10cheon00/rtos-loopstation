@@ -3,17 +3,29 @@
 
 #include <cstddef>
 
-enum class Mcp23017Status : uint8_t {
+namespace Mcp23017 {
+
+enum class Status : uint8_t {
   OK = 0,
   NOT_INITED,
   BUSY,
   ERROR,
 };
 
-using Mcp23017Address = uint8_t;
-using Mcp23017PinMask = uint8_t;
-using Mcp23017PinStates = uint8_t;
-using Mcp23017Port = uint8_t;
-using Mcp23017InterruptPin = uint16_t;
+enum class Address : std::uint8_t {
+  NONE = 0,
+  b100 = (0x20 | 0b100),
+  b101 = (0x20 | 0b101),
+};
+using PinMask = std::uint8_t;
+using PinStates = std::uint8_t;
+enum class Port : std::uint8_t {
+  A = 0x0,
+  B = 0x1,
+};
+using InterruptPin = std::uint16_t;
+using PinIndex = std::uint8_t;
+
+}  // namespace Mcp23017
 
 #endif
