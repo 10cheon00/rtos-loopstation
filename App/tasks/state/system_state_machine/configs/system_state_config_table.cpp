@@ -1,29 +1,22 @@
 #include "system_state_config_table.h"
 
-#include "config_table.h"
-#include "config_validator.h"
+#include "enum_map.hpp"
 #include "system_state_error.h"
 #include "system_state_not_inited.h"
 #include "system_state_running.h"
 
-#define ENTRIES                                                             \
-  ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_NONE, nullptr),                      \
-      ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_NOT_INITED,                      \
-                           &SYSTEM_STATE_NOT_INITED),                       \
-      ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_RUNNING, &SYSTEM_STATE_RUNNING), \
-      ConfigTable_1D_ENTRY(SYSTEM_STATE_ID_ERROR, &SYSTEM_STATE_ERROR)
-
-ConfigTable_1D_DECLARE_TABLE(SystemStateId, SystemStatePointer,
-                             SYSTEM_STATE_ID_COUNT, ENTRIES);
-#undef ENTRIES
-
-ConfigValidator_REGISTER_CONFIG_TABLE_1D(SystemStateId, SystemStatePointer,
-                                         SYSTEM_STATE_ID_COUNT, 0, UINT32_MAX,
-                                         CONFIG_TABLE_TYPE_NO_NULL_VALUE);
+static constexpr EnumMap<SystemStateId, SystemStatePointer,
+                         SYSTEM_STATE_ID_COUNT>
+    system_state_map{
+        EnumEntry{SYSTEM_STATE_ID_NONE, nullptr},
+        EnumEntry{SYSTEM_STATE_ID_NOT_INITED, &SYSTEM_STATE_NOT_INITED},
+        EnumEntry{SYSTEM_STATE_ID_RUNNING, &SYSTEM_STATE_RUNNING},
+        EnumEntry{SYSTEM_STATE_ID_ERROR, &SYSTEM_STATE_ERROR},
+    };
 
 SystemStatePointer SystemStateConfigMap_Get(SystemStateId id) {
   if (id <= SYSTEM_STATE_ID_NONE || id >= SYSTEM_STATE_ID_COUNT) {
     return NULL;
   }
-  return ConfigTable_1D_GET(SystemStateId, SystemStatePointer, id);
+  return system_state_map[id];
 }
