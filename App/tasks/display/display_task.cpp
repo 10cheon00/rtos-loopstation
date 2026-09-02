@@ -7,8 +7,8 @@
 
 #include "display_messages.h"
 #include "display_initparams.h"
-#include "mcp23017.h"
-#include "mcp23017_gpio_map.h"
+#include "mcp23017.hpp"
+#include "mcp23017_gpio_map.hpp"
 #include "ui_renderer.h"
 #include "ui_state_label_config_table.h"
 
@@ -19,7 +19,7 @@
 static u8g2_t u8g2;
 static osMessageQueueId_t display_snapshot_mailbox;
 
-using TrackLedRgb = std::array<Mcp23017LedState, TRACK_LED_COLOR_COUNT>;
+using TrackLedRgb = std::array<Mcp23017LedState, (size_t)TrackLedColor::COUNT>;
 static constexpr auto track_led_rgb_table = [] {
     std::array<TrackLedRgb, TRACK_STATE_ID_COUNT> values{};
     values[TRACK_STATE_ID_IDLE] = {
@@ -181,15 +181,15 @@ static TaskStatus RenderTrackLed(TrackStateId state_id, uint8_t track_index)
 {
 
     ParameterPinMapEntry *red_entry, *blue_entry, *green_entry;
-    red_entry = Mcp23017GpioMap_GetTrackLedEntry(track_index, TRACK_LED_COLOR_RED);
+    red_entry = Mcp23017GpioMap_GetTrackLedEntry(track_index, TrackLedColor::RED);
     if (red_entry == NULL) {
         return TASK_STATUS_ERROR;
     }
-    green_entry = Mcp23017GpioMap_GetTrackLedEntry(track_index, TRACK_LED_COLOR_GREEN);
+    green_entry = Mcp23017GpioMap_GetTrackLedEntry(track_index, TrackLedColor::GREEN);
     if (green_entry == NULL) {
         return TASK_STATUS_ERROR;
     }
-    blue_entry = Mcp23017GpioMap_GetTrackLedEntry(track_index, TRACK_LED_COLOR_BLUE);
+    blue_entry = Mcp23017GpioMap_GetTrackLedEntry(track_index, TrackLedColor::BLUE);
     if (blue_entry == NULL) {
         return TASK_STATUS_ERROR;
     }
@@ -199,17 +199,17 @@ static TaskStatus RenderTrackLed(TrackStateId state_id, uint8_t track_index)
         {
             .address = red_entry->address,
             .led_gpio_id = red_entry->gpio_id,
-            .led_state = track_led_rgb_table[state_id][TRACK_LED_COLOR_RED],
+            .led_state = track_led_rgb_table[state_id][(size_t)TrackLedColor::RED],
         },
         {
             .address = green_entry->address,
             .led_gpio_id = green_entry->gpio_id,
-            .led_state = track_led_rgb_table[state_id][TRACK_LED_COLOR_GREEN],
+            .led_state = track_led_rgb_table[state_id][(size_t)TrackLedColor::GREEN],
         },
         {
             .address = blue_entry->address,
             .led_gpio_id = blue_entry->gpio_id,
-            .led_state = track_led_rgb_table[state_id][TRACK_LED_COLOR_BLUE],
+            .led_state = track_led_rgb_table[state_id][(size_t)TrackLedColor::BLUE],
         },
     };
     if (driver.UpdateTrackLedState(payload) != Mcp23017Status::OK) {

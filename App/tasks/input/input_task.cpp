@@ -5,8 +5,8 @@
 #include "input_initparams.h"
 #include "input_messages.h"
 #include "state_messages.h"
-#include "mcp23017.h"
-#include "mcp23017_gpio_map.h"
+#include "mcp23017.hpp"
+#include "mcp23017_gpio_map.hpp"
 
 static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;
