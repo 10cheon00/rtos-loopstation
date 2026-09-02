@@ -80,7 +80,7 @@ static uint8_t Gmg12864Lcd_u8g2GpioAndDelayCallback(u8x8_t *u8x8, uint8_t msg, u
 Gmg12864LcdStatus Gmg12864Lcd_Init(u8g2_t *u8g2, Gmg12864Lcd_InitParams *params)
 {
     if (!(u8g2 != NULL && Gmg12864LcdStatus_IsValidInitParams(params))) {
-        return GMG12864_LCD_STATUS_ERROR;
+        return Gmg12864LcdStatus::ERROR;
     }
     u8x8_SetUserPtr(&u8g2->u8x8, params);
 
@@ -90,5 +90,5 @@ Gmg12864LcdStatus Gmg12864Lcd_Init(u8g2_t *u8g2, Gmg12864Lcd_InitParams *params)
     u8g2_SetPowerSave(u8g2, 0);
     u8g2_SetContrast(u8g2, 80);
 
-    return GMG12864_LCD_STATUS_OK;
+    return Gmg12864LcdStatus::OK;
 }

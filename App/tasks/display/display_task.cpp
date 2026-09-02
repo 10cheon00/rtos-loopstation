@@ -92,7 +92,7 @@ void DisplayTask_Init(void *argument)
     };
 
     Gmg12864LcdStatus status = Gmg12864Lcd_Init(&u8g2, &initparams);
-    if (status != GMG12864_LCD_STATUS_OK) {
+    if (status != Gmg12864LcdStatus::OK) {
         // TODO: 초기화 단계에서 오류 발생 시 처리 흐름에 대해 요구사항에서 정의하기
         for (;;) {
             osDelay(1);
