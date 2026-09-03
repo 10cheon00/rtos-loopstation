@@ -1,7 +1,9 @@
-#include "button_track_action_config_table.h"
+#include "button_to_track_action_map.hpp"
 
 #include "button_id.hpp"
 #include "enum_map.hpp"
+
+namespace ButtonToTrackActionMap {
 
 static constexpr EnumMap<ButtonId, TrackActionId> button_track_action_map{
     EnumEntry{ButtonId::NONE, TRACK_ACTION_ID_NONE},
@@ -32,6 +34,8 @@ static constexpr EnumMap<ButtonId, TrackActionId> button_track_action_map{
     EnumEntry{ButtonId::TRACK_5_STOP, TRACK_ACTION_ID_ENTER_STOP},
 };
 
-TrackActionId ButtonTrackActionConfigMap_Get(ButtonId id) {
+TrackActionId Get(ButtonId id) {
   return button_track_action_map[id];
+}
+
 }

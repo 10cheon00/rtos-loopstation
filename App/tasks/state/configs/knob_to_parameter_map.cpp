@@ -1,8 +1,8 @@
-#include "knob_parameter_config_table.h"
+#include "knob_to_parameter_map.hpp"
 
 #include "enum_map.hpp"
 
-namespace KnobParameterMap {
+namespace KnobToParameterMap {
 
 static constexpr EnumMap<KnobId, ParameterId> knob_parameter_map{
     EnumEntry{KnobId::NONE, PARAMETER_ID_NONE},
@@ -15,8 +15,6 @@ static constexpr EnumMap<KnobId, ParameterId> knob_parameter_map{
     EnumEntry{KnobId::TRACK_5_VOLUME_FADER, PARAMETER_ID_NULL},
 };
 
-const EnumMap<KnobId, ParameterId>& GetKnobParameterMap() {
-  return knob_parameter_map;
-}
+ParameterId Get(KnobId id) { return knob_parameter_map[id]; }
 
-}
+}  // namespace KnobToParameterMap

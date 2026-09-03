@@ -3,7 +3,7 @@
 #include "FreeRTOS.h"
 #include "app.h"
 #include "button_state.hpp"
-#include "button_track_action_config_table.h"
+#include "button_to_track_action_map.hpp"
 #include "cmsis_os2.h"
 #include "display_messages.h"
 #include "encoder_id.h"
@@ -360,7 +360,7 @@ TaskStatus TryTransitionTrackStateMachine(TrackStateMachine* state_machine,
   }
 
   // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
-  action_id = ButtonTrackActionConfigMap_Get(id);
+  action_id = ButtonToTrackActionMap::Get(id);
   if (action_id == TRACK_ACTION_ID_NONE) {
     return TASK_STATUS_ERROR;
   }
