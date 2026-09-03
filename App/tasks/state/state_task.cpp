@@ -8,7 +8,7 @@
 #include "display_messages.h"
 #include "encoder_id.h"
 #include "global_ui_transition_config_table.h"
-#include "loopstation_parameter_store.h"
+#include "loopstation_parameter_store.hpp"
 #include "queue.h"
 #include "state_initparams.h"
 #include "state_messages.h"
@@ -139,12 +139,11 @@ static TaskStatus TryUpdateParameter(StateEvent* state_event) {
  * */
 static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
   ParameterId parameter_id;
-  Parameter* parameter;
   PanelSlot* panel_slot;
 
   ButtonState button_state;
   if (!ConvertEnumRawToEnum<ButtonState>(button_payload->button_state_raw,
-                                     &button_state)) {
+                                         &button_state)) {
     return TASK_STATUS_ERROR;
   }
   if (button_state != ButtonState::PRESSED) {
@@ -167,26 +166,24 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
     panel_slot = UiState_GetPanelSlot(ui_state_machine.current_state,
                                       UI_STATE_SLOT_INDEX_A);
     parameter_id = panel_slot->data.parameter.id;
-    if (parameter_id == PARAMETER_ID_NONE) {
+    if (parameter_id == ParameterId::NONE) {
       return TASK_STATUS_ERROR;
     }
-    parameter = LoopStationParameterStore_Get(parameter_id);
-    if (parameter->type == PARAMETER_TYPE_TOGGLE) {
-      Parameter_ToggleValue(parameter);
+    Parameter& parameter = LoopstationStore::GetParameter(parameter_id);
+    if (parameter.type == PARAMETER_TYPE_TOGGLE) {
+      Parameter_ToggleValue(&parameter);
       return TASK_STATUS_OK;
     }
   } else if (id == ButtonId::IFX_A_TOGGLE) {
-    parameter = LoopStationParameterStore_Get(PARAMETER_ID_IFX_A_STATE);
-    if (parameter != NULL) {
-      Parameter_ToggleValue(parameter);
-      return TASK_STATUS_OK;
-    }
+    Parameter& parameter =
+        LoopstationStore::GetParameter(ParameterId::IFX_A_STATE);
+    Parameter_ToggleValue(&parameter);
+    return TASK_STATUS_OK;
   } else if (id == ButtonId::TFX_A_TOGGLE) {
-    parameter = LoopStationParameterStore_Get(PARAMETER_ID_TFX_A_STATE);
-    if (parameter != NULL) {
-      Parameter_ToggleValue(parameter);
-      return TASK_STATUS_OK;
-    }
+    Parameter& parameter =
+        LoopstationStore::GetParameter(ParameterId::TFX_A_STATE);
+    Parameter_ToggleValue(&parameter);
+    return TASK_STATUS_OK;
   }
 
   return TASK_STATUS_ERROR;
@@ -195,7 +192,6 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
 TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationPayload* encoder_rotation_payload) {
   ParameterId parameter_id;
-  Parameter* parameter;
   PanelSlot* slot;
   EncoderId encoder_id;
 
@@ -207,15 +203,15 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
   }
 
   parameter_id = slot->data.parameter.id;
-  if (parameter_id == PARAMETER_ID_NONE) {
+  if (parameter_id == ParameterId::NONE) {
     return TASK_STATUS_ERROR;
   }
-  parameter = LoopStationParameterStore_Get(parameter_id);
-  if (parameter->type == PARAMETER_TYPE_TOGGLE) {
-    Parameter_ToggleValue(parameter);
+  Parameter& parameter = LoopstationStore::GetParameter(parameter_id);
+  if (parameter.type == PARAMETER_TYPE_TOGGLE) {
+    Parameter_ToggleValue(&parameter);
     return TASK_STATUS_OK;
-  } else if (parameter->type == PARAMETER_TYPE_SLIDER) {
-    Parameter_AddValue(parameter, encoder_rotation_payload->delta);
+  } else if (parameter.type == PARAMETER_TYPE_SLIDER) {
+    Parameter_AddValue(&parameter, encoder_rotation_payload->delta);
     return TASK_STATUS_OK;
   }
   return TASK_STATUS_ERROR;
@@ -246,13 +242,13 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
   }
   ButtonId button_id;
   if (!ConvertEnumRawToEnum<ButtonId>(state_event->payload.button.button_id_raw,
-                                  &button_id)) {
+                                      &button_id)) {
     return TASK_STATUS_ERROR;
   }
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
   ButtonState button_state;
-  if (!ConvertEnumRawToEnum<ButtonState>(state_event->payload.button.button_state_raw,
-                                     &button_state)) {
+  if (!ConvertEnumRawToEnum<ButtonState>(
+          state_event->payload.button.button_state_raw, &button_state)) {
     return TASK_STATUS_ERROR;
   }
   if (button_state != ButtonState::PRESSED) {
@@ -313,18 +309,18 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
           .label = slot->data.menu.label,
       };
     } else if (slot->type == PANEL_SLOT_TYPE_PARAMETER) {
-      Parameter* parameter =
-          LoopStationParameterStore_Get(slot->data.parameter.id);
+      Parameter parameter =
+          LoopstationStore::GetParameter(slot->data.parameter.id);
       snapshot.panel.slot_render_payloads[i].data.parameter =
           (ParameterRenderPayload){
-              .parameter = *parameter,
+              .parameter = parameter,
               .label = slot->data.parameter.label,
           };
     }
   }
   snapshot.led = (LedRenderPayload){
-      .ifx_a_state = *LoopStationParameterStore_Get(PARAMETER_ID_IFX_A_STATE),
-      .tfx_a_state = *LoopStationParameterStore_Get(PARAMETER_ID_TFX_A_STATE),
+      .ifx_a_state = LoopstationStore::GetParameter(ParameterId::IFX_A_STATE),
+      .tfx_a_state = LoopstationStore::GetParameter(ParameterId::TFX_A_STATE),
   };
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     snapshot.led.track_state_enum_raws[i] =
@@ -352,7 +348,8 @@ TaskStatus TryTransitionTrackStateMachine(TrackStateMachine* state_machine,
   }
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
   ButtonState state;
-  if (!ConvertEnumRawToEnum<ButtonState>(button_payload->button_state_raw, &state)) {
+  if (!ConvertEnumRawToEnum<ButtonState>(button_payload->button_state_raw,
+                                         &state)) {
     return TASK_STATUS_ERROR;
   }
   if (state != ButtonState::PRESSED) {

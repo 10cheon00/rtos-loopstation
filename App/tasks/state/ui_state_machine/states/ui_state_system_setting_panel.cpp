@@ -8,7 +8,7 @@ static PanelSlot panel_slots[4] = {
          {
              .parameter =
                  (ParameterDescriptor){
-                     .id = PARAMETER_ID_SYSTEM_SETTING_LCD_CONSTRAST,
+                     .id = ParameterId::SYSTEM_SETTING_LCD_CONSTRAST,
                      .label = "LCD CO-\nNTRAST",
                  },
          }},
@@ -17,7 +17,7 @@ static PanelSlot panel_slots[4] = {
          {
              .parameter =
                  (ParameterDescriptor){
-                     .id = PARAMETER_ID_IFX_A_STATE,
+                     .id = ParameterId::IFX_A_STATE,
                      .label = "IFX A\nSTATUS",
                  },
          }},

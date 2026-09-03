@@ -1,10 +1,9 @@
-#ifndef LOOPSTATION_PARAMETER_STORE_H
-#define LOOPSTATION_PARAMETER_STORE_H
+#ifndef LOOPSTATION_PARAMETER_STORE_HPP
+#define LOOPSTATION_PARAMETER_STORE_HPP
 
-#include <array>
-
+#include "enum_map.hpp"
 #include "parameter.h"
-#include "parameter_id.h"
+#include "parameter_id.hpp"
 
 /**
  * TODO:
@@ -13,10 +12,13 @@
  * 단, 파라미터 수가 50개 이상이 되는 경우 패널별로 분리해야한다.
  * 저장소를 분리한다면 ParameterId도 저장소에 따라 분리해야한다.
  */
-typedef struct {
-  std::array<Parameter, PARAMETER_ID_COUNT> parameters;
-} LoopStationParameterStore;
 
-Parameter* LoopStationParameterStore_Get(ParameterId parameter_id);
+namespace LoopstationStore {
+
+using ParameterStore = EnumMap<ParameterId, Parameter>;
+
+Parameter& GetParameter(ParameterId parameter_id);
+
+}  // namespace LoopstationStore
 
 #endif

@@ -41,6 +41,12 @@ class EnumMap {
     return array[static_cast<std::size_t>(key)];
   }
 
+  constexpr Value& Get(Key key) { return array[static_cast<std::size_t>(key)]; }
+
+  constexpr Value& operator[](Key key) {
+    return array[static_cast<std::size_t>(key)];
+  }
+
  private:
   static constexpr std::size_t SIZE = MapSize;
   std::array<Value, SIZE> array;

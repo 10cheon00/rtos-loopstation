@@ -5,7 +5,7 @@
 
 #include "knob_id.h"
 #include "enum_map.hpp"
-#include "parameter_id.h"
+#include "parameter_id.hpp"
 
 namespace KnobToParameterMap {
 
