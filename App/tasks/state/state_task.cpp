@@ -12,7 +12,7 @@
 #include "queue.h"
 #include "state_initparams.h"
 #include "state_messages.h"
-#include "system_state_machine.h"
+#include "system_state_machine.hpp"
 #include "track_config.h"
 #include "track_state_machine.h"
 #include "track_state_machine_context.h"
@@ -26,8 +26,8 @@ static StateTaskContext state_task_context;
 static osMessageQueueId_t state_event_queue = 0;
 static osMessageQueueId_t display_snapshot_mailbox = 0;
 
-static SystemStateMachine system_state_machine;
-static SystemStateMachineContext system_state_machine_context;
+static SystemStateMachine::StateMachine system_state_machine;
+static SystemStateMachine::Context system_state_machine_context;
 
 static UiStateMachine ui_state_machine;
 static UiStateMachineContext ui_state_machine_context;
@@ -82,7 +82,8 @@ void StateTask_Run(void) {
   InitStateMachines();
 
   for (;;) {
-    if (system_state_machine.current_state->id == SYSTEM_STATE_ID_ERROR) {
+    if (system_state_machine.current_state->id ==
+        SystemStateMachine::Id::ERROR) {
       // TODO:
       // 시스템 검증 결과에 오류가 있으면 이를 사용자에게 알려야 함.
       // 지금은 임시로 그냥 무한루프 처리를 했음
@@ -109,8 +110,8 @@ void StateTask_Run(void) {
 }
 
 static void InitStateMachines() {
-  SystemStateMachine_Init(&system_state_machine, &system_state_machine_context,
-                          SYSTEM_STATE_ID_NOT_INITED);
+  SystemStateMachine::Init(&system_state_machine, &system_state_machine_context,
+                           SystemStateMachine::Id::NOT_INITED);
 
   UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context,
                       UiStateConfigTable_Get(UiStateId::HOME));

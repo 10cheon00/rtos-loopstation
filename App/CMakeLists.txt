@@ -65,7 +65,7 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine_context.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs/system_state_config_table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs/system_state_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_not_inited.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_running.cpp

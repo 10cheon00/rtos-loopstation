@@ -1,10 +1,9 @@
-#include "system_state.h"
+#include "system_state.hpp"
 
-SystemStateId SystemState_GetNextSystemStateId(SystemState* state,
-                                               SystemActionId action_id) {
-  if (action_id <= SYSTEM_ACTION_ID_NONE ||
-      action_id >= SYSTEM_ACTION_ID_COUNT) {
-    action_id = SYSTEM_ACTION_ID_NONE;
-  }
-  return state->transition_table[action_id];
+namespace SystemStateMachine {
+
+Id GetNextSystemStateId(State* state, ActionId action_id) {
+  return (*state->transition_table)[action_id];
 }
+
+}  // namespace SystemStateMachine

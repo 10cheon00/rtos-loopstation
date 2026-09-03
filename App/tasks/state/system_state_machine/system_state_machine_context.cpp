@@ -1,4 +1,7 @@
-#include "system_state_machine_context.h"
+#include "system_state_machine_context.hpp"
 
-void SystemStateMachineContext_Init(SystemStateMachineContext* context) {
-}
+namespace SystemStateMachine {
+
+void Init_Context(Context* context) {}
+
+}  // namespace SystemStateMachine
