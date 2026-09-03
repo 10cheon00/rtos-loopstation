@@ -15,5 +15,6 @@ using AdcRankKnobConfigMapCallbackFunction = void(AdcRank_t adc_rank,
 
 void Foreach(AdcRankKnobConfigMapCallbackFunction CallbackFunction);
 
-}  // namespace AdcRankKnobMap
+}  // namespace AdcRankToKnobMap
+
 #endif

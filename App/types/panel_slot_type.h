@@ -1,0 +1,10 @@
+#ifndef PANEL_SLOT_TYPE_H
+#define PANEL_SLOT_TYPE_H
+
+typedef enum {
+  PANEL_SLOT_TYPE_NONE = 0,
+  PANEL_SLOT_TYPE_MENU,
+  PANEL_SLOT_TYPE_PARAMETER,
+} PanelSlotType;
+
+#endif

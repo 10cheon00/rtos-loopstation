@@ -10,8 +10,8 @@
 #include "mcp23017_gpio_map.hpp"
 #include "track_state_id.hpp"
 #include "u8g2.h"
-#include "ui_renderer.h"
-#include "ui_state_label_config_table.h"
+#include "ui_renderer.hpp"
+#include "ui_state_label_map.hpp"
 #include "utils.h"
 
 #define DISPLAY_RENDER_FREQEUNCY_HZ (100UL)
@@ -126,24 +126,29 @@ static TaskStatus HandlePanelRenderPayload(
     PanelRenderPayload* panel_render_payload) {
   u8g2_ClearBuffer(&u8g2);
 
-  const char* panel_label =
-      UiStateLabelConfigTable_Get(panel_render_payload->ui_state_id);
-  UI_DrawPanelLayout(&u8g2, panel_label,
-                     panel_render_payload->page_navigation_flag);
+  UiStateId ui_state_id;
+  if (!ConvertIdRawToId<UiStateIdRaw, UiStateId>(
+          panel_render_payload->ui_state_id_raw, &ui_state_id)) {
+    return TASK_STATUS_ERROR;
+  }
+  const char* panel_label = UiStateLabelMap::Get(ui_state_id);
+  UiRenderer::DrawPanelLayout(&u8g2, panel_label,
+                              panel_render_payload->page_navigation_flag);
 
   for (uint8_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
     PanelSlotRenderPayload* payload =
         &panel_render_payload->slot_render_payloads[i];
     if (payload->type == PANEL_SLOT_TYPE_MENU) {
       MenuRenderPayload* menu_render_payload = &payload->data.menu;
-      UI_DrawMenu(&u8g2, menu_render_payload->icon_id,
-                  menu_render_payload->label, (UiStateSlotIndex)i);
+      UiRenderer::DrawMenu(&u8g2, menu_render_payload->icon_id,
+                           menu_render_payload->label, (UiStateSlotIndex)i);
     } else if (panel_render_payload->slot_render_payloads[i].type ==
                PANEL_SLOT_TYPE_PARAMETER) {
       ParameterRenderPayload* parameter_render_payload =
           &payload->data.parameter;
-      UI_DrawParameter(&u8g2, &parameter_render_payload->parameter,
-                       parameter_render_payload->label, (UiStateSlotIndex)i);
+      UiRenderer::DrawParameter(&u8g2, &parameter_render_payload->parameter,
+                                parameter_render_payload->label,
+                                (UiStateSlotIndex)i);
     }
   }
 

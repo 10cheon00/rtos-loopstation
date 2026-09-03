@@ -1,10 +1,12 @@
-#include "ui_renderer.h"
+#include "ui_renderer.hpp"
 
 #include <array>
 
 #include "knob_widget.h"
 #include "toggle_switch_widget.h"
 #include "utils.h"
+
+namespace UiRenderer {
 
 #define SLOT_WIDTH 32
 #define CHARACTER_HEIGHT 5
@@ -36,7 +38,6 @@
  *  기준 좌표를 좌상단으로 넘기면 출력을 처리하는 함수 내에서 좌하단으로
  변환하여 출력한다.
  */
-
 static constexpr auto parameter_width_table = [] {
   std::array<uint8_t, UI_STATE_SLOT_INDEX_COUNT> values{};
   values[UI_STATE_SLOT_INDEX_A] = 0;
@@ -56,21 +57,20 @@ static constexpr auto panel_menu_icon_table = [] {
 
 static void DrawArrowLeft4x5(u8g2_t* u8g2, uint8_t x, uint8_t y);
 static void DrawArrowRight4x5(u8g2_t* u8g2, uint8_t x, uint8_t y);
-static UiDrawingStatus DrawParameterValue(u8g2_t* u8g2, Parameter* parameter,
-                                          uint8_t x, uint8_t y);
-static UiDrawingStatus DrawParameterWidget(u8g2_t* u8g2, Parameter* parameter,
-                                           uint8_t x, uint8_t y);
+static Status DrawParameterValue(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
+                                 uint8_t y);
+static Status DrawParameterWidget(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
+                                  uint8_t y);
 static void ConvertNumberToString(int32_t number, char* string,
                                   uint8_t string_length);
-static UiDrawingStatus DrawPanelMenuIcon(u8g2_t* u8g2, MenuIconId icon,
-                                         uint8_t x, uint8_t y);
-static UiDrawingStatus DrawLabel(u8g2_t* u8g2, const char* label, uint8_t x,
-                                 uint8_t y);
+static Status DrawPanelMenuIcon(u8g2_t* u8g2, MenuIconId icon, uint8_t x,
+                                uint8_t y);
+static Status DrawLabel(u8g2_t* u8g2, const char* label, uint8_t x, uint8_t y);
 
 // TODO:
 // 패널 이동 화살표 표시도 자동화할 수 있지 않을까?
-UiDrawingStatus UI_DrawPanelLayout(u8g2_t* u8g2, const char* panel_name,
-                                   PageNavigationFlag flag) {
+Status DrawPanelLayout(u8g2_t* u8g2, const char* panel_name,
+                       PageNavigationFlag flag) {
   u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
   u8g2_ClearBuffer(u8g2);
   u8g2_DrawStr(u8g2, 1, PANEL_LABEL_HEIGHT, panel_name);
@@ -81,7 +81,7 @@ UiDrawingStatus UI_DrawPanelLayout(u8g2_t* u8g2, const char* panel_name,
   if (flag & PAGE_NAVIGATION_FLAG_RIGHT_ARROW) {
     DrawArrowRight4x5(u8g2, 122, PANEL_LABEL_HEIGHT);
   }
-  return UI_DRAWING_STATUS_OK;
+  return Status::OK;
 }
 
 static void DrawArrowLeft4x5(u8g2_t* u8g2, uint8_t x, uint8_t y) {
@@ -98,19 +98,19 @@ static void DrawArrowRight4x5(u8g2_t* u8g2, uint8_t x, uint8_t y) {
   u8g2_DrawVLine(u8g2, x + 3, y - 3, 1);
 }
 
-UiDrawingStatus UI_DrawParameter(u8g2_t* u8g2, Parameter* parameter,
-                                 const char* label, UiStateSlotIndex index) {
+Status DrawParameter(u8g2_t* u8g2, Parameter* parameter, const char* label,
+                     UiStateSlotIndex index) {
   uint8_t x, y;
-  UiDrawingStatus status;
+  Status status;
 
   if (index >= UI_STATE_SLOT_INDEX_COUNT) {
-    return UI_DRAWING_STATUS_ERROR;
+    return Status::ERROR;
   }
 
   x = parameter_width_table[index];
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING;
   status = DrawParameterValue(u8g2, parameter, x, y);
-  if (status != UI_DRAWING_STATUS_OK) {
+  if (status != Status::OK) {
     return status;
   }
 
@@ -118,7 +118,7 @@ UiDrawingStatus UI_DrawParameter(u8g2_t* u8g2, Parameter* parameter,
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT +
       PARAMETER_PADDING;
   status = DrawParameterWidget(u8g2, parameter, x, y);
-  if (status != UI_DRAWING_STATUS_OK) {
+  if (status != Status::OK) {
     return status;
   }
 
@@ -128,8 +128,8 @@ UiDrawingStatus UI_DrawParameter(u8g2_t* u8g2, Parameter* parameter,
   return status;
 }
 
-static UiDrawingStatus DrawParameterValue(u8g2_t* u8g2, Parameter* parameter,
-                                          uint8_t x, uint8_t y) {
+static Status DrawParameterValue(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
+                                 uint8_t y) {
   char str[5];
   uint8_t string_width;
 
@@ -158,11 +158,11 @@ static UiDrawingStatus DrawParameterValue(u8g2_t* u8g2, Parameter* parameter,
     // TODO:
     // RATE_SLIDER면 4,2,1,1/2~1/16,0~100와 같이 출력해야함.
   }
-  return UI_DRAWING_STATUS_OK;
+  return Status::OK;
 }
 
-static UiDrawingStatus DrawParameterWidget(u8g2_t* u8g2, Parameter* parameter,
-                                           uint8_t x, uint8_t y) {
+static Status DrawParameterWidget(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
+                                  uint8_t y) {
   if (parameter->type == PARAMETER_TYPE_TOGGLE) {
     x = x + SLOT_WIDTH / 2 - TOGGLE_SWITCH_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - TOGGLE_SWITCH_WIDGET_HEIGHT / 2;
@@ -175,7 +175,7 @@ static UiDrawingStatus DrawParameterWidget(u8g2_t* u8g2, Parameter* parameter,
     // TODO:
     // RATE SLIDER형 파라미터 위젯 구현하기
   }
-  return UI_DRAWING_STATUS_OK;
+  return Status::OK;
 }
 
 static void ConvertNumberToString(int32_t number, char* string,
@@ -203,11 +203,11 @@ static void ConvertNumberToString(int32_t number, char* string,
   }
 }
 
-UiDrawingStatus UI_DrawMenu(u8g2_t* u8g2, MenuIconId icon_id, const char* label,
-                            UiStateSlotIndex index) {
+Status DrawMenu(u8g2_t* u8g2, MenuIconId icon_id, const char* label,
+                UiStateSlotIndex index) {
   uint8_t x, y;
   if (index >= UI_STATE_SLOT_INDEX_COUNT) {
-    return UI_DRAWING_STATUS_ERROR;
+    return Status::ERROR;
   }
 
   x = parameter_width_table[index];
@@ -218,22 +218,21 @@ UiDrawingStatus UI_DrawMenu(u8g2_t* u8g2, MenuIconId icon_id, const char* label,
   x = parameter_width_table[index];
   y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
   DrawLabel(u8g2, label, x, y);
-  return UI_DRAWING_STATUS_OK;
+  return Status::OK;
 }
 
-static UiDrawingStatus DrawPanelMenuIcon(u8g2_t* u8g2, MenuIconId icon_id,
-                                         uint8_t x, uint8_t y) {
+static Status DrawPanelMenuIcon(u8g2_t* u8g2, MenuIconId icon_id, uint8_t x,
+                                uint8_t y) {
   uint8_t icon_encoding = panel_menu_icon_table[icon_id], glyph_width;
   u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
   glyph_width = u8g2_GetGlyphWidth(u8g2, icon_encoding);
   u8g2_DrawGlyph(u8g2, x + SLOT_WIDTH / 2 - glyph_width / 2, y + ICON_HEIGHT,
                  icon_encoding);
 
-  return UI_DRAWING_STATUS_OK;
+  return Status::OK;
 }
 
-static UiDrawingStatus DrawLabel(u8g2_t* u8g2, const char* label, uint8_t x,
-                                 uint8_t y) {
+static Status DrawLabel(u8g2_t* u8g2, const char* label, uint8_t x, uint8_t y) {
   const char *first_line = label, *second_line;
   char* p = (char*)label;
   uint8_t string_width;
@@ -258,5 +257,7 @@ static UiDrawingStatus DrawLabel(u8g2_t* u8g2, const char* label, uint8_t x,
     u8g2_DrawStr(u8g2, x + SLOT_WIDTH / 2 - string_width / 2,
                  y + CHARACTER_HEIGHT + 1 + CHARACTER_HEIGHT, second_line);
   }
-  return UI_DRAWING_STATUS_OK;
+  return Status::OK;
 }
+
+}  // namespace UiRenderer

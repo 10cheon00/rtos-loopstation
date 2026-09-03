@@ -18,7 +18,7 @@ static PanelSlot panel_slots[4] = {
 };
 
 UiState UI_STATE_HOME_PANEL = {
-    .ui_state_id = UI_STATE_ID_HOME,
+    .ui_state_id = UiStateId::HOME,
     .page_index = 0,
     .panel_slot_count = 4,
     .panel_slots = panel_slots,

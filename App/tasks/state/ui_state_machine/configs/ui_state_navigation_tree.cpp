@@ -1,19 +1,12 @@
 #include "ui_state_navigation_tree.h"
 
-#include <array>
+#include "enum_map.hpp"
 
-static constexpr auto parent = [] {
-  std::array<UiStateId, UI_STATE_ID_COUNT> values{};
-  values[UI_STATE_ID_NONE] = UI_STATE_ID_NONE;
-  values[UI_STATE_ID_HOME] = UI_STATE_ID_NONE;
-  values[UI_STATE_ID_SETTING] = UI_STATE_ID_HOME;
-  values[UI_STATE_ID_SYSTEM_SETTING] = UI_STATE_ID_SETTING;
-  return values;
-}();
+static constexpr EnumMap<UiStateId, UiStateId> parent{
+    EnumEntry{UiStateId::NONE, UiStateId::NONE},
+    EnumEntry{UiStateId::HOME, UiStateId::NONE},
+    EnumEntry{UiStateId::SETTING, UiStateId::HOME},
+    EnumEntry{UiStateId::SYSTEM_SETTING, UiStateId::SETTING},
+};
 
-UiStateId UiStateNavigationTree_GetParent(UiStateId id) {
-  if (id < UI_STATE_ID_NONE || id >= UI_STATE_ID_COUNT) {
-    return UI_STATE_ID_NONE;
-  }
-  return parent[id];
-}
+UiStateId UiStateNavigationTree_GetParent(UiStateId id) { return parent[id]; }

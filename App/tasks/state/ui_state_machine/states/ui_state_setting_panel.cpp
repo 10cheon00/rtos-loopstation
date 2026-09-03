@@ -7,7 +7,7 @@ static PanelSlot panel_slots[4] = {
      .data =
          {
              .menu = (MenuDescriptor){.icon_id = MENU_ICON_ID_SYSTEM,
-                                      .state_id = UI_STATE_ID_SYSTEM_SETTING,
+                                      .state_id = UiStateId::SYSTEM_SETTING,
                                       .label = "SYSTEM\nSETTING"},
          }},
     {
@@ -22,7 +22,7 @@ static PanelSlot panel_slots[4] = {
 };
 
 UiState UI_STATE_SETTING_PANEL = {
-    .ui_state_id = UI_STATE_ID_SETTING,
+    .ui_state_id = UiStateId::SETTING,
     .page_index = 0,
     .panel_slot_count = ARRAY_COUNT(panel_slots),
     .panel_slots = panel_slots,

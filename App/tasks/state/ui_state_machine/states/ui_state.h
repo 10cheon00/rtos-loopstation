@@ -5,19 +5,14 @@
 #include <stddef.h>
 
 #include "id.h"
-#include "menu_descriptor.h"
+#include "menu_descriptor.hpp"
+#include "panel_slot_type.h"
 #include "parameter_descriptor.h"
 #include "ui_state_id.h"
 #include "ui_state_slot_index.h"
 
 /* 순환 참조를 막기 위한 전방 선언 */
 typedef struct UiStateMachine UiStateMachine;
-
-typedef enum {
-  PANEL_SLOT_TYPE_NONE = 0,
-  PANEL_SLOT_TYPE_MENU,
-  PANEL_SLOT_TYPE_PARAMETER,
-} PanelSlotType;
 
 typedef struct {
   PanelSlotType type;

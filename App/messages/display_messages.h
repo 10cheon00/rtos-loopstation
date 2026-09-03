@@ -5,12 +5,11 @@
 
 #include "FreeRTOS.h"
 #include "button_id.h"
-#include "menu_descriptor.h"
+#include "menu_icon_id.h"
+#include "panel_slot_type.h"
 #include "parameter.h"
-#include "ui_state.h"
-#include "ui_state_id.h"
-#include "ui_state_slot_index.h"
 #include "track_config.h"
+#include "ui_state_slot_index.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
@@ -39,14 +38,17 @@ typedef struct {
   } data;
 } PanelSlotRenderPayload;
 
+typedef uint8_t UiStateIdRaw;
+
 typedef struct {
-  UiStateId ui_state_id;
+  UiStateIdRaw ui_state_id_raw;
   PageNavigationFlag page_navigation_flag;
   PanelSlotRenderPayload slot_render_payloads[UI_STATE_SLOT_INDEX_COUNT];
 } PanelRenderPayload;
 
 /**
- * enum class로 구현된 TrackStateId를 C로 잠시 변환하는 DTO 역할을 맡기 위해 정의된 타입
+ * enum class로 구현된 TrackStateId를 C로 잠시 변환하는 DTO 역할을 맡기 위해
+ * 정의된 타입
  */
 typedef uint16_t TrackStateIdRaw;
 

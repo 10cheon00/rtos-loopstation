@@ -112,11 +112,10 @@ static void InitStateMachines() {
                           SYSTEM_STATE_ID_NOT_INITED);
 
   UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context,
-                      UiStateConfigTable_Get(UI_STATE_ID_HOME));
+                      UiStateConfigTable_Get(UiStateId::HOME));
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     TrackStateMachine_Init(&track_state_machine[i],
-                           &track_state_machine_context[i],
-                           TrackStateId::IDLE);
+                           &track_state_machine_context[i], TrackStateId::IDLE);
   }
   UpdateDisplaySnapshotMailbox(&ui_state_machine);
 }
@@ -229,7 +228,7 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
   // 없으니까 기존에 transition_map 대신 상태 머신에서 전역으로 판단하는게
   // 나을것 같다.
   ButtonId button_id;
-  UiStateId next_ui_state_id = UI_STATE_ID_NONE;
+  UiStateId next_ui_state_id = UiStateId::NONE;
   PanelSlot* panel_slot;
 
   // 1. 버튼 입력일때에만 패널이 바뀜
@@ -265,7 +264,7 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
     // 6. 전역 버튼이라면 전역 패널 전이 테이블에 따라 전이
     next_ui_state_id = GlobalUiTransitionConfigTable_Get(button_id);
   }
-  if (next_ui_state_id != UI_STATE_ID_NONE) {
+  if (next_ui_state_id != UiStateId::NONE) {
     UiStateMachine_TryTransition(ui_state_machine, next_ui_state_id);
   }
 
@@ -276,7 +275,8 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
   PanelSlot* slot;
   DisplaySnapshot snapshot;
 
-  snapshot.panel.ui_state_id = ui_state_machine->current_state->ui_state_id;
+  snapshot.panel.ui_state_id_raw = ConvertIdToIdRaw<UiStateId, UiStateIdRaw>(
+      ui_state_machine->current_state->ui_state_id);
   snapshot.panel.page_navigation_flag = PAGE_NAVIGATION_FLAG_NONE;
   if (UiState_CanDecreasePageIndex(ui_state_machine->current_state)) {
     snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_LEFT_ARROW;
@@ -309,7 +309,9 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
       .tfx_a_state = *LoopStationParameterStore_Get(PARAMETER_ID_TFX_A_STATE),
   };
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    snapshot.led.track_state[i] = ConvertIdToIdRaw<TrackStateId, TrackStateIdRaw>(track_state_machine->current_state->id);
+    snapshot.led.track_state[i] =
+        ConvertIdToIdRaw<TrackStateId, TrackStateIdRaw>(
+            track_state_machine->current_state->id);
   }
 
   xQueueOverwrite((QueueHandle_t)display_snapshot_mailbox, &snapshot);
