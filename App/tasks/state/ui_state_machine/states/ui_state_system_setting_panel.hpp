@@ -1,7 +1,7 @@
-#ifndef UI_STATE_SYSTEM_SETTING_PANEL_H
-#define UI_STATE_SYSTEM_SETTING_PANEL_H
+#ifndef UI_STATE_SYSTEM_SETTING_PANEL_HPP
+#define UI_STATE_SYSTEM_SETTING_PANEL_HPP
 
-#include "ui_state.h"
+#include "ui_state.hpp"
 
 namespace UiStateMachine {
 

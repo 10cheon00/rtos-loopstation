@@ -2,7 +2,7 @@
 #define MENU_DESCRIPTOR_HPP
 
 #include "menu_icon_id.h"
-#include "ui_state_id.h"
+#include "ui_state_id.hpp"
 
 typedef struct {
   MenuIconId icon_id;

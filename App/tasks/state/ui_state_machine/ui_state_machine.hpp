@@ -1,8 +1,8 @@
-#ifndef UI_STATE_MACHINE_H
-#define UI_STATE_MACHINE_H
+#ifndef UI_STATE_MACHINE_HPP
+#define UI_STATE_MACHINE_HPP
 
 #include "cmsis_os2.h"
-#include "ui_state.h"
+#include "ui_state.hpp"
 
 namespace UiStateMachine {
 

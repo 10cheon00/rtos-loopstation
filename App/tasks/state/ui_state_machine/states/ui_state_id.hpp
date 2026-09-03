@@ -1,5 +1,5 @@
-#ifndef UI_STATE_ID_H
-#define UI_STATE_ID_H
+#ifndef UI_STATE_ID_HPP
+#define UI_STATE_ID_HPP
 
 #include <cstdint>
 

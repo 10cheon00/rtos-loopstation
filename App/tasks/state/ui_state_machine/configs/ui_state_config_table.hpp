@@ -1,8 +1,8 @@
-#ifndef UI_STATE_CONFIG_TABLE_H
-#define UI_STATE_CONFIG_TABLE_H
+#ifndef UI_STATE_CONFIG_TABLE_HPP
+#define UI_STATE_CONFIG_TABLE_HPP
 
-#include "ui_state.h"
-#include "ui_state_id.h"
+#include "ui_state.hpp"
+#include "ui_state_id.hpp"
 
 namespace UiStatePointerMap {
 

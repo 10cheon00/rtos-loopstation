@@ -7,7 +7,7 @@
 #include "cmsis_os2.h"
 #include "display_messages.h"
 #include "encoder_id.h"
-#include "global_ui_transition_config_table.h"
+#include "global_ui_transition_config_table.hpp"
 #include "loopstation_parameter_store.hpp"
 #include "queue.h"
 #include "state_initparams.h"
@@ -15,9 +15,9 @@
 #include "system_state_machine.hpp"
 #include "track_config.h"
 #include "track_state_machine.hpp"
-#include "ui_state_config_table.h"
-#include "ui_state_machine.h"
-#include "ui_state_navigation_tree.h"
+#include "ui_state_config_table.hpp"
+#include "ui_state_machine.hpp"
+#include "ui_state_navigation_tree.hpp"
 #include "utils.h"
 
 static StateTaskContext state_task_context;

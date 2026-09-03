@@ -7,7 +7,7 @@
 #include "gmg12864_lcd.hpp"
 #include "parameter.h"
 #include "parameter_id.hpp"
-#include "ui_state_id.h"
+#include "ui_state_id.hpp"
 
 extern const uint8_t u8g2_font_ref4x5_prop_v4_tr[];
 

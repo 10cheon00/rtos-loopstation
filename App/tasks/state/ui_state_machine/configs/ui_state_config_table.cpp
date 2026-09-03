@@ -1,9 +1,9 @@
-#include "ui_state_config_table.h"
+#include "ui_state_config_table.hpp"
 
 #include "enum_map.hpp"
-#include "ui_state_home_panel.h"
-#include "ui_state_setting_panel.h"
-#include "ui_state_system_setting_panel.h"
+#include "ui_state_home_panel.hpp"
+#include "ui_state_setting_panel.hpp"
+#include "ui_state_system_setting_panel.hpp"
 
 namespace UiStatePointerMap {
 namespace UiStateClass {

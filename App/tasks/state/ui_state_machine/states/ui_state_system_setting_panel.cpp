@@ -1,4 +1,4 @@
-#include "ui_state_system_setting_panel.h"
+#include "ui_state_system_setting_panel.hpp"
 
 // static PanelSlot panel_slots[4] = {
 //     {.type = PANEL_SLOT_TYPE_PARAMETER,

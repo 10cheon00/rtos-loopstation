@@ -1,5 +1,5 @@
-#ifndef UI_STATE_H
-#define UI_STATE_H
+#ifndef UI_STATE_HPP
+#define UI_STATE_HPP
 
 #include <cstdbool>
 #include <cstdint>
@@ -8,7 +8,7 @@
 #include "menu_descriptor.hpp"
 #include "panel_slot_type.h"
 #include "parameter_descriptor.h"
-#include "ui_state_id.h"
+#include "ui_state_id.hpp"
 #include "ui_state_slot_index.h"
 
 namespace UiStateMachine {

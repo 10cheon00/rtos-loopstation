@@ -1,7 +1,7 @@
-#include "ui_state_machine.h"
+#include "ui_state_machine.hpp"
 
 #include "display_messages.h"
-#include "ui_state_config_table.h"
+#include "ui_state_config_table.hpp"
 
 namespace UiStateMachine {
 

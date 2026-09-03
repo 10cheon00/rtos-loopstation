@@ -1,4 +1,4 @@
-#include "global_ui_transition_config_table.h"
+#include "global_ui_transition_config_table.hpp"
 
 #include "enum_map.hpp"
 
