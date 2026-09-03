@@ -127,8 +127,8 @@ static TaskStatus HandlePanelRenderPayload(
   u8g2_ClearBuffer(&u8g2);
 
   UiStateId ui_state_id;
-  if (!ConvertIdRawToId<UiStateIdRaw, UiStateId>(
-          panel_render_payload->ui_state_id_raw, &ui_state_id)) {
+  if (!ConvertIdRawToId<IdRaw, UiStateId>(panel_render_payload->ui_state_id_raw,
+                                          &ui_state_id)) {
     return TASK_STATUS_ERROR;
   }
   const char* panel_label = UiStateLabelMap::Get(ui_state_id);
@@ -168,8 +168,8 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload) {
   }
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     TrackStateId id;
-    if (!ConvertIdRawToId<TrackStateIdRaw, TrackStateId>(
-            payload->track_state[i], &id)) {
+    if (!ConvertIdRawToId<IdRaw, TrackStateId>(payload->track_state_id_raws[i],
+                                               &id)) {
       return TASK_STATUS_ERROR;
     }
     if (RenderTrackLed(id, i) != TASK_STATUS_OK) {

@@ -197,7 +197,7 @@ static TaskStatus HandleAdcConversionEvent(
       .type = STATE_EVENT_ADC_CONVERSION,
       .payload = {.adc_conversion = {
                       .timestamp_ticks = adc_conversion_event->timestamp_ticks,
-                      .knob_id = adc_conversion_event->knob_id,
+                      .knob_id_raw = adc_conversion_event->knob_id_raw,
                       .adc_value = adc_conversion_event->adc_value}}};
 
   osMessageQueuePut(state_event_queue, &state_event, 0,

@@ -275,7 +275,7 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
   PanelSlot* slot;
   DisplaySnapshot snapshot;
 
-  snapshot.panel.ui_state_id_raw = ConvertIdToIdRaw<UiStateId, UiStateIdRaw>(
+  snapshot.panel.ui_state_id_raw = ConvertIdToIdRaw<UiStateId, IdRaw>(
       ui_state_machine->current_state->ui_state_id);
   snapshot.panel.page_navigation_flag = PAGE_NAVIGATION_FLAG_NONE;
   if (UiState_CanDecreasePageIndex(ui_state_machine->current_state)) {
@@ -309,8 +309,8 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
       .tfx_a_state = *LoopStationParameterStore_Get(PARAMETER_ID_TFX_A_STATE),
   };
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    snapshot.led.track_state[i] =
-        ConvertIdToIdRaw<TrackStateId, TrackStateIdRaw>(
+    snapshot.led.track_state_id_raws[i] =
+        ConvertIdToIdRaw<TrackStateId, IdRaw>(
             track_state_machine->current_state->id);
   }
 

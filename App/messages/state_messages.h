@@ -26,14 +26,9 @@ typedef struct {
   int32_t delta;
 } EncoderRotationPayload;
 
-/**
- * enum class로 구현된 KnobId C로 잠시 변환하는 DTO 역할을 맡기 위해 정의된 타입
- */
-typedef uint8_t KnobIdRaw;
-
 typedef struct {
   uint32_t timestamp_ticks;
-  KnobIdRaw knob_id;
+  IdRaw knob_id_raw;
   uint16_t adc_value;
 } AdcConversionPayload;
 

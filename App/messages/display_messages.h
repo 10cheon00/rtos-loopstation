@@ -5,6 +5,7 @@
 
 #include "FreeRTOS.h"
 #include "button_id.h"
+#include "id_raw.h"
 #include "menu_icon_id.h"
 #include "panel_slot_type.h"
 #include "parameter.h"
@@ -38,10 +39,8 @@ typedef struct {
   } data;
 } PanelSlotRenderPayload;
 
-typedef uint8_t UiStateIdRaw;
-
 typedef struct {
-  UiStateIdRaw ui_state_id_raw;
+  IdRaw ui_state_id_raw;
   PageNavigationFlag page_navigation_flag;
   PanelSlotRenderPayload slot_render_payloads[UI_STATE_SLOT_INDEX_COUNT];
 } PanelRenderPayload;
@@ -50,14 +49,13 @@ typedef struct {
  * enum class로 구현된 TrackStateId를 C로 잠시 변환하는 DTO 역할을 맡기 위해
  * 정의된 타입
  */
-typedef uint16_t TrackStateIdRaw;
 
 typedef struct {
   // TODO:
   // LED와 관련된 설정 구현하기
   Parameter ifx_a_state;
   Parameter tfx_a_state;
-  TrackStateIdRaw track_state[TRACK_COUNT];
+  IdRaw track_state_id_raws[TRACK_COUNT];
 } LedRenderPayload;
 
 typedef struct {
