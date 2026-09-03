@@ -30,6 +30,7 @@ struct SystemStateOnEnterResult {
 };
 
 using SystemStateOnEnterFunction = SystemStateOnEnterResult (*)(Context*);
+
 using TransitionTable = EnumMap<ActionId, Id>;
 
 struct State {
