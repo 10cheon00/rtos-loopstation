@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-typedef uint8_t IdRaw;
+typedef uint8_t EnumRaw;
 
 #endif

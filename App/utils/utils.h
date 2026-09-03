@@ -5,7 +5,7 @@
 
 #include <cstdbool>
 
-#include "id_raw.h"
+#include "enum_raw.h"
 
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))
 
@@ -23,16 +23,16 @@ double tangent(int16_t degree);
 typedef uint32_t Hash_t;
 Hash_t djb2(const char* string);
 
-template <typename Id>
-inline IdRaw ConvertIdToIdRaw(Id id) {
-  return static_cast<IdRaw>(id);
+template <typename Enum>
+inline EnumRaw ConvertEnumToEnumRaw(Enum id) {
+  return static_cast<EnumRaw>(id);
 }
-template <typename Id>
-bool ConvertIdRawToId(IdRaw raw, Id* id) {
-  if (raw >= static_cast<IdRaw>(Id::COUNT)) {
+template <typename Enum>
+bool ConvertEnumRawToEnum(EnumRaw raw, Enum* id) {
+  if (raw >= static_cast<EnumRaw>(Enum::COUNT)) {
     return false;
   }
-  *id = static_cast<Id>(raw);
+  *id = static_cast<Enum>(raw);
   return true;
 }
 

@@ -129,7 +129,7 @@ static TaskStatus HandlePanelRenderPayload(
   u8g2_ClearBuffer(&u8g2);
 
   UiStateId ui_state_id;
-  if (!ConvertIdRawToId<UiStateId>(panel_render_payload->ui_state_id_raw,
+  if (!ConvertEnumRawToEnum<UiStateId>(panel_render_payload->ui_state_enum_raw,
                                           &ui_state_id)) {
     return TASK_STATUS_ERROR;
   }
@@ -170,7 +170,7 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload) {
   }
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     TrackStateId id;
-    if (!ConvertIdRawToId<TrackStateId>(payload->track_state_id_raws[i],
+    if (!ConvertEnumRawToEnum<TrackStateId>(payload->track_state_enum_raws[i],
                                                &id)) {
       return TASK_STATUS_ERROR;
     }

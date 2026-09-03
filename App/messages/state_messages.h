@@ -15,8 +15,8 @@ typedef enum {
 
 typedef struct {
   uint32_t timestamp_ticks;
-  IdRaw id_raw;
-  IdRaw state_raw;
+  EnumRaw enum_raw;
+  EnumRaw state_raw;
 } ButtonPayload;
 
 typedef struct {
@@ -27,7 +27,7 @@ typedef struct {
 
 typedef struct {
   uint32_t timestamp_ticks;
-  IdRaw knob_id_raw;
+  EnumRaw knob_enum_raw;
   uint16_t adc_value;
 } AdcConversionPayload;
 

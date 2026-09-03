@@ -5,7 +5,7 @@
 
 #include "FreeRTOS.h"
 #include "encoder_id.h"
-#include "id_raw.h"
+#include "enum_raw.h"
 
 #define INPUT_EVENT_QUEUE_TIMEOUT_500MS (500UL)
 
@@ -34,7 +34,7 @@ typedef struct {
 typedef struct {
   TickType_t timestamp_ticks;  // for debugging only
   uint16_t adc_value;
-  IdRaw knob_id_raw;
+  EnumRaw knob_enum_raw;
 } AdcConversionEvent;
 
 typedef struct {

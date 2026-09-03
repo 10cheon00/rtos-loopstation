@@ -58,7 +58,7 @@ void ScanAllAdcAndSendMessages(AdcRankToKnobMap::AdcRank_t adc_rank,
   input_event.payload.adc_conversion_event = (AdcConversionEvent){
       .timestamp_ticks = osKernelGetTickCount(),
       .adc_value = adc_values[adc_rank],
-      .knob_id_raw = ConvertIdToIdRaw(knob_id),
+      .knob_enum_raw = ConvertEnumToEnumRaw(knob_id),
   };
   osMessageQueuePut(input_message_queue, &input_event, 0,
                     INPUT_EVENT_QUEUE_TIMEOUT_500MS);

@@ -143,7 +143,7 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
   PanelSlot* panel_slot;
 
   ButtonState button_state;
-  if (!ConvertIdRawToId<ButtonState>(button_payload->state_raw,
+  if (!ConvertEnumRawToEnum<ButtonState>(button_payload->state_raw,
                                      &button_state)) {
     return TASK_STATUS_ERROR;
   }
@@ -152,7 +152,7 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
   }
 
   ButtonId id;
-  if (!ConvertIdRawToId<ButtonId>(button_payload->id_raw, &id)) {
+  if (!ConvertEnumRawToEnum<ButtonId>(button_payload->enum_raw, &id)) {
     return TASK_STATUS_ERROR;
   }
 
@@ -245,13 +245,13 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
     return TASK_STATUS_ERROR;
   }
   ButtonId button_id;
-  if (!ConvertIdRawToId<ButtonId>(state_event->payload.button.id_raw,
+  if (!ConvertEnumRawToEnum<ButtonId>(state_event->payload.button.enum_raw,
                                   &button_id)) {
     return TASK_STATUS_ERROR;
   }
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
   ButtonState button_state;
-  if (!ConvertIdRawToId<ButtonState>(state_event->payload.button.state_raw,
+  if (!ConvertEnumRawToEnum<ButtonState>(state_event->payload.button.state_raw,
                                      &button_state)) {
     return TASK_STATUS_ERROR;
   }
@@ -293,8 +293,8 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
   PanelSlot* slot;
   DisplaySnapshot snapshot;
 
-  snapshot.panel.ui_state_id_raw =
-      ConvertIdToIdRaw(ui_state_machine->current_state->ui_state_id);
+  snapshot.panel.ui_state_enum_raw =
+      ConvertEnumToEnumRaw(ui_state_machine->current_state->ui_state_id);
   snapshot.panel.page_navigation_flag = PAGE_NAVIGATION_FLAG_NONE;
   if (UiState_CanDecreasePageIndex(ui_state_machine->current_state)) {
     snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_LEFT_ARROW;
@@ -327,8 +327,8 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
       .tfx_a_state = *LoopStationParameterStore_Get(PARAMETER_ID_TFX_A_STATE),
   };
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    snapshot.led.track_state_id_raws[i] =
-        ConvertIdToIdRaw(track_state_machine->current_state->id);
+    snapshot.led.track_state_enum_raws[i] =
+        ConvertEnumToEnumRaw(track_state_machine->current_state->id);
   }
 
   xQueueOverwrite((QueueHandle_t)display_snapshot_mailbox, &snapshot);
@@ -347,12 +347,12 @@ TaskStatus TryTransitionTrackStateMachine(TrackStateMachine* state_machine,
   }
   button_payload = &state_event->payload.button;
   ButtonId id;
-  if (!ConvertIdRawToId<ButtonId>(button_payload->id_raw, &id)) {
+  if (!ConvertEnumRawToEnum<ButtonId>(button_payload->enum_raw, &id)) {
     return TASK_STATUS_ERROR;
   }
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
   ButtonState state;
-  if (!ConvertIdRawToId<ButtonState>(button_payload->state_raw, &state)) {
+  if (!ConvertEnumRawToEnum<ButtonState>(button_payload->state_raw, &state)) {
     return TASK_STATUS_ERROR;
   }
   if (state != ButtonState::PRESSED) {
