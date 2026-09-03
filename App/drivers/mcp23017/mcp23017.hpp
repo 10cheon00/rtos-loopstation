@@ -1,5 +1,5 @@
-#ifndef MCP23017_H
-#define MCP23017_H
+#ifndef MCP23017_HPP
+#define MCP23017_HPP
 
 #include <stdint.h>
 

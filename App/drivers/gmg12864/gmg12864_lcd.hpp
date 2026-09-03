@@ -1,5 +1,5 @@
-#ifndef GMG12864_LCD_H
-#define GMG12864_LCD_H
+#ifndef GMG12864_LCD_HPP
+#define GMG12864_LCD_HPP
 
 #include <stdint.h>
 

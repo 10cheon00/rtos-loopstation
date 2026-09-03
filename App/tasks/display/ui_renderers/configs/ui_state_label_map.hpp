@@ -1,5 +1,5 @@
-#ifndef UI_STATE_LABEL_MAP_H
-#define UI_STATE_LABEL_MAP_H
+#ifndef UI_STATE_LABEL_MAP_HPP
+#define UI_STATE_LABEL_MAP_HPP
 
 #include "ui_state_id.h"
 

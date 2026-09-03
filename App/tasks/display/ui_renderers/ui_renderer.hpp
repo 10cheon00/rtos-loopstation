@@ -1,5 +1,5 @@
-#ifndef UI_RENDERER_H
-#define UI_RENDERER_H
+#ifndef UI_RENDERER_HPP
+#define UI_RENDERER_HPP
 
 #include <cstdint>
 
