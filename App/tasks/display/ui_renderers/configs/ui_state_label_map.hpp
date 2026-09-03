@@ -5,7 +5,7 @@
 
 namespace UiStateLabelMap {
 
-const char* Get(UiStateId id);
+const char* Get(UiStateMachine::Id id);
 
 }
 #endif

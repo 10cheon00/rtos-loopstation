@@ -2,11 +2,13 @@
 
 #include "enum_map.hpp"
 
-static constexpr EnumMap<UiStateId, UiStateId> parent{
-    EnumEntry{UiStateId::NONE, UiStateId::NONE},
-    EnumEntry{UiStateId::HOME, UiStateId::NONE},
-    EnumEntry{UiStateId::SETTING, UiStateId::HOME},
-    EnumEntry{UiStateId::SYSTEM_SETTING, UiStateId::SETTING},
+static constexpr EnumMap<UiStateMachine::Id, UiStateMachine::Id> parent{
+    EnumEntry{UiStateMachine::Id::NONE, UiStateMachine::Id::NONE},
+    EnumEntry{UiStateMachine::Id::HOME, UiStateMachine::Id::NONE},
+    EnumEntry{UiStateMachine::Id::SETTING, UiStateMachine::Id::HOME},
+    EnumEntry{UiStateMachine::Id::SYSTEM_SETTING, UiStateMachine::Id::SETTING},
 };
 
-UiStateId UiStateNavigationTree_GetParent(UiStateId id) { return parent[id]; }
+UiStateMachine::Id UiStateNavigationTree_GetParent(UiStateMachine::Id id) {
+  return parent[id];
+}

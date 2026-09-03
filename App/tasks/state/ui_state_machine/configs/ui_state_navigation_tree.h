@@ -3,6 +3,6 @@
 
 #include "ui_state_id.h"
 
-UiStateId UiStateNavigationTree_GetParent(UiStateId id);
+UiStateMachine::Id UiStateNavigationTree_GetParent(UiStateMachine::Id id);
 
 #endif

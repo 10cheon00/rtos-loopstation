@@ -4,20 +4,20 @@
 #include "cmsis_os2.h"
 #include "ui_state.h"
 
-typedef struct {
-} UiStateMachineContext;
+namespace UiStateMachine {
 
-void UiStateMachineContext_Init(
-    UiStateMachineContext* ui_state_machine_context);
+struct Context {};
 
-struct UiStateMachine {
-  UiState* current_state;
-  UiStateMachineContext* context;
+void InitContext(Context* context);
+
+struct StateMachine {
+  State* current_state;
+  Context* context;
 };
 
-void UiStateMachine_Init(UiStateMachine* ui_state_machine,
-                         UiStateMachineContext* context, UiState* init_state);
-void UiStateMachine_TryTransition(UiStateMachine* ui_state_machine,
-                                  UiStateId next_ui_state_id);
+void Init(StateMachine* ui_state_machine, Context* context, State* init_state);
+void TryTransition(StateMachine* ui_state_machine, Id next_ui_state_id);
+
+}  // namespace UiStateMachine
 
 #endif

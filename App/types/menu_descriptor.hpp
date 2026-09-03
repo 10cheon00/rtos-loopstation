@@ -6,7 +6,7 @@
 
 typedef struct {
   MenuIconId icon_id;
-  UiStateId state_id;
+  UiStateMachine::Id state_id;
   const char* label;
 } MenuDescriptor;
 

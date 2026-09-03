@@ -2,39 +2,36 @@
 
 #include "enum_map.hpp"
 
-static constexpr EnumMap<ButtonId, UiStateId> table{
-    EnumEntry{ButtonId::NONE, UiStateId::NONE},
-    EnumEntry{ButtonId::LEFT, UiStateId::NONE},
-    EnumEntry{ButtonId::RIGHT, UiStateId::NONE},
-    EnumEntry{ButtonId::ENTER, UiStateId::NONE},
-    EnumEntry{ButtonId::EXIT, UiStateId::NONE},
+static constexpr EnumMap<ButtonId, UiStateMachine::Id> table{
+    EnumEntry{ButtonId::NONE, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::LEFT, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::RIGHT, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::ENTER, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::EXIT, UiStateMachine::Id::NONE},
     // 엔코더 푸시 버튼의 동작은 패널마다 다르므로 이곳에서 정의하지 않음
-    EnumEntry{ButtonId::ENCODER_A_PUSH, UiStateId::NONE},
-    EnumEntry{ButtonId::ENCODER_B_PUSH, UiStateId::NONE},
-    EnumEntry{ButtonId::ENCODER_C_PUSH, UiStateId::NONE},
-    EnumEntry{ButtonId::ENCODER_D_PUSH, UiStateId::NONE},
-    EnumEntry{ButtonId::IFX_A_TOGGLE, UiStateId::NONE},
-    EnumEntry{ButtonId::TFX_A_TOGGLE, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_1_EDIT, UiStateId::SETTING},
-    EnumEntry{ButtonId::TRACK_1_PLAY_RECORD, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_1_STOP, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_2_EDIT, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_2_PLAY_RECORD, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_2_STOP, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_3_EDIT, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_3_PLAY_RECORD, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_3_STOP, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_4_EDIT, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_4_PLAY_RECORD, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_4_STOP, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_5_EDIT, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_5_PLAY_RECORD, UiStateId::NONE},
-    EnumEntry{ButtonId::TRACK_5_STOP, UiStateId::NONE},
+    EnumEntry{ButtonId::ENCODER_A_PUSH, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::ENCODER_B_PUSH, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::ENCODER_C_PUSH, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::ENCODER_D_PUSH, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::IFX_A_TOGGLE, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TFX_A_TOGGLE, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_1_EDIT, UiStateMachine::Id::SETTING},
+    EnumEntry{ButtonId::TRACK_1_PLAY_RECORD, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_1_STOP, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_2_EDIT, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_2_PLAY_RECORD, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_2_STOP, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_3_EDIT, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_3_PLAY_RECORD, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_3_STOP, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_4_EDIT, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_4_PLAY_RECORD, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_4_STOP, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_5_EDIT, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_5_PLAY_RECORD, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TRACK_5_STOP, UiStateMachine::Id::NONE},
 };
 
-UiStateId GlobalUiTransitionConfigTable_Get(ButtonId id) {
-  if (id <= ButtonId::NONE || id >= ButtonId::COUNT) {
-    return UiStateId::NONE;
-  }
+UiStateMachine::Id GlobalUiTransitionConfigTable_Get(ButtonId id) {
   return table[id];
 }

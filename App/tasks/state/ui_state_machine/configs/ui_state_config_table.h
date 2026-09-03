@@ -4,8 +4,14 @@
 #include "ui_state.h"
 #include "ui_state_id.h"
 
-typedef UiState* UiStatePointer;
+namespace UiStatePointerMap {
 
-UiStatePointer UiStateConfigTable_Get(UiStateId ui_state_id);
+using namespace UiStateMachine;
+
+using UiStatePointer = State*;
+
+UiStatePointer Get(Id ui_state_id);
+
+}  // namespace UiStatePointerMap
 
 #endif

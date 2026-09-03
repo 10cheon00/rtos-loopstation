@@ -67,7 +67,8 @@ static void Run(void);
 static TaskStatus HandlePanelRenderPayload(PanelRenderPayload* payload);
 static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload);
 static TaskStatus RenderFxLed(Parameter* parameter, Mcp23017::GpioId gpio_id);
-static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id, uint8_t track_index);
+static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id,
+                                 uint8_t track_index);
 
 static int IsValidInitParams(const DisplayInitParams* params) {
   return (params != 0) &&
@@ -128,9 +129,9 @@ static TaskStatus HandlePanelRenderPayload(
     PanelRenderPayload* panel_render_payload) {
   u8g2_ClearBuffer(&u8g2);
 
-  UiStateId ui_state_id;
-  if (!ConvertEnumRawToEnum<UiStateId>(panel_render_payload->ui_state_enum_raw,
-                                          &ui_state_id)) {
+  UiStateMachine::Id ui_state_id;
+  if (!ConvertEnumRawToEnum<UiStateMachine::Id>(
+          panel_render_payload->ui_state_enum_raw, &ui_state_id)) {
     return TASK_STATUS_ERROR;
   }
   const char* panel_label = UiStateLabelMap::Get(ui_state_id);
@@ -170,8 +171,8 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload) {
   }
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     TrackStateMachine::Id id;
-    if (!ConvertEnumRawToEnum<TrackStateMachine::Id>(payload->track_state_enum_raws[i],
-                                               &id)) {
+    if (!ConvertEnumRawToEnum<TrackStateMachine::Id>(
+            payload->track_state_enum_raws[i], &id)) {
       return TASK_STATUS_ERROR;
     }
     if (RenderTrackLed(id, i) != TASK_STATUS_OK) {
@@ -200,7 +201,8 @@ static TaskStatus RenderFxLed(Parameter* parameter, Mcp23017::GpioId gpio_id) {
   return TASK_STATUS_OK;
 }
 
-static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id, uint8_t track_index) {
+static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id,
+                                 uint8_t track_index) {
   const Mcp23017::PinConfig& red_entry =
       Mcp23017::GetTrackLedEntry(track_index, Mcp23017::TrackLedColor::RED);
   const Mcp23017::PinConfig& green_entry =

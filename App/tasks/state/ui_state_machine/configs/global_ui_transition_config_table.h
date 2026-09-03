@@ -6,6 +6,6 @@
 #include "button_id.hpp"
 #include "ui_state_id.h"
 
-UiStateId GlobalUiTransitionConfigTable_Get(ButtonId ui_action_id);
+UiStateMachine::Id GlobalUiTransitionConfigTable_Get(ButtonId ui_action_id);
 
 #endif

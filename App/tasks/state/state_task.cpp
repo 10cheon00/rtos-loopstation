@@ -28,8 +28,8 @@ static osMessageQueueId_t display_snapshot_mailbox = 0;
 static SystemStateMachine::StateMachine system_state_machine;
 static SystemStateMachine::Context system_state_machine_context;
 
-static UiStateMachine ui_state_machine;
-static UiStateMachineContext ui_state_machine_context;
+static UiStateMachine::StateMachine ui_state_machine;
+static UiStateMachine::Context ui_state_machine_context;
 
 static TrackStateMachine::StateMachine track_state_machine[TRACK_COUNT];
 static TrackStateMachine::Context track_state_machine_context[TRACK_COUNT];
@@ -40,10 +40,10 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload);
 static TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationPayload* encoder_rotation_payload);
 static TaskStatus TryUpdateParameterFromAdc(StateEvent* state_event);
-static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
-                                              StateEvent* state_event);
+static TaskStatus TryTransitionUiStateMachine(
+    UiStateMachine::StateMachine* ui_state_machine, StateEvent* state_event);
 static TaskStatus UpdateDisplaySnapshotMailbox(
-    UiStateMachine* ui_state_machine);
+    UiStateMachine::StateMachine* ui_state_machine);
 static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine* track_state_machine,
     StateEvent* state_event, uint8_t track_index);
@@ -65,7 +65,7 @@ void StateTask_Init(void* argument) {
   state_event_queue = params->state_event_queue;
   display_snapshot_mailbox = params->display_snapshot_mailbox;
 
-  UiStateMachineContext_Init(&ui_state_machine_context);
+  UiStateMachine::InitContext(&ui_state_machine_context);
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     InitContext(&track_state_machine_context[i]);
   }
@@ -112,8 +112,8 @@ static void InitStateMachines() {
   SystemStateMachine::Init(&system_state_machine, &system_state_machine_context,
                            SystemStateMachine::Id::NOT_INITED);
 
-  UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context,
-                      UiStateConfigTable_Get(UiStateId::HOME));
+  UiStateMachine::Init(&ui_state_machine, &ui_state_machine_context,
+                       UiStatePointerMap::Get(UiStateMachine::Id::HOME));
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     TrackStateMachine::Init(&track_state_machine[i],
                             &track_state_machine_context[i],
@@ -140,7 +140,6 @@ static TaskStatus TryUpdateParameter(StateEvent* state_event) {
  * */
 static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
   ParameterId parameter_id;
-  PanelSlot* panel_slot;
 
   ButtonState button_state;
   if (!ConvertEnumRawToEnum<ButtonState>(button_payload->button_state_raw,
@@ -164,12 +163,13 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
   if (id == ButtonId::ENCODER_A_PUSH) {
     // TODO:
     // Encoder_A~D 모두 처리 가능하게 해야함
-    panel_slot = UiState_GetPanelSlot(ui_state_machine.current_state,
-                                      UI_STATE_SLOT_INDEX_A);
-    parameter_id = panel_slot->data.parameter.id;
+    const UiStateMachine::PanelSlot& panel_slot =
+        ui_state_machine.current_state->GetCurrentPage()[UI_STATE_SLOT_INDEX_A];
+    parameter_id = panel_slot.data.parameter.id;
     if (parameter_id == ParameterId::NONE) {
       return TASK_STATUS_ERROR;
     }
+
     Parameter& parameter = LoopstationStore::GetParameter(parameter_id);
     if (parameter.type == PARAMETER_TYPE_TOGGLE) {
       Parameter_ToggleValue(&parameter);
@@ -193,17 +193,17 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
 TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationPayload* encoder_rotation_payload) {
   ParameterId parameter_id;
-  PanelSlot* slot;
+
   EncoderId encoder_id;
 
   encoder_id = encoder_rotation_payload->encoder_id;
-  slot = UiState_GetPanelSlot(ui_state_machine.current_state,
-                              (UiStateSlotIndex)encoder_id);
-  if (slot == NULL || slot->type == PANEL_SLOT_TYPE_MENU) {
+  const UiStateMachine::PanelSlot& panel_slot =
+      ui_state_machine.current_state->GetCurrentPage()[encoder_id];
+  if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
     return TASK_STATUS_OK;
   }
 
-  parameter_id = slot->data.parameter.id;
+  parameter_id = panel_slot.data.parameter.id;
   if (parameter_id == ParameterId::NONE) {
     return TASK_STATUS_ERROR;
   }
@@ -224,8 +224,8 @@ TaskStatus TryUpdateParameterFromAdc(StateEvent* state_event) {
   return TASK_STATUS_ERROR;
 }
 
-static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
-                                              StateEvent* state_event) {
+static TaskStatus TryTransitionUiStateMachine(
+    UiStateMachine::StateMachine* ui_state_machine, StateEvent* state_event) {
   // TODO:
   // 좌우 버튼이 페이지 이동에만 사용되므로, 여기서 일어나는 전이들은 대부분
   // System, Loop, IFX A/B/C, TFX A/B/C와 같이 특정 메뉴로 바로 이동하는 전역
@@ -234,8 +234,7 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
   // 하도록 요청하면 된다. 패널 전이도 사실상 전역 이동, 상위 패널로 이동밖에
   // 없으니까 기존에 transition_map 대신 상태 머신에서 전역으로 판단하는게
   // 나을것 같다.
-  UiStateId next_ui_state_id = UiStateId::NONE;
-  PanelSlot* panel_slot;
+  UiStateMachine::Id next_ui_state_id = UiStateMachine::Id::NONE;
 
   // 1. 버튼 입력일때에만 패널이 바뀜
   if (state_event->type != STATE_EVENT_BUTTON) {
@@ -259,18 +258,19 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
   if (button_id == ButtonId::EXIT) {
     // 3. exit 버튼이라면 상위 패널로 이동 가능한지 판단 후 전이
     next_ui_state_id = UiStateNavigationTree_GetParent(
-        ui_state_machine->current_state->ui_state_id);
+        ui_state_machine->current_state->GetId());
   } else if (button_id == ButtonId::LEFT) {
     // 4. 좌우 버튼인 경우 페이지 증가
-    UiState_IncreasePageIndex(ui_state_machine->current_state);
+    ui_state_machine->current_state->IncreasePageIndex();
   } else if (button_id == ButtonId::RIGHT) {
-    UiState_DecreasePageIndex(ui_state_machine->current_state);
+    ui_state_machine->current_state->DecreasePageIndex();
   } else if (button_id == ButtonId::ENCODER_A_PUSH) {
     // 5. 엔코더 푸시 버튼이라면 현재 UiState가 보여주는 슬롯에 따라 전이
-    panel_slot = UiState_GetPanelSlot(ui_state_machine->current_state,
-                                      UI_STATE_SLOT_INDEX_A);
-    if (panel_slot->type == PANEL_SLOT_TYPE_MENU) {
-      next_ui_state_id = panel_slot->data.menu.state_id;
+    const UiStateMachine::PanelSlot& panel_slot =
+        ui_state_machine->current_state
+            ->GetCurrentPage()[UI_STATE_SLOT_INDEX_A];
+    if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
+      next_ui_state_id = panel_slot.data.menu.state_id;
     }
   } else if (button_id == ButtonId::ENCODER_B_PUSH) {
   } else if (button_id == ButtonId::ENCODER_C_PUSH) {
@@ -279,43 +279,44 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
     // 6. 전역 버튼이라면 전역 패널 전이 테이블에 따라 전이
     next_ui_state_id = GlobalUiTransitionConfigTable_Get(button_id);
   }
-  if (next_ui_state_id != UiStateId::NONE) {
-    UiStateMachine_TryTransition(ui_state_machine, next_ui_state_id);
+  if (next_ui_state_id != UiStateMachine::Id::NONE) {
+    UiStateMachine::TryTransition(ui_state_machine, next_ui_state_id);
   }
 
   return TASK_STATUS_OK;
 }
 
-TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
-  PanelSlot* slot;
+TaskStatus UpdateDisplaySnapshotMailbox(
+    UiStateMachine::StateMachine* ui_state_machine) {
   DisplaySnapshot snapshot;
 
   snapshot.panel.ui_state_enum_raw =
-      ConvertEnumToEnumRaw(ui_state_machine->current_state->ui_state_id);
+      ConvertEnumToEnumRaw(ui_state_machine->current_state->GetId());
   snapshot.panel.page_navigation_flag = PAGE_NAVIGATION_FLAG_NONE;
-  if (UiState_CanDecreasePageIndex(ui_state_machine->current_state)) {
+  if (ui_state_machine->current_state->CanDecreasePageIndex()) {
     snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_LEFT_ARROW;
   }
-  if (UiState_CanIncreasePageIndex(ui_state_machine->current_state)) {
+  if (ui_state_machine->current_state->CanIncreasePageIndex()) {
     snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_RIGHT_ARROW;
   }
-  for (size_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
-    slot = UiState_GetPanelSlot(ui_state_machine->current_state,
-                                (UiStateSlotIndex)i);
 
-    snapshot.panel.slot_render_payloads[i].type = slot->type;
-    if (slot->type == PANEL_SLOT_TYPE_MENU) {
+  const UiStateMachine::Page& page =
+      ui_state_machine->current_state->GetCurrentPage();
+  for (size_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
+    const UiStateMachine::PanelSlot& panel_slot = page[i];
+    snapshot.panel.slot_render_payloads[i].type = page[i].type;
+    if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
       snapshot.panel.slot_render_payloads[i].data.menu = (MenuRenderPayload){
-          .icon_id = slot->data.menu.icon_id,
-          .label = slot->data.menu.label,
+          .icon_id = panel_slot.data.menu.icon_id,
+          .label = panel_slot.data.menu.label,
       };
-    } else if (slot->type == PANEL_SLOT_TYPE_PARAMETER) {
+    } else if (panel_slot.type == PANEL_SLOT_TYPE_PARAMETER) {
       Parameter parameter =
-          LoopstationStore::GetParameter(slot->data.parameter.id);
+          LoopstationStore::GetParameter(panel_slot.data.parameter.id);
       snapshot.panel.slot_render_payloads[i].data.parameter =
           (ParameterRenderPayload){
               .parameter = parameter,
-              .label = slot->data.parameter.label,
+              .label = panel_slot.data.parameter.label,
           };
     }
   }

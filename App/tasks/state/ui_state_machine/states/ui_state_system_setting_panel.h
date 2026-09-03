@@ -3,6 +3,15 @@
 
 #include "ui_state.h"
 
-extern UiState UI_STATE_SYSTEM_SETTING_PANEL;
+namespace UiStateMachine {
+
+template <typename... Pages>
+class SystemSettingState : public FixedPageState<sizeof...(Pages)> {
+ public:
+  SystemSettingState(Pages... pages)
+      : FixedPageState<sizeof...(Pages)>(Id::SYSTEM_SETTING, pages...) {}
+};
+
+}  // namespace UiStateMachine
 
 #endif

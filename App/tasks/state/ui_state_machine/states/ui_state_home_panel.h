@@ -3,6 +3,13 @@
 
 #include "ui_state.h"
 
-extern UiState UI_STATE_HOME_PANEL;
+namespace UiStateMachine {
 
+template <typename... Pages>
+class HomeState : public FixedPageState<sizeof...(Pages)> {
+ public:
+  HomeState(Pages... pages) : FixedPageState<sizeof...(Pages)>(Id::HOME, pages...) {}
+};
+
+}  // namespace UiStateMachine
 #endif
