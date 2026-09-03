@@ -1,40 +1,45 @@
 #ifndef TRACK_STATE_H
 #define TRACK_STATE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <cstdint>
 
-#include <stddef.h>
-
+#include "enum_map.hpp"
 #include "id.h"
-#include "state_id.h"
 #include "track_state_id.hpp"
 #include "track_state_machine_context.h"
 
-// typedef StateId TrackStateId;
+namespace TrackStateMachine {
 
-typedef enum {
-  TRACK_ACTION_ID_NONE = ID_NONE,
-  TRACK_ACTION_ID_NULL = ID_NULL,
-  TRACK_ACTION_ID_ENTER_RECORD_PLAY,
-  TRACK_ACTION_ID_ENTER_STOP,
-  TRACK_ACTION_ID_COUNT,
-} TrackActionId;
-
-typedef void (*TrackStateOnEnterFunction)(TrackStateMachineContext*);
-
-struct TrackState {
-  TrackStateId id;
-  const TrackStateId* transition_table;
-  TrackStateOnEnterFunction OnEnter;
+enum class ActionId : std::uint8_t {
+  NONE = ID_NONE,
+  ENTER_RECORD_PLAY,
+  ENTER_STOP,
+  COUNT,
 };
 
-TrackStateId TrackState_GetTrackStateId(TrackState* track_state,
-                                        TrackActionId action_id);
+using TransitionEntry = EnumEntry<ActionId, Id>;
+using TransitionEntryArray =
+    std::array<TransitionEntry, static_cast<size_t>(ActionId::COUNT)>;
 
-#ifdef __cplusplus
-}
-#endif
+class State {
+ protected:
+  template <typename... TransitionEntries>
+  explicit State(Id id, TransitionEntries... transition_entries)
+      : id(id), transition_table(transition_entries...) {};
+
+ public:
+  const Id GetTrackStateId(ActionId action_id) const {
+    return this->transition_table[action_id];
+  }
+
+  virtual void OnEnter(Context* contex) {}
+  const Id GetId() { return this->id; }
+
+ private:
+  const Id id;
+  const EnumMap<ActionId, Id> transition_table;
+};
+
+}  // namespace TrackStateMachine
 
 #endif

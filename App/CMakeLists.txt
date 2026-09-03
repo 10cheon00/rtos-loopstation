@@ -73,13 +73,8 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_id_state_config_table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_state_pointer_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_idle.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_recording.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_stopped.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_playing.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state_overdubbing.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/ui_state_machine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state.cpp

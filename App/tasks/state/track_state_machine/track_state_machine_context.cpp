@@ -1,3 +1,7 @@
 #include "track_state_machine_context.h"
 
-void TrackStateMachineContext_Init(TrackStateMachineContext* context) {}
+namespace TrackStateMachine {
+
+void InitContext(Context* context) {}
+
+}  // namespace TrackStateMachine

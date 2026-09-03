@@ -29,33 +29,33 @@ struct TrackLedColorSet {
   Mcp23017::LedState blue;
 };
 
-static constexpr EnumMap<TrackStateId, TrackLedColorSet>
+static constexpr EnumMap<TrackStateMachine::Id, TrackLedColorSet>
     track_state_led_color_map{
-        EnumEntry{TrackStateId::IDLE,
+        EnumEntry{TrackStateMachine::Id::IDLE,
                   (TrackLedColorSet){
                       Mcp23017::LedState::OFF,
                       Mcp23017::LedState::OFF,
                       Mcp23017::LedState::OFF,
                   }},
-        EnumEntry{TrackStateId::RECORDING,
+        EnumEntry{TrackStateMachine::Id::RECORDING,
                   (TrackLedColorSet){
                       Mcp23017::LedState::ON,
                       Mcp23017::LedState::OFF,
                       Mcp23017::LedState::OFF,
                   }},
-        EnumEntry{TrackStateId::STOPPED,
+        EnumEntry{TrackStateMachine::Id::STOPPED,
                   (TrackLedColorSet){
                       Mcp23017::LedState::OFF,
                       Mcp23017::LedState::OFF,
                       Mcp23017::LedState::ON,
                   }},
-        EnumEntry{TrackStateId::PLAYING,
+        EnumEntry{TrackStateMachine::Id::PLAYING,
                   (TrackLedColorSet){
                       Mcp23017::LedState::OFF,
                       Mcp23017::LedState::ON,
                       Mcp23017::LedState::OFF,
                   }},
-        EnumEntry{TrackStateId::OVERDUBBING,
+        EnumEntry{TrackStateMachine::Id::OVERDUBBING,
                   (TrackLedColorSet){
                       Mcp23017::LedState::ON,
                       Mcp23017::LedState::ON,
@@ -67,7 +67,7 @@ static void Run(void);
 static TaskStatus HandlePanelRenderPayload(PanelRenderPayload* payload);
 static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload);
 static TaskStatus RenderFxLed(Parameter* parameter, Mcp23017::GpioId gpio_id);
-static TaskStatus RenderTrackLed(TrackStateId state_id, uint8_t track_index);
+static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id, uint8_t track_index);
 
 static int IsValidInitParams(const DisplayInitParams* params) {
   return (params != 0) &&
@@ -169,8 +169,8 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload) {
     return TASK_STATUS_ERROR;
   }
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    TrackStateId id;
-    if (!ConvertEnumRawToEnum<TrackStateId>(payload->track_state_enum_raws[i],
+    TrackStateMachine::Id id;
+    if (!ConvertEnumRawToEnum<TrackStateMachine::Id>(payload->track_state_enum_raws[i],
                                                &id)) {
       return TASK_STATUS_ERROR;
     }
@@ -200,7 +200,7 @@ static TaskStatus RenderFxLed(Parameter* parameter, Mcp23017::GpioId gpio_id) {
   return TASK_STATUS_OK;
 }
 
-static TaskStatus RenderTrackLed(TrackStateId state_id, uint8_t track_index) {
+static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id, uint8_t track_index) {
   const Mcp23017::PinConfig& red_entry =
       Mcp23017::GetTrackLedEntry(track_index, Mcp23017::TrackLedColor::RED);
   const Mcp23017::PinConfig& green_entry =

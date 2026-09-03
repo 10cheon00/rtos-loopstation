@@ -4,15 +4,19 @@
 #include "track_state.h"
 #include "track_state_machine_context.h"
 
-typedef struct {
-  TrackState* current_state;
-  TrackStateMachineContext* context;
-} TrackStateMachine;
+namespace TrackStateMachine {
 
-void TrackStateMachine_Init(TrackStateMachine* state_machine,
-                            TrackStateMachineContext* context,
-                            TrackStateId init_state_id);
-void TrackStateMachine_TryTransition(TrackStateMachine* state_machine,
-                                     TrackActionId action_id);
+struct StateMachine {
+  State* current_state;
+  Context* context;
+};
+
+void Init(StateMachine* state_machine,
+                            Context* context,
+                            Id init_state_id);
+void TryTransition(StateMachine* state_machine,
+                                     ActionId action_id);
+
+}  // namespace TrackStateMachine
 
 #endif

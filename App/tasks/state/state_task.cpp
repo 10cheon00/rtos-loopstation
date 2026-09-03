@@ -15,7 +15,6 @@
 #include "system_state_machine.hpp"
 #include "track_config.h"
 #include "track_state_machine.h"
-#include "track_state_machine_context.h"
 #include "ui_state_config_table.h"
 #include "ui_state_machine.h"
 #include "ui_state_navigation_tree.h"
@@ -32,8 +31,8 @@ static SystemStateMachine::Context system_state_machine_context;
 static UiStateMachine ui_state_machine;
 static UiStateMachineContext ui_state_machine_context;
 
-static TrackStateMachine track_state_machine[TRACK_COUNT];
-static TrackStateMachineContext track_state_machine_context[TRACK_COUNT];
+static TrackStateMachine::StateMachine track_state_machine[TRACK_COUNT];
+static TrackStateMachine::Context track_state_machine_context[TRACK_COUNT];
 
 static void InitStateMachines();
 static TaskStatus TryUpdateParameter(StateEvent* state_event);
@@ -46,8 +45,8 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
 static TaskStatus UpdateDisplaySnapshotMailbox(
     UiStateMachine* ui_state_machine);
 static TaskStatus TryTransitionTrackStateMachine(
-    TrackStateMachine* track_state_machine, StateEvent* state_event,
-    uint8_t track_index);
+    TrackStateMachine::StateMachine* track_state_machine,
+    StateEvent* state_event, uint8_t track_index);
 
 static int IsValidInitParams(const StateInitParams* params) {
   return (params != 0) && (params->state_event_queue != 0) &&
@@ -68,7 +67,7 @@ void StateTask_Init(void* argument) {
 
   UiStateMachineContext_Init(&ui_state_machine_context);
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    TrackStateMachineContext_Init(&track_state_machine_context[i]);
+    InitContext(&track_state_machine_context[i]);
   }
 
   StateTask_Run();
@@ -116,8 +115,9 @@ static void InitStateMachines() {
   UiStateMachine_Init(&ui_state_machine, &ui_state_machine_context,
                       UiStateConfigTable_Get(UiStateId::HOME));
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    TrackStateMachine_Init(&track_state_machine[i],
-                           &track_state_machine_context[i], TrackStateId::IDLE);
+    TrackStateMachine::Init(&track_state_machine[i],
+                            &track_state_machine_context[i],
+                            TrackStateMachine::Id::IDLE);
   }
   UpdateDisplaySnapshotMailbox(&ui_state_machine);
 }
@@ -325,18 +325,18 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
   };
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     snapshot.led.track_state_enum_raws[i] =
-        ConvertEnumToEnumRaw(track_state_machine->current_state->id);
+        ConvertEnumToEnumRaw(track_state_machine->current_state->GetId());
   }
 
   xQueueOverwrite((QueueHandle_t)display_snapshot_mailbox, &snapshot);
   return TASK_STATUS_OK;
 }
 
-TaskStatus TryTransitionTrackStateMachine(TrackStateMachine* state_machine,
-                                          StateEvent* state_event,
-                                          uint8_t track_index) {
+TaskStatus TryTransitionTrackStateMachine(
+    TrackStateMachine::StateMachine* state_machine, StateEvent* state_event,
+    uint8_t track_index) {
   ButtonPayload* button_payload;
-  TrackActionId action_id;
+  TrackStateMachine::ActionId action_id;
 
   // 1. 버튼 입력일때에만 트랙 상태를 바꿈
   if (state_event->type != STATE_EVENT_BUTTON) {
@@ -359,10 +359,10 @@ TaskStatus TryTransitionTrackStateMachine(TrackStateMachine* state_machine,
 
   // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
   action_id = ButtonToTrackActionMap::Get(id);
-  if (action_id == TRACK_ACTION_ID_NONE) {
+  if (action_id == TrackStateMachine::ActionId::NONE) {
     return TASK_STATUS_ERROR;
   }
-  TrackStateMachine_TryTransition(state_machine, action_id);
+  TrackStateMachine::TryTransition(state_machine, action_id);
 
   return TASK_STATUS_OK;
 }

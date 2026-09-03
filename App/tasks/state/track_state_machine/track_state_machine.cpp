@@ -1,23 +1,21 @@
 #include "track_state_machine.h"
 
-#include "track_id_state_config_table.h"
+#include "track_state_pointer_map.hpp"
 
-void TrackStateMachine_Init(TrackStateMachine* state_machine,
-                            TrackStateMachineContext* context,
-                            TrackStateId init_state_id) {
-  TrackState* next_state;
+namespace TrackStateMachine {
 
+void Init(StateMachine* state_machine, Context* context, Id init_state_id) {
   state_machine->context = context;
-  next_state = TrackIdStateConfigMap_Get(init_state_id);
+
+  TrackStatePointerMap::TrackStatePointer next_state =
+      TrackStatePointerMap::Get(init_state_id);
   state_machine->current_state = next_state;
   state_machine->current_state->OnEnter(state_machine->context);
 }
 
-void TrackStateMachine_TryTransition(TrackStateMachine* state_machine,
-                                     TrackActionId action_id) {
-  TrackStateId next_state_id =
-      TrackState_GetTrackStateId(state_machine->current_state, action_id);
-  TrackState* next_state = TrackIdStateConfigMap_Get(next_state_id);
+void TryTransition(StateMachine* state_machine, ActionId action_id) {
+  Id next_state_id = state_machine->current_state->GetTrackStateId(action_id);
+  State* next_state = TrackStatePointerMap::Get(next_state_id);
   if (next_state == NULL) {
     // TODO:
     // 전이가 안된 경우에 대해 예외처리 하기
@@ -26,3 +24,5 @@ void TrackStateMachine_TryTransition(TrackStateMachine* state_machine,
   state_machine->current_state = next_state;
   state_machine->current_state->OnEnter(state_machine->context);
 }
+
+}  // namespace TrackStateMachine

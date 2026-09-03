@@ -1,9 +1,13 @@
 #ifndef TRACK_STATE_ID_HPP
 #define TRACK_STATE_ID_HPP
 
+#include <cstdint>
+
 #include "id.h"
 
-enum class TrackStateId {
+namespace TrackStateMachine {
+
+enum class Id : std::uint8_t {
   NONE = ID_NONE,
   IDLE,
   RECORDING,
@@ -13,5 +17,6 @@ enum class TrackStateId {
   COUNT,
 };
 
+}
 
 #endif

@@ -8,7 +8,7 @@
 
 namespace ButtonToTrackActionMap {
 
-TrackActionId Get(ButtonId id);
+TrackStateMachine::ActionId Get(ButtonId id);
 
 }
 
