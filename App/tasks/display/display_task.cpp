@@ -18,6 +18,8 @@
 #define DISPLAY_RENDER_DELAY_MS (1000UL / DISPLAY_RENDER_FREQEUNCY_HZ)
 #define DISPLAY_RENDER_DELAY_TICKS (pdMS_TO_TICKS(DISPLAY_RENDER_DELAY_MS))
 
+// TODO:
+// C++ u8g2 라이브러리를 사용하도록 수정하기
 static u8g2_t u8g2;
 static osMessageQueueId_t display_snapshot_mailbox;
 
@@ -127,7 +129,7 @@ static TaskStatus HandlePanelRenderPayload(
   u8g2_ClearBuffer(&u8g2);
 
   UiStateId ui_state_id;
-  if (!ConvertIdRawToId<IdRaw, UiStateId>(panel_render_payload->ui_state_id_raw,
+  if (!ConvertIdRawToId<UiStateId>(panel_render_payload->ui_state_id_raw,
                                           &ui_state_id)) {
     return TASK_STATUS_ERROR;
   }
@@ -168,7 +170,7 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload) {
   }
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     TrackStateId id;
-    if (!ConvertIdRawToId<IdRaw, TrackStateId>(payload->track_state_id_raws[i],
+    if (!ConvertIdRawToId<TrackStateId>(payload->track_state_id_raws[i],
                                                &id)) {
       return TASK_STATUS_ERROR;
     }

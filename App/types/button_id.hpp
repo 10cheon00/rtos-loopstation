@@ -1,0 +1,38 @@
+#ifndef BUTTON_ID_HPP
+#define BUTTON_ID_HPP
+
+#include <cstdint>
+
+#include "id.h"
+
+enum class ButtonId : std::uint8_t {
+  NONE = ID_NONE,
+  LEFT,
+  RIGHT,
+  ENTER,
+  EXIT,
+  ENCODER_A_PUSH,
+  ENCODER_B_PUSH,
+  ENCODER_C_PUSH,
+  ENCODER_D_PUSH,
+  IFX_A_TOGGLE,
+  TFX_A_TOGGLE,
+  TRACK_1_EDIT,
+  TRACK_1_PLAY_RECORD,
+  TRACK_1_STOP,
+  TRACK_2_EDIT,
+  TRACK_2_PLAY_RECORD,
+  TRACK_2_STOP,
+  TRACK_3_EDIT,
+  TRACK_3_PLAY_RECORD,
+  TRACK_3_STOP,
+  TRACK_4_EDIT,
+  TRACK_4_PLAY_RECORD,
+  TRACK_4_STOP,
+  TRACK_5_EDIT,
+  TRACK_5_PLAY_RECORD,
+  TRACK_5_STOP,
+  COUNT,
+};
+
+#endif

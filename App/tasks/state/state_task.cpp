@@ -2,6 +2,7 @@
 
 #include "FreeRTOS.h"
 #include "app.h"
+#include "button_state.hpp"
 #include "button_track_action_config_table.h"
 #include "cmsis_os2.h"
 #include "display_messages.h"
@@ -141,17 +142,26 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
   Parameter* parameter;
   PanelSlot* panel_slot;
 
-  if (button_payload->state != BUTTON_STATE_PRESSED) {
+  ButtonState button_state;
+  if (!ConvertIdRawToId<ButtonState>(button_payload->state_raw,
+                                     &button_state)) {
+    return TASK_STATUS_ERROR;
+  }
+  if (button_state != ButtonState::PRESSED) {
     return TASK_STATUS_ERROR;
   }
 
-  if (button_payload->id != BUTTON_ID_IFX_A_TOGGLE &&
-      button_payload->id != BUTTON_ID_TFX_A_TOGGLE &&
-      button_payload->id != BUTTON_ID_ENCODER_A_PUSH) {
+  ButtonId id;
+  if (!ConvertIdRawToId<ButtonId>(button_payload->id_raw, &id)) {
     return TASK_STATUS_ERROR;
   }
 
-  if (button_payload->id == BUTTON_ID_ENCODER_A_PUSH) {
+  if (id != ButtonId::IFX_A_TOGGLE && id != ButtonId::TFX_A_TOGGLE &&
+      id != ButtonId::ENCODER_A_PUSH) {
+    return TASK_STATUS_ERROR;
+  }
+
+  if (id == ButtonId::ENCODER_A_PUSH) {
     // TODO:
     // Encoder_A~D 모두 처리 가능하게 해야함
     panel_slot = UiState_GetPanelSlot(ui_state_machine.current_state,
@@ -165,13 +175,13 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
       Parameter_ToggleValue(parameter);
       return TASK_STATUS_OK;
     }
-  } else if (button_payload->id == BUTTON_ID_IFX_A_TOGGLE) {
+  } else if (id == ButtonId::IFX_A_TOGGLE) {
     parameter = LoopStationParameterStore_Get(PARAMETER_ID_IFX_A_STATE);
     if (parameter != NULL) {
       Parameter_ToggleValue(parameter);
       return TASK_STATUS_OK;
     }
-  } else if (button_payload->id == BUTTON_ID_TFX_A_TOGGLE) {
+  } else if (id == ButtonId::TFX_A_TOGGLE) {
     parameter = LoopStationParameterStore_Get(PARAMETER_ID_TFX_A_STATE);
     if (parameter != NULL) {
       Parameter_ToggleValue(parameter);
@@ -227,7 +237,6 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
   // 하도록 요청하면 된다. 패널 전이도 사실상 전역 이동, 상위 패널로 이동밖에
   // 없으니까 기존에 transition_map 대신 상태 머신에서 전역으로 판단하는게
   // 나을것 같다.
-  ButtonId button_id;
   UiStateId next_ui_state_id = UiStateId::NONE;
   PanelSlot* panel_slot;
 
@@ -235,31 +244,40 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
   if (state_event->type != STATE_EVENT_BUTTON) {
     return TASK_STATUS_ERROR;
   }
-  button_id = state_event->payload.button.id;
+  ButtonId button_id;
+  if (!ConvertIdRawToId<ButtonId>(state_event->payload.button.id_raw,
+                                  &button_id)) {
+    return TASK_STATUS_ERROR;
+  }
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
-  if (state_event->payload.button.state != BUTTON_STATE_PRESSED) {
+  ButtonState button_state;
+  if (!ConvertIdRawToId<ButtonState>(state_event->payload.button.state_raw,
+                                     &button_state)) {
+    return TASK_STATUS_ERROR;
+  }
+  if (button_state != ButtonState::PRESSED) {
     return TASK_STATUS_ERROR;
   }
 
-  if (button_id == BUTTON_ID_EXIT) {
+  if (button_id == ButtonId::EXIT) {
     // 3. exit 버튼이라면 상위 패널로 이동 가능한지 판단 후 전이
     next_ui_state_id = UiStateNavigationTree_GetParent(
         ui_state_machine->current_state->ui_state_id);
-  } else if (button_id == BUTTON_ID_LEFT) {
+  } else if (button_id == ButtonId::LEFT) {
     // 4. 좌우 버튼인 경우 페이지 증가
     UiState_IncreasePageIndex(ui_state_machine->current_state);
-  } else if (button_id == BUTTON_ID_RIGHT) {
+  } else if (button_id == ButtonId::RIGHT) {
     UiState_DecreasePageIndex(ui_state_machine->current_state);
-  } else if (button_id == BUTTON_ID_ENCODER_A_PUSH) {
+  } else if (button_id == ButtonId::ENCODER_A_PUSH) {
     // 5. 엔코더 푸시 버튼이라면 현재 UiState가 보여주는 슬롯에 따라 전이
     panel_slot = UiState_GetPanelSlot(ui_state_machine->current_state,
                                       UI_STATE_SLOT_INDEX_A);
     if (panel_slot->type == PANEL_SLOT_TYPE_MENU) {
       next_ui_state_id = panel_slot->data.menu.state_id;
     }
-  } else if (button_id == BUTTON_ID_ENCODER_B_PUSH) {
-  } else if (button_id == BUTTON_ID_ENCODER_C_PUSH) {
-  } else if (button_id == BUTTON_ID_ENCODER_D_PUSH) {
+  } else if (button_id == ButtonId::ENCODER_B_PUSH) {
+  } else if (button_id == ButtonId::ENCODER_C_PUSH) {
+  } else if (button_id == ButtonId::ENCODER_D_PUSH) {
   } else {
     // 6. 전역 버튼이라면 전역 패널 전이 테이블에 따라 전이
     next_ui_state_id = GlobalUiTransitionConfigTable_Get(button_id);
@@ -328,14 +346,21 @@ TaskStatus TryTransitionTrackStateMachine(TrackStateMachine* state_machine,
     return TASK_STATUS_ERROR;
   }
   button_payload = &state_event->payload.button;
-
+  ButtonId id;
+  if (!ConvertIdRawToId<ButtonId>(button_payload->id_raw, &id)) {
+    return TASK_STATUS_ERROR;
+  }
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
-  if (button_payload->state != BUTTON_STATE_PRESSED) {
+  ButtonState state;
+  if (!ConvertIdRawToId<ButtonState>(button_payload->state_raw, &state)) {
+    return TASK_STATUS_ERROR;
+  }
+  if (state != ButtonState::PRESSED) {
     return TASK_STATUS_ERROR;
   }
 
   // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
-  action_id = ButtonTrackActionConfigMap_Get(button_payload->id);
+  action_id = ButtonTrackActionConfigMap_Get(id);
   if (action_id == TRACK_ACTION_ID_NONE) {
     return TASK_STATUS_ERROR;
   }

@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#include "button_id.h"
 #include "encoder_id.h"
 
 #define STATE_EVENT_QUEUE_TIMEOUT_500MS (500UL)
@@ -16,8 +15,8 @@ typedef enum {
 
 typedef struct {
   uint32_t timestamp_ticks;
-  ButtonId id;
-  ButtonState state;
+  IdRaw id_raw;
+  IdRaw state_raw;
 } ButtonPayload;
 
 typedef struct {

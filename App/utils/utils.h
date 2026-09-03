@@ -27,7 +27,7 @@ template <typename Id>
 inline IdRaw ConvertIdToIdRaw(Id id) {
   return static_cast<IdRaw>(id);
 }
-template <typename IdRaw, typename Id>
+template <typename Id>
 bool ConvertIdRawToId(IdRaw raw, Id* id) {
   if (raw >= static_cast<IdRaw>(Id::COUNT)) {
     return false;

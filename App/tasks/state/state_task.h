@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "button_id.h"
+#include "button_id.hpp"
 
 void StateTask_Init(void* argument);
 void StateTask_Run(void);

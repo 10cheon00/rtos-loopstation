@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "button_id.h"
+#include "button_id.hpp"
 #include "enum_map.hpp"
 #include "mcp23017_gpio_id.hpp"
 #include "mcp23017_types.hpp"

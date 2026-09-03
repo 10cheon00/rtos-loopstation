@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "button_id.h"
+#include "button_id.hpp"
 #include "ui_state_id.h"
 
 UiStateId GlobalUiTransitionConfigTable_Get(ButtonId ui_action_id);

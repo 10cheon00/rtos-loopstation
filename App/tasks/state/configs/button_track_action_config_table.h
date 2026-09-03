@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "button_id.h"
+#include "button_id.hpp"
 #include "track_state.h"
 
 TrackActionId ButtonTrackActionConfigMap_Get(ButtonId id);

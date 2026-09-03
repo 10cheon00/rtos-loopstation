@@ -1,6 +1,8 @@
 #include "input_task.h"
 
+#include "button_state.hpp"
 #include "cmsis_os2.h"
+#include "encoder_id.h"
 #include "input_initparams.h"
 #include "input_messages.h"
 #include "mcp23017.hpp"
@@ -8,6 +10,10 @@
 #include "mcp23017_gpio_to_button_map.hpp"
 #include "state_messages.h"
 #include "utils.h"
+
+typedef struct {
+  ButtonState encoder_button_state[ENCODER_ID_COUNT];
+} InputTaskContext;
 
 static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;
@@ -107,8 +113,8 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent* intEvent) {
         return TASK_STATUS_ERROR;
       }
       button_state = (snapshot.port_a.captured_pin_states & 0x1)
-                         ? BUTTON_STATE_RELEASED
-                         : BUTTON_STATE_PRESSED;
+                         ? ButtonState::RELEASED
+                         : ButtonState::PRESSED;
       SendButtonPayload(address, gpio_id, button_state, timestamp_ticks);
     }
     snapshot.port_a.pin_mask >>= 1;
@@ -123,8 +129,8 @@ static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent* intEvent) {
         return TASK_STATUS_ERROR;
       }
       button_state = (snapshot.port_b.captured_pin_states & 0x1)
-                         ? BUTTON_STATE_RELEASED
-                         : BUTTON_STATE_PRESSED;
+                         ? ButtonState::RELEASED
+                         : ButtonState::PRESSED;
       SendButtonPayload(address, gpio_id, button_state, timestamp_ticks);
     }
     snapshot.port_b.pin_mask >>= 1;
@@ -141,8 +147,8 @@ static TaskStatus SendButtonPayload(Mcp23017::Address address,
   ButtonId button_id = Mcp23017GpioToButtonMap::Get(gpio_id);
   ButtonPayload payload = {
       .timestamp_ticks = timestamp_ticks,
-      .id = button_id,
-      .state = button_state,
+      .id_raw = ConvertIdToIdRaw(button_id),
+      .state_raw = ConvertIdToIdRaw(button_state),
   };
   StateEvent state_event = {.type = STATE_EVENT_BUTTON,
                             .payload = {
@@ -151,16 +157,16 @@ static TaskStatus SendButtonPayload(Mcp23017::Address address,
   osMessageQueuePut(state_event_queue, &state_event, 0,
                     STATE_EVENT_QUEUE_TIMEOUT_500MS);
 
-  if (button_id == BUTTON_ID_ENCODER_A_PUSH) {
+  if (button_id == ButtonId::ENCODER_A_PUSH) {
     input_task_context.encoder_button_state[ENCODER_ID_A] = button_state;
   }
-  if (button_id == BUTTON_ID_ENCODER_B_PUSH) {
+  if (button_id == ButtonId::ENCODER_B_PUSH) {
     input_task_context.encoder_button_state[ENCODER_ID_B] = button_state;
   }
-  if (button_id == BUTTON_ID_ENCODER_C_PUSH) {
+  if (button_id == ButtonId::ENCODER_C_PUSH) {
     input_task_context.encoder_button_state[ENCODER_ID_C] = button_state;
   }
-  if (button_id == BUTTON_ID_ENCODER_D_PUSH) {
+  if (button_id == ButtonId::ENCODER_D_PUSH) {
     input_task_context.encoder_button_state[ENCODER_ID_D] = button_state;
   }
   return TASK_STATUS_OK;
@@ -174,7 +180,7 @@ static TaskStatus HandleEncoderRotationEvent(
     delta = -1;
   }
   if (input_task_context.encoder_button_state[encoder_id] ==
-      BUTTON_STATE_PRESSED) {
+      ButtonState::PRESSED) {
     delta *= 10;
   }
   StateEvent state_event = {
