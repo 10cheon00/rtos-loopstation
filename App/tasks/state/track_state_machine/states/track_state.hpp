@@ -1,12 +1,12 @@
-#ifndef TRACK_STATE_H
-#define TRACK_STATE_H
+#ifndef TRACK_STATE_HPP
+#define TRACK_STATE_HPP
 
 #include <cstdint>
 
 #include "enum_map.hpp"
 #include "id.h"
 #include "track_state_id.hpp"
-#include "track_state_machine_context.h"
+#include "track_state_machine_context.hpp"
 
 namespace TrackStateMachine {
 

@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 #include "button_id.hpp"
-#include "track_state.h"
+#include "track_state.hpp"
 
 namespace ButtonToTrackActionMap {
 

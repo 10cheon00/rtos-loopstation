@@ -1,7 +1,7 @@
 #ifndef TRACK_STATE_POINTER_MAP_HPP
 #define TRACK_STATE_POINTER_MAP_HPP
 
-#include "track_state.h"
+#include "track_state.hpp"
 
 namespace TrackStatePointerMap {
 

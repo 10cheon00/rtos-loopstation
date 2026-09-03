@@ -1,8 +1,8 @@
-#ifndef TRACK_STATE_MACHINE_H
-#define TRACK_STATE_MACHINE_H
+#ifndef TRACK_STATE_MACHINE_HPP
+#define TRACK_STATE_MACHINE_HPP
 
-#include "track_state.h"
-#include "track_state_machine_context.h"
+#include "track_state.hpp"
+#include "track_state_machine_context.hpp"
 
 namespace TrackStateMachine {
 

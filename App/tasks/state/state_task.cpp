@@ -14,7 +14,7 @@
 #include "state_messages.h"
 #include "system_state_machine.hpp"
 #include "track_config.h"
-#include "track_state_machine.h"
+#include "track_state_machine.hpp"
 #include "ui_state_config_table.h"
 #include "ui_state_machine.h"
 #include "ui_state_navigation_tree.h"
