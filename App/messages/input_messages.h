@@ -34,7 +34,7 @@ typedef struct {
 typedef struct {
   TickType_t timestamp_ticks;  // for debugging only
   uint16_t adc_value;
-  EnumRaw knob_enum_raw;
+  EnumRaw knob_id_raw;
 } AdcConversionEvent;
 
 typedef struct {

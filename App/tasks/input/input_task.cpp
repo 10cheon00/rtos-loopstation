@@ -147,8 +147,8 @@ static TaskStatus SendButtonPayload(Mcp23017::Address address,
   ButtonId button_id = Mcp23017GpioToButtonMap::Get(gpio_id);
   ButtonPayload payload = {
       .timestamp_ticks = timestamp_ticks,
-      .enum_raw = ConvertEnumToEnumRaw(button_id),
-      .state_raw = ConvertEnumToEnumRaw(button_state),
+      .button_id_raw = ConvertEnumToEnumRaw(button_id),
+      .button_state_raw = ConvertEnumToEnumRaw(button_state),
   };
   StateEvent state_event = {.type = STATE_EVENT_BUTTON,
                             .payload = {
@@ -203,7 +203,7 @@ static TaskStatus HandleAdcConversionEvent(
       .type = STATE_EVENT_ADC_CONVERSION,
       .payload = {.adc_conversion = {
                       .timestamp_ticks = adc_conversion_event->timestamp_ticks,
-                      .knob_enum_raw = adc_conversion_event->knob_enum_raw,
+                      .knob_id_raw = adc_conversion_event->knob_id_raw,
                       .adc_value = adc_conversion_event->adc_value}}};
 
   osMessageQueuePut(state_event_queue, &state_event, 0,

@@ -143,7 +143,7 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
   PanelSlot* panel_slot;
 
   ButtonState button_state;
-  if (!ConvertEnumRawToEnum<ButtonState>(button_payload->state_raw,
+  if (!ConvertEnumRawToEnum<ButtonState>(button_payload->button_state_raw,
                                      &button_state)) {
     return TASK_STATUS_ERROR;
   }
@@ -152,7 +152,7 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
   }
 
   ButtonId id;
-  if (!ConvertEnumRawToEnum<ButtonId>(button_payload->enum_raw, &id)) {
+  if (!ConvertEnumRawToEnum<ButtonId>(button_payload->button_id_raw, &id)) {
     return TASK_STATUS_ERROR;
   }
 
@@ -245,13 +245,13 @@ static TaskStatus TryTransitionUiStateMachine(UiStateMachine* ui_state_machine,
     return TASK_STATUS_ERROR;
   }
   ButtonId button_id;
-  if (!ConvertEnumRawToEnum<ButtonId>(state_event->payload.button.enum_raw,
+  if (!ConvertEnumRawToEnum<ButtonId>(state_event->payload.button.button_id_raw,
                                   &button_id)) {
     return TASK_STATUS_ERROR;
   }
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
   ButtonState button_state;
-  if (!ConvertEnumRawToEnum<ButtonState>(state_event->payload.button.state_raw,
+  if (!ConvertEnumRawToEnum<ButtonState>(state_event->payload.button.button_state_raw,
                                      &button_state)) {
     return TASK_STATUS_ERROR;
   }
@@ -347,12 +347,12 @@ TaskStatus TryTransitionTrackStateMachine(TrackStateMachine* state_machine,
   }
   button_payload = &state_event->payload.button;
   ButtonId id;
-  if (!ConvertEnumRawToEnum<ButtonId>(button_payload->enum_raw, &id)) {
+  if (!ConvertEnumRawToEnum<ButtonId>(button_payload->button_id_raw, &id)) {
     return TASK_STATUS_ERROR;
   }
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
   ButtonState state;
-  if (!ConvertEnumRawToEnum<ButtonState>(button_payload->state_raw, &state)) {
+  if (!ConvertEnumRawToEnum<ButtonState>(button_payload->button_state_raw, &state)) {
     return TASK_STATUS_ERROR;
   }
   if (state != ButtonState::PRESSED) {
