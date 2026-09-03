@@ -275,8 +275,8 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
   PanelSlot* slot;
   DisplaySnapshot snapshot;
 
-  snapshot.panel.ui_state_id_raw = ConvertIdToIdRaw<UiStateId, IdRaw>(
-      ui_state_machine->current_state->ui_state_id);
+  snapshot.panel.ui_state_id_raw =
+      ConvertIdToIdRaw(ui_state_machine->current_state->ui_state_id);
   snapshot.panel.page_navigation_flag = PAGE_NAVIGATION_FLAG_NONE;
   if (UiState_CanDecreasePageIndex(ui_state_machine->current_state)) {
     snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_LEFT_ARROW;
@@ -310,8 +310,7 @@ TaskStatus UpdateDisplaySnapshotMailbox(UiStateMachine* ui_state_machine) {
   };
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     snapshot.led.track_state_id_raws[i] =
-        ConvertIdToIdRaw<TrackStateId, IdRaw>(
-            track_state_machine->current_state->id);
+        ConvertIdToIdRaw(track_state_machine->current_state->id);
   }
 
   xQueueOverwrite((QueueHandle_t)display_snapshot_mailbox, &snapshot);

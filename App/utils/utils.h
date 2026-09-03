@@ -5,6 +5,8 @@
 
 #include <cstdbool>
 
+#include "id_raw.h"
+
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))
 
 #define CONCATENATE2_IMPL(A, B) A##B
@@ -21,7 +23,7 @@ double tangent(int16_t degree);
 typedef uint32_t Hash_t;
 Hash_t djb2(const char* string);
 
-template <typename Id, typename IdRaw>
+template <typename Id>
 inline IdRaw ConvertIdToIdRaw(Id id) {
   return static_cast<IdRaw>(id);
 }
