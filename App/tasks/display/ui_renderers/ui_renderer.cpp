@@ -2,8 +2,8 @@
 
 #include <array>
 
-#include "knob_widget.h"
-#include "toggle_switch_widget.h"
+#include "knob_widget.hpp"
+#include "toggle_switch_widget.hpp"
 #include "utils.h"
 
 namespace UiRenderer {
@@ -166,11 +166,11 @@ static Status DrawParameterWidget(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
   if (parameter->type == PARAMETER_TYPE_TOGGLE) {
     x = x + SLOT_WIDTH / 2 - TOGGLE_SWITCH_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - TOGGLE_SWITCH_WIDGET_HEIGHT / 2;
-    UiWidget_DrawToggleSwitchWidget(u8g2, x, y, parameter);
+    UiWidget::DrawToggleSwitchWidget(u8g2, x, y, parameter);
   } else if (parameter->type == PARAMETER_TYPE_SLIDER) {
     x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
-    UiWidget_DrawKnobWidget(u8g2, x, y, parameter);
+    UiWidget::DrawKnobWidget(u8g2, x, y, parameter);
   } else {
     // TODO:
     // RATE SLIDER형 파라미터 위젯 구현하기

@@ -1,8 +1,10 @@
-#include "knob_widget.h"
+#include "knob_widget.hpp"
 
 #include <stdlib.h>
 
 #include "utils.h"
+
+namespace UiWidget {
 
 #define RADIUS 7
 #define BOX_WIDTH 2
@@ -12,8 +14,7 @@ static int16_t ConvertParameterToDegree(Parameter* parameter);
 static void DrawKnobIndicator(u8g2_t* u8g2, int16_t degree, uint8_t x,
                               uint8_t y);
 
-void UiWidget_DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y,
-                             Parameter* parameter) {
+void DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y, Parameter* parameter) {
   /**
    * 바늘지시식으로 노브의 값을 보여주어야 함.
    * 1. 그러므로 일단 노브의 값을 수학적으로 표현하는 각도로 변환
@@ -43,7 +44,7 @@ void UiWidget_DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y,
   DrawKnobIndicator(u8g2, degree, cx, cy);
 }
 
-int16_t ConvertParameterToDegree(Parameter* parameter) {
+static int16_t ConvertParameterToDegree(Parameter* parameter) {
   int16_t degree;
 
   // 수학적 각도가 증가하는 방향과 파라미터가 증가하는 방향이 서로
@@ -92,3 +93,5 @@ static void DrawKnobIndicator(u8g2_t* u8g2, int16_t degree, uint8_t x,
   }
   u8g2_SetDrawColor(u8g2, 1);
 }
+
+}  // namespace UiWidget

@@ -1,4 +1,6 @@
-#include "toggle_switch_widget.h"
+#include "toggle_switch_widget.hpp"
+
+namespace UiWidget {
 
 #define TOGGLE_SWITCH_INDICATOR_WIDTH 4
 #define TOGGLE_SWITCH_INDICATOR_HEIGHT 4
@@ -6,8 +8,8 @@
 #define TOGGLE_SWITCH_RBOX_WIDTH (TOGGLE_SWITCH_INDICATOR_WIDTH + PADDING * 2)
 #define TOGGLE_SWITCH_RBOX_HEIGHT TOGGLE_SWITCH_WIDGET_HEIGHT
 
-void UiWidget_DrawToggleSwitchWidget(u8g2_t* u8g2, uint8_t x, uint8_t y,
-                                     Parameter* parameter) {
+void DrawToggleSwitchWidget(u8g2_t* u8g2, uint8_t x, uint8_t y,
+                            Parameter* parameter) {
   uint8_t indicator_cx, indicator_cy;
   if (parameter->type != PARAMETER_TYPE_TOGGLE) {
     return;
@@ -27,3 +29,5 @@ void UiWidget_DrawToggleSwitchWidget(u8g2_t* u8g2, uint8_t x, uint8_t y,
                 TOGGLE_SWITCH_INDICATOR_HEIGHT, 2);
   u8g2_SetDrawColor(u8g2, 1);
 }
+
+}  // namespace UiWidget
