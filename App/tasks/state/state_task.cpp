@@ -145,9 +145,14 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload) {
   if (id == ButtonId::ENCODER_A_PUSH) {
     // TODO:
     // Encoder_A~D 모두 처리 가능하게 해야함
-    const UiStateMachine::PanelSlot& panel_slot =
-        ui_state_machine.GetCurrentState()
-            ->GetCurrentPage()[UI_STATE_SLOT_INDEX_A];
+    std::optional<SlotPosition> maybe_position = ToSlotPosition(id);
+    if (!maybe_position.has_value()) {
+      return TASK_STATUS_ERROR;
+    }
+    SlotPosition slot_position = maybe_position.value();
+
+    const PanelSlot& panel_slot =
+        ui_state_machine.GetCurrentState()->GetCurrentPage()[slot_position];
     parameter_id = panel_slot.data.parameter.id;
     if (parameter_id == ParameterId::NONE) {
       return TASK_STATUS_ERROR;
@@ -177,11 +182,14 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationPayload& encoder_rotation_payload) {
   ParameterId parameter_id;
 
-  EncoderId encoder_id;
-
-  encoder_id = encoder_rotation_payload.encoder_id;
-  const UiStateMachine::PanelSlot& panel_slot =
-      ui_state_machine.GetCurrentState()->GetCurrentPage()[encoder_id];
+  std::optional<SlotPosition> maybe_slot_position =
+      ToSlotPosition(encoder_rotation_payload.encoder_id);
+  if (!maybe_slot_position.has_value()) {
+    return TASK_STATUS_ERROR;
+  }
+  const SlotPosition slot_position = maybe_slot_position.value();
+  const PanelSlot& panel_slot =
+      ui_state_machine.GetCurrentState()->GetCurrentPage()[slot_position];
   if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
     return TASK_STATUS_OK;
   }
@@ -248,9 +256,13 @@ static TaskStatus TryTransitionUiStateMachine(StateEvent& state_event) {
     ui_state_machine.GetCurrentState()->DecreasePageIndex();
   } else if (button_id == ButtonId::ENCODER_A_PUSH) {
     // 5. 엔코더 푸시 버튼이라면 현재 UiState가 보여주는 슬롯에 따라 전이
-    const UiStateMachine::PanelSlot& panel_slot =
-        ui_state_machine.GetCurrentState()
-            ->GetCurrentPage()[UI_STATE_SLOT_INDEX_A];
+    std::optional<SlotPosition> maybe_slot_position = ToSlotPosition(button_id);
+    if (!maybe_slot_position.has_value()) {
+      return TASK_STATUS_ERROR;
+    }
+    SlotPosition slot_position = maybe_slot_position.value();
+    const PanelSlot& panel_slot =
+        ui_state_machine.GetCurrentState()->GetCurrentPage()[slot_position];
     if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
       next_ui_state_id = panel_slot.data.menu.state_id;
     }
@@ -281,14 +293,16 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
     snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_RIGHT_ARROW;
   }
 
-  const UiStateMachine::Page& page =
-      ui_state_machine.GetCurrentState()->GetCurrentPage();
-  for (size_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
-    const UiStateMachine::PanelSlot& panel_slot = page[i];
-    snapshot.panel.slot_render_payloads[i].type = page[i].type;
+  const Page& page = ui_state_machine.GetCurrentState()->GetCurrentPage();
+  for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
+       i++) {
+    const SlotPosition slot_position = static_cast<SlotPosition>(i);
+    const PanelSlot& panel_slot = page[slot_position];
+    snapshot.panel.slot_render_payloads[i].type = page[slot_position].type;
     if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
       snapshot.panel.slot_render_payloads[i].data.menu = (MenuRenderPayload){
-          .menu_icon_encoding_raw16 = ConvertEnumToRaw(panel_slot.data.menu.icon_encoding),
+          .menu_icon_encoding_raw16 =
+              ConvertEnumToRaw(panel_slot.data.menu.icon_encoding),
           .label = panel_slot.data.menu.label,
       };
     } else if (panel_slot.type == PANEL_SLOT_TYPE_PARAMETER) {
@@ -306,15 +320,15 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
       .tfx_a_state = LoopstationStore::GetParameter(ParameterId::TFX_A_STATE),
   };
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    snapshot.led.track_state_enum_raws[i] = ConvertEnumToRaw(
-        track_state_machines[i].GetCurrentState()->GetId());
+    snapshot.led.track_state_enum_raws[i] =
+        ConvertEnumToRaw(track_state_machines[i].GetCurrentState()->GetId());
   }
 
   xQueueOverwrite((QueueHandle_t)display_snapshot_mailbox, &snapshot);
   return TASK_STATUS_OK;
 }
 
-TaskStatus TryTransitionTrackStateMachine(
+static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine& track_state_machine,
     StateEvent& state_event) {
   // 1. 버튼 입력일때에만 트랙 상태를 바꿈

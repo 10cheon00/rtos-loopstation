@@ -1,12 +1,15 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <stdint.h>
-
 #include <cstdbool>
+#include <cstdint>
+#include <optional>
 #include <type_traits>
 
+#include "button_id.hpp"
+#include "encoder_id.h"
 #include "enum_raw.h"
+#include "slot_position.hpp"
 
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))
 
@@ -36,6 +39,44 @@ bool ConvertEnumRawToEnum(std::underlying_type_t<Enum> raw, Enum* id) {
   }
   *id = static_cast<Enum>(raw);
   return true;
+}
+
+constexpr std::optional<SlotPosition> ToSlotPosition(ButtonId id) {
+  switch (id) {
+    case ButtonId::ENCODER_A_PUSH:
+      return SlotPosition::A;
+
+    case ButtonId::ENCODER_B_PUSH:
+      return SlotPosition::B;
+
+    case ButtonId::ENCODER_C_PUSH:
+      return SlotPosition::C;
+
+    case ButtonId::ENCODER_D_PUSH:
+      return SlotPosition::D;
+
+    default:
+      return std::nullopt;
+  }
+}
+
+constexpr std::optional<SlotPosition> ToSlotPosition(EncoderId id) {
+  switch (id) {
+    case ENCODER_ID_A:
+      return SlotPosition::A;
+
+    case ENCODER_ID_B:
+      return SlotPosition::B;
+
+    case ENCODER_ID_C:
+      return SlotPosition::C;
+
+    case ENCODER_ID_D:
+      return SlotPosition::D;
+
+    default:
+      return std::nullopt;
+  }
 }
 
 #endif

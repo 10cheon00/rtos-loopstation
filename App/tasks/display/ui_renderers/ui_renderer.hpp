@@ -6,6 +6,7 @@
 #include "display_messages.h"
 #include "gmg12864_lcd.hpp"
 #include "menu_icon_encoding.hpp"
+#include "page.hpp"
 #include "parameter.h"
 #include "parameter_id.hpp"
 #include "ui_state_id.hpp"
@@ -19,15 +20,14 @@ enum class Status : std::uint8_t {
   ERROR,
 };
 
-// typedef Status (*UiPanelRenderFunction)(u8g2_t*, ParameterRenderPayload*);
 using UiPanelRenderFunction = Status(u8g2_t*, ParameterRenderPayload*);
 
 Status DrawPanelLayout(u8g2_t* u8g2, const char* panel_name,
                        PageNavigationFlag flag);
 Status DrawParameter(u8g2_t* u8g2, Parameter* parameter, const char* label,
-                     UiStateSlotIndex index);
+                     SlotPosition slot_position);
 Status DrawMenu(u8g2_t* u8g2, MenuIconEncoding icon_id, const char* label,
-                UiStateSlotIndex index);
+                SlotPosition slot_position);
 }  // namespace UiRenderer
 
 #endif

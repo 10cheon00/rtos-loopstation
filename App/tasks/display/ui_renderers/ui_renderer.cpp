@@ -40,14 +40,12 @@ namespace UiRenderer {
  *  기준 좌표를 좌상단으로 넘기면 출력을 처리하는 함수 내에서 좌하단으로
  변환하여 출력한다.
  */
-static constexpr auto parameter_width_table = [] {
-  std::array<uint8_t, UI_STATE_SLOT_INDEX_COUNT> values{};
-  values[UI_STATE_SLOT_INDEX_A] = 0;
-  values[UI_STATE_SLOT_INDEX_B] = SLOT_WIDTH;
-  values[UI_STATE_SLOT_INDEX_C] = SLOT_WIDTH * 2;
-  values[UI_STATE_SLOT_INDEX_D] = SLOT_WIDTH * 3;
-  return values;
-}();
+static constexpr EnumMap<SlotPosition, std::uint8_t> parameter_width_map{
+    EnumEntry{SlotPosition::A, 0},
+    EnumEntry{SlotPosition::B, SLOT_WIDTH},
+    EnumEntry{SlotPosition::C, SLOT_WIDTH * 2},
+    EnumEntry{SlotPosition::D, SLOT_WIDTH * 3},
+};
 
 static void DrawArrowLeft4x5(u8g2_t* u8g2, uint8_t x, uint8_t y);
 static void DrawArrowRight4x5(u8g2_t* u8g2, uint8_t x, uint8_t y);
@@ -93,22 +91,18 @@ static void DrawArrowRight4x5(u8g2_t* u8g2, uint8_t x, uint8_t y) {
 }
 
 Status DrawParameter(u8g2_t* u8g2, Parameter* parameter, const char* label,
-                     UiStateSlotIndex index) {
+                     SlotPosition slot_position) {
   uint8_t x, y;
   Status status;
 
-  if (index >= UI_STATE_SLOT_INDEX_COUNT) {
-    return Status::ERROR;
-  }
-
-  x = parameter_width_table[index];
+  x = parameter_width_map[slot_position];
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING;
   status = DrawParameterValue(u8g2, parameter, x, y);
   if (status != Status::OK) {
     return status;
   }
 
-  x = parameter_width_table[index];
+  x = parameter_width_map[slot_position];
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT +
       PARAMETER_PADDING;
   status = DrawParameterWidget(u8g2, parameter, x, y);
@@ -116,7 +110,7 @@ Status DrawParameter(u8g2_t* u8g2, Parameter* parameter, const char* label,
     return status;
   }
 
-  x = parameter_width_table[index];
+  x = parameter_width_map[slot_position];
   y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
   status = DrawLabel(u8g2, label, x, y);
   return status;
@@ -198,18 +192,15 @@ static void ConvertNumberToString(int32_t number, char* string,
 }
 
 Status DrawMenu(u8g2_t* u8g2, MenuIconEncoding icon_encoding, const char* label,
-                UiStateSlotIndex index) {
+                SlotPosition slot_position) {
   uint8_t x, y;
-  if (index >= UI_STATE_SLOT_INDEX_COUNT) {
-    return Status::ERROR;
-  }
 
-  x = parameter_width_table[index];
+  x = parameter_width_map[slot_position];
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT +
       PARAMETER_PADDING + GRAPHIC_AREA_HEIGHT / 2 - ICON_HEIGHT / 2;
   DrawPanelMenuIcon(u8g2, icon_encoding, x, y);
 
-  x = parameter_width_table[index];
+  x = parameter_width_map[slot_position];
   y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
   DrawLabel(u8g2, label, x, y);
   return Status::OK;

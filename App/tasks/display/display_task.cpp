@@ -8,6 +8,7 @@
 #include "enum_map.hpp"
 #include "mcp23017.hpp"
 #include "mcp23017_gpio_map.hpp"
+#include "page.hpp"
 #include "track_state_id.hpp"
 #include "u8g2.h"
 #include "ui_renderer.hpp"
@@ -137,8 +138,9 @@ static TaskStatus HandlePanelRenderPayload(
   const char* panel_label = UiStateLabelMap::Get(ui_state_id);
   UiRenderer::DrawPanelLayout(&u8g2, panel_label,
                               panel_render_payload->page_navigation_flag);
-
-  for (uint8_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
+  for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
+       i++) {
+    const SlotPosition slot_position = static_cast<SlotPosition>(i);
     PanelSlotRenderPayload* payload =
         &panel_render_payload->slot_render_payloads[i];
     if (payload->type == PANEL_SLOT_TYPE_MENU) {
@@ -149,14 +151,13 @@ static TaskStatus HandlePanelRenderPayload(
         icon_encoding = MenuIconEncoding::MISSING;
       }
       UiRenderer::DrawMenu(&u8g2, icon_encoding, menu_render_payload->label,
-                           (UiStateSlotIndex)i);
+                           slot_position);
     } else if (panel_render_payload->slot_render_payloads[i].type ==
                PANEL_SLOT_TYPE_PARAMETER) {
       ParameterRenderPayload* parameter_render_payload =
           &payload->data.parameter;
       UiRenderer::DrawParameter(&u8g2, &parameter_render_payload->parameter,
-                                parameter_render_payload->label,
-                                (UiStateSlotIndex)i);
+                                parameter_render_payload->label, slot_position);
     }
   }
 

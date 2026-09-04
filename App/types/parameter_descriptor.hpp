@@ -3,9 +3,9 @@
 
 #include "parameter_id.hpp"
 
-typedef struct {
+struct ParameterDescriptor {
   ParameterId id;
   const char* label;
-} ParameterDescriptor;
+};
 
 #endif

@@ -5,23 +5,10 @@
 #include <cstdint>
 
 #include "enum_map.hpp"
-#include "menu_descriptor.hpp"
-#include "panel_slot_type.h"
-#include "parameter_descriptor.h"
+#include "page.hpp"
 #include "ui_state_id.hpp"
-#include "ui_state_slot_index.h"
 
 namespace UiStateMachine {
-
-struct PanelSlot {
-  PanelSlotType type;
-  union Data {
-    MenuDescriptor menu;
-    ParameterDescriptor parameter;
-  } data;
-};
-
-using Page = std::array<PanelSlot, static_cast<std::size_t>(4)>;
 
 class State {
  public:

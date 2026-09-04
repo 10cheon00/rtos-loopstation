@@ -8,7 +8,6 @@
 #include "panel_slot_type.h"
 #include "parameter.h"
 #include "track_config.h"
-#include "ui_state_slot_index.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
@@ -40,7 +39,7 @@ typedef struct {
 typedef struct {
   EnumRaw ui_state_enum_raw;
   PageNavigationFlag page_navigation_flag;
-  PanelSlotRenderPayload slot_render_payloads[UI_STATE_SLOT_INDEX_COUNT];
+  PanelSlotRenderPayload slot_render_payloads[4];
 } PanelRenderPayload;
 
 /**
