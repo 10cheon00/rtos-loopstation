@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "knob_id.h"
+#include "knob_id.hpp"
 #include "enum_map.hpp"
 #include "parameter_id.hpp"
 

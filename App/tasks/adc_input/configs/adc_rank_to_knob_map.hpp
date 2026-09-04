@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#include "knob_id.h"
+#include "knob_id.hpp"
 #include "stm32h7xx.h"
 
 namespace AdcRankToKnobMap {
