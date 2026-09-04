@@ -26,7 +26,7 @@ static SettingState setting_state{Page{
     (PanelSlot){.type = PANEL_SLOT_TYPE_MENU,
                 .data =
                     {
-                        .menu = (MenuDescriptor){.icon_id = MENU_ICON_ID_SYSTEM,
+                        .menu = (MenuDescriptor){.icon_encoding = MenuIconEncoding::SYSTEM,
                                                  .state_id = Id::SYSTEM_SETTING,
                                                  .label = "SYSTEM\nSETTING"},
                     }},

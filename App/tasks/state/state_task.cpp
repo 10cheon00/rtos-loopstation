@@ -272,7 +272,7 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
   DisplaySnapshot snapshot;
 
   snapshot.panel.ui_state_enum_raw =
-      ConvertEnumToEnumRaw(ui_state_machine.GetCurrentState()->GetId());
+      ConvertEnumToRaw(ui_state_machine.GetCurrentState()->GetId());
   snapshot.panel.page_navigation_flag = PAGE_NAVIGATION_FLAG_NONE;
   if (ui_state_machine.GetCurrentState()->CanDecreasePageIndex()) {
     snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_LEFT_ARROW;
@@ -288,7 +288,7 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
     snapshot.panel.slot_render_payloads[i].type = page[i].type;
     if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
       snapshot.panel.slot_render_payloads[i].data.menu = (MenuRenderPayload){
-          .icon_id = panel_slot.data.menu.icon_id,
+          .menu_icon_encoding_raw16 = ConvertEnumToRaw(panel_slot.data.menu.icon_encoding),
           .label = panel_slot.data.menu.label,
       };
     } else if (panel_slot.type == PANEL_SLOT_TYPE_PARAMETER) {
@@ -306,7 +306,7 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
       .tfx_a_state = LoopstationStore::GetParameter(ParameterId::TFX_A_STATE),
   };
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    snapshot.led.track_state_enum_raws[i] = ConvertEnumToEnumRaw(
+    snapshot.led.track_state_enum_raws[i] = ConvertEnumToRaw(
         track_state_machines[i].GetCurrentState()->GetId());
   }
 

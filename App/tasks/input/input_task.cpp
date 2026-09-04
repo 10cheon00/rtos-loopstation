@@ -147,8 +147,8 @@ static TaskStatus SendButtonPayload(Mcp23017::Address address,
   ButtonId button_id = Mcp23017GpioToButtonMap::Get(gpio_id);
   ButtonPayload payload = {
       .timestamp_ticks = timestamp_ticks,
-      .button_id_raw = ConvertEnumToEnumRaw(button_id),
-      .button_state_raw = ConvertEnumToEnumRaw(button_state),
+      .button_id_raw = ConvertEnumToRaw(button_id),
+      .button_state_raw = ConvertEnumToRaw(button_state),
   };
   StateEvent state_event = {.type = STATE_EVENT_BUTTON,
                             .payload = {

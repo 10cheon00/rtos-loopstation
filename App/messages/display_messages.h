@@ -5,7 +5,6 @@
 
 #include "FreeRTOS.h"
 #include "enum_raw.h"
-#include "menu_icon_id.h"
 #include "panel_slot_type.h"
 #include "parameter.h"
 #include "track_config.h"
@@ -26,7 +25,7 @@ typedef struct {
 } ParameterRenderPayload;
 
 typedef struct {
-  MenuIconId icon_id;
+  EnumRaw16 menu_icon_encoding_raw16;
   const char* label;
 } MenuRenderPayload;
 

@@ -130,8 +130,8 @@ static TaskStatus HandlePanelRenderPayload(
   u8g2_ClearBuffer(&u8g2);
 
   UiStateMachine::Id ui_state_id;
-  if (!ConvertEnumRawToEnum<UiStateMachine::Id>(
-          panel_render_payload->ui_state_enum_raw, &ui_state_id)) {
+  if (!ConvertEnumRawToEnum(panel_render_payload->ui_state_enum_raw,
+                            &ui_state_id)) {
     return TASK_STATUS_ERROR;
   }
   const char* panel_label = UiStateLabelMap::Get(ui_state_id);
@@ -143,8 +143,13 @@ static TaskStatus HandlePanelRenderPayload(
         &panel_render_payload->slot_render_payloads[i];
     if (payload->type == PANEL_SLOT_TYPE_MENU) {
       MenuRenderPayload* menu_render_payload = &payload->data.menu;
-      UiRenderer::DrawMenu(&u8g2, menu_render_payload->icon_id,
-                           menu_render_payload->label, (UiStateSlotIndex)i);
+      MenuIconEncoding icon_encoding;
+      if (!ConvertEnumRawToEnum(menu_render_payload->menu_icon_encoding_raw16,
+                                &icon_encoding)) {
+        icon_encoding = MenuIconEncoding::MISSING;
+      }
+      UiRenderer::DrawMenu(&u8g2, icon_encoding, menu_render_payload->label,
+                           (UiStateSlotIndex)i);
     } else if (panel_render_payload->slot_render_payloads[i].type ==
                PANEL_SLOT_TYPE_PARAMETER) {
       ParameterRenderPayload* parameter_render_payload =

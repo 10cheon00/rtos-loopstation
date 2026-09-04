@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include <cstdbool>
+#include <type_traits>
 
 #include "enum_raw.h"
 
@@ -24,12 +25,13 @@ typedef uint32_t Hash_t;
 Hash_t djb2(const char* string);
 
 template <typename Enum>
-inline EnumRaw ConvertEnumToEnumRaw(Enum id) {
-  return static_cast<EnumRaw>(id);
+inline std::underlying_type_t<Enum> ConvertEnumToRaw(Enum id) {
+  return static_cast<std::underlying_type_t<Enum>>(id);
 }
+
 template <typename Enum>
-bool ConvertEnumRawToEnum(EnumRaw raw, Enum* id) {
-  if (raw >= static_cast<EnumRaw>(Enum::COUNT)) {
+bool ConvertEnumRawToEnum(std::underlying_type_t<Enum> raw, Enum* id) {
+  if (id == nullptr) {
     return false;
   }
   *id = static_cast<Enum>(raw);

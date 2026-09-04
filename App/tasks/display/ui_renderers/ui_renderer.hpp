@@ -5,6 +5,7 @@
 
 #include "display_messages.h"
 #include "gmg12864_lcd.hpp"
+#include "menu_icon_encoding.hpp"
 #include "parameter.h"
 #include "parameter_id.hpp"
 #include "ui_state_id.hpp"
@@ -25,7 +26,7 @@ Status DrawPanelLayout(u8g2_t* u8g2, const char* panel_name,
                        PageNavigationFlag flag);
 Status DrawParameter(u8g2_t* u8g2, Parameter* parameter, const char* label,
                      UiStateSlotIndex index);
-Status DrawMenu(u8g2_t* u8g2, MenuIconId icon_id, const char* label,
+Status DrawMenu(u8g2_t* u8g2, MenuIconEncoding icon_id, const char* label,
                 UiStateSlotIndex index);
 }  // namespace UiRenderer
 

@@ -2,7 +2,9 @@
 
 #include <array>
 
+#include "enum_map.hpp"
 #include "knob_widget.hpp"
+#include "menu_icon_encoding.hpp"
 #include "toggle_switch_widget.hpp"
 #include "utils.h"
 
@@ -47,14 +49,6 @@ static constexpr auto parameter_width_table = [] {
   return values;
 }();
 
-static constexpr auto panel_menu_icon_table = [] {
-  std::array<uint8_t, MENU_ICON_ID_COUNT> values{};
-  values[MENU_ICON_ID_NONE] = 0;
-  values[MENU_ICON_ID_SYSTEM] = 129;
-  values[MENU_ICON_ID_DEBUG] = 104;
-  return values;
-}();
-
 static void DrawArrowLeft4x5(u8g2_t* u8g2, uint8_t x, uint8_t y);
 static void DrawArrowRight4x5(u8g2_t* u8g2, uint8_t x, uint8_t y);
 static Status DrawParameterValue(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
@@ -63,7 +57,7 @@ static Status DrawParameterWidget(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
                                   uint8_t y);
 static void ConvertNumberToString(int32_t number, char* string,
                                   uint8_t string_length);
-static Status DrawPanelMenuIcon(u8g2_t* u8g2, MenuIconId icon, uint8_t x,
+static Status DrawPanelMenuIcon(u8g2_t* u8g2, MenuIconEncoding icon, uint8_t x,
                                 uint8_t y);
 static Status DrawLabel(u8g2_t* u8g2, const char* label, uint8_t x, uint8_t y);
 
@@ -203,7 +197,7 @@ static void ConvertNumberToString(int32_t number, char* string,
   }
 }
 
-Status DrawMenu(u8g2_t* u8g2, MenuIconId icon_id, const char* label,
+Status DrawMenu(u8g2_t* u8g2, MenuIconEncoding icon_encoding, const char* label,
                 UiStateSlotIndex index) {
   uint8_t x, y;
   if (index >= UI_STATE_SLOT_INDEX_COUNT) {
@@ -213,7 +207,7 @@ Status DrawMenu(u8g2_t* u8g2, MenuIconId icon_id, const char* label,
   x = parameter_width_table[index];
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT +
       PARAMETER_PADDING + GRAPHIC_AREA_HEIGHT / 2 - ICON_HEIGHT / 2;
-  DrawPanelMenuIcon(u8g2, icon_id, x, y);
+  DrawPanelMenuIcon(u8g2, icon_encoding, x, y);
 
   x = parameter_width_table[index];
   y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
@@ -221,13 +215,13 @@ Status DrawMenu(u8g2_t* u8g2, MenuIconId icon_id, const char* label,
   return Status::OK;
 }
 
-static Status DrawPanelMenuIcon(u8g2_t* u8g2, MenuIconId icon_id, uint8_t x,
-                                uint8_t y) {
-  uint8_t icon_encoding = panel_menu_icon_table[icon_id], glyph_width;
+static Status DrawPanelMenuIcon(u8g2_t* u8g2, MenuIconEncoding icon_encoding,
+                                uint8_t x, uint8_t y) {
+  uint8_t glyph_width;
   u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
-  glyph_width = u8g2_GetGlyphWidth(u8g2, icon_encoding);
+  glyph_width = u8g2_GetGlyphWidth(u8g2, (std::uint16_t)icon_encoding);
   u8g2_DrawGlyph(u8g2, x + SLOT_WIDTH / 2 - glyph_width / 2, y + ICON_HEIGHT,
-                 icon_encoding);
+                 (std::uint16_t)icon_encoding);
 
   return Status::OK;
 }
