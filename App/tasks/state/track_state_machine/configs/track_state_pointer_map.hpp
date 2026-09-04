@@ -25,7 +25,7 @@ class IdleState : public State {
               TransitionEntry{ActionId::ENTER_RECORD_PLAY, Id::RECORDING},
               TransitionEntry{ActionId::ENTER_STOP, Id::IDLE}) {}
 
-  void OnEnter(Context* context) override {}
+  void OnEnter(Context& context) override {}
 };
 
 class RecordingState : public State {
@@ -35,7 +35,7 @@ class RecordingState : public State {
               TransitionEntry{ActionId::ENTER_RECORD_PLAY, Id::PLAYING},
               TransitionEntry{ActionId::ENTER_STOP, Id::STOPPED}) {}
 
-  void OnEnter(Context* context) override {}
+  void OnEnter(Context& context) override {}
 };
 
 class PlayingState : public State {
@@ -45,7 +45,7 @@ class PlayingState : public State {
               TransitionEntry{ActionId::ENTER_RECORD_PLAY, Id::OVERDUBBING},
               TransitionEntry{ActionId::ENTER_STOP, Id::STOPPED}) {}
 
-  void OnEnter(Context* context) override {}
+  void OnEnter(Context& context) override {}
 };
 
 class StoppedState : public State {
@@ -55,7 +55,7 @@ class StoppedState : public State {
               TransitionEntry{ActionId::ENTER_RECORD_PLAY, Id::PLAYING},
               TransitionEntry{ActionId::ENTER_STOP, Id::STOPPED}) {}
 
-  void OnEnter(Context* context) override {}
+  void OnEnter(Context& context) override {}
 };
 
 class OverdubbingState : public State {
@@ -65,7 +65,7 @@ class OverdubbingState : public State {
               TransitionEntry{ActionId::ENTER_RECORD_PLAY, Id::PLAYING},
               TransitionEntry{ActionId::ENTER_STOP, Id::STOPPED}) {}
 
-  void OnEnter(Context* context) override {}
+  void OnEnter(Context& context) override {}
 };
 
 }  // namespace TrackStateClass

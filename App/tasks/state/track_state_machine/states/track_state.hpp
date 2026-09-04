@@ -32,7 +32,7 @@ class State {
     return this->transition_table[action_id];
   }
 
-  virtual void OnEnter(Context* contex) {}
+  virtual void OnEnter(Context& context) {}
   const Id GetId() { return this->id; }
 
  private:

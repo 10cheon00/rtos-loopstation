@@ -24,22 +24,28 @@ enum class ActionId : std::uint8_t {
   COUNT,
 };
 
-struct SystemStateOnEnterResult {
-  ActionId action_id;
-  bool is_transition_requested;
-};
-
-using SystemStateOnEnterFunction = SystemStateOnEnterResult (*)(Context*);
-
 using TransitionTable = EnumMap<ActionId, Id>;
 
-struct State {
-  Id id;
-  const TransitionTable* transition_table;
-  SystemStateOnEnterFunction OnEnter;
+class State {
+ protected:
+  template <typename... TransitionEntries>
+  explicit State(Id id, TransitionEntries... transition_entries)
+      : id(id), transition_table(transition_entries...) {};
+
+ public:
+  const Id GetId() { return this->id; }
+  const Id GetNextStateId(ActionId action_id) const {
+    return this->transition_table[action_id];
+  }
+
+  virtual void OnEnter(Context& context) = 0;
+
+ private:
+  const Id id;
+  const EnumMap<ActionId, Id> transition_table;
 };
 
-Id GetNextSystemStateId(State* state, ActionId action_id);
+// Id GetNextSystemStateId(State* state, ActionId action_id);
 
 }  // namespace SystemStateMachine
 

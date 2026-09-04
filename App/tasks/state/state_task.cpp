@@ -25,28 +25,32 @@ static StateTaskContext state_task_context;
 static osMessageQueueId_t state_event_queue = 0;
 static osMessageQueueId_t display_snapshot_mailbox = 0;
 
-static SystemStateMachine::StateMachine system_state_machine;
 static SystemStateMachine::Context system_state_machine_context;
+static SystemStateMachine::StateMachine system_state_machine{
+    system_state_machine_context, SystemStateMachine::Id::NOT_INITED};
 
-static UiStateMachine::StateMachine ui_state_machine;
 static UiStateMachine::Context ui_state_machine_context;
+static UiStateMachine::StateMachine ui_state_machine{ui_state_machine_context,
+                                                     UiStateMachine::Id::HOME};
 
-static TrackStateMachine::StateMachine track_state_machine[TRACK_COUNT];
-static TrackStateMachine::Context track_state_machine_context[TRACK_COUNT];
+static std::array<TrackStateMachine::Context,
+                  static_cast<std::size_t>(TRACK_COUNT)>
+    track_state_machine_contexts;
+static std::array<TrackStateMachine::StateMachine,
+                  static_cast<std::size_t>(TRACK_COUNT)>
+    track_state_machines{TrackStateMachine::StateMachine{
+        track_state_machine_contexts[0], TrackStateMachine::Id::IDLE}};
 
-static void InitStateMachines();
-static TaskStatus TryUpdateParameter(StateEvent* state_event);
-static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload);
+static TaskStatus TryUpdateParameter(StateEvent& state_event);
+static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload);
 static TaskStatus TryUpdateParameterFromEncoderRotation(
-    EncoderRotationPayload* encoder_rotation_payload);
-static TaskStatus TryUpdateParameterFromAdc(StateEvent* state_event);
-static TaskStatus TryTransitionUiStateMachine(
-    UiStateMachine::StateMachine* ui_state_machine, StateEvent* state_event);
-static TaskStatus UpdateDisplaySnapshotMailbox(
-    UiStateMachine::StateMachine* ui_state_machine);
+    EncoderRotationPayload& encoder_rotation_payload);
+static TaskStatus TryUpdateParameterFromAdc(StateEvent& state_event);
+static TaskStatus TryTransitionUiStateMachine(StateEvent& state_event);
+static TaskStatus UpdateDisplaySnapshotMailbox();
 static TaskStatus TryTransitionTrackStateMachine(
-    TrackStateMachine::StateMachine* track_state_machine,
-    StateEvent* state_event, uint8_t track_index);
+    TrackStateMachine::StateMachine& track_state_machine,
+    StateEvent& state_event);
 
 static int IsValidInitParams(const StateInitParams* params) {
   return (params != 0) && (params->state_event_queue != 0) &&
@@ -65,11 +69,6 @@ void StateTask_Init(void* argument) {
   state_event_queue = params->state_event_queue;
   display_snapshot_mailbox = params->display_snapshot_mailbox;
 
-  UiStateMachine::InitContext(&ui_state_machine_context);
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    InitContext(&track_state_machine_context[i]);
-  }
-
   StateTask_Run();
 }
 
@@ -78,10 +77,8 @@ void StateTask_Run(void) {
   osStatus_t os_status;
   TaskStatus task_status;
 
-  InitStateMachines();
-
   for (;;) {
-    if (system_state_machine.current_state->id ==
+    if (system_state_machine.GetCurrentState()->GetId() ==
         SystemStateMachine::Id::ERROR) {
       // TODO:
       // 시스템 검증 결과에 오류가 있으면 이를 사용자에게 알려야 함.
@@ -93,41 +90,26 @@ void StateTask_Run(void) {
     os_status =
         osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
     if (os_status == osOK) {
-      TryUpdateParameter(&state_event);
-      TryTransitionUiStateMachine(&ui_state_machine, &state_event);
+      TryUpdateParameter(state_event);
+      TryTransitionUiStateMachine(state_event);
       for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-        TryTransitionTrackStateMachine(&track_state_machine[i], &state_event,
-                                       i);
+        TryTransitionTrackStateMachine(track_state_machines[i], state_event);
       }
       if (task_status != TASK_STATUS_OK) {
         // TODO:
         // 처리 실패에 대한 예외처리 구현하기
       }
-      UpdateDisplaySnapshotMailbox(&ui_state_machine);
+      UpdateDisplaySnapshotMailbox();
     }
   }
 }
 
-static void InitStateMachines() {
-  SystemStateMachine::Init(&system_state_machine, &system_state_machine_context,
-                           SystemStateMachine::Id::NOT_INITED);
-
-  UiStateMachine::Init(&ui_state_machine, &ui_state_machine_context,
-                       UiStatePointerMap::Get(UiStateMachine::Id::HOME));
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    TrackStateMachine::Init(&track_state_machine[i],
-                            &track_state_machine_context[i],
-                            TrackStateMachine::Id::IDLE);
-  }
-  UpdateDisplaySnapshotMailbox(&ui_state_machine);
-}
-
-static TaskStatus TryUpdateParameter(StateEvent* state_event) {
-  if (state_event->type == STATE_EVENT_BUTTON) {
-    return TryUpdateParameterFromButton(&state_event->payload.button);
-  } else if (state_event->type == STATE_EVENT_ENCODER_ROTATION) {
+static TaskStatus TryUpdateParameter(StateEvent& state_event) {
+  if (state_event.type == STATE_EVENT_BUTTON) {
+    return TryUpdateParameterFromButton(state_event.payload.button);
+  } else if (state_event.type == STATE_EVENT_ENCODER_ROTATION) {
     return TryUpdateParameterFromEncoderRotation(
-        &state_event->payload.encoder_rotation);
+        state_event.payload.encoder_rotation);
   } else {
     // TODO:
     // ADC 입력에 대한 파라미터 값 변경 기능 구현하기
@@ -138,11 +120,11 @@ static TaskStatus TryUpdateParameter(StateEvent* state_event) {
 /**
  * 버튼 입력은 IFX/TFX 토글, 엔코더 버튼만 파라미터 값을 변경한다.
  * */
-static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
+static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload) {
   ParameterId parameter_id;
 
   ButtonState button_state;
-  if (!ConvertEnumRawToEnum<ButtonState>(button_payload->button_state_raw,
+  if (!ConvertEnumRawToEnum<ButtonState>(button_payload.button_state_raw,
                                          &button_state)) {
     return TASK_STATUS_ERROR;
   }
@@ -151,7 +133,7 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
   }
 
   ButtonId id;
-  if (!ConvertEnumRawToEnum<ButtonId>(button_payload->button_id_raw, &id)) {
+  if (!ConvertEnumRawToEnum<ButtonId>(button_payload.button_id_raw, &id)) {
     return TASK_STATUS_ERROR;
   }
 
@@ -164,7 +146,8 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
     // TODO:
     // Encoder_A~D 모두 처리 가능하게 해야함
     const UiStateMachine::PanelSlot& panel_slot =
-        ui_state_machine.current_state->GetCurrentPage()[UI_STATE_SLOT_INDEX_A];
+        ui_state_machine.GetCurrentState()
+            ->GetCurrentPage()[UI_STATE_SLOT_INDEX_A];
     parameter_id = panel_slot.data.parameter.id;
     if (parameter_id == ParameterId::NONE) {
       return TASK_STATUS_ERROR;
@@ -191,14 +174,14 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload* button_payload) {
 }
 
 TaskStatus TryUpdateParameterFromEncoderRotation(
-    EncoderRotationPayload* encoder_rotation_payload) {
+    EncoderRotationPayload& encoder_rotation_payload) {
   ParameterId parameter_id;
 
   EncoderId encoder_id;
 
-  encoder_id = encoder_rotation_payload->encoder_id;
+  encoder_id = encoder_rotation_payload.encoder_id;
   const UiStateMachine::PanelSlot& panel_slot =
-      ui_state_machine.current_state->GetCurrentPage()[encoder_id];
+      ui_state_machine.GetCurrentState()->GetCurrentPage()[encoder_id];
   if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
     return TASK_STATUS_OK;
   }
@@ -212,20 +195,19 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
     Parameter_ToggleValue(&parameter);
     return TASK_STATUS_OK;
   } else if (parameter.type == PARAMETER_TYPE_SLIDER) {
-    Parameter_AddValue(&parameter, encoder_rotation_payload->delta);
+    Parameter_AddValue(&parameter, encoder_rotation_payload.delta);
     return TASK_STATUS_OK;
   }
   return TASK_STATUS_ERROR;
 }
 
-TaskStatus TryUpdateParameterFromAdc(StateEvent* state_event) {
+TaskStatus TryUpdateParameterFromAdc(StateEvent& state_event) {
   // TODO:
   // ADC 입력과 매핑된 파라미터를 수정하기
   return TASK_STATUS_ERROR;
 }
 
-static TaskStatus TryTransitionUiStateMachine(
-    UiStateMachine::StateMachine* ui_state_machine, StateEvent* state_event) {
+static TaskStatus TryTransitionUiStateMachine(StateEvent& state_event) {
   // TODO:
   // 좌우 버튼이 페이지 이동에만 사용되므로, 여기서 일어나는 전이들은 대부분
   // System, Loop, IFX A/B/C, TFX A/B/C와 같이 특정 메뉴로 바로 이동하는 전역
@@ -237,18 +219,18 @@ static TaskStatus TryTransitionUiStateMachine(
   UiStateMachine::Id next_ui_state_id = UiStateMachine::Id::NONE;
 
   // 1. 버튼 입력일때에만 패널이 바뀜
-  if (state_event->type != STATE_EVENT_BUTTON) {
+  if (state_event.type != STATE_EVENT_BUTTON) {
     return TASK_STATUS_ERROR;
   }
   ButtonId button_id;
-  if (!ConvertEnumRawToEnum<ButtonId>(state_event->payload.button.button_id_raw,
+  if (!ConvertEnumRawToEnum<ButtonId>(state_event.payload.button.button_id_raw,
                                       &button_id)) {
     return TASK_STATUS_ERROR;
   }
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
   ButtonState button_state;
   if (!ConvertEnumRawToEnum<ButtonState>(
-          state_event->payload.button.button_state_raw, &button_state)) {
+          state_event.payload.button.button_state_raw, &button_state)) {
     return TASK_STATUS_ERROR;
   }
   if (button_state != ButtonState::PRESSED) {
@@ -258,16 +240,16 @@ static TaskStatus TryTransitionUiStateMachine(
   if (button_id == ButtonId::EXIT) {
     // 3. exit 버튼이라면 상위 패널로 이동 가능한지 판단 후 전이
     next_ui_state_id = UiStateNavigationTree_GetParent(
-        ui_state_machine->current_state->GetId());
+        ui_state_machine.GetCurrentState()->GetId());
   } else if (button_id == ButtonId::LEFT) {
     // 4. 좌우 버튼인 경우 페이지 증가
-    ui_state_machine->current_state->IncreasePageIndex();
+    ui_state_machine.GetCurrentState()->IncreasePageIndex();
   } else if (button_id == ButtonId::RIGHT) {
-    ui_state_machine->current_state->DecreasePageIndex();
+    ui_state_machine.GetCurrentState()->DecreasePageIndex();
   } else if (button_id == ButtonId::ENCODER_A_PUSH) {
     // 5. 엔코더 푸시 버튼이라면 현재 UiState가 보여주는 슬롯에 따라 전이
     const UiStateMachine::PanelSlot& panel_slot =
-        ui_state_machine->current_state
+        ui_state_machine.GetCurrentState()
             ->GetCurrentPage()[UI_STATE_SLOT_INDEX_A];
     if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
       next_ui_state_id = panel_slot.data.menu.state_id;
@@ -280,28 +262,27 @@ static TaskStatus TryTransitionUiStateMachine(
     next_ui_state_id = GlobalUiTransitionConfigTable_Get(button_id);
   }
   if (next_ui_state_id != UiStateMachine::Id::NONE) {
-    UiStateMachine::TryTransition(ui_state_machine, next_ui_state_id);
+    ui_state_machine.TryTransition(next_ui_state_id);
   }
 
   return TASK_STATUS_OK;
 }
 
-TaskStatus UpdateDisplaySnapshotMailbox(
-    UiStateMachine::StateMachine* ui_state_machine) {
+static TaskStatus UpdateDisplaySnapshotMailbox() {
   DisplaySnapshot snapshot;
 
   snapshot.panel.ui_state_enum_raw =
-      ConvertEnumToEnumRaw(ui_state_machine->current_state->GetId());
+      ConvertEnumToEnumRaw(ui_state_machine.GetCurrentState()->GetId());
   snapshot.panel.page_navigation_flag = PAGE_NAVIGATION_FLAG_NONE;
-  if (ui_state_machine->current_state->CanDecreasePageIndex()) {
+  if (ui_state_machine.GetCurrentState()->CanDecreasePageIndex()) {
     snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_LEFT_ARROW;
   }
-  if (ui_state_machine->current_state->CanIncreasePageIndex()) {
+  if (ui_state_machine.GetCurrentState()->CanIncreasePageIndex()) {
     snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_RIGHT_ARROW;
   }
 
   const UiStateMachine::Page& page =
-      ui_state_machine->current_state->GetCurrentPage();
+      ui_state_machine.GetCurrentState()->GetCurrentPage();
   for (size_t i = 0; i < UI_STATE_SLOT_INDEX_COUNT; i++) {
     const UiStateMachine::PanelSlot& panel_slot = page[i];
     snapshot.panel.slot_render_payloads[i].type = page[i].type;
@@ -325,8 +306,8 @@ TaskStatus UpdateDisplaySnapshotMailbox(
       .tfx_a_state = LoopstationStore::GetParameter(ParameterId::TFX_A_STATE),
   };
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    snapshot.led.track_state_enum_raws[i] =
-        ConvertEnumToEnumRaw(track_state_machine->current_state->GetId());
+    snapshot.led.track_state_enum_raws[i] = ConvertEnumToEnumRaw(
+        track_state_machines[i].GetCurrentState()->GetId());
   }
 
   xQueueOverwrite((QueueHandle_t)display_snapshot_mailbox, &snapshot);
@@ -334,23 +315,20 @@ TaskStatus UpdateDisplaySnapshotMailbox(
 }
 
 TaskStatus TryTransitionTrackStateMachine(
-    TrackStateMachine::StateMachine* state_machine, StateEvent* state_event,
-    uint8_t track_index) {
-  ButtonPayload* button_payload;
-  TrackStateMachine::ActionId action_id;
-
+    TrackStateMachine::StateMachine& track_state_machine,
+    StateEvent& state_event) {
   // 1. 버튼 입력일때에만 트랙 상태를 바꿈
-  if (state_event->type != STATE_EVENT_BUTTON) {
+  if (state_event.type != STATE_EVENT_BUTTON) {
     return TASK_STATUS_ERROR;
   }
-  button_payload = &state_event->payload.button;
+  ButtonPayload& button_payload = state_event.payload.button;
   ButtonId id;
-  if (!ConvertEnumRawToEnum<ButtonId>(button_payload->button_id_raw, &id)) {
+  if (!ConvertEnumRawToEnum<ButtonId>(button_payload.button_id_raw, &id)) {
     return TASK_STATUS_ERROR;
   }
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
   ButtonState state;
-  if (!ConvertEnumRawToEnum<ButtonState>(button_payload->button_state_raw,
+  if (!ConvertEnumRawToEnum<ButtonState>(button_payload.button_state_raw,
                                          &state)) {
     return TASK_STATUS_ERROR;
   }
@@ -359,11 +337,11 @@ TaskStatus TryTransitionTrackStateMachine(
   }
 
   // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
-  action_id = ButtonToTrackActionMap::Get(id);
+  TrackStateMachine::ActionId action_id = ButtonToTrackActionMap::Get(id);
   if (action_id == TrackStateMachine::ActionId::NONE) {
     return TASK_STATUS_ERROR;
   }
-  TrackStateMachine::TryTransition(state_machine, action_id);
+  track_state_machine.TryTransition(action_id);
 
   return TASK_STATUS_OK;
 }

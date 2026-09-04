@@ -63,20 +63,14 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_to_track_action_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine_context.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs/system_state_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs/system_state_pointer_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_not_inited.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_running.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state_error.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_state_pointer_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/ui_state_machine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/global_ui_transition_config_table.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_config_table.cpp
