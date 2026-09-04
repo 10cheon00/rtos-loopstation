@@ -75,9 +75,6 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/global_ui_transition_config_table.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_config_table.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_navigation_tree.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_home_panel.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_setting_panel.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state_system_setting_panel.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864/gmg12864_lcd.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/mcp23017.cpp
