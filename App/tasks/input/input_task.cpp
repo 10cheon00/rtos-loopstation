@@ -8,11 +8,17 @@
 #include "mcp23017.hpp"
 #include "mcp23017_gpio_map.hpp"
 #include "mcp23017_gpio_to_button_map.hpp"
+#include "mutable_enum_map.hpp"
 #include "state_messages.h"
 #include "utils.h"
 
 typedef struct {
-  ButtonState encoder_button_state[static_cast<std::size_t>(EncoderId::COUNT)];
+  MutableEnumMap<EncoderId, ButtonState> encoder_button_states{
+    EnumEntry{EncoderId::A, ButtonState::RELEASED},
+    EnumEntry{EncoderId::B, ButtonState::RELEASED},
+    EnumEntry{EncoderId::C, ButtonState::RELEASED},
+    EnumEntry{EncoderId::D, ButtonState::RELEASED},
+  };
 } InputTaskContext;
 
 static osMessageQueueId_t input_event_queue;
@@ -158,16 +164,16 @@ static TaskStatus SendButtonPayload(Mcp23017::Address address,
                     STATE_EVENT_QUEUE_TIMEOUT_500MS);
 
   if (button_id == ButtonId::ENCODER_A_PUSH) {
-    input_task_context.encoder_button_state[static_cast<std::size_t>(EncoderId::A)] = button_state;
+    input_task_context.encoder_button_states[EncoderId::A] = button_state;
   }
   if (button_id == ButtonId::ENCODER_B_PUSH) {
-    input_task_context.encoder_button_state[static_cast<std::size_t>(EncoderId::B)] = button_state;
+    input_task_context.encoder_button_states[EncoderId::B] = button_state;
   }
   if (button_id == ButtonId::ENCODER_C_PUSH) {
-    input_task_context.encoder_button_state[static_cast<std::size_t>(EncoderId::C)] = button_state;
+    input_task_context.encoder_button_states[EncoderId::C] = button_state;
   }
   if (button_id == ButtonId::ENCODER_D_PUSH) {
-    input_task_context.encoder_button_state[static_cast<std::size_t>(EncoderId::D)] = button_state;
+    input_task_context.encoder_button_states[EncoderId::D] = button_state;
   }
   return TASK_STATUS_OK;
 }
@@ -183,7 +189,7 @@ static TaskStatus HandleEncoderRotationEvent(
   if (!ConvertEnumRawToEnum(encoder_rotation_event->encoder_id_raw, &id)) {
     return TASK_STATUS_ERROR;
   }
-  if (input_task_context.encoder_button_state[static_cast<std::size_t>(id)] == ButtonState::PRESSED) {
+  if (input_task_context.encoder_button_states[id] == ButtonState::PRESSED) {
     delta *= 10;
   }
   StateEvent state_event = {
