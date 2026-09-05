@@ -9,6 +9,6 @@ enum class EncoderId : EnumId {
   C,
   D,
   COUNT,
-} ;
+};
 
 #endif
