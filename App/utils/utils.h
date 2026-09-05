@@ -7,7 +7,7 @@
 #include <type_traits>
 
 #include "button_id.hpp"
-#include "encoder_id.h"
+#include "encoder_id.hpp"
 #include "enum_raw.h"
 #include "slot_position.hpp"
 
@@ -62,16 +62,16 @@ constexpr std::optional<SlotPosition> ToSlotPosition(ButtonId id) {
 
 constexpr std::optional<SlotPosition> ToSlotPosition(EncoderId id) {
   switch (id) {
-    case ENCODER_ID_A:
+    case EncoderId::A:
       return SlotPosition::A;
 
-    case ENCODER_ID_B:
+    case EncoderId::B:
       return SlotPosition::B;
 
-    case ENCODER_ID_C:
+    case EncoderId::C:
       return SlotPosition::C;
 
-    case ENCODER_ID_D:
+    case EncoderId::D:
       return SlotPosition::D;
 
     default:

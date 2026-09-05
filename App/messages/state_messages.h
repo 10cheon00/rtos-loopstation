@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#include "encoder_id.h"
-
 #define STATE_EVENT_QUEUE_TIMEOUT_500MS (500UL)
 
 typedef enum {
@@ -21,7 +19,7 @@ typedef struct {
 
 typedef struct {
   uint32_t timestamp_ticks;
-  EncoderId encoder_id;
+  EnumRaw encoder_id_raw;
   int32_t delta;
 } EncoderRotationPayload;
 

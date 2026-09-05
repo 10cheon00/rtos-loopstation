@@ -172,7 +172,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
                     .direction = __HAL_TIM_IS_TIM_COUNTING_DOWN(htim) ? 
                         ENCODER_ROTATE_COUNTER_CLOCKWISE :
                         ENCODER_ROTATE_CLOCKWISE,
-                    .encoder_id = ENCODER_ID_A,
+                    .encoder_id_raw = ENCODER_ID_A,
                 }
             }
         };

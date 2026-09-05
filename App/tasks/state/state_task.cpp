@@ -6,7 +6,7 @@
 #include "button_to_track_action_map.hpp"
 #include "cmsis_os2.h"
 #include "display_messages.h"
-#include "encoder_id.h"
+#include "encoder_id.hpp"
 #include "global_ui_transition_config_table.hpp"
 #include "loopstation_parameter_store.hpp"
 #include "queue.h"
@@ -182,8 +182,11 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationPayload& encoder_rotation_payload) {
   ParameterId parameter_id;
 
-  std::optional<SlotPosition> maybe_slot_position =
-      ToSlotPosition(encoder_rotation_payload.encoder_id);
+  EncoderId id;
+  if (!ConvertEnumRawToEnum(encoder_rotation_payload.encoder_id_raw, &id)) {
+    return TASK_STATUS_ERROR;
+  }
+  std::optional<SlotPosition> maybe_slot_position = ToSlotPosition(id);
   if (!maybe_slot_position.has_value()) {
     return TASK_STATUS_ERROR;
   }

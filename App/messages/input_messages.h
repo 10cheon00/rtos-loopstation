@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 #include "FreeRTOS.h"
-#include "encoder_id.h"
 #include "enum_raw.h"
+#include "encoder_id_raw.h"
 
 #define INPUT_EVENT_QUEUE_TIMEOUT_500MS (500UL)
 
@@ -28,7 +28,7 @@ typedef enum {
 typedef struct {
   TickType_t timestamp_ticks;  // for debugging only
   EncoderRotationDirection direction;
-  EncoderId encoder_id;
+  EncoderIdRaw encoder_id_raw;
 } EncoderRotationEvent;
 
 typedef struct {

@@ -2,7 +2,7 @@
 
 #include "button_state.hpp"
 #include "cmsis_os2.h"
-#include "encoder_id.h"
+#include "encoder_id.hpp"
 #include "input_initparams.h"
 #include "input_messages.h"
 #include "mcp23017.hpp"
@@ -12,7 +12,7 @@
 #include "utils.h"
 
 typedef struct {
-  ButtonState encoder_button_state[ENCODER_ID_COUNT];
+  ButtonState encoder_button_state[static_cast<std::size_t>(EncoderId::COUNT)];
 } InputTaskContext;
 
 static osMessageQueueId_t input_event_queue;
@@ -158,29 +158,32 @@ static TaskStatus SendButtonPayload(Mcp23017::Address address,
                     STATE_EVENT_QUEUE_TIMEOUT_500MS);
 
   if (button_id == ButtonId::ENCODER_A_PUSH) {
-    input_task_context.encoder_button_state[ENCODER_ID_A] = button_state;
+    input_task_context.encoder_button_state[static_cast<std::size_t>(EncoderId::A)] = button_state;
   }
   if (button_id == ButtonId::ENCODER_B_PUSH) {
-    input_task_context.encoder_button_state[ENCODER_ID_B] = button_state;
+    input_task_context.encoder_button_state[static_cast<std::size_t>(EncoderId::B)] = button_state;
   }
   if (button_id == ButtonId::ENCODER_C_PUSH) {
-    input_task_context.encoder_button_state[ENCODER_ID_C] = button_state;
+    input_task_context.encoder_button_state[static_cast<std::size_t>(EncoderId::C)] = button_state;
   }
   if (button_id == ButtonId::ENCODER_D_PUSH) {
-    input_task_context.encoder_button_state[ENCODER_ID_D] = button_state;
+    input_task_context.encoder_button_state[static_cast<std::size_t>(EncoderId::D)] = button_state;
   }
   return TASK_STATUS_OK;
 }
 
 static TaskStatus HandleEncoderRotationEvent(
     EncoderRotationEvent* encoder_rotation_event) {
-  EncoderId encoder_id = encoder_rotation_event->encoder_id;
   int32_t delta = 1;
   if (encoder_rotation_event->direction == ENCODER_ROTATE_COUNTER_CLOCKWISE) {
     delta = -1;
   }
-  if (input_task_context.encoder_button_state[encoder_id] ==
-      ButtonState::PRESSED) {
+
+  EncoderId id;
+  if (!ConvertEnumRawToEnum(encoder_rotation_event->encoder_id_raw, &id)) {
+    return TASK_STATUS_ERROR;
+  }
+  if (input_task_context.encoder_button_state[static_cast<std::size_t>(id)] == ButtonState::PRESSED) {
     delta *= 10;
   }
   StateEvent state_event = {
@@ -188,7 +191,7 @@ static TaskStatus HandleEncoderRotationEvent(
       .payload = {
           .encoder_rotation = {
               .timestamp_ticks = encoder_rotation_event->timestamp_ticks,
-              .encoder_id = encoder_id,
+              .encoder_id_raw = encoder_rotation_event->encoder_id_raw,
               .delta = delta,
           }}};
   osMessageQueuePut(state_event_queue, &state_event, 0,
