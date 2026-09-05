@@ -5,7 +5,6 @@
 
 #include "FreeRTOS.h"
 #include "enum_raw.h"
-#include "panel_slot_type.h"
 #include "parameter.h"
 #include "track_config.h"
 
@@ -29,7 +28,7 @@ typedef struct {
 } MenuRenderPayload;
 
 typedef struct {
-  PanelSlotType type;
+  EnumRaw panel_slot_type_raw;
   union {
     MenuRenderPayload menu;
     ParameterRenderPayload parameter;
@@ -41,11 +40,6 @@ typedef struct {
   PageNavigationFlag page_navigation_flag;
   PanelSlotRenderPayload slot_render_payloads[4];
 } PanelRenderPayload;
-
-/**
- * enum class로 구현된 TrackStateId를 C로 잠시 변환하는 DTO 역할을 맡기 위해
- * 정의된 타입
- */
 
 typedef struct {
   // TODO:

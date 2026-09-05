@@ -11,19 +11,19 @@ namespace UiStateClass {
 using namespace UiStateMachine;
 
 static HomeState home_state{Page{(PanelSlot){
-                                     .type = PANEL_SLOT_TYPE_NONE,
+                                     .type = PanelSlotType::NONE,
                                  },
                                  (PanelSlot){
-                                     .type = PANEL_SLOT_TYPE_NONE,
+                                     .type = PanelSlotType::NONE,
                                  },
                                  (PanelSlot){
-                                     .type = PANEL_SLOT_TYPE_NONE,
+                                     .type = PanelSlotType::NONE,
                                  },
                                  (PanelSlot){
-                                     .type = PANEL_SLOT_TYPE_NONE,
+                                     .type = PanelSlotType::NONE,
                                  }}};
 static SettingState setting_state{Page{
-    (PanelSlot){.type = PANEL_SLOT_TYPE_MENU,
+    (PanelSlot){.type = PanelSlotType::MENU,
                 .data =
                     {
                         .menu = (MenuDescriptor){.icon_encoding = MenuIconEncoding::SYSTEM,
@@ -31,16 +31,16 @@ static SettingState setting_state{Page{
                                                  .label = "SYSTEM\nSETTING"},
                     }},
     (PanelSlot){
-        .type = PANEL_SLOT_TYPE_NONE,
+        .type = PanelSlotType::NONE,
     },
     (PanelSlot){
-        .type = PANEL_SLOT_TYPE_NONE,
+        .type = PanelSlotType::NONE,
     },
     (PanelSlot){
-        .type = PANEL_SLOT_TYPE_NONE,
+        .type = PanelSlotType::NONE,
     }}};
 static SystemSettingState system_setting_state{Page{
-    (PanelSlot){.type = PANEL_SLOT_TYPE_PARAMETER,
+    (PanelSlot){.type = PanelSlotType::PARAMETER,
                 .data =
                     {
                         .parameter =
@@ -49,7 +49,7 @@ static SystemSettingState system_setting_state{Page{
                                 .label = "LCD CO-\nNTRAST",
                             },
                     }},
-    (PanelSlot){.type = PANEL_SLOT_TYPE_PARAMETER,
+    (PanelSlot){.type = PanelSlotType::PARAMETER,
                 .data =
                     {
                         .parameter =
@@ -59,10 +59,10 @@ static SystemSettingState system_setting_state{Page{
                             },
                     }},
     (PanelSlot){
-        .type = PANEL_SLOT_TYPE_NONE,
+        .type = PanelSlotType::NONE,
     },
     (PanelSlot){
-        .type = PANEL_SLOT_TYPE_NONE,
+        .type = PanelSlotType::NONE,
     }}};
 
 }  // namespace UiStateClass

@@ -193,7 +193,7 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
   const SlotPosition slot_position = maybe_slot_position.value();
   const PanelSlot& panel_slot =
       ui_state_machine.GetCurrentState()->GetCurrentPage()[slot_position];
-  if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
+  if (panel_slot.type == PanelSlotType::MENU) {
     return TASK_STATUS_OK;
   }
 
@@ -266,7 +266,7 @@ static TaskStatus TryTransitionUiStateMachine(StateEvent& state_event) {
     SlotPosition slot_position = maybe_slot_position.value();
     const PanelSlot& panel_slot =
         ui_state_machine.GetCurrentState()->GetCurrentPage()[slot_position];
-    if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
+    if (panel_slot.type == PanelSlotType::MENU) {
       next_ui_state_id = panel_slot.data.menu.state_id;
     }
   } else if (button_id == ButtonId::ENCODER_B_PUSH) {
@@ -301,14 +301,14 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
        i++) {
     const SlotPosition slot_position = static_cast<SlotPosition>(i);
     const PanelSlot& panel_slot = page[slot_position];
-    snapshot.panel.slot_render_payloads[i].type = page[slot_position].type;
-    if (panel_slot.type == PANEL_SLOT_TYPE_MENU) {
+    snapshot.panel.slot_render_payloads[i].panel_slot_type_raw = ConvertEnumToRaw(page[slot_position].type);
+    if (panel_slot.type == PanelSlotType::MENU) {
       snapshot.panel.slot_render_payloads[i].data.menu = (MenuRenderPayload){
           .menu_icon_encoding_raw16 =
               ConvertEnumToRaw(panel_slot.data.menu.icon_encoding),
           .label = panel_slot.data.menu.label,
       };
-    } else if (panel_slot.type == PANEL_SLOT_TYPE_PARAMETER) {
+    } else if (panel_slot.type == PanelSlotType::PARAMETER) {
       Parameter parameter =
           LoopstationStore::GetParameter(panel_slot.data.parameter.id);
       snapshot.panel.slot_render_payloads[i].data.parameter =

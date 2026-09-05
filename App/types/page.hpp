@@ -4,7 +4,7 @@
 #include <array>
 
 #include "menu_descriptor.hpp"
-#include "panel_slot_type.h"
+#include "panel_slot_type.hpp"
 #include "parameter_descriptor.hpp"
 #include "slot_position.hpp"
 

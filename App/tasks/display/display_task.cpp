@@ -135,15 +135,21 @@ static TaskStatus HandlePanelRenderPayload(
                             &ui_state_id)) {
     return TASK_STATUS_ERROR;
   }
+
   const char* panel_label = UiStateLabelMap::Get(ui_state_id);
   UiRenderer::DrawPanelLayout(&u8g2, panel_label,
                               panel_render_payload->page_navigation_flag);
+
   for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
        i++) {
     const SlotPosition slot_position = static_cast<SlotPosition>(i);
     PanelSlotRenderPayload* payload =
         &panel_render_payload->slot_render_payloads[i];
-    if (payload->type == PANEL_SLOT_TYPE_MENU) {
+    PanelSlotType type;
+    if (!ConvertEnumRawToEnum(payload->panel_slot_type_raw, &type)) {
+      type = PanelSlotType::NONE;
+    }
+    if (type == PanelSlotType::MENU) {
       MenuRenderPayload* menu_render_payload = &payload->data.menu;
       MenuIconEncoding icon_encoding;
       if (!ConvertEnumRawToEnum(menu_render_payload->menu_icon_encoding_raw16,
@@ -152,8 +158,7 @@ static TaskStatus HandlePanelRenderPayload(
       }
       UiRenderer::DrawMenu(&u8g2, icon_encoding, menu_render_payload->label,
                            slot_position);
-    } else if (panel_render_payload->slot_render_payloads[i].type ==
-               PANEL_SLOT_TYPE_PARAMETER) {
+    } else if (type == PanelSlotType::PARAMETER) {
       ParameterRenderPayload* parameter_render_payload =
           &payload->data.parameter;
       UiRenderer::DrawParameter(&u8g2, &parameter_render_payload->parameter,
