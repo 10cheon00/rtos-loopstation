@@ -19,8 +19,8 @@ struct PanelSlot {
 class Page {
  public:
   template <typename... PanelSlots>
-  constexpr explicit Page(PanelSlots... panel_slots) : panel_slots{panel_slots...}{
-  }
+  constexpr explicit Page(PanelSlots... panel_slots)
+      : panel_slots{panel_slots...} {}
   const PanelSlot& GetPanelSlotAt(SlotPosition position) const {
     return this->panel_slots[static_cast<std::size_t>(position)];
   }

@@ -14,10 +14,10 @@
 
 typedef struct {
   MutableEnumMap<EncoderId, ButtonState> encoder_button_states{
-    EnumEntry{EncoderId::A, ButtonState::RELEASED},
-    EnumEntry{EncoderId::B, ButtonState::RELEASED},
-    EnumEntry{EncoderId::C, ButtonState::RELEASED},
-    EnumEntry{EncoderId::D, ButtonState::RELEASED},
+      EnumEntry{EncoderId::A, ButtonState::RELEASED},
+      EnumEntry{EncoderId::B, ButtonState::RELEASED},
+      EnumEntry{EncoderId::C, ButtonState::RELEASED},
+      EnumEntry{EncoderId::D, ButtonState::RELEASED},
   };
 } InputTaskContext;
 
