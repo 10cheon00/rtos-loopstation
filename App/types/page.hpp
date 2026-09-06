@@ -6,7 +6,6 @@
 
 #include "menu_descriptor.hpp"
 #include "page_slot.hpp"
-#include "page_slot_type.hpp"
 #include "parameter_descriptor.hpp"
 #include "slot_position.hpp"
 
