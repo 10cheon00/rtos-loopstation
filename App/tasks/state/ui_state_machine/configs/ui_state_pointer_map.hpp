@@ -1,5 +1,5 @@
-#ifndef UI_STATE_CONFIG_TABLE_HPP
-#define UI_STATE_CONFIG_TABLE_HPP
+#ifndef UI_STATE_POINTER_MAP_HPP
+#define UI_STATE_POINTER_MAP_HPP
 
 #include "ui_state.hpp"
 #include "ui_state_id.hpp"

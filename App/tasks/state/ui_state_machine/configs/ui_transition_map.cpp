@@ -1,8 +1,10 @@
-#include "global_ui_transition_config_table.hpp"
+#include "ui_transition_map.hpp"
 
 #include "enum_map.hpp"
 
-static constexpr EnumMap<ButtonId, UiStateMachine::Id> table{
+namespace UiTransitionMap {
+
+static constexpr EnumMap<ButtonId, UiStateMachine::Id> map{
     EnumEntry{ButtonId::NONE, UiStateMachine::Id::NONE},
     EnumEntry{ButtonId::LEFT, UiStateMachine::Id::NONE},
     EnumEntry{ButtonId::RIGHT, UiStateMachine::Id::NONE},
@@ -32,6 +34,6 @@ static constexpr EnumMap<ButtonId, UiStateMachine::Id> table{
     EnumEntry{ButtonId::TRACK_5_STOP, UiStateMachine::Id::NONE},
 };
 
-UiStateMachine::Id GlobalUiTransitionConfigTable_Get(ButtonId id) {
-  return table[id];
-}
+UiStateMachine::Id Get(ButtonId id) { return map[id]; }
+
+}  // namespace UiTransitionMap

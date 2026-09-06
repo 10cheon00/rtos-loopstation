@@ -7,7 +7,7 @@
 #include "cmsis_os2.h"
 #include "display_messages.h"
 #include "encoder_id.hpp"
-#include "global_ui_transition_config_table.hpp"
+#include "ui_transition_map.hpp"
 #include "loopstation_parameter_store.hpp"
 #include "queue.h"
 #include "state_initparams.h"
@@ -15,7 +15,7 @@
 #include "system_state_machine.hpp"
 #include "track_config.h"
 #include "track_state_machine.hpp"
-#include "ui_state_config_table.hpp"
+#include "ui_state_pointer_map.hpp"
 #include "ui_state_machine.hpp"
 #include "ui_state_navigation_tree.hpp"
 #include "utils.h"
@@ -274,7 +274,7 @@ static TaskStatus TryTransitionUiStateMachine(StateEvent& state_event) {
   } else if (button_id == ButtonId::ENCODER_D_PUSH) {
   } else {
     // 6. 전역 버튼이라면 전역 패널 전이 테이블에 따라 전이
-    next_ui_state_id = GlobalUiTransitionConfigTable_Get(button_id);
+    next_ui_state_id = UiTransitionMap::Get(button_id);
   }
   if (next_ui_state_id != UiStateMachine::Id::NONE) {
     ui_state_machine.TryTransition(next_ui_state_id);
