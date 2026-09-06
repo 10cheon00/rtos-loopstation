@@ -10,8 +10,6 @@ namespace LoopstationStore {
  */
 static constexpr ParameterStore initial_parameters{
     EnumEntry{ParameterId::NONE, Parameter{0, 0, 0, PARAMETER_TYPE_SLIDER}},
-    EnumEntry{ParameterId::SETTING_PANEL_CURSOR,
-              Parameter{0, 100, 0, PARAMETER_TYPE_SLIDER}},
     EnumEntry{ParameterId::TFX_KNOB,
               Parameter{0, 100, 0, PARAMETER_TYPE_SLIDER}},
     EnumEntry{ParameterId::IFX_KNOB,

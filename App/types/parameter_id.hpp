@@ -7,7 +7,6 @@
 
 enum class ParameterId : std::uint8_t {
   NONE = ID_NONE,
-  SETTING_PANEL_CURSOR,
   IFX_KNOB,
   TFX_KNOB,
   IFX_A_STATE,
