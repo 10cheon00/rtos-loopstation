@@ -1,7 +1,7 @@
 #ifndef TOGGLE_SWITCH_WIDGET_HPP
 #define TOGGLE_SWITCH_WIDGET_HPP
 
-#include "parameter.h"
+#include "parameter.hpp"
 #include "u8g2.h"
 
 namespace UiWidget {

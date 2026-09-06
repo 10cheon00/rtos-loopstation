@@ -45,8 +45,6 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/csrc/u8x8_u8toa.c
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/fonts/u8g2_font_ref4x5_prop_v4_tr.c
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/types/parameter.cpp
-
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/adc_input/adc_input_task.cpp
@@ -71,7 +69,6 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_state_pointer_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states/ui_state.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/global_ui_transition_config_table.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_config_table.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_navigation_tree.cpp
@@ -82,7 +79,6 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs/mcp23017_gpio_to_button_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/mutex_guard.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/enum_map.cpp
 )
 
 target_include_directories(loopstation_app PUBLIC

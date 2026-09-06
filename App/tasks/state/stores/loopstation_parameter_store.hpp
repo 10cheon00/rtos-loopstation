@@ -2,7 +2,7 @@
 #define LOOPSTATION_PARAMETER_STORE_HPP
 
 #include "enum_map.hpp"
-#include "parameter.h"
+#include "parameter.hpp"
 #include "parameter_id.hpp"
 
 /**

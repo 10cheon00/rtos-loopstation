@@ -7,7 +7,7 @@
 #include "gmg12864_lcd.hpp"
 #include "menu_icon_encoding.hpp"
 #include "page.hpp"
-#include "parameter.h"
+#include "parameter.hpp"
 #include "parameter_id.hpp"
 #include "ui_state_id.hpp"
 
