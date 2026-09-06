@@ -28,7 +28,7 @@ typedef struct {
 } MenuRenderPayload;
 
 typedef struct {
-  EnumRaw panel_slot_type_raw;
+  EnumRaw page_slot_type_raw;
   union {
     MenuRenderPayload menu;
     ParameterRenderPayload parameter;

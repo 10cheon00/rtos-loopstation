@@ -146,7 +146,7 @@ static TaskStatus HandlePanelRenderPayload(
     PanelSlotRenderPayload* payload =
         &panel_render_payload->slot_render_payloads[i];
     PanelSlotType type;
-    if (!ConvertEnumRawToEnum(payload->panel_slot_type_raw, &type)) {
+    if (!ConvertEnumRawToEnum(payload->page_slot_type_raw, &type)) {
       type = PanelSlotType::NONE;
     }
     if (type == PanelSlotType::MENU) {

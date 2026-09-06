@@ -10,60 +10,17 @@ namespace UiStateClass {
 
 using namespace UiStateMachine;
 
-static HomeState home_state{Page{(PanelSlot){
-                                     .type = PanelSlotType::NONE,
-                                 },
-                                 (PanelSlot){
-                                     .type = PanelSlotType::NONE,
-                                 },
-                                 (PanelSlot){
-                                     .type = PanelSlotType::NONE,
-                                 },
-                                 (PanelSlot){
-                                     .type = PanelSlotType::NONE,
-                                 }}};
+static HomeState home_state{
+    Page{PageSlot{}, PageSlot{}, PageSlot{}, PageSlot{}}};
+
 static SettingState setting_state{Page{
-    (PanelSlot){.type = PanelSlotType::MENU,
-                .data =
-                    {
-                        .menu = (MenuDescriptor){.icon_encoding = MenuIconEncoding::SYSTEM,
-                                                 .state_id = Id::SYSTEM_SETTING,
-                                                 .label = "SYSTEM\nSETTING"},
-                    }},
-    (PanelSlot){
-        .type = PanelSlotType::NONE,
-    },
-    (PanelSlot){
-        .type = PanelSlotType::NONE,
-    },
-    (PanelSlot){
-        .type = PanelSlotType::NONE,
-    }}};
+    MenuSlot{MenuIconEncoding::SYSTEM, Id::SYSTEM_SETTING, "SYSTEM\nSETTING"},
+    PageSlot{}, PageSlot{}, PageSlot{}}};
+
 static SystemSettingState system_setting_state{Page{
-    (PanelSlot){.type = PanelSlotType::PARAMETER,
-                .data =
-                    {
-                        .parameter =
-                            (ParameterDescriptor){
-                                .id = ParameterId::SYSTEM_SETTING_LCD_CONSTRAST,
-                                .label = "LCD CO-\nNTRAST",
-                            },
-                    }},
-    (PanelSlot){.type = PanelSlotType::PARAMETER,
-                .data =
-                    {
-                        .parameter =
-                            (ParameterDescriptor){
-                                .id = ParameterId::IFX_A_STATE,
-                                .label = "IFX A\nSTATUS",
-                            },
-                    }},
-    (PanelSlot){
-        .type = PanelSlotType::NONE,
-    },
-    (PanelSlot){
-        .type = PanelSlotType::NONE,
-    }}};
+    ParameterSlot{ParameterId::SYSTEM_SETTING_LCD_CONSTRAST, "LCD CO-\nNTRAST"},
+    ParameterSlot{ParameterId::IFX_A_STATE, "IFX A\nSTATUS"}, PageSlot{},
+    PageSlot{}}};
 
 }  // namespace UiStateClass
 }  // namespace UiStatePointerMap

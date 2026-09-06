@@ -151,9 +151,14 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload) {
     }
     SlotPosition slot_position = maybe_position.value();
 
-    const PanelSlot& panel_slot =
-        ui_state_machine.GetCurrentState()->GetCurrentPage()[slot_position];
-    parameter_id = panel_slot.data.parameter.id;
+    PageSlotVariant& page_slot_variant =
+        ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
+            slot_position);
+
+    if (!std::holds_alternative<ParameterSlot>(page_slot_variant)) {
+      return TASK_STATUS_ERROR;
+    }
+    parameter_id = std::get<ParameterSlot>(page_slot_variant).GetParameterId();
     if (parameter_id == ParameterId::NONE) {
       return TASK_STATUS_ERROR;
     }
@@ -190,14 +195,14 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
   if (!maybe_slot_position.has_value()) {
     return TASK_STATUS_ERROR;
   }
-  const SlotPosition slot_position = maybe_slot_position.value();
-  const PanelSlot& panel_slot =
-      ui_state_machine.GetCurrentState()->GetCurrentPage()[slot_position];
-  if (panel_slot.type == PanelSlotType::MENU) {
+  SlotPosition slot_position = maybe_slot_position.value();
+  PageSlotVariant& page_slot_variant =
+      ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(slot_position);
+  if (!std::holds_alternative<ParameterSlot>(page_slot_variant)) {
     return TASK_STATUS_OK;
   }
 
-  parameter_id = panel_slot.data.parameter.id;
+  parameter_id = std::get<ParameterSlot>(page_slot_variant).GetParameterId();
   if (parameter_id == ParameterId::NONE) {
     return TASK_STATUS_ERROR;
   }
@@ -258,10 +263,11 @@ static TaskStatus TryTransitionUiStateMachine(StateEvent& state_event) {
       return TASK_STATUS_ERROR;
     }
     SlotPosition slot_position = maybe_slot_position.value();
-    const PanelSlot& panel_slot =
-        ui_state_machine.GetCurrentState()->GetCurrentPage()[slot_position];
-    if (panel_slot.type == PanelSlotType::MENU) {
-      next_ui_state_id = panel_slot.data.menu.state_id;
+    PageSlotVariant& page_slot_variant =
+        ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
+            slot_position);
+    if (std::holds_alternative<MenuSlot>(page_slot_variant)) {
+      next_ui_state_id = std::get<MenuSlot>(page_slot_variant).GetUiStateId();
     }
   } else if (button_id == ButtonId::ENCODER_B_PUSH) {
   } else if (button_id == ButtonId::ENCODER_C_PUSH) {
@@ -290,26 +296,28 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
     snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_RIGHT_ARROW;
   }
 
-  const Page& page = ui_state_machine.GetCurrentState()->GetCurrentPage();
+  Page& page = ui_state_machine.GetCurrentState()->GetCurrentPage();
   for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
        i++) {
-    const SlotPosition slot_position = static_cast<SlotPosition>(i);
-    const PanelSlot& panel_slot = page[slot_position];
-    snapshot.panel.slot_render_payloads[i].panel_slot_type_raw =
-        ConvertEnumToRaw(page[slot_position].type);
-    if (panel_slot.type == PanelSlotType::MENU) {
-      snapshot.panel.slot_render_payloads[i].data.menu = (MenuRenderPayload){
-          .menu_icon_encoding_raw16 =
-              ConvertEnumToRaw(panel_slot.data.menu.icon_encoding),
-          .label = panel_slot.data.menu.label,
-      };
-    } else if (panel_slot.type == PanelSlotType::PARAMETER) {
+    SlotPosition slot_position = static_cast<SlotPosition>(i);
+    PageSlotVariant& page_slot_variant = page.GetAt(slot_position);
+    snapshot.panel.slot_render_payloads[i].page_slot_type_raw =
+        ConvertEnumToRaw(GetPanelSlotType(page_slot_variant));
+    if (std::holds_alternative<MenuSlot>(page_slot_variant)) {
+      MenuSlot& menu_slot = std::get<MenuSlot>(page_slot_variant);
+      snapshot.panel.slot_render_payloads[i].data.menu =
+          (MenuRenderPayload){.menu_icon_encoding_raw16 =
+                                  ConvertEnumToRaw(menu_slot.GetIconEncoding()),
+                              .label = menu_slot.GetLabel()};
+    } else if (std::holds_alternative<ParameterSlot>(page_slot_variant)) {
+      ParameterSlot& parameter_slot =
+          std::get<ParameterSlot>(page_slot_variant);
       Parameter parameter =
-          LoopstationStore::GetParameter(panel_slot.data.parameter.id);
+          LoopstationStore::GetParameter(parameter_slot.GetParameterId());
       parameter.ToRaw(
           snapshot.panel.slot_render_payloads[i].data.parameter.parameter_raw);
       snapshot.panel.slot_render_payloads[i].data.parameter.label =
-          panel_slot.data.parameter.label;
+          parameter_slot.GetLabel();
     }
   }
   LoopstationStore::GetParameter(ParameterId::IFX_A_STATE)

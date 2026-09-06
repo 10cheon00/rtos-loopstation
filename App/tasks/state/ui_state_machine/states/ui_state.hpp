@@ -15,7 +15,7 @@ class State {
   State(Id id) : id(id), page_index(0) {}
 
   const Id GetId() { return this->id; }
-  std::size_t GetPageIndex() const { return this->page_index; }
+  const std::size_t GetPageIndex() const { return this->page_index; }
 
   void IncreasePageIndex() {
     if (this->CanIncreasePageIndex()) {
@@ -33,7 +33,7 @@ class State {
   bool CanDecreasePageIndex() { return this->page_index > 0; }
 
   virtual std::size_t GetPageCount() = 0;
-  virtual const Page& GetCurrentPage() const = 0;
+  virtual Page& GetCurrentPage() = 0;
 
  private:
   const Id id;
@@ -47,10 +47,11 @@ class FixedPageState : public State {
   explicit FixedPageState(Id id, Pages... pages) : State(id), pages{pages...} {}
 
  public:
-  const Page& GetPage() { return this->pages[this->GetPageIndex()]; }
+  Page& GetPage() { return this->pages[this->GetPageIndex()]; }
 
   std::size_t GetPageCount() override { return pages.size(); }
-  const Page& GetCurrentPage() const override {
+
+  Page& GetCurrentPage() override {
     return this->pages[this->GetPageIndex()];
   };
 
