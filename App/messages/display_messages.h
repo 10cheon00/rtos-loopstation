@@ -33,12 +33,12 @@ typedef struct {
     MenuRenderPayload menu;
     ParameterRenderPayload parameter;
   } data;
-} PanelSlotRenderPayload;
+} PageSlotRenderPayload;
 
 typedef struct {
   EnumRaw ui_state_enum_raw;
   PageNavigationFlag page_navigation_flag;
-  PanelSlotRenderPayload slot_render_payloads[4];
+  PageSlotRenderPayload slot_render_payloads[4];
 } PanelRenderPayload;
 
 typedef struct {

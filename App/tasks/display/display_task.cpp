@@ -143,13 +143,13 @@ static TaskStatus HandlePanelRenderPayload(
   for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
        i++) {
     const SlotPosition slot_position = static_cast<SlotPosition>(i);
-    PanelSlotRenderPayload* payload =
+    PageSlotRenderPayload* payload =
         &panel_render_payload->slot_render_payloads[i];
-    PanelSlotType type;
+    PageSlotType type;
     if (!ConvertEnumRawToEnum(payload->page_slot_type_raw, &type)) {
-      type = PanelSlotType::NONE;
+      type = PageSlotType::NONE;
     }
-    if (type == PanelSlotType::MENU) {
+    if (type == PageSlotType::MENU) {
       MenuRenderPayload* menu_render_payload = &payload->data.menu;
       MenuIconEncoding icon_encoding;
       if (!ConvertEnumRawToEnum(menu_render_payload->menu_icon_encoding_raw16,
@@ -158,7 +158,7 @@ static TaskStatus HandlePanelRenderPayload(
       }
       UiRenderer::DrawMenu(&u8g2, icon_encoding, menu_render_payload->label,
                            slot_position);
-    } else if (type == PanelSlotType::PARAMETER) {
+    } else if (type == PageSlotType::PARAMETER) {
       ParameterRenderPayload* parameter_render_payload =
           &payload->data.parameter;
       Parameter parameter{parameter_render_payload->parameter_raw};

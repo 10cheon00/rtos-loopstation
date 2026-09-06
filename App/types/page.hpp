@@ -6,13 +6,13 @@
 
 #include "menu_descriptor.hpp"
 #include "page_slot.hpp"
-#include "panel_slot_type.hpp"
+#include "page_slot_type.hpp"
 #include "parameter_descriptor.hpp"
 #include "slot_position.hpp"
 
 using PageSlotVariant = std::variant<PageSlot, MenuSlot, ParameterSlot>;
 
-PanelSlotType GetPanelSlotType(PageSlotVariant& page_slot_variant);
+PageSlotType GetPageSlotType(PageSlotVariant& page_slot_variant);
 
 class Page {
  public:
@@ -20,7 +20,7 @@ class Page {
   constexpr explicit Page(PageSlots... page_slots)
       : page_slots{page_slots...} {}
 
-  PageSlot& GetPanelSlotAt(SlotPosition position) {
+  PageSlot& GetPageSlotAt(SlotPosition position) {
     return std::get<PageSlot>(
         this->page_slots[static_cast<std::size_t>(position)]);
   }

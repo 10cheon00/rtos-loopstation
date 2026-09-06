@@ -302,7 +302,7 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
     SlotPosition slot_position = static_cast<SlotPosition>(i);
     PageSlotVariant& page_slot_variant = page.GetAt(slot_position);
     snapshot.panel.slot_render_payloads[i].page_slot_type_raw =
-        ConvertEnumToRaw(GetPanelSlotType(page_slot_variant));
+        ConvertEnumToRaw(GetPageSlotType(page_slot_variant));
     if (std::holds_alternative<MenuSlot>(page_slot_variant)) {
       MenuSlot& menu_slot = std::get<MenuSlot>(page_slot_variant);
       snapshot.panel.slot_render_payloads[i].data.menu =
