@@ -49,9 +49,9 @@ static constexpr EnumMap<SlotPosition, std::uint8_t> parameter_width_map{
 
 static void DrawArrowLeft4x5(u8g2_t* u8g2, uint8_t x, uint8_t y);
 static void DrawArrowRight4x5(u8g2_t* u8g2, uint8_t x, uint8_t y);
-static Status DrawParameterValue(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
+static Status DrawParameterValue(u8g2_t* u8g2, Parameter& parameter, uint8_t x,
                                  uint8_t y);
-static Status DrawParameterWidget(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
+static Status DrawParameterWidget(u8g2_t* u8g2, Parameter& parameter, uint8_t x,
                                   uint8_t y);
 static void ConvertNumberToString(int32_t number, char* string,
                                   uint8_t string_length);
@@ -90,7 +90,7 @@ static void DrawArrowRight4x5(u8g2_t* u8g2, uint8_t x, uint8_t y) {
   u8g2_DrawVLine(u8g2, x + 3, y - 3, 1);
 }
 
-Status DrawParameter(u8g2_t* u8g2, Parameter* parameter, const char* label,
+Status DrawParameter(u8g2_t* u8g2, Parameter& parameter, const char* label,
                      SlotPosition slot_position) {
   uint8_t x, y;
   Status status;
@@ -116,13 +116,13 @@ Status DrawParameter(u8g2_t* u8g2, Parameter* parameter, const char* label,
   return status;
 }
 
-static Status DrawParameterValue(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
+static Status DrawParameterValue(u8g2_t* u8g2, Parameter& parameter, uint8_t x,
                                  uint8_t y) {
   char str[5];
   uint8_t string_width;
 
-  if (parameter->type == PARAMETER_TYPE_TOGGLE) {
-    if (parameter->current == parameter->max) {
+  if (parameter.GetType() == ParameterType::TOGGLE) {
+    if (parameter.IsCurrentMaximum()) {
       str[0] = 'O';
       str[1] = 'N';
       str[2] = '\n';
@@ -136,9 +136,9 @@ static Status DrawParameterValue(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
     string_width = u8g2_GetStrWidth(u8g2, str);
     u8g2_DrawStr(u8g2, x + SLOT_WIDTH / 2 - string_width / 2,
                  y + PARAMETER_VALUE_HEIGHT, str);
-  } else if (parameter->type == PARAMETER_TYPE_SLIDER) {
+  } else if (parameter.GetType() == ParameterType::SLIDER) {
     u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
-    ConvertNumberToString(parameter->current, str, 5);
+    ConvertNumberToString(parameter.GetCurrent(), str, 5);
     string_width = u8g2_GetStrWidth(u8g2, str);
     u8g2_DrawStr(u8g2, x + SLOT_WIDTH / 2 - string_width / 2,
                  y + PARAMETER_VALUE_HEIGHT, str);
@@ -149,13 +149,13 @@ static Status DrawParameterValue(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
   return Status::OK;
 }
 
-static Status DrawParameterWidget(u8g2_t* u8g2, Parameter* parameter, uint8_t x,
+static Status DrawParameterWidget(u8g2_t* u8g2, Parameter& parameter, uint8_t x,
                                   uint8_t y) {
-  if (parameter->type == PARAMETER_TYPE_TOGGLE) {
+  if (parameter.GetType() == ParameterType::TOGGLE) {
     x = x + SLOT_WIDTH / 2 - TOGGLE_SWITCH_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - TOGGLE_SWITCH_WIDGET_HEIGHT / 2;
     UiWidget::DrawToggleSwitchWidget(u8g2, x, y, parameter);
-  } else if (parameter->type == PARAMETER_TYPE_SLIDER) {
+  } else if (parameter.GetType() == ParameterType::SLIDER) {
     x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
     UiWidget::DrawKnobWidget(u8g2, x, y, parameter);

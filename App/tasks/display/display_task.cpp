@@ -67,7 +67,7 @@ static constexpr EnumMap<TrackStateMachine::Id, TrackLedColorSet>
 static void Run(void);
 static TaskStatus HandlePanelRenderPayload(PanelRenderPayload* payload);
 static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload);
-static TaskStatus RenderFxLed(Parameter* parameter, Mcp23017::GpioId gpio_id);
+static TaskStatus RenderFxLed(Parameter& parameter, Mcp23017::GpioId gpio_id);
 static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id,
                                  uint8_t track_index);
 
@@ -161,7 +161,8 @@ static TaskStatus HandlePanelRenderPayload(
     } else if (type == PanelSlotType::PARAMETER) {
       ParameterRenderPayload* parameter_render_payload =
           &payload->data.parameter;
-      UiRenderer::DrawParameter(&u8g2, &parameter_render_payload->parameter,
+      Parameter parameter{parameter_render_payload->parameter_raw};
+      UiRenderer::DrawParameter(&u8g2, parameter,
                                 parameter_render_payload->label, slot_position);
     }
   }
@@ -172,12 +173,12 @@ static TaskStatus HandlePanelRenderPayload(
 }
 
 static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload) {
-  if (RenderFxLed(&payload->ifx_a_state, Mcp23017::GpioId::LED_IFX_A) !=
-      TASK_STATUS_OK) {
+  Parameter ifx_a_state{payload->ifx_a_state_raw};
+  Parameter tfx_a_state{payload->tfx_a_state_raw};
+  if (RenderFxLed(ifx_a_state, Mcp23017::GpioId::LED_IFX_A) != TASK_STATUS_OK) {
     return TASK_STATUS_ERROR;
   }
-  if (RenderFxLed(&payload->tfx_a_state, Mcp23017::GpioId::LED_TFX_A) !=
-      TASK_STATUS_OK) {
+  if (RenderFxLed(tfx_a_state, Mcp23017::GpioId::LED_TFX_A) != TASK_STATUS_OK) {
     return TASK_STATUS_ERROR;
   }
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
@@ -196,11 +197,11 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload) {
 // ParameterId에 매핑된 address, port, 레지스터 상 핀의 비트 위치를 찾아야 함
 // 현재 핀 상태에 따라 수정된 핀의 값을 Mcp23017 드라이버에게 넘겨 값을
 // 업데이트하라고 함
-static TaskStatus RenderFxLed(Parameter* parameter, Mcp23017::GpioId gpio_id) {
+static TaskStatus RenderFxLed(Parameter& parameter, Mcp23017::GpioId gpio_id) {
   Mcp23017::Driver& driver = Mcp23017::Driver::GetInstance();
   const Mcp23017::PinConfigMap& pin_config_map = Mcp23017::GetPinConfigMap();
   const Mcp23017::PinConfig& pin_config = pin_config_map.Get(gpio_id);
-  Mcp23017::LedState pin_state = parameter->current == parameter->max
+  Mcp23017::LedState pin_state = parameter.IsCurrentMaximum()
                                      ? Mcp23017::LedState::ON
                                      : Mcp23017::LedState::OFF;
 

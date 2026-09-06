@@ -159,19 +159,19 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload) {
     }
 
     Parameter& parameter = LoopstationStore::GetParameter(parameter_id);
-    if (parameter.type == PARAMETER_TYPE_TOGGLE) {
-      Parameter_ToggleValue(&parameter);
+    if (parameter.GetType() == ParameterType::TOGGLE) {
+      parameter.Toggle();
       return TASK_STATUS_OK;
     }
   } else if (id == ButtonId::IFX_A_TOGGLE) {
     Parameter& parameter =
         LoopstationStore::GetParameter(ParameterId::IFX_A_STATE);
-    Parameter_ToggleValue(&parameter);
+    parameter.Toggle();
     return TASK_STATUS_OK;
   } else if (id == ButtonId::TFX_A_TOGGLE) {
     Parameter& parameter =
         LoopstationStore::GetParameter(ParameterId::TFX_A_STATE);
-    Parameter_ToggleValue(&parameter);
+    parameter.Toggle();
     return TASK_STATUS_OK;
   }
 
@@ -202,14 +202,8 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
     return TASK_STATUS_ERROR;
   }
   Parameter& parameter = LoopstationStore::GetParameter(parameter_id);
-  if (parameter.type == PARAMETER_TYPE_TOGGLE) {
-    Parameter_ToggleValue(&parameter);
-    return TASK_STATUS_OK;
-  } else if (parameter.type == PARAMETER_TYPE_SLIDER) {
-    Parameter_AddValue(&parameter, encoder_rotation_payload.delta);
-    return TASK_STATUS_OK;
-  }
-  return TASK_STATUS_ERROR;
+  parameter.Add(encoder_rotation_payload.delta);
+  return TASK_STATUS_OK;
 }
 
 TaskStatus TryUpdateParameterFromAdc(StateEvent& state_event) {
@@ -301,7 +295,8 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
        i++) {
     const SlotPosition slot_position = static_cast<SlotPosition>(i);
     const PanelSlot& panel_slot = page[slot_position];
-    snapshot.panel.slot_render_payloads[i].panel_slot_type_raw = ConvertEnumToRaw(page[slot_position].type);
+    snapshot.panel.slot_render_payloads[i].panel_slot_type_raw =
+        ConvertEnumToRaw(page[slot_position].type);
     if (panel_slot.type == PanelSlotType::MENU) {
       snapshot.panel.slot_render_payloads[i].data.menu = (MenuRenderPayload){
           .menu_icon_encoding_raw16 =
@@ -311,17 +306,17 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
     } else if (panel_slot.type == PanelSlotType::PARAMETER) {
       Parameter parameter =
           LoopstationStore::GetParameter(panel_slot.data.parameter.id);
-      snapshot.panel.slot_render_payloads[i].data.parameter =
-          (ParameterRenderPayload){
-              .parameter = parameter,
-              .label = panel_slot.data.parameter.label,
-          };
+      parameter.ToRaw(
+          snapshot.panel.slot_render_payloads[i].data.parameter.parameter_raw);
+      snapshot.panel.slot_render_payloads[i].data.parameter.label =
+          panel_slot.data.parameter.label;
     }
   }
-  snapshot.led = (LedRenderPayload){
-      .ifx_a_state = LoopstationStore::GetParameter(ParameterId::IFX_A_STATE),
-      .tfx_a_state = LoopstationStore::GetParameter(ParameterId::TFX_A_STATE),
-  };
+  LoopstationStore::GetParameter(ParameterId::IFX_A_STATE)
+      .ToRaw(snapshot.led.ifx_a_state_raw);
+  LoopstationStore::GetParameter(ParameterId::TFX_A_STATE)
+      .ToRaw(snapshot.led.tfx_a_state_raw);
+
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     snapshot.led.track_state_enum_raws[i] =
         ConvertEnumToRaw(track_state_machines[i].GetCurrentState()->GetId());

@@ -9,17 +9,17 @@ namespace LoopstationStore {
  * 제공하기 위해 이를 복사한 actual_parameters를 선언한다.
  */
 static constexpr ParameterStore initial_parameters{
-    EnumEntry{ParameterId::NONE, Parameter{0, 0, 0, PARAMETER_TYPE_SLIDER}},
-    EnumEntry{ParameterId::TFX_KNOB,
-              Parameter{0, 100, 0, PARAMETER_TYPE_SLIDER}},
+    EnumEntry{ParameterId::NONE, Parameter{0, 0, 0, ParameterType::SLIDER}},
     EnumEntry{ParameterId::IFX_KNOB,
-              Parameter{0, 100, 0, PARAMETER_TYPE_SLIDER}},
+              Parameter{0, 100, 0, ParameterType::SLIDER}},
+    EnumEntry{ParameterId::TFX_KNOB,
+              Parameter{0, 100, 0, ParameterType::SLIDER}},
     EnumEntry{ParameterId::IFX_A_STATE,
-              Parameter{0, 1, 0, PARAMETER_TYPE_TOGGLE}},
+              Parameter{0, 1, 0, ParameterType::TOGGLE}},
     EnumEntry{ParameterId::TFX_A_STATE,
-              Parameter{0, 1, 0, PARAMETER_TYPE_TOGGLE}},
+              Parameter{0, 1, 0, ParameterType::TOGGLE}},
     EnumEntry{ParameterId::SYSTEM_SETTING_LCD_CONSTRAST,
-              Parameter{10, 80, 80, PARAMETER_TYPE_SLIDER}},
+              Parameter{10, 80, 80, ParameterType::SLIDER}},
 };
 
 static ParameterStore actual_parameters{initial_parameters};

@@ -5,7 +5,7 @@
 
 #include "FreeRTOS.h"
 #include "enum_raw.h"
-#include "parameter.h"
+#include "parameter_raw.h"
 #include "track_config.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
@@ -18,7 +18,7 @@ enum {
 };
 
 typedef struct {
-  Parameter parameter;
+  ParameterRaw parameter_raw;
   const char* label;
 } ParameterRenderPayload;
 
@@ -44,8 +44,8 @@ typedef struct {
 typedef struct {
   // TODO:
   // LED와 관련된 설정 구현하기
-  Parameter ifx_a_state;
-  Parameter tfx_a_state;
+  ParameterRaw ifx_a_state_raw;
+  ParameterRaw tfx_a_state_raw;
   EnumRaw track_state_enum_raws[TRACK_COUNT];
 } LedRenderPayload;
 

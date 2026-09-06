@@ -1,26 +1,90 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
-#include <stdint.h>
+#include <cstdbool>
+#include <cstdint>
 
-typedef int8_t Parameter_t;
-typedef uint8_t ParameterType_t;
+#include "enum_id.hpp"
+#include "parameter_raw.h"
+#include "utils.h"
 
-enum {
-  PARAMETER_TYPE_NONE = 0,
-  PARAMETER_TYPE_SLIDER,
-  PARAMETER_TYPE_TOGGLE,
+using ParameterValue = std::int8_t;
+
+enum class ParameterType : EnumId {
+  NONE = 0,
+  SLIDER,
+  TOGGLE,
 };
 
-typedef struct {
-  Parameter_t min;
-  Parameter_t max;
-  Parameter_t current;
-  ParameterType_t type;
-} Parameter;
+class Parameter {
+ public:
+  constexpr Parameter()
+      : min(0), max(0), current(0), type(ParameterType::NONE) {}
 
-void Parameter_AddValue(Parameter* parameter, Parameter_t value);
-void Parameter_SetValue(Parameter* parameter, Parameter_t value);
-void Parameter_ToggleValue(Parameter* parameter);
+  constexpr Parameter(ParameterValue min, ParameterValue max,
+                      ParameterValue initial_value, ParameterType type)
+      : min(min), max(max), current(initial_value), type(type) {}
+
+  constexpr Parameter(ParameterRaw& raw)
+      : Parameter(raw.min, raw.max, raw.current,
+                  static_cast<ParameterType>(raw.parameter_type_raw)) {}
+
+  constexpr Parameter& operator=(const Parameter& parameter) {
+    this->min = parameter.min;
+    this->max = parameter.max;
+    this->current = parameter.current;
+    this->type = parameter.type;
+    return *this;
+  }
+
+  constexpr void Add(const ParameterValue value) {
+    this->current = this->clamp(static_cast<std::int32_t>(this->current) +
+                                static_cast<std::int32_t>(value));
+  }
+
+  constexpr void Toggle() {
+    this->current = IsCurrentMinimum() ? this->max : this->min;
+  }
+
+  constexpr const ParameterValue GetCurrent() const { return this->current; }
+
+  constexpr const bool IsCurrentMinimum() const {
+    return this->current == this->min;
+  }
+
+  constexpr const bool IsCurrentMaximum() const {
+    return this->current == this->max;
+  }
+
+  const void ToRaw(ParameterRaw& raw) {
+    raw.min = this->min;
+    raw.max = this->max;
+    raw.current = this->current;
+    raw.parameter_type_raw = ConvertEnumToRaw(this->type);
+  }
+
+  const ParameterValue GetMin() const { return this->min; }
+  const ParameterValue GetMax() const { return this->max; }
+  const ParameterType GetType() const { return this->type; }
+
+ private:
+  ParameterValue min;
+  ParameterValue max;
+  ParameterValue current;
+  ParameterType type;
+
+  constexpr ParameterValue clamp(std::int32_t value) {
+    std::int32_t min_int32 = static_cast<std::int32_t>(this->min),
+                 max_int32 = static_cast<std::int32_t>(this->max);
+
+    if (value < min_int32) {
+      return this->min;
+    }
+    if (value > max_int32) {
+      return this->max;
+    }
+    return value;
+  }
+};
 
 #endif

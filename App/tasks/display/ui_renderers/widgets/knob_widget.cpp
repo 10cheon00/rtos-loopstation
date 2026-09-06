@@ -10,11 +10,11 @@ namespace UiWidget {
 #define BOX_WIDTH 2
 #define BOX_HEIGHT 2
 
-static int16_t ConvertParameterToDegree(Parameter* parameter);
+static int16_t ConvertParameterToDegree(Parameter& parameter);
 static void DrawKnobIndicator(u8g2_t* u8g2, int16_t degree, uint8_t x,
                               uint8_t y);
 
-void DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y, Parameter* parameter) {
+void DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y, Parameter& parameter) {
   /**
    * 바늘지시식으로 노브의 값을 보여주어야 함.
    * 1. 그러므로 일단 노브의 값을 수학적으로 표현하는 각도로 변환
@@ -27,7 +27,7 @@ void DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y, Parameter* parameter) {
   uint8_t cx, cy;
   int16_t degree;
 
-  if (parameter->type != PARAMETER_TYPE_SLIDER) {
+  if (parameter.GetType() != ParameterType::SLIDER) {
     return;
   }
 
@@ -44,15 +44,15 @@ void DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y, Parameter* parameter) {
   DrawKnobIndicator(u8g2, degree, cx, cy);
 }
 
-static int16_t ConvertParameterToDegree(Parameter* parameter) {
+static int16_t ConvertParameterToDegree(Parameter& parameter) {
   int16_t degree;
 
   // 수학적 각도가 증가하는 방향과 파라미터가 증가하는 방향이 서로
   // 반대방향이므로 방향을 일치시키기 위해 계산
-  degree = parameter->max - parameter->current + parameter->min;
+  degree = parameter.GetMax() - parameter.GetCurrent() + parameter.GetMin();
   // 파라미터 값을 수학적 각도로 변환
-  return (((double)degree - parameter->min) /
-          (parameter->max - parameter->min)) *
+  return (((double)degree - parameter.GetMin()) /
+          (parameter.GetMax() - parameter.GetMin())) *
              270.0 -
          45;
 }
