@@ -3,7 +3,7 @@
 
 #include "enum_raw.h"
 
-typedef EnumRaw EncoderIdRaw;
+typedef RtosEnumValue EncoderIdRaw;
 
 enum {
   ENCODER_ID_A = 0,

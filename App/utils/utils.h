@@ -28,17 +28,14 @@ typedef uint32_t Hash_t;
 Hash_t djb2(const char* string);
 
 template <typename Enum>
-inline std::underlying_type_t<Enum> ConvertEnumToRaw(Enum id) {
+inline std::underlying_type_t<Enum> ToRtosEnumValue(Enum id) {
   return static_cast<std::underlying_type_t<Enum>>(id);
 }
 
 template <typename Enum>
-bool ConvertEnumRawToEnum(std::underlying_type_t<Enum> raw, Enum* id) {
-  if (id == nullptr) {
-    return false;
-  }
-  *id = static_cast<Enum>(raw);
-  return true;
+Enum FromRtosEnumValue(std::underlying_type_t<Enum> rtos_enum_value) noexcept {
+  static_assert(std::is_enum_v<Enum>);
+  return static_cast<Enum>(rtos_enum_value);
 }
 
 constexpr std::optional<SlotPosition> ToSlotPosition(ButtonId id) {

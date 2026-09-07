@@ -13,19 +13,19 @@ typedef enum {
 
 typedef struct {
   uint32_t timestamp_ticks;
-  EnumRaw button_id_raw;
-  EnumRaw button_state_raw;
+  RtosEnumValue button_id_raw;
+  RtosEnumValue button_state_raw;
 } ButtonPayload;
 
 typedef struct {
   uint32_t timestamp_ticks;
-  EnumRaw encoder_id_raw;
+  RtosEnumValue encoder_id_raw;
   int32_t delta;
 } EncoderRotationPayload;
 
 typedef struct {
   uint32_t timestamp_ticks;
-  EnumRaw knob_id_raw;
+  RtosEnumValue knob_id_raw;
   uint16_t adc_value;
 } AdcConversionPayload;
 
@@ -36,6 +36,6 @@ typedef struct {
     EncoderRotationPayload encoder_rotation;
     AdcConversionPayload adc_conversion;
   } payload;
-} StateEvent;
+} RtosMessage_StateEvent;
 
 #endif

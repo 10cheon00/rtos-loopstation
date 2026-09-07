@@ -65,8 +65,8 @@ static constexpr EnumMap<TrackStateMachine::Id, TrackLedColorSet>
     };
 
 static void Run(void);
-static TaskStatus HandlePanelRenderPayload(PanelRenderPayload* payload);
-static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload);
+static TaskStatus HandlePanelRenderPayload(RtosPayload_PanelRender* payload);
+static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender* payload);
 static TaskStatus RenderFxLed(Parameter& parameter, Mcp23017::GpioId gpio_id);
 static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id,
                                  uint8_t track_index);
@@ -114,7 +114,7 @@ void DisplayTask_Init(void* argument) {
 
 static void Run(void) {
   TickType_t last_wake_ticks = 0, next_wake_ticks;
-  DisplaySnapshot snapshot;
+  RtosMessage_DisplaySnapshot snapshot;
 
   for (;;) {
     next_wake_ticks = last_wake_ticks + DISPLAY_RENDER_DELAY_TICKS;
@@ -127,14 +127,11 @@ static void Run(void) {
 }
 
 static TaskStatus HandlePanelRenderPayload(
-    PanelRenderPayload* panel_render_payload) {
+    RtosPayload_PanelRender* panel_render_payload) {
   u8g2_ClearBuffer(&u8g2);
 
-  UiStateMachine::Id ui_state_id;
-  if (!ConvertEnumRawToEnum(panel_render_payload->ui_state_enum_raw,
-                            &ui_state_id)) {
-    return TASK_STATUS_ERROR;
-  }
+  UiStateMachine::Id ui_state_id =
+      FromRtosEnumValue<UiStateMachine::Id>(panel_render_payload->ui_state_enum_raw);
 
   const char* panel_label = UiStateLabelMap::Get(ui_state_id);
   UiRenderer::DrawPanelLayout(&u8g2, panel_label,
@@ -143,23 +140,18 @@ static TaskStatus HandlePanelRenderPayload(
   for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
        i++) {
     const SlotPosition slot_position = static_cast<SlotPosition>(i);
-    PageSlotRenderPayload* payload =
+    RtosPayload_PageSlotRender* payload =
         &panel_render_payload->slot_render_payloads[i];
-    PageSlotType type;
-    if (!ConvertEnumRawToEnum(payload->page_slot_type_raw, &type)) {
-      type = PageSlotType::NONE;
-    }
+    PageSlotType type =
+        FromRtosEnumValue<PageSlotType>(payload->page_slot_type_raw);
     if (type == PageSlotType::MENU) {
-      MenuRenderPayload* menu_render_payload = &payload->data.menu;
-      MenuIconEncoding icon_encoding;
-      if (!ConvertEnumRawToEnum(menu_render_payload->menu_icon_encoding_raw16,
-                                &icon_encoding)) {
-        icon_encoding = MenuIconEncoding::MISSING;
-      }
+      RtosPayload_MenuRender* menu_render_payload = &payload->data.menu;
+      MenuIconEncoding icon_encoding = FromRtosEnumValue<MenuIconEncoding>(
+          menu_render_payload->menu_icon_encoding_raw16);
       UiRenderer::DrawMenu(&u8g2, icon_encoding, menu_render_payload->label,
                            slot_position);
     } else if (type == PageSlotType::PARAMETER) {
-      ParameterRenderPayload* parameter_render_payload =
+      RtosPayload_ParameterRender* parameter_render_payload =
           &payload->data.parameter;
       Parameter parameter{parameter_render_payload->parameter_raw};
       UiRenderer::DrawParameter(&u8g2, parameter,
@@ -172,7 +164,7 @@ static TaskStatus HandlePanelRenderPayload(
   return TASK_STATUS_OK;
 }
 
-static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload) {
+static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender* payload) {
   Parameter ifx_a_state{payload->ifx_a_state_raw};
   Parameter tfx_a_state{payload->tfx_a_state_raw};
   if (RenderFxLed(ifx_a_state, Mcp23017::GpioId::LED_IFX_A) != TASK_STATUS_OK) {
@@ -182,11 +174,8 @@ static TaskStatus HandleLedRenderPayload(LedRenderPayload* payload) {
     return TASK_STATUS_ERROR;
   }
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    TrackStateMachine::Id id;
-    if (!ConvertEnumRawToEnum<TrackStateMachine::Id>(
-            payload->track_state_enum_raws[i], &id)) {
-      return TASK_STATUS_ERROR;
-    }
+    TrackStateMachine::Id id = FromRtosEnumValue<TrackStateMachine::Id>(
+        payload->track_state_enum_raws[i]);
     if (RenderTrackLed(id, i) != TASK_STATUS_OK) {
       return TASK_STATUS_ERROR;
     }

@@ -11,7 +11,7 @@ typedef struct {
   ParameterValueRaw min;
   ParameterValueRaw max;
   ParameterValueRaw current;
-  EnumRaw parameter_type_raw;
+  RtosEnumValue parameter_type_raw;
 } ParameterRaw;
 
 #endif

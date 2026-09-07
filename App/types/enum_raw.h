@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-typedef uint8_t EnumRaw;
-typedef uint16_t EnumRaw16;
+typedef uint8_t RtosEnumValue;
+typedef uint16_t RtosEnumValue16;
 
 #endif

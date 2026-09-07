@@ -41,16 +41,16 @@ static std::array<TrackStateMachine::StateMachine,
     track_state_machines{TrackStateMachine::StateMachine{
         track_state_machine_contexts[0], TrackStateMachine::Id::IDLE}};
 
-static TaskStatus TryUpdateParameter(StateEvent& state_event);
+static TaskStatus TryUpdateParameter(RtosMessage_StateEvent& state_event);
 static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload);
 static TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationPayload& encoder_rotation_payload);
-static TaskStatus TryUpdateParameterFromAdc(StateEvent& state_event);
-static TaskStatus TryTransitionUiStateMachine(StateEvent& state_event);
+static TaskStatus TryUpdateParameterFromAdc(RtosMessage_StateEvent& state_event);
+static TaskStatus TryTransitionUiStateMachine(RtosMessage_StateEvent& state_event);
 static TaskStatus UpdateDisplaySnapshotMailbox();
 static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine& track_state_machine,
-    StateEvent& state_event);
+    RtosMessage_StateEvent& state_event);
 
 static int IsValidInitParams(const StateInitParams* params) {
   return (params != 0) && (params->state_event_queue != 0) &&
@@ -73,7 +73,7 @@ void StateTask_Init(void* argument) {
 }
 
 void StateTask_Run(void) {
-  StateEvent state_event;
+  RtosMessage_StateEvent state_event;
   osStatus_t os_status;
   TaskStatus task_status;
 
@@ -104,7 +104,7 @@ void StateTask_Run(void) {
   }
 }
 
-static TaskStatus TryUpdateParameter(StateEvent& state_event) {
+static TaskStatus TryUpdateParameter(RtosMessage_StateEvent& state_event) {
   if (state_event.type == STATE_EVENT_BUTTON) {
     return TryUpdateParameterFromButton(state_event.payload.button);
   } else if (state_event.type == STATE_EVENT_ENCODER_ROTATION) {
@@ -123,19 +123,13 @@ static TaskStatus TryUpdateParameter(StateEvent& state_event) {
 static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload) {
   ParameterId parameter_id;
 
-  ButtonState button_state;
-  if (!ConvertEnumRawToEnum<ButtonState>(button_payload.button_state_raw,
-                                         &button_state)) {
-    return TASK_STATUS_ERROR;
-  }
+  ButtonState button_state =
+      FromRtosEnumValue<ButtonState>(button_payload.button_state_raw);
   if (button_state != ButtonState::PRESSED) {
     return TASK_STATUS_ERROR;
   }
 
-  ButtonId id;
-  if (!ConvertEnumRawToEnum<ButtonId>(button_payload.button_id_raw, &id)) {
-    return TASK_STATUS_ERROR;
-  }
+  ButtonId id = FromRtosEnumValue<ButtonId>(button_payload.button_id_raw);
 
   if (id != ButtonId::IFX_A_TOGGLE && id != ButtonId::TFX_A_TOGGLE &&
       id != ButtonId::ENCODER_A_PUSH) {
@@ -187,10 +181,8 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationPayload& encoder_rotation_payload) {
   ParameterId parameter_id;
 
-  EncoderId id;
-  if (!ConvertEnumRawToEnum(encoder_rotation_payload.encoder_id_raw, &id)) {
-    return TASK_STATUS_ERROR;
-  }
+  EncoderId id =
+      FromRtosEnumValue<EncoderId>(encoder_rotation_payload.encoder_id_raw);
   std::optional<SlotPosition> maybe_slot_position = ToSlotPosition(id);
   if (!maybe_slot_position.has_value()) {
     return TASK_STATUS_ERROR;
@@ -211,13 +203,13 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
   return TASK_STATUS_OK;
 }
 
-TaskStatus TryUpdateParameterFromAdc(StateEvent& state_event) {
+TaskStatus TryUpdateParameterFromAdc(RtosMessage_StateEvent& state_event) {
   // TODO:
   // ADC 입력과 매핑된 파라미터를 수정하기
   return TASK_STATUS_ERROR;
 }
 
-static TaskStatus TryTransitionUiStateMachine(StateEvent& state_event) {
+static TaskStatus TryTransitionUiStateMachine(RtosMessage_StateEvent& state_event) {
   // TODO:
   // 좌우 버튼이 페이지 이동에만 사용되므로, 여기서 일어나는 전이들은 대부분
   // System, Loop, IFX A/B/C, TFX A/B/C와 같이 특정 메뉴로 바로 이동하는 전역
@@ -232,17 +224,11 @@ static TaskStatus TryTransitionUiStateMachine(StateEvent& state_event) {
   if (state_event.type != STATE_EVENT_BUTTON) {
     return TASK_STATUS_ERROR;
   }
-  ButtonId button_id;
-  if (!ConvertEnumRawToEnum<ButtonId>(state_event.payload.button.button_id_raw,
-                                      &button_id)) {
-    return TASK_STATUS_ERROR;
-  }
+  ButtonId button_id =
+      FromRtosEnumValue<ButtonId>(state_event.payload.button.button_id_raw);
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
-  ButtonState button_state;
-  if (!ConvertEnumRawToEnum<ButtonState>(
-          state_event.payload.button.button_state_raw, &button_state)) {
-    return TASK_STATUS_ERROR;
-  }
+  ButtonState button_state = FromRtosEnumValue<ButtonState>(
+      state_event.payload.button.button_state_raw);
   if (button_state != ButtonState::PRESSED) {
     return TASK_STATUS_ERROR;
   }
@@ -284,10 +270,10 @@ static TaskStatus TryTransitionUiStateMachine(StateEvent& state_event) {
 }
 
 static TaskStatus UpdateDisplaySnapshotMailbox() {
-  DisplaySnapshot snapshot;
+  RtosMessage_DisplaySnapshot snapshot;
 
   snapshot.panel.ui_state_enum_raw =
-      ConvertEnumToRaw(ui_state_machine.GetCurrentState()->GetId());
+      ToRtosEnumValue(ui_state_machine.GetCurrentState()->GetId());
   snapshot.panel.page_navigation_flag = PAGE_NAVIGATION_FLAG_NONE;
   if (ui_state_machine.GetCurrentState()->CanDecreasePageIndex()) {
     snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_LEFT_ARROW;
@@ -302,12 +288,12 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
     SlotPosition slot_position = static_cast<SlotPosition>(i);
     PageSlotVariant& page_slot_variant = page.GetAt(slot_position);
     snapshot.panel.slot_render_payloads[i].page_slot_type_raw =
-        ConvertEnumToRaw(GetPageSlotType(page_slot_variant));
+        ToRtosEnumValue(GetPageSlotType(page_slot_variant));
     if (std::holds_alternative<MenuSlot>(page_slot_variant)) {
       MenuSlot& menu_slot = std::get<MenuSlot>(page_slot_variant);
       snapshot.panel.slot_render_payloads[i].data.menu =
-          (MenuRenderPayload){.menu_icon_encoding_raw16 =
-                                  ConvertEnumToRaw(menu_slot.GetIconEncoding()),
+          (RtosPayload_MenuRender){.menu_icon_encoding_raw16 =
+                                  ToRtosEnumValue(menu_slot.GetIconEncoding()),
                               .label = menu_slot.GetLabel()};
     } else if (std::holds_alternative<ParameterSlot>(page_slot_variant)) {
       ParameterSlot& parameter_slot =
@@ -327,7 +313,7 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
 
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     snapshot.led.track_state_enum_raws[i] =
-        ConvertEnumToRaw(track_state_machines[i].GetCurrentState()->GetId());
+        ToRtosEnumValue(track_state_machines[i].GetCurrentState()->GetId());
   }
 
   xQueueOverwrite((QueueHandle_t)display_snapshot_mailbox, &snapshot);
@@ -336,22 +322,16 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
 
 static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine& track_state_machine,
-    StateEvent& state_event) {
+    RtosMessage_StateEvent& state_event) {
   // 1. 버튼 입력일때에만 트랙 상태를 바꿈
   if (state_event.type != STATE_EVENT_BUTTON) {
     return TASK_STATUS_ERROR;
   }
   ButtonPayload& button_payload = state_event.payload.button;
-  ButtonId id;
-  if (!ConvertEnumRawToEnum<ButtonId>(button_payload.button_id_raw, &id)) {
-    return TASK_STATUS_ERROR;
-  }
+  ButtonId id = FromRtosEnumValue<ButtonId>(button_payload.button_id_raw);
   // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
-  ButtonState state;
-  if (!ConvertEnumRawToEnum<ButtonState>(button_payload.button_state_raw,
-                                         &state)) {
-    return TASK_STATUS_ERROR;
-  }
+  ButtonState state =
+      FromRtosEnumValue<ButtonState>(button_payload.button_state_raw);
   if (state != ButtonState::PRESSED) {
     return TASK_STATUS_ERROR;
   }

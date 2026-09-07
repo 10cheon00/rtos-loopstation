@@ -60,7 +60,7 @@ class Parameter {
     raw.min = this->min;
     raw.max = this->max;
     raw.current = this->current;
-    raw.parameter_type_raw = ConvertEnumToRaw(this->type);
+    raw.parameter_type_raw = ToRtosEnumValue(this->type);
   }
 
   const ParameterValue GetMin() const { return this->min; }

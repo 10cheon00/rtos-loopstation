@@ -147,7 +147,7 @@ extern void AdcInputTask_Init(void *argument);
 //  처리를 위임하는 코드만 둔다.
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-    InputEvent input_event = {
+    RtosMessage_InputEvent input_event = {
         .type = INPUT_EVENT_MCP23017,
         .payload = {
             .mcp23017_int_event = {
@@ -164,10 +164,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM4) {
-        InputEvent input_event = {
+        RtosMessage_InputEvent input_event = {
             .type = INPUT_EVENT_ENCODER_ROTATION,
             .payload = {
-                .encoder_rotation_event = (EncoderRotationEvent){
+                .encoder_rotation_event = (RtosPayload_EncoderRotation){
                     .timestamp_ticks = osKernelGetTickCount(),
                     .direction = __HAL_TIM_IS_TIM_COUNTING_DOWN(htim) ? 
                         ENCODER_ROTATE_COUNTER_CLOCKWISE :
@@ -254,13 +254,13 @@ int main(void)
 
   /* Create the queue(s) */
   /* creation of input_event_queue */
-  input_event_queueHandle = osMessageQueueNew (16, sizeof(InputEvent), &input_event_queue_attributes);
+  input_event_queueHandle = osMessageQueueNew (16, sizeof(RtosMessage_InputEvent), &input_event_queue_attributes);
 
   /* creation of display_snapshot_mailbox */
-  display_snapshot_mailboxHandle = osMessageQueueNew (1, sizeof(DisplaySnapshot), &display_snapshot_mailbox_attributes);
+  display_snapshot_mailboxHandle = osMessageQueueNew (1, sizeof(RtosMessage_DisplaySnapshot), &display_snapshot_mailbox_attributes);
 
   /* creation of state_event_queue */
-  state_event_queueHandle = osMessageQueueNew (16, sizeof(StateEvent), &state_event_queue_attributes);
+  state_event_queueHandle = osMessageQueueNew (16, sizeof(RtosMessage_StateEvent), &state_event_queue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   input_init_params.input_event_queue = input_event_queueHandle;

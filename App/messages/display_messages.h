@@ -10,7 +10,7 @@
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
-typedef uint8_t PageNavigationFlag;
+typedef uint8_t RtosPayload_PageNavigationFlag;
 enum {
   PAGE_NAVIGATION_FLAG_NONE = 0x0,
   PAGE_NAVIGATION_FLAG_LEFT_ARROW = 0x1,
@@ -20,38 +20,38 @@ enum {
 typedef struct {
   ParameterRaw parameter_raw;
   const char* label;
-} ParameterRenderPayload;
+} RtosPayload_ParameterRender;
 
 typedef struct {
-  EnumRaw16 menu_icon_encoding_raw16;
+  RtosEnumValue16 menu_icon_encoding_raw16;
   const char* label;
-} MenuRenderPayload;
+} RtosPayload_MenuRender;
 
 typedef struct {
-  EnumRaw page_slot_type_raw;
+  RtosEnumValue page_slot_type_raw;
   union {
-    MenuRenderPayload menu;
-    ParameterRenderPayload parameter;
+    RtosPayload_MenuRender menu;
+    RtosPayload_ParameterRender parameter;
   } data;
-} PageSlotRenderPayload;
+} RtosPayload_PageSlotRender;
 
 typedef struct {
-  EnumRaw ui_state_enum_raw;
-  PageNavigationFlag page_navigation_flag;
-  PageSlotRenderPayload slot_render_payloads[4];
-} PanelRenderPayload;
+  RtosEnumValue ui_state_enum_raw;
+  RtosPayload_PageNavigationFlag page_navigation_flag;
+  RtosPayload_PageSlotRender slot_render_payloads[4];
+} RtosPayload_PanelRender;
 
 typedef struct {
   // TODO:
   // LED와 관련된 설정 구현하기
   ParameterRaw ifx_a_state_raw;
   ParameterRaw tfx_a_state_raw;
-  EnumRaw track_state_enum_raws[TRACK_COUNT];
-} LedRenderPayload;
+  RtosEnumValue track_state_enum_raws[TRACK_COUNT];
+} RtosPayload_LedRender;
 
 typedef struct {
-  PanelRenderPayload panel;
-  LedRenderPayload led;
-} DisplaySnapshot;
+  RtosPayload_PanelRender panel;
+  RtosPayload_LedRender led;
+} RtosMessage_DisplaySnapshot;
 
 #endif

@@ -24,16 +24,16 @@ typedef struct {
 static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;
 
-static TaskStatus HandleInputEvent(InputEvent* input_event);
-static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent* intEvent);
+static TaskStatus HandleInputEvent(RtosMessage_InputEvent* input_event);
+static TaskStatus HandleMcp23017IntEvent(RtosPayload_Mcp23017Event* intEvent);
 static TaskStatus SendButtonPayload(Mcp23017::Address address,
                                     Mcp23017::GpioId gpio_id,
                                     ButtonState button_state,
                                     TickType_t timestamp_ticks);
 static TaskStatus HandleEncoderRotationEvent(
-    EncoderRotationEvent* encoder_rotation_event);
+    RtosPayload_EncoderRotation* encoder_rotation_event);
 static TaskStatus HandleAdcConversionEvent(
-    AdcConversionEvent* adc_conversion_event);
+    RtosPayload_AdcConversion* adc_conversion_event);
 
 static InputTaskContext input_task_context;
 
@@ -59,7 +59,7 @@ void InputTask_Init(void* argument) {
 
 void InputTask_Run(void) {
   TaskStatus task_status;
-  InputEvent input_event;
+  RtosMessage_InputEvent input_event;
   osStatus_t os_status;
   for (;;) {
     os_status =
@@ -70,7 +70,7 @@ void InputTask_Run(void) {
   }
 }
 
-static TaskStatus HandleInputEvent(InputEvent* input_event) {
+static TaskStatus HandleInputEvent(RtosMessage_InputEvent* input_event) {
   if (input_event->type == INPUT_EVENT_MCP23017) {
     return HandleMcp23017IntEvent(&input_event->payload.mcp23017_int_event);
   } else if (input_event->type == INPUT_EVENT_ENCODER_ROTATION) {
@@ -86,7 +86,7 @@ static TaskStatus HandleInputEvent(InputEvent* input_event) {
 // 핀 상태에 따라 상태 관리 태스크에게 메시지를 보낸다.
 // TODO:  버튼 입력 이벤트를 debouncing하여 잘못된 입력을 전달하지 않도록
 // 검사하기
-static TaskStatus HandleMcp23017IntEvent(Mcp23017IntEvent* intEvent) {
+static TaskStatus HandleMcp23017IntEvent(RtosPayload_Mcp23017Event* intEvent) {
   TickType_t timestamp_ticks = intEvent->timestamp_ticks;
   Mcp23017::Address address;
   Mcp23017::InterruptPin GPIO_Pin = intEvent->gpio_pin;
@@ -153,10 +153,10 @@ static TaskStatus SendButtonPayload(Mcp23017::Address address,
   ButtonId button_id = Mcp23017GpioToButtonMap::Get(gpio_id);
   ButtonPayload payload = {
       .timestamp_ticks = timestamp_ticks,
-      .button_id_raw = ConvertEnumToRaw(button_id),
-      .button_state_raw = ConvertEnumToRaw(button_state),
+      .button_id_raw = ToRtosEnumValue(button_id),
+      .button_state_raw = ToRtosEnumValue(button_state),
   };
-  StateEvent state_event = {.type = STATE_EVENT_BUTTON,
+  RtosMessage_StateEvent state_event = {.type = STATE_EVENT_BUTTON,
                             .payload = {
                                 .button = payload,
                             }};
@@ -179,20 +179,18 @@ static TaskStatus SendButtonPayload(Mcp23017::Address address,
 }
 
 static TaskStatus HandleEncoderRotationEvent(
-    EncoderRotationEvent* encoder_rotation_event) {
+    RtosPayload_EncoderRotation* encoder_rotation_event) {
   int32_t delta = 1;
   if (encoder_rotation_event->direction == ENCODER_ROTATE_COUNTER_CLOCKWISE) {
     delta = -1;
   }
 
-  EncoderId id;
-  if (!ConvertEnumRawToEnum(encoder_rotation_event->encoder_id_raw, &id)) {
-    return TASK_STATUS_ERROR;
-  }
+  EncoderId id =
+      FromRtosEnumValue<EncoderId>(encoder_rotation_event->encoder_id_raw);
   if (input_task_context.encoder_button_states[id] == ButtonState::PRESSED) {
     delta *= 10;
   }
-  StateEvent state_event = {
+  RtosMessage_StateEvent state_event = {
       .type = STATE_EVENT_ENCODER_ROTATION,
       .payload = {
           .encoder_rotation = {
@@ -207,8 +205,8 @@ static TaskStatus HandleEncoderRotationEvent(
 }
 
 static TaskStatus HandleAdcConversionEvent(
-    AdcConversionEvent* adc_conversion_event) {
-  StateEvent state_event = {
+    RtosPayload_AdcConversion* adc_conversion_event) {
+  RtosMessage_StateEvent state_event = {
       .type = STATE_EVENT_ADC_CONVERSION,
       .payload = {.adc_conversion = {
                       .timestamp_ticks = adc_conversion_event->timestamp_ticks,

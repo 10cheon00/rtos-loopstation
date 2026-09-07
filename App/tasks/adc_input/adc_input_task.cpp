@@ -49,16 +49,16 @@ static void Run() {
 
 void ScanAllAdcAndSendMessages(AdcRankToKnobMap::AdcRank_t adc_rank,
                                KnobId knob_id) {
-  InputEvent input_event;
+  RtosMessage_InputEvent input_event;
 
   HAL_ADC_PollForConversion(hadc, ADC_POLLING_DELAY_MS);
   adc_values[adc_rank] = HAL_ADC_GetValue(hadc);
 
   input_event.type = INPUT_EVENT_ADC_CONVERSION;
-  input_event.payload.adc_conversion_event = (AdcConversionEvent){
+  input_event.payload.adc_conversion_event = (RtosPayload_AdcConversion){
       .timestamp_ticks = osKernelGetTickCount(),
       .adc_value = adc_values[adc_rank],
-      .knob_id_raw = ConvertEnumToRaw(knob_id),
+      .knob_id_raw = ToRtosEnumValue(knob_id),
   };
   osMessageQueuePut(input_message_queue, &input_event, 0,
                     INPUT_EVENT_QUEUE_TIMEOUT_500MS);
