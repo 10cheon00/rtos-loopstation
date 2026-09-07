@@ -19,21 +19,6 @@ class Page {
   constexpr explicit Page(PageSlots... page_slots)
       : page_slots{page_slots...} {}
 
-  PageSlot& GetPageSlotAt(SlotPosition position) {
-    return std::get<PageSlot>(
-        this->page_slots[static_cast<std::size_t>(position)]);
-  }
-
-  MenuSlot& GetMenuSlotAt(SlotPosition position) {
-    return std::get<MenuSlot>(
-        this->page_slots[static_cast<std::size_t>(position)]);
-  }
-
-  ParameterSlot& GetParameterSlotAt(SlotPosition position) {
-    return std::get<ParameterSlot>(
-        this->page_slots[static_cast<std::size_t>(position)]);
-  }
-
   PageSlotVariant& GetAt(SlotPosition position) {
     return this->page_slots[static_cast<std::size_t>(position)];
   }
