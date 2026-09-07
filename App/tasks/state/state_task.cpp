@@ -12,6 +12,7 @@
 #include "queue.h"
 #include "state_initparams.h"
 #include "state_messages.h"
+#include "state_event_type.hpp"
 #include "page_navigation_flag.hpp"
 #include "system_state_machine.hpp"
 #include "track_config.h"
@@ -106,9 +107,11 @@ void StateTask_Run(void) {
 }
 
 static TaskStatus TryUpdateParameter(RtosMessage_StateEvent& state_event) {
-  if (state_event.type == STATE_EVENT_BUTTON) {
+  const StateEventType type =
+      FromRtosEnumValue<StateEventType>(state_event.type_raw);
+  if (type == StateEventType::BUTTON) {
     return TryUpdateParameterFromButton(state_event.payload.button);
-  } else if (state_event.type == STATE_EVENT_ENCODER_ROTATION) {
+  } else if (type == StateEventType::ENCODER_ROTATION) {
     return TryUpdateParameterFromEncoderRotation(
         state_event.payload.encoder_rotation);
   } else {
@@ -222,7 +225,8 @@ static TaskStatus TryTransitionUiStateMachine(RtosMessage_StateEvent& state_even
   UiStateMachine::Id next_ui_state_id = UiStateMachine::Id::NONE;
 
   // 1. 버튼 입력일때에만 패널이 바뀜
-  if (state_event.type != STATE_EVENT_BUTTON) {
+  if (FromRtosEnumValue<StateEventType>(state_event.type_raw) !=
+      StateEventType::BUTTON) {
     return TASK_STATUS_ERROR;
   }
   ButtonId button_id =
@@ -327,7 +331,8 @@ static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine& track_state_machine,
     RtosMessage_StateEvent& state_event) {
   // 1. 버튼 입력일때에만 트랙 상태를 바꿈
-  if (state_event.type != STATE_EVENT_BUTTON) {
+  if (FromRtosEnumValue<StateEventType>(state_event.type_raw) !=
+      StateEventType::BUTTON) {
     return TASK_STATUS_ERROR;
   }
   ButtonPayload& button_payload = state_event.payload.button;

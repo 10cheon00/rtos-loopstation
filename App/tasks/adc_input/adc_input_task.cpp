@@ -5,6 +5,7 @@
 #include "adc_rank_to_knob_map.hpp"
 #include "cmsis_os2.h"
 #include "input_messages.h"
+#include "input_event_type.hpp"
 #include "stm32h7xx.h"
 #include "utils.h"
 
@@ -54,7 +55,7 @@ void ScanAllAdcAndSendMessages(AdcRankToKnobMap::AdcRank_t adc_rank,
   HAL_ADC_PollForConversion(hadc, ADC_POLLING_DELAY_MS);
   adc_values[adc_rank] = HAL_ADC_GetValue(hadc);
 
-  input_event.type = INPUT_EVENT_ADC_CONVERSION;
+  input_event.type_raw = ToRtosEnumValue(InputEventType::ADC_CONVERSION);
   input_event.payload.adc_conversion_event = (RtosPayload_AdcConversion){
       .timestamp_ticks = osKernelGetTickCount(),
       .adc_value = adc_values[adc_rank],

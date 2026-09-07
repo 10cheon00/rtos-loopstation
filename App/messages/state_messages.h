@@ -3,13 +3,9 @@
 
 #include <stdint.h>
 
-#define STATE_EVENT_QUEUE_TIMEOUT_500MS (500UL)
+#include "enum_raw.h"
 
-typedef enum {
-  STATE_EVENT_BUTTON = 0,
-  STATE_EVENT_ENCODER_ROTATION,
-  STATE_EVENT_ADC_CONVERSION,
-} StateEventType;
+#define STATE_EVENT_QUEUE_TIMEOUT_500MS (500UL)
 
 typedef struct {
   uint32_t timestamp_ticks;
@@ -30,7 +26,7 @@ typedef struct {
 } AdcConversionPayload;
 
 typedef struct {
-  StateEventType type;
+  RtosEnumValue type_raw;
   union {
     ButtonPayload button;
     EncoderRotationPayload encoder_rotation;

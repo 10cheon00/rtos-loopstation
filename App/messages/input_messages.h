@@ -14,20 +14,9 @@ typedef struct {
   uint16_t gpio_pin;
 } RtosPayload_Mcp23017Event;
 
-typedef enum {
-  INPUT_EVENT_MCP23017 = 0,
-  INPUT_EVENT_ENCODER_ROTATION,
-  INPUT_EVENT_ADC_CONVERSION,
-} InputEventType;
-
-typedef enum {
-  ENCODER_ROTATE_CLOCKWISE = 0,
-  ENCODER_ROTATE_COUNTER_CLOCKWISE,
-} EncoderRotationDirection;
-
 typedef struct {
   TickType_t timestamp_ticks;  // for debugging only
-  EncoderRotationDirection direction;
+  RtosEnumValue direction_raw;
   EncoderIdRaw encoder_id_raw;
 } RtosPayload_EncoderRotation;
 
@@ -38,7 +27,7 @@ typedef struct {
 } RtosPayload_AdcConversion;
 
 typedef struct {
-  InputEventType type;
+  RtosEnumValue type_raw;
   union {
     RtosPayload_Mcp23017Event mcp23017_int_event;
     RtosPayload_EncoderRotation encoder_rotation_event;

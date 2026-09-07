@@ -28,6 +28,7 @@
 #include "debug_fault.h"
 #include "display_initparams.h"
 #include "input_initparams.h"
+#include "input_event_sender.h"
 #include "adc_input_initparams.h"
 #include "state_initparams.h"
 /* USER CODE END Includes */
@@ -143,40 +144,17 @@ extern void StateTask_Init(void *argument);
 extern void AdcInputTask_Init(void *argument);
 
 /* USER CODE BEGIN PFP */
-// 이 함수는 전역 콜백 함수 이므로, 여기서는 애플리케이션에게 
-//  처리를 위임하는 코드만 둔다.
+// 이 함수는 전역 콜백 함수이므로 애플리케이션에 처리를 위임한다.
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-    RtosMessage_InputEvent input_event = {
-        .type = INPUT_EVENT_MCP23017,
-        .payload = {
-            .mcp23017_int_event = {
-                .timestamp_ticks = osKernelGetTickCount(),
-                .gpio_pin = GPIO_Pin
-            }
-        }  
-    };
-    osMessageQueuePut(input_event_queueHandle, &input_event, 0, 0);   
+    InputEvent_SendMcp23017(input_event_queueHandle, GPIO_Pin);
 }
 
-// 이 함수는 전역 콜백 함수 이므로, 여기서는 애플리케이션에게 
-//  처리를 위임하는 코드만 둔다.
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM4) {
-        RtosMessage_InputEvent input_event = {
-            .type = INPUT_EVENT_ENCODER_ROTATION,
-            .payload = {
-                .encoder_rotation_event = (RtosPayload_EncoderRotation){
-                    .timestamp_ticks = osKernelGetTickCount(),
-                    .direction = __HAL_TIM_IS_TIM_COUNTING_DOWN(htim) ? 
-                        ENCODER_ROTATE_COUNTER_CLOCKWISE :
-                        ENCODER_ROTATE_CLOCKWISE,
-                    .encoder_id_raw = ENCODER_ID_A,
-                }
-            }
-        };
-        osMessageQueuePut(input_event_queueHandle, &input_event, 0, 0);   
+        InputEvent_SendEncoderA(input_event_queueHandle,
+                               __HAL_TIM_IS_TIM_COUNTING_DOWN(htim));
     }
 }
 
