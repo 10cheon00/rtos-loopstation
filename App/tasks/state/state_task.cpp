@@ -12,6 +12,7 @@
 #include "queue.h"
 #include "state_initparams.h"
 #include "state_messages.h"
+#include "page_navigation_flag.hpp"
 #include "system_state_machine.hpp"
 #include "track_config.h"
 #include "track_state_machine.hpp"
@@ -274,13 +275,15 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
 
   snapshot.panel.ui_state_enum_raw =
       ToRtosEnumValue(ui_state_machine.GetCurrentState()->GetId());
-  snapshot.panel.page_navigation_flag = PAGE_NAVIGATION_FLAG_NONE;
+  PageNavigationFlag navigation_flags = PageNavigationFlag::NONE;
   if (ui_state_machine.GetCurrentState()->CanDecreasePageIndex()) {
-    snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_LEFT_ARROW;
+    navigation_flags = navigation_flags | PageNavigationFlag::LEFT_ARROW;
   }
   if (ui_state_machine.GetCurrentState()->CanIncreasePageIndex()) {
-    snapshot.panel.page_navigation_flag |= PAGE_NAVIGATION_FLAG_RIGHT_ARROW;
+    navigation_flags = navigation_flags | PageNavigationFlag::RIGHT_ARROW;
   }
+
+  snapshot.panel.page_navigation_flag_raw = ToRtosEnumValue(navigation_flags);
 
   Page& page = ui_state_machine.GetCurrentState()->GetCurrentPage();
   for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);

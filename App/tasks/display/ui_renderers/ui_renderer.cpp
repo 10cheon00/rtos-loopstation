@@ -62,15 +62,15 @@ static Status DrawLabel(u8g2_t* u8g2, const char* label, uint8_t x, uint8_t y);
 // TODO:
 // 패널 이동 화살표 표시도 자동화할 수 있지 않을까?
 Status DrawPanelLayout(u8g2_t* u8g2, const char* panel_name,
-                       RtosPayload_PageNavigationFlag flag) {
+                       PageNavigationFlag flag) {
   u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
   u8g2_ClearBuffer(u8g2);
   u8g2_DrawStr(u8g2, 1, PANEL_LABEL_HEIGHT, panel_name);
   u8g2_DrawLine(u8g2, 0, PANEL_LABEL_LINE_Y, SCREEN_WIDTH, PANEL_LABEL_LINE_Y);
-  if (flag & PAGE_NAVIGATION_FLAG_LEFT_ARROW) {
+  if (HasPageNavigationFlag(flag, PageNavigationFlag::LEFT_ARROW)) {
     DrawArrowLeft4x5(u8g2, 117, PANEL_LABEL_HEIGHT);
   }
-  if (flag & PAGE_NAVIGATION_FLAG_RIGHT_ARROW) {
+  if (HasPageNavigationFlag(flag, PageNavigationFlag::RIGHT_ARROW)) {
     DrawArrowRight4x5(u8g2, 122, PANEL_LABEL_HEIGHT);
   }
   return Status::OK;

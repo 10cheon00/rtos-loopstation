@@ -135,7 +135,8 @@ static TaskStatus HandlePanelRenderPayload(
 
   const char* panel_label = UiStateLabelMap::Get(ui_state_id);
   UiRenderer::DrawPanelLayout(&u8g2, panel_label,
-                              panel_render_payload->page_navigation_flag);
+                              FromRtosEnumValue<PageNavigationFlag>(
+                                  panel_render_payload->page_navigation_flag_raw));
 
   for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
        i++) {

@@ -10,13 +10,6 @@
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
-typedef uint8_t RtosPayload_PageNavigationFlag;
-enum {
-  PAGE_NAVIGATION_FLAG_NONE = 0x0,
-  PAGE_NAVIGATION_FLAG_LEFT_ARROW = 0x1,
-  PAGE_NAVIGATION_FLAG_RIGHT_ARROW = 0x2,
-};
-
 typedef struct {
   ParameterRaw parameter_raw;
   const char* label;
@@ -37,7 +30,7 @@ typedef struct {
 
 typedef struct {
   RtosEnumValue ui_state_enum_raw;
-  RtosPayload_PageNavigationFlag page_navigation_flag;
+  RtosEnumValue page_navigation_flag_raw;
   RtosPayload_PageSlotRender slot_render_payloads[4];
 } RtosPayload_PanelRender;
 
