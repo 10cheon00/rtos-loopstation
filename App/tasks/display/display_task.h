@@ -7,8 +7,7 @@ extern "C" {
 
 #include "app.h"
 
-void DisplayTask_Init(void *argument);
-void DisplayTask_Run(void);
+void DisplayTask_Init(void* argument);
 
 #ifdef __cplusplus
 }

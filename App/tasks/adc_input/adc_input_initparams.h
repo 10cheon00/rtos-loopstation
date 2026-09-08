@@ -5,8 +5,8 @@
 #include "stm32h7xx.h"
 
 typedef struct {
-    ADC_HandleTypeDef *hadc;
-    osMessageQueueId_t input_message_queue;
+  ADC_HandleTypeDef* hadc;
+  osMessageQueueId_t input_message_queue;
 } AdcInputInitParams;
 
 #endif

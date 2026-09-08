@@ -1,7 +1,15 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <stdint.h>
+#include <cstdbool>
+#include <cstdint>
+#include <optional>
+#include <type_traits>
+
+#include "button_id.hpp"
+#include "encoder_id.hpp"
+#include "enum_raw.h"
+#include "slot_position.hpp"
 
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))
 
@@ -17,6 +25,55 @@ double cosine(int16_t degree);
 double sine(int16_t degree);
 double tangent(int16_t degree);
 typedef uint32_t Hash_t;
-Hash_t djb2(const char *string);
+Hash_t djb2(const char* string);
+
+template <typename Enum>
+inline std::underlying_type_t<Enum> ToRtosEnumValue(Enum id) {
+  return static_cast<std::underlying_type_t<Enum>>(id);
+}
+
+template <typename Enum>
+Enum FromRtosEnumValue(std::underlying_type_t<Enum> rtos_enum_value) noexcept {
+  static_assert(std::is_enum_v<Enum>);
+  return static_cast<Enum>(rtos_enum_value);
+}
+
+constexpr std::optional<SlotPosition> ToSlotPosition(ButtonId id) {
+  switch (id) {
+    case ButtonId::ENCODER_A_PUSH:
+      return SlotPosition::A;
+
+    case ButtonId::ENCODER_B_PUSH:
+      return SlotPosition::B;
+
+    case ButtonId::ENCODER_C_PUSH:
+      return SlotPosition::C;
+
+    case ButtonId::ENCODER_D_PUSH:
+      return SlotPosition::D;
+
+    default:
+      return std::nullopt;
+  }
+}
+
+constexpr std::optional<SlotPosition> ToSlotPosition(EncoderId id) {
+  switch (id) {
+    case EncoderId::A:
+      return SlotPosition::A;
+
+    case EncoderId::B:
+      return SlotPosition::B;
+
+    case EncoderId::C:
+      return SlotPosition::C;
+
+    case EncoderId::D:
+      return SlotPosition::D;
+
+    default:
+      return std::nullopt;
+  }
+}
 
 #endif

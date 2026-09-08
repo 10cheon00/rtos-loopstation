@@ -4,58 +4,47 @@
 #include <stdint.h>
 
 #include "FreeRTOS.h"
-#include "ui_state.h"
-#include "ui_state_id.h"
-#include "button_id.h"
-#include "parameter.h"
-#include "track_state.h"
-#include "ui_state_slot_index.h"
-#include "menu_descriptor.h"
+#include "enum_raw.h"
+#include "parameter_raw.h"
+#include "track_config.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
-typedef uint8_t PageNavigationFlag;
-enum {
-    PAGE_NAVIGATION_FLAG_NONE = 0x0,
-    PAGE_NAVIGATION_FLAG_LEFT_ARROW = 0x1,
-    PAGE_NAVIGATION_FLAG_RIGHT_ARROW = 0x2,
-};
+typedef struct {
+  ParameterRaw parameter_raw;
+  const char* label;
+} RtosPayload_ParameterRender;
 
 typedef struct {
-    Parameter parameter;
-    const char *label;
-} ParameterRenderPayload;
+  RtosEnumValue16 menu_icon_encoding_raw16;
+  const char* label;
+} RtosPayload_MenuRender;
 
 typedef struct {
-    MenuIconId icon_id;
-    const char *label;
-} MenuRenderPayload;
+  RtosEnumValue page_slot_type_raw;
+  union {
+    RtosPayload_MenuRender menu;
+    RtosPayload_ParameterRender parameter;
+  } data;
+} RtosPayload_PageSlotRender;
 
 typedef struct {
-    PanelSlotType type;
-    union {
-        MenuRenderPayload menu;
-        ParameterRenderPayload parameter;
-    } data;
-} PanelSlotRenderPayload;
+  RtosEnumValue ui_state_enum_raw;
+  RtosEnumValue page_navigation_flag_raw;
+  RtosPayload_PageSlotRender slot_render_payloads[4];
+} RtosPayload_PanelRender;
 
 typedef struct {
-    UiStateId ui_state_id;
-    PageNavigationFlag page_navigation_flag;
-    PanelSlotRenderPayload slot_render_payloads[UI_STATE_SLOT_INDEX_COUNT];
-} PanelRenderPayload;
+  // TODO:
+  // LED와 관련된 설정 구현하기
+  ParameterRaw ifx_a_state_raw;
+  ParameterRaw tfx_a_state_raw;
+  RtosEnumValue track_state_enum_raws[TRACK_COUNT];
+} RtosPayload_LedRender;
 
 typedef struct {
-    // TODO:
-    // LED와 관련된 설정 구현하기
-    Parameter ifx_a_state;
-    Parameter tfx_a_state;
-    TrackStateId track_state[TRACK_COUNT];
-} LedRenderPayload;
-
-typedef struct {
-    PanelRenderPayload panel;
-    LedRenderPayload led;
-} DisplaySnapshot;
+  RtosPayload_PanelRender panel;
+  RtosPayload_LedRender led;
+} RtosMessage_DisplaySnapshot;
 
 #endif

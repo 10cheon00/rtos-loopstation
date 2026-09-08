@@ -1,0 +1,64 @@
+#ifndef UI_STATE_HPP
+#define UI_STATE_HPP
+
+#include <cstdbool>
+#include <cstdint>
+
+#include "enum_map.hpp"
+#include "page.hpp"
+#include "ui_state_id.hpp"
+
+namespace UiStateMachine {
+
+class State {
+ public:
+  State(Id id) : id(id), page_index(0) {}
+
+  const Id GetId() { return this->id; }
+  const std::size_t GetPageIndex() const { return this->page_index; }
+
+  void IncreasePageIndex() {
+    if (this->CanIncreasePageIndex()) {
+      page_index++;
+    }
+  }
+  void DecreasePageIndex() {
+    if (this->CanDecreasePageIndex()) {
+      page_index--;
+    }
+  }
+  bool CanIncreasePageIndex() {
+    return this->page_index + 1 < this->GetPageCount();
+  }
+  bool CanDecreasePageIndex() { return this->page_index > 0; }
+
+  virtual std::size_t GetPageCount() = 0;
+  virtual Page& GetCurrentPage() = 0;
+
+ private:
+  const Id id;
+  std::size_t page_index;
+};
+
+template <std::size_t PageCount>
+class FixedPageState : public State {
+ protected:
+  template <typename... Pages>
+  explicit FixedPageState(Id id, Pages... pages) : State(id), pages{pages...} {}
+
+ public:
+  Page& GetPage() { return this->pages[this->GetPageIndex()]; }
+
+  std::size_t GetPageCount() override { return pages.size(); }
+
+  Page& GetCurrentPage() override {
+    return this->pages[this->GetPageIndex()];
+  };
+
+ private:
+  std::array<Page, PageCount> pages;
+};
+
+}  // namespace UiStateMachine
+
+#endif
