@@ -6,7 +6,7 @@
 **
 **  Author		: STM32CubeMX
 **
-**  Abstract    : Linker script for STM32H743VITx series
+**  Abstract    : Linker script for STM32H743IITx series
 **                2048Kbytes FLASH and 1056Kbytes RAM
 **
 **                Set heap size, stack size and stack location according
