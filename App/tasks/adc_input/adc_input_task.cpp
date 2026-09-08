@@ -4,8 +4,8 @@
 #include "adc_input_initparams.h"
 #include "adc_rank_to_knob_map.hpp"
 #include "cmsis_os2.h"
-#include "input_messages.h"
 #include "input_event_type.hpp"
+#include "input_messages.h"
 #include "stm32h7xx.h"
 #include "utils.h"
 
@@ -55,11 +55,12 @@ void ScanAllAdcAndSendMessages(AdcRankToKnobMap::AdcRank_t adc_rank,
   HAL_ADC_PollForConversion(hadc, ADC_POLLING_DELAY_MS);
   adc_values[adc_rank] = HAL_ADC_GetValue(hadc);
 
-  input_event.type_raw = ToRtosEnumValue(InputEventType::ADC_CONVERSION);
+  input_event.rtos_enum_value_input_event_type =
+      ToRtosEnumValue(InputEventType::ADC_CONVERSION);
   input_event.payload.adc_conversion_event = (RtosPayload_AdcConversion){
       .timestamp_ticks = osKernelGetTickCount(),
       .adc_value = adc_values[adc_rank],
-      .knob_id_raw = ToRtosEnumValue(knob_id),
+      .rtos_enum_value_knob_id = ToRtosEnumValue(knob_id),
   };
   osMessageQueuePut(input_message_queue, &input_event, 0,
                     INPUT_EVENT_QUEUE_TIMEOUT_500MS);

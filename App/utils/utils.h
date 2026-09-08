@@ -8,7 +8,7 @@
 
 #include "button_id.hpp"
 #include "encoder_id.hpp"
-#include "enum_raw.h"
+#include "rtos_enum_value.h"
 #include "slot_position.hpp"
 
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))

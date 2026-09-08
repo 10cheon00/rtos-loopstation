@@ -7,7 +7,8 @@
 
 void InputEvent_SendMcp23017(osMessageQueueId_t queue, uint16_t gpio_pin) {
   RtosMessage_InputEvent event{};
-  event.type_raw = ToRtosEnumValue(InputEventType::MCP23017);
+  event.rtos_enum_value_input_event_type =
+      ToRtosEnumValue(InputEventType::MCP23017);
   event.payload.mcp23017_int_event.timestamp_ticks = osKernelGetTickCount();
   event.payload.mcp23017_int_event.gpio_pin = gpio_pin;
   osMessageQueuePut(queue, &event, 0, 0);
@@ -15,12 +16,14 @@ void InputEvent_SendMcp23017(osMessageQueueId_t queue, uint16_t gpio_pin) {
 
 void InputEvent_SendEncoderA(osMessageQueueId_t queue, bool counting_down) {
   RtosMessage_InputEvent event{};
-  event.type_raw = ToRtosEnumValue(InputEventType::ENCODER_ROTATION);
+  event.rtos_enum_value_input_event_type =
+      ToRtosEnumValue(InputEventType::ENCODER_ROTATION);
   event.payload.encoder_rotation_event.timestamp_ticks = osKernelGetTickCount();
-  event.payload.encoder_rotation_event.direction_raw = ToRtosEnumValue(
+  event.payload.encoder_rotation_event
+      .rtos_enum_value_encoder_rotation_direction = ToRtosEnumValue(
       counting_down ? EncoderRotationDirection::COUNTER_CLOCKWISE
                     : EncoderRotationDirection::CLOCKWISE);
-  event.payload.encoder_rotation_event.encoder_id_raw =
+  event.payload.encoder_rotation_event.rtos_enum_value_encoder_id =
       ToRtosEnumValue(EncoderId::A);
   osMessageQueuePut(queue, &event, 0, 0);
 }
