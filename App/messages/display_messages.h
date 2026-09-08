@@ -4,24 +4,24 @@
 #include <stdint.h>
 
 #include "FreeRTOS.h"
-#include "enum_raw.h"
-#include "parameter_raw.h"
+#include "rtos_enum_value.h"
+#include "rtos_parameter_copy.h"
 #include "track_config.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
 
 typedef struct {
-  ParameterRaw parameter_raw;
+  RtosParameterCopy rtos_parameter_copy;
   const char* label;
 } RtosPayload_ParameterRender;
 
 typedef struct {
-  RtosEnumValue16 menu_icon_encoding_raw16;
+  RtosEnumValue16 rtos_enum_value16_menu_icon_encoding;
   const char* label;
 } RtosPayload_MenuRender;
 
 typedef struct {
-  RtosEnumValue page_slot_type_raw;
+  RtosEnumValue rtos_enum_value_page_slot_type;
   union {
     RtosPayload_MenuRender menu;
     RtosPayload_ParameterRender parameter;
@@ -29,17 +29,17 @@ typedef struct {
 } RtosPayload_PageSlotRender;
 
 typedef struct {
-  RtosEnumValue ui_state_enum_raw;
-  RtosEnumValue page_navigation_flag_raw;
-  RtosPayload_PageSlotRender slot_render_payloads[4];
+  RtosEnumValue rtos_enum_value_ui_state;
+  RtosEnumValue rtos_enum_value_page_navigation_flag;
+  RtosPayload_PageSlotRender page_slots[4];
 } RtosPayload_PanelRender;
 
 typedef struct {
   // TODO:
   // LED와 관련된 설정 구현하기
-  ParameterRaw ifx_a_state_raw;
-  ParameterRaw tfx_a_state_raw;
-  RtosEnumValue track_state_enum_raws[TRACK_COUNT];
+  RtosParameterCopy ifx_a_state;
+  RtosParameterCopy tfx_a_state;
+  RtosEnumValue rtos_enum_value_track_states[TRACK_COUNT];
 } RtosPayload_LedRender;
 
 typedef struct {

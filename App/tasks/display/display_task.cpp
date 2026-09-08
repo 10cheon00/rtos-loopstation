@@ -131,30 +131,30 @@ static TaskStatus HandlePanelRenderPayload(
   u8g2_ClearBuffer(&u8g2);
 
   UiStateMachine::Id ui_state_id =
-      FromRtosEnumValue<UiStateMachine::Id>(panel_render_payload->ui_state_enum_raw);
+      FromRtosEnumValue<UiStateMachine::Id>(panel_render_payload->rtos_enum_value_ui_state);
 
   const char* panel_label = UiStateLabelMap::Get(ui_state_id);
   UiRenderer::DrawPanelLayout(&u8g2, panel_label,
                               FromRtosEnumValue<PageNavigationFlag>(
-                                  panel_render_payload->page_navigation_flag_raw));
+                                  panel_render_payload->rtos_enum_value_page_navigation_flag));
 
   for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
        i++) {
     const SlotPosition slot_position = static_cast<SlotPosition>(i);
     RtosPayload_PageSlotRender* payload =
-        &panel_render_payload->slot_render_payloads[i];
+        &panel_render_payload->page_slots[i];
     PageSlotType type =
-        FromRtosEnumValue<PageSlotType>(payload->page_slot_type_raw);
+        FromRtosEnumValue<PageSlotType>(payload->rtos_enum_value_page_slot_type);
     if (type == PageSlotType::MENU) {
       RtosPayload_MenuRender* menu_render_payload = &payload->data.menu;
       MenuIconEncoding icon_encoding = FromRtosEnumValue<MenuIconEncoding>(
-          menu_render_payload->menu_icon_encoding_raw16);
+          menu_render_payload->rtos_enum_value16_menu_icon_encoding);
       UiRenderer::DrawMenu(&u8g2, icon_encoding, menu_render_payload->label,
                            slot_position);
     } else if (type == PageSlotType::PARAMETER) {
       RtosPayload_ParameterRender* parameter_render_payload =
           &payload->data.parameter;
-      Parameter parameter{parameter_render_payload->parameter_raw};
+      Parameter parameter{parameter_render_payload->rtos_parameter_copy};
       UiRenderer::DrawParameter(&u8g2, parameter,
                                 parameter_render_payload->label, slot_position);
     }
@@ -166,8 +166,8 @@ static TaskStatus HandlePanelRenderPayload(
 }
 
 static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender* payload) {
-  Parameter ifx_a_state{payload->ifx_a_state_raw};
-  Parameter tfx_a_state{payload->tfx_a_state_raw};
+  Parameter ifx_a_state{payload->ifx_a_state};
+  Parameter tfx_a_state{payload->tfx_a_state};
   if (RenderFxLed(ifx_a_state, Mcp23017::GpioId::LED_IFX_A) != TASK_STATUS_OK) {
     return TASK_STATUS_ERROR;
   }
@@ -176,7 +176,7 @@ static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender* payload) {
   }
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     TrackStateMachine::Id id = FromRtosEnumValue<TrackStateMachine::Id>(
-        payload->track_state_enum_raws[i]);
+        payload->rtos_enum_value_track_states[i]);
     if (RenderTrackLed(id, i) != TASK_STATUS_OK) {
       return TASK_STATUS_ERROR;
     }

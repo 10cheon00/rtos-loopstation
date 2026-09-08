@@ -5,7 +5,7 @@
 #include <cstdint>
 
 #include "enum_id.hpp"
-#include "parameter_raw.h"
+#include "rtos_parameter_copy.h"
 #include "utils.h"
 
 using ParameterValue = std::int8_t;
@@ -25,7 +25,7 @@ class Parameter {
                       ParameterValue initial_value, ParameterType type)
       : min(min), max(max), current(initial_value), type(type) {}
 
-  constexpr Parameter(ParameterRaw& raw)
+  constexpr Parameter(RtosParameterCopy& raw)
       : Parameter(raw.min, raw.max, raw.current,
                   static_cast<ParameterType>(raw.parameter_type_raw)) {}
 
@@ -56,7 +56,7 @@ class Parameter {
     return this->current == this->max;
   }
 
-  const void ToRaw(ParameterRaw& raw) {
+  const void ToRaw(RtosParameterCopy& raw) {
     raw.min = this->min;
     raw.max = this->max;
     raw.current = this->current;

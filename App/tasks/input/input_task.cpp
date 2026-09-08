@@ -75,7 +75,7 @@ void InputTask_Run(void) {
 
 static TaskStatus HandleInputEvent(RtosMessage_InputEvent* input_event) {
   const InputEventType type =
-      FromRtosEnumValue<InputEventType>(input_event->type_raw);
+      FromRtosEnumValue<InputEventType>(input_event->rtos_enum_value_input_event_type);
   if (type == InputEventType::MCP23017) {
     return HandleMcp23017IntEvent(&input_event->payload.mcp23017_int_event);
   } else if (type == InputEventType::ENCODER_ROTATION) {
@@ -158,11 +158,11 @@ static TaskStatus SendButtonPayload(Mcp23017::Address address,
   ButtonId button_id = Mcp23017GpioToButtonMap::Get(gpio_id);
   ButtonPayload payload = {
       .timestamp_ticks = timestamp_ticks,
-      .button_id_raw = ToRtosEnumValue(button_id),
-      .button_state_raw = ToRtosEnumValue(button_state),
+      .rtos_enum_value_button_id = ToRtosEnumValue(button_id),
+      .rtos_enum_value_button_state = ToRtosEnumValue(button_state),
   };
   RtosMessage_StateEvent state_event = {
-      .type_raw = ToRtosEnumValue(StateEventType::BUTTON),
+      .rtos_enum_value_state_event_type = ToRtosEnumValue(StateEventType::BUTTON),
       .payload = {.button = payload}};
   osMessageQueuePut(state_event_queue, &state_event, 0,
                     STATE_EVENT_QUEUE_TIMEOUT_500MS);
@@ -186,22 +186,22 @@ static TaskStatus HandleEncoderRotationEvent(
     RtosPayload_EncoderRotation* encoder_rotation_event) {
   int32_t delta = 1;
   if (FromRtosEnumValue<EncoderRotationDirection>(
-          encoder_rotation_event->direction_raw) ==
+          encoder_rotation_event->rtos_enum_value_encoder_rotation_direction) ==
       EncoderRotationDirection::COUNTER_CLOCKWISE) {
     delta = -1;
   }
 
   EncoderId id =
-      FromRtosEnumValue<EncoderId>(encoder_rotation_event->encoder_id_raw);
+      FromRtosEnumValue<EncoderId>(encoder_rotation_event->rtos_enum_value_encoder_id);
   if (input_task_context.encoder_button_states[id] == ButtonState::PRESSED) {
     delta *= 10;
   }
   RtosMessage_StateEvent state_event = {
-      .type_raw = ToRtosEnumValue(StateEventType::ENCODER_ROTATION),
+      .rtos_enum_value_state_event_type = ToRtosEnumValue(StateEventType::ENCODER_ROTATION),
       .payload = {
           .encoder_rotation = {
               .timestamp_ticks = encoder_rotation_event->timestamp_ticks,
-              .encoder_id_raw = encoder_rotation_event->encoder_id_raw,
+              .rtos_enum_valud_encoder_id = encoder_rotation_event->rtos_enum_value_encoder_id,
               .delta = delta,
           }}};
   osMessageQueuePut(state_event_queue, &state_event, 0,
@@ -213,10 +213,10 @@ static TaskStatus HandleEncoderRotationEvent(
 static TaskStatus HandleAdcConversionEvent(
     RtosPayload_AdcConversion* adc_conversion_event) {
   RtosMessage_StateEvent state_event = {
-      .type_raw = ToRtosEnumValue(StateEventType::ADC_CONVERSION),
+      .rtos_enum_value_state_event_type = ToRtosEnumValue(StateEventType::ADC_CONVERSION),
       .payload = {.adc_conversion = {
                       .timestamp_ticks = adc_conversion_event->timestamp_ticks,
-                      .knob_id_raw = adc_conversion_event->knob_id_raw,
+                      .rtos_enum_value_knob_id = adc_conversion_event->rtos_enum_value_knob_id,
                       .adc_value = adc_conversion_event->adc_value}}};
 
   osMessageQueuePut(state_event_queue, &state_event, 0,
