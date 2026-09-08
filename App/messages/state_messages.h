@@ -15,7 +15,7 @@ typedef struct {
 
 typedef struct {
   uint32_t timestamp_ticks;
-  RtosEnumValue rtos_enum_valud_encoder_id;
+  RtosEnumValue rtos_enum_value_encoder_id;
   int32_t delta;
 } EncoderRotationPayload;
 

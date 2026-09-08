@@ -201,7 +201,7 @@ static TaskStatus HandleEncoderRotationEvent(
       .payload = {
           .encoder_rotation = {
               .timestamp_ticks = encoder_rotation_event->timestamp_ticks,
-              .rtos_enum_valud_encoder_id = encoder_rotation_event->rtos_enum_value_encoder_id,
+              .rtos_enum_value_encoder_id = encoder_rotation_event->rtos_enum_value_encoder_id,
               .delta = delta,
           }}};
   osMessageQueuePut(state_event_queue, &state_event, 0,

@@ -186,7 +186,7 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
   ParameterId parameter_id;
 
   EncoderId id =
-      FromRtosEnumValue<EncoderId>(encoder_rotation_payload.rtos_enum_valud_encoder_id);
+      FromRtosEnumValue<EncoderId>(encoder_rotation_payload.rtos_enum_value_encoder_id);
   std::optional<SlotPosition> maybe_slot_position = ToSlotPosition(id);
   if (!maybe_slot_position.has_value()) {
     return TASK_STATUS_ERROR;
@@ -307,16 +307,16 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
           std::get<ParameterSlot>(page_slot_variant);
       Parameter parameter =
           LoopstationStore::GetParameter(parameter_slot.GetParameterId());
-      parameter.ToRaw(
+      parameter.ToRtosParameterCopy(
           snapshot.panel.page_slots[i].data.parameter.rtos_parameter_copy);
       snapshot.panel.page_slots[i].data.parameter.label =
           parameter_slot.GetLabel();
     }
   }
   LoopstationStore::GetParameter(ParameterId::IFX_A_STATE)
-      .ToRaw(snapshot.led.ifx_a_state);
+      .ToRtosParameterCopy(snapshot.led.ifx_a_state);
   LoopstationStore::GetParameter(ParameterId::TFX_A_STATE)
-      .ToRaw(snapshot.led.tfx_a_state);
+      .ToRtosParameterCopy(snapshot.led.tfx_a_state);
 
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     snapshot.led.rtos_enum_value_track_states[i] =

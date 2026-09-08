@@ -56,7 +56,7 @@ class Parameter {
     return this->current == this->max;
   }
 
-  const void ToRaw(RtosParameterCopy& raw) {
+  const void ToRtosParameterCopy(RtosParameterCopy& raw) {
     raw.min = this->min;
     raw.max = this->max;
     raw.current = this->current;
