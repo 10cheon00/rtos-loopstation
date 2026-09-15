@@ -11,6 +11,8 @@ enum class ButtonId : std::uint8_t {
   RIGHT,
   ENTER,
   EXIT,
+  SETTING,
+  LOOP,
   ENCODER_A_PUSH,
   ENCODER_B_PUSH,
   ENCODER_C_PUSH,

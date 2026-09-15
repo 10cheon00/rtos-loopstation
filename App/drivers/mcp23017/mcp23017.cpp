@@ -255,7 +255,7 @@ Status Driver::UpdateLedStateLocked(Address address, GpioId led_gpio_id,
   }
   PinMask pin_register_mask = (PinMask)0x1 << pin_config.pin_index;
 
-  value = (value & (uint8_t)~pin_register_mask) | (uint8_t)led_state;
+  value = (value & ~pin_register_mask) | ((uint8_t)led_state & pin_register_mask);
 
   return this->WriteRegister(address, reg, value);
 }

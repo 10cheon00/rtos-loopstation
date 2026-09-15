@@ -91,6 +91,7 @@ LcdStatus Init(u8g2_t* u8g2, InitParams* params) {
   u8g2_InitDisplay(u8g2);
   u8g2_SetPowerSave(u8g2, 0);
   u8g2_SetContrast(u8g2, 80);
+  u8g2_SetDisplayRotation(u8g2, U8G2_R2);
 
   return LcdStatus::OK;
 }

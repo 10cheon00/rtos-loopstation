@@ -5,6 +5,9 @@
 #include "input_messages.h"
 #include "utils.h"
 
+static void SendEncoder(osMessageQueueId_t queue, EncoderId id,
+                        bool counting_down);
+
 void InputEvent_SendMcp23017(osMessageQueueId_t queue, uint16_t gpio_pin) {
   RtosMessage_InputEvent event{};
   event.rtos_enum_value_input_event_type =
@@ -15,6 +18,23 @@ void InputEvent_SendMcp23017(osMessageQueueId_t queue, uint16_t gpio_pin) {
 }
 
 void InputEvent_SendEncoderA(osMessageQueueId_t queue, bool counting_down) {
+  SendEncoder(queue, EncoderId::A, counting_down);
+}
+
+void InputEvent_SendEncoderB(osMessageQueueId_t queue, bool counting_down) {
+  SendEncoder(queue, EncoderId::B, counting_down);
+}
+
+void InputEvent_SendEncoderC(osMessageQueueId_t queue, bool counting_down) {
+  SendEncoder(queue, EncoderId::C, counting_down);
+}
+
+void InputEvent_SendEncoderD(osMessageQueueId_t queue, bool counting_down) {
+  SendEncoder(queue, EncoderId::D, counting_down);
+}
+
+static void SendEncoder(osMessageQueueId_t queue, EncoderId id,
+                        bool counting_down) {
   RtosMessage_InputEvent event{};
   event.rtos_enum_value_input_event_type =
       ToRtosEnumValue(InputEventType::ENCODER_ROTATION);
@@ -24,6 +44,6 @@ void InputEvent_SendEncoderA(osMessageQueueId_t queue, bool counting_down) {
       counting_down ? EncoderRotationDirection::COUNTER_CLOCKWISE
                     : EncoderRotationDirection::CLOCKWISE);
   event.payload.encoder_rotation_event.rtos_enum_value_encoder_id =
-      ToRtosEnumValue(EncoderId::A);
+      ToRtosEnumValue(id);
   osMessageQueuePut(queue, &event, 0, 0);
 }

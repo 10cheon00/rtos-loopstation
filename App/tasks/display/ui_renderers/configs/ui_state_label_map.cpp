@@ -13,6 +13,6 @@ static constexpr EnumMap<Id, const char*> map{
     EnumEntry{Id::SYSTEM_SETTING, "SYSTEM SETTING"},
 };
 
-const char* Get(Id id) { return map[Id::NONE]; }
+const char* Get(Id id) { return map[id]; }
 
 }  // namespace UiStateLabelMap

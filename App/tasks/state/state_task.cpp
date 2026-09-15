@@ -1,6 +1,7 @@
 #include "state_task.h"
 
 #include "FreeRTOS.h"
+#include "mcp23017.hpp"
 #include "app.h"
 #include "button_state.hpp"
 #include "button_to_track_action_map.hpp"
@@ -70,6 +71,8 @@ void StateTask_Init(void* argument) {
 
   state_event_queue = params->state_event_queue;
   display_snapshot_mailbox = params->display_snapshot_mailbox;
+  
+  Mcp23017::Driver::GetInstance().Initialize(params->hi2c, params->i2c_mutex);
 
   StateTask_Run();
 }

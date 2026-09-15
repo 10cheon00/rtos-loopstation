@@ -13,6 +13,9 @@ extern "C" {
 // ISR callers use non-blocking queue writes.
 void InputEvent_SendMcp23017(osMessageQueueId_t queue, uint16_t gpio_pin);
 void InputEvent_SendEncoderA(osMessageQueueId_t queue, bool counting_down);
+void InputEvent_SendEncoderB(osMessageQueueId_t queue, bool counting_down);
+void InputEvent_SendEncoderC(osMessageQueueId_t queue, bool counting_down);
+void InputEvent_SendEncoderD(osMessageQueueId_t queue, bool counting_down);
 
 #ifdef __cplusplus
 }

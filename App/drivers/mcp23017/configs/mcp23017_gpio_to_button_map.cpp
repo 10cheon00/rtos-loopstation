@@ -21,6 +21,8 @@ static constexpr EnumMap<GpioId, ButtonId> gpio_to_button_map{
     EnumEntry{GpioId::BUTTON_RIGHT, ButtonId::RIGHT},
     EnumEntry{GpioId::BUTTON_ENTER, ButtonId::ENTER},
     EnumEntry{GpioId::BUTTON_EXIT, ButtonId::EXIT},
+    EnumEntry{GpioId::BUTTON_SETTING, ButtonId::SETTING},
+    EnumEntry{GpioId::BUTTON_LOOP, ButtonId::LOOP},
     EnumEntry{GpioId::BUTTON_ENCODER_A_PUSH, ButtonId::ENCODER_A_PUSH},
     EnumEntry{GpioId::BUTTON_ENCODER_B_PUSH, ButtonId::ENCODER_B_PUSH},
     EnumEntry{GpioId::BUTTON_ENCODER_C_PUSH, ButtonId::ENCODER_C_PUSH},
