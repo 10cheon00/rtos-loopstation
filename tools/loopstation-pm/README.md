@@ -1,13 +1,19 @@
 ---
 title: rtos-loopstation-PM 로컬 Slack 연결 사용 안내
-version: 0.2.0
+version: 0.3.1
 change_history:
+  - date: 2026-09-15
+    version: 0.3.0
+    summary: 멘션으로 등록한 스레드의 일반 댓글 응답과 중복 방지 및 추가 권한 설정을 안내함
   - date: 2026-09-14
     version: 0.2.0
     summary: 실제 앱 이름을 반영하고 이벤트 활성화 장애 원인과 토큰 권한 진단·수신 로그 안내를 추가함
   - date: 2026-09-14
     version: 0.1.0
     summary: ChatGPT 인증 Codex CLI 기반 PM 봇의 설치·실행·검증 및 운영 제약을 문서화함
+  - date: 2026-09-16
+    version: 0.3.1
+    summary: 문서의 설계 및 설명 내용을 갱신함
 ---
 
 # rtos-loopstation-PM — Slack과 Codex CLI 연결
@@ -23,8 +29,8 @@ Codex 구독 사용량을 소비하며, 한도가 소진되면 실패한다. API
   `Logged in using ChatGPT`인지 확인한다. 로그인하지 않았다면 `codex login`을 실행한다.
 - Python 3.10 이상과 인터넷 연결이 필요하다.
 - 기존 Slack 앱에서 Socket Mode를 활성화한다.
-- Bot Token Scopes: `app_mentions:read`, `chat:write`.
-- Event Subscriptions: Enable Events, Subscribe to bot events에 `app_mention` 추가.
+- Bot Token Scopes: `app_mentions:read`, `chat:write`, `channels:history`.
+- Event Subscriptions: Enable Events, Subscribe to bot events에 `app_mention`, `message.channels` 추가.
 - App-Level Token에는 `connections:write` 권한을 부여한다.
 - 앱을 워크스페이스에 설치하고 사용할 채널에 초대한다. 권한 변경 후에는 재설치한다.
 
@@ -66,8 +72,9 @@ Slack의 허용 채널에서 실제 앱을 선택하여 멘션한다.
 
 > @rtos-loopstation-PM 이번 주에는 4시간을 쓸 수 있어. 이번 작업의 범위부터 함께 정하자.
 
-PM 답변 아래 스레드에서도 매번 앱을 멘션한다. 멘션 없는 메시지, 첨부파일, 링크의 내용은
-수집하지 않는다. Mac이 잠자거나 프로그램이 꺼지면 응답할 수 없으며, 꺼진 동안의
+처음에 앱을 멘션하면 해당 스레드가 등록되며, 이후 같은 스레드의 본인 댓글에는 멘션 없이 답한다.
+기존 스레드는 업데이트 후 한 번 다시 멘션해 등록한다. 등록 상태는 재시작 후에도 유지된다.
+일반 채널 글, 미등록 스레드, 다른 사용자와 봇의 댓글에는 답하지 않는다. 첨부파일과 링크 내용은 읽지 않는다. Mac이 잠자거나 프로그램이 꺼지면 응답할 수 없으며, 꺼진 동안의
 멘션을 모두 복구한다는 보장은 없다. 화면 잠금과 시스템 잠자기는 다르다.
 
 ## 기억과 PM 역할
@@ -83,9 +90,9 @@ PM 답변 아래 스레드에서도 매번 앱을 멘션한다. 멘션 없는 �
 
 ## 실행 범위와 오류 처리
 
-- 지정한 사용자와 채널만 허용하며 한 번에 하나씩, 최대 5개 요청을 처리/대기한다.
+- 지정한 사용자와 채널의 멘션 및 등록된 스레드 댓글만 허용하며 한 번에 하나씩, 최대 5개 요청을 처리/대기한다.
 - 질문은 4000자 이내, 응답은 2900자 이내다. 응답이 길면 잘릴 수 있다.
-- 이벤트 ID를 DB에 저장해 같은 이벤트의 중복 생성을 막는다.
+- 채널 ID와 메시지 ts를 DB 키로 사용하며, 멘션의 message 이벤트는 app_mention 경로에 맡겨 이중 응답을 막는다.
 - Codex는 저장소 밖의 임시 디렉터리에서 read-only, approval never로 실행한다.
   사용자 설정을 로드하지 않고 셸, 웹 검색, 플러그인, hook, 다중 에이전트를 비활성화한다.
   PM은 전달받은 텍스트만으로 답변하며 펌웨어 파일을 직접 수정하지 않는다.
@@ -106,7 +113,7 @@ PM 답변 아래 스레드에서도 매번 앱을 멘션한다. 멘션 없는 �
 | `doctor` 성공인데 멘션 수신 실패 | App Token의 `connections:write`, Socket Mode, `app_mention` 구독 |
 | ChatGPT 인증 확인 실패 | 일반 터미널에서 `codex login`, `codex login status` |
 | Codex 생성 실패 | `smoke` 실행, 구독 한도, 네트워크, CLI 버전 |
-| 다음 메시지를 기억하지 못함 | 같은 스레드인지, 매번 실제 봇을 멘션했는지 |
+| 다음 메시지를 기억하지 못함 | 같은 스레드인지, 업데이트 후 한 번 멘션해 등록했는지 |
 | 이미 실행 중 | 기존 터미널의 PM 종료 후 재실행 |
 
 ## 검증

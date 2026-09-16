@@ -82,6 +82,17 @@ class Store:
             db.execute('CREATE TABLE IF NOT EXISTS jobs '
                        '(id TEXT PRIMARY KEY, channel TEXT, thread TEXT, question TEXT, '
                        'answer TEXT, status TEXT, created TEXT DEFAULT CURRENT_TIMESTAMP)')
+            db.execute('CREATE TABLE IF NOT EXISTS active_threads '
+                       '(channel TEXT, thread TEXT, PRIMARY KEY(channel,thread))')
+
+    def activate(self, channel, thread):
+        with self.connect() as db:
+            db.execute('INSERT OR IGNORE INTO active_threads VALUES(?,?)', (channel, thread))
+
+    def active(self, channel, thread):
+        with self.connect() as db:
+            return db.execute('SELECT 1 FROM active_threads WHERE channel=? AND thread=?',
+                              (channel, thread)).fetchone() is not None
 
     def connect(self):
         return sqlite3.connect(self.path, timeout=10)
@@ -113,6 +124,27 @@ def eligible(event, cfg):
     return (event.get('type') == 'app_mention' and not event.get('bot_id')
             and not event.get('subtype') and event.get('user') == cfg['user_id']
             and event.get('channel') == cfg['channel_id'])
+
+
+def route_thread(event, cfg, bot_user_id, store):
+    """Only mentions start conversations; plain replies need an enrolled thread."""
+    kind = event.get('type')
+    if (kind not in ('message', 'app_mention') or event.get('bot_id')
+            or event.get('subtype') or event.get('user') != cfg['user_id']
+            or event.get('user') == bot_user_id
+            or event.get('channel') != cfg['channel_id'] or not event.get('ts')):
+        return None
+    channel = event['channel']
+    thread = event.get('thread_ts') or event['ts']
+    if kind == 'app_mention':
+        store.activate(channel, thread)
+        return thread
+    # Slack can deliver both message and app_mention for one message, in either order.
+    if f'<@{bot_user_id}>' in event.get('text', ''):
+        return None
+    if event.get('thread_ts') and store.active(channel, thread):
+        return thread
+    return None
 
 
 def setup():
@@ -187,18 +219,18 @@ def run(cfg):
         finally:
             slots.release()
 
+    @app.event('message')
     @app.event('app_mention')
-    def mention(event, body):
-        LOG.info('멘션 수신 event=%s user=%s channel=%s', body.get('event_id'),
+    def conversation(event, body):
+        LOG.info('이벤트 수신 type=%s event=%s user=%s channel=%s', event.get('type'), body.get('event_id'),
                  event.get('user'), event.get('channel'))
-        if not eligible(event, cfg):
-            LOG.warning('멘션 제외: 허용 사용자/채널 또는 이벤트 유형 불일치')
+        thread = route_thread(event, cfg, identity['user_id'], store)
+        if thread is None:
+            LOG.info('이벤트 제외: 미등록 스레드/허용 조건 불일치/봇 메시지/중복 멘션 경로')
             return
-        eid = body.get('event_id')
-        if not eid:
-            return
+        # Message identity is stable even if event IDs differ across subscriptions.
+        eid = event['channel'] + ':' + event['ts']
         channel = event['channel']
-        thread = event.get('thread_ts') or event['ts']
         question = re.sub(r'<@[A-Z0-9]+>', '', event.get('text', '')).strip()
         if not question or len(question) > 4000:
             post(channel, thread, '멘션 뒤에 1~4000자 이내의 질문을 입력해 주세요.')
@@ -212,7 +244,7 @@ def run(cfg):
             return
         pool.submit(process, eid, channel, thread, question)
 
-    print('rtos-loopstation-PM 실행 중. 허용된 사용자/채널의 멘션에만 답합니다. 종료: Ctrl+C', flush=True)
+    print('rtos-loopstation-PM 실행 중. 멘션으로 시작한 스레드에서는 댓글에도 답합니다. 종료: Ctrl+C', flush=True)
     handler = SocketModeHandler(app, cfg['app_token'])
     try:
         handler.start()
@@ -245,12 +277,12 @@ def main():
             print('실제 봇 이름/사용자 ID:', result.get('user'), result.get('user_id'))
             scopes = result.headers.get('x-oauth-scopes', '')
             granted = {scope.strip() for scope in scopes.split(',')}
-            for scope in ('app_mentions:read', 'chat:write'):
+            for scope in ('app_mentions:read', 'chat:write', 'channels:history'):
                 print(f'{scope}: ' + ('정상' if scope in granted else '권한 확인 필요'))
             connection = WebClient().apps_connections_open(app_token=cfg['app_token'])
             print('App Token / Socket Mode 연결 발급: ' + ('정상' if connection.get('ok') else '실패'))
             print('허용 사용자/채널:', cfg['user_id'], cfg['channel_id'])
-        print('doctor는 모델 호출/게시를 하지 않습니다. Enable Events가 On이고 app_mention을 구독했는지도 확인하세요.')
+        print('doctor는 모델 호출/게시를 하지 않습니다. Enable Events On 및 app_mention/message.channels 구독을 확인하세요.')
     else:
         if not CONFIG.exists():
             raise RuntimeError('먼저 run.sh setup을 실행하세요.')

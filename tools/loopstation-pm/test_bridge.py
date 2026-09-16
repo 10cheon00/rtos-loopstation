@@ -9,6 +9,32 @@ import bridge
 
 
 class BridgeTests(unittest.TestCase):
+    def test_thread_replies_and_persistence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = bridge.Store(Path(directory) / 'history.db')
+            cfg = {'user_id': 'U1', 'channel_id': 'C1'}
+            mention = {'type': 'app_mention', 'user': 'U1', 'channel': 'C1',
+                       'ts': '1', 'text': '<@B1> 안녕'}
+            reply = dict(mention, type='message', ts='2', thread_ts='1', text='다음 질문')
+            self.assertIsNone(bridge.route_thread(reply, cfg, 'B1', store))
+            self.assertEqual(bridge.route_thread(mention, cfg, 'B1', store), '1')
+            restored = bridge.Store(store.path)
+            self.assertEqual(bridge.route_thread(reply, cfg, 'B1', restored), '1')
+            for delta in [{'thread_ts': 'other'}, {'thread_ts': None}, {'user': 'U2'},
+                          {'channel': 'C2'}, {'bot_id': 'B1'}, {'subtype': 'message_changed'},
+                          {'text': '<@B1> 중복 이벤트'}]:
+                self.assertIsNone(bridge.route_thread(dict(reply, **delta), cfg, 'B1', restored))
+
+    def test_dual_event_order(self):
+        for message_first in (True, False):
+            with tempfile.TemporaryDirectory() as directory:
+                store = bridge.Store(Path(directory) / 'history.db')
+                cfg = {'user_id': 'U1', 'channel_id': 'C1'}
+                base = {'user': 'U1', 'channel': 'C1', 'ts': '1', 'text': '<@B1> 질문'}
+                types = ['message', 'app_mention'] if message_first else ['app_mention', 'message']
+                results = [bridge.route_thread(dict(base, type=t), cfg, 'B1', store) for t in types]
+                self.assertEqual(sum(x is not None for x in results), 1)
+
     def test_restrict_sender_and_channel(self):
         cfg = {'user_id': 'U1', 'channel_id': 'C1'}
         event = {'type': 'app_mention', 'user': 'U1', 'channel': 'C1'}
