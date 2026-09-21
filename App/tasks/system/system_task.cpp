@@ -24,9 +24,6 @@ void SystemTask_Init(void* argument) {
   }
 
   if (Init(params) == SystemInitResult::SUCCESS) {
-    // TODO:
-    // 시스템 초기화 성공 시 다른 태스크들이 시작할 수 있도록,
-    //  이벤트를 발생 시킨 후 이 태스크 종료
     osEventFlagsSet(params->system_init_event, SystemInitEventFlag::Inited);
   } else {
     ErrorHandler();

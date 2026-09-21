@@ -43,7 +43,6 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/csrc/u8x8_string.c
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/csrc/u8x8_u16toa.c
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/csrc/u8x8_u8toa.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/cppsrc/U8g2lib.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/fonts/u8g2_font_ref4x5_prop_v4_tr.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/input_task.cpp
