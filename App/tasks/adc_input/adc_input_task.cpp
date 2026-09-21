@@ -23,8 +23,20 @@ static void Run();
 static void ScanAllAdcAndSendMessages(AdcRankToKnobMap::AdcRank_t adc_rank,
                                       KnobId knob_id);
 
+static int IsValidInitParams(const AdcInputInitParams* params) {
+  return params != NULL && params->hadc != NULL &&
+         params->system_init_event != NULL &&
+         params->input_message_queue != NULL;
+}
+
 void AdcInputTask_Init(void* arguments) {
   AdcInputInitParams* params = (AdcInputInitParams*)arguments;
+
+  if (!IsValidInitParams(params)) {
+    for (;;) {
+      osDelay(1);
+    }
+  }
 
   hadc = params->hadc;
   input_message_queue = params->input_message_queue;

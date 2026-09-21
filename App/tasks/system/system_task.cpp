@@ -30,7 +30,21 @@ void SystemTask_Init(void* argument) {
   }
 }
 
-bool IsValidParams(SystemInitParams* params) { return params != NULL; }
+bool IsValidParams(SystemInitParams* params) {
+  return params != NULL && params->system_init_event != NULL &&
+         params->mcp23017_init_params.hi2c != NULL &&
+         params->mcp23017_init_params.i2c1_mutex != NULL &&
+         params->sdram_init_params.hsdram != NULL &&
+         params->gmg12864_init_params.hspi != NULL &&
+         params->gmg12864_init_params.hi2c != NULL &&
+         params->gmg12864_init_params.i2c1_mutex != NULL &&
+         params->gmg12864_init_params.CS_Port != NULL &&
+         params->gmg12864_init_params.CS_Pin != 0 &&
+         params->gmg12864_init_params.RST_Port != NULL &&
+         params->gmg12864_init_params.RST_Pin != 0 &&
+         params->gmg12864_init_params.DC_Port != NULL &&
+         params->gmg12864_init_params.DC_Pin != 0;
+}
 
 static void ErrorHandler() {
   for (;;) {

@@ -43,8 +43,9 @@ static TaskStatus HandleAdcConversionEvent(
 static InputTaskContext input_task_context;
 
 static int IsValidInitParams(const InputInitParams* params) {
-  return (params != 0) &&
-         (params->input_event_queue != 0 && params->state_event_queue != 0);
+  return (params != 0) && (params->input_event_queue != 0) &&
+         (params->state_event_queue != 0) && (params->hi2c != NULL) &&
+         (params->i2c1_mutex != 0) && (params->system_init_event != 0);
 }
 
 void InputTask_Init(void* argument) {

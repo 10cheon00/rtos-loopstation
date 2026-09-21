@@ -56,7 +56,8 @@ static TaskStatus TryTransitionTrackStateMachine(
 
 static int IsValidInitParams(const StateInitParams* params) {
   return (params != 0) && (params->state_event_queue != 0) &&
-         (params->display_snapshot_mailbox != 0);
+         (params->display_snapshot_mailbox != 0) && (params->hi2c != NULL) &&
+         (params->i2c_mutex != 0) && (params->system_init_event != 0);
 }
 
 void StateTask_Init(void* argument) {

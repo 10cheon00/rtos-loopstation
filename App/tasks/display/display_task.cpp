@@ -74,7 +74,9 @@ static int IsValidInitParams(const DisplayInitParams* params) {
          (params->display_snapshot_mailbox != 0 && params->hspi != NULL &&
           params->CS_Pin != 0 && params->CS_Port != NULL &&
           params->RST_Pin != 0 && params->RST_Port != NULL &&
-          params->DC_Pin != 0 && params->DC_Port != NULL);
+          params->DC_Pin != 0 && params->DC_Port != NULL &&
+          params->hi2c != NULL && params->i2c1_mutex != 0 &&
+          params->system_init_event != 0);
 }
 
 void DisplayTask_Init(void* argument) {
