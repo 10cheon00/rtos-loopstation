@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 
+#include "gmg12864_lcd.hpp"
 #include "utils.h"
 
 namespace UiWidget {
@@ -11,10 +12,9 @@ namespace UiWidget {
 #define BOX_HEIGHT 2
 
 static int16_t ConvertParameterToDegree(Parameter& parameter);
-static void DrawKnobIndicator(u8g2_t* u8g2, int16_t degree, uint8_t x,
-                              uint8_t y);
+static void DrawKnobIndicator(int16_t degree, uint8_t x, uint8_t y);
 
-void DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y, Parameter& parameter) {
+void DrawKnobWidget(uint8_t x, uint8_t y, Parameter& parameter) {
   /**
    * 바늘지시식으로 노브의 값을 보여주어야 함.
    * 1. 그러므로 일단 노브의 값을 수학적으로 표현하는 각도로 변환
@@ -24,6 +24,7 @@ void DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y, Parameter& parameter) {
    * 3. lcd 좌표 축에 맞추어 y를 뒤집음
    * 4. 중심 좌표에 더해서 최종 좌표를 구한다.
    */
+  Gmg12864::Driver& driver = Gmg12864::Driver::GetInstance();
   uint8_t cx, cy;
   int16_t degree;
 
@@ -36,12 +37,12 @@ void DrawKnobWidget(u8g2_t* u8g2, uint8_t x, uint8_t y, Parameter& parameter) {
   cy = y + RADIUS;
 
   // 배경 렌더링
-  u8g2_DrawDisc(u8g2, cx, cy, RADIUS, U8G2_DRAW_ALL);
-  u8g2_DrawBox(u8g2, cx + RADIUS, cy + RADIUS, BOX_WIDTH, BOX_HEIGHT);
-  u8g2_DrawBox(u8g2, cx - RADIUS - 1, cy + RADIUS, BOX_WIDTH, BOX_HEIGHT);
+  driver.drawDisc(cx, cy, RADIUS, U8G2_DRAW_ALL);
+  driver.drawBox(cx + RADIUS, cy + RADIUS, BOX_WIDTH, BOX_HEIGHT);
+  driver.drawBox(cx - RADIUS - 1, cy + RADIUS, BOX_WIDTH, BOX_HEIGHT);
 
   // 노브 인디케이터 렌더링
-  DrawKnobIndicator(u8g2, degree, cx, cy);
+  DrawKnobIndicator(degree, cx, cy);
 }
 
 static int16_t ConvertParameterToDegree(Parameter& parameter) {
@@ -60,8 +61,9 @@ static int16_t ConvertParameterToDegree(Parameter& parameter) {
 /**
  * Bresenham알고리즘으로 직선을 그려 노브 인디케이터를 렌더링
  */
-static void DrawKnobIndicator(u8g2_t* u8g2, int16_t degree, uint8_t x,
-                              uint8_t y) {
+static void DrawKnobIndicator(int16_t degree, uint8_t x, uint8_t y) {
+  Gmg12864::Driver& driver = Gmg12864::Driver::GetInstance();
+  
   int16_t dx, dy, sx, sy, err, x0, x1, y0, y1;
   x0 = x + cosine(degree) * 2;
   y0 = y - sine(degree) * 2;
@@ -73,9 +75,9 @@ static void DrawKnobIndicator(u8g2_t* u8g2, int16_t degree, uint8_t x,
   sy = y0 < y1 ? 1 : -1;
   err = dx + dy;
 
-  u8g2_SetDrawColor(u8g2, 0);
+  driver.setDrawColor(0);
   while (1) {
-    u8g2_DrawBox(u8g2, x0, y0, BOX_WIDTH, BOX_HEIGHT);
+    driver.drawBox(x0, y0, BOX_WIDTH, BOX_HEIGHT);
     if (x0 == x1 && y0 == y1) {
       break;
     }
@@ -91,7 +93,7 @@ static void DrawKnobIndicator(u8g2_t* u8g2, int16_t degree, uint8_t x,
       y0 += sy;
     }
   }
-  u8g2_SetDrawColor(u8g2, 1);
+  driver.setDrawColor(1);
 }
 
 }  // namespace UiWidget

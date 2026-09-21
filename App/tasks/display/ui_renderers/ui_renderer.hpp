@@ -21,13 +21,11 @@ enum class Status : std::uint8_t {
   ERROR,
 };
 
-using UiPanelRenderFunction = Status(u8g2_t*, RtosPayload_ParameterRender*);
-
-Status DrawPanelLayout(u8g2_t* u8g2, const char* panel_name,
+Status DrawPanelLayout(const char* panel_name,
                        PageNavigationFlag flag);
-Status DrawParameter(u8g2_t* u8g2, Parameter& parameter, const char* label,
+Status DrawParameter(Parameter& parameter, const char* label,
                      SlotPosition slot_position);
-Status DrawMenu(u8g2_t* u8g2, MenuIconEncoding icon_id, const char* label,
+Status DrawMenu(MenuIconEncoding icon_id, const char* label,
                 SlotPosition slot_position);
 }  // namespace UiRenderer
 

@@ -8,21 +8,18 @@
 #include "enum_map.hpp"
 #include "mcp23017.hpp"
 #include "mcp23017_gpio_map.hpp"
+#include "gmg12864_lcd.hpp"
 #include "page.hpp"
+#include "system_init_event_flag.hpp"
 #include "track_state_id.hpp"
-#include "u8g2.h"
 #include "ui_renderer.hpp"
 #include "ui_state_label_map.hpp"
-#include "system_init_event_flag.hpp"
 #include "utils.h"
 
 #define DISPLAY_RENDER_FREQEUNCY_HZ (100UL)
 #define DISPLAY_RENDER_DELAY_MS (1000UL / DISPLAY_RENDER_FREQEUNCY_HZ)
 #define DISPLAY_RENDER_DELAY_TICKS (pdMS_TO_TICKS(DISPLAY_RENDER_DELAY_MS))
 
-// TODO:
-// C++ u8g2 라이브러리를 사용하도록 수정하기
-static u8g2_t u8g2;
 static osMessageQueueId_t display_snapshot_mailbox;
 
 struct TrackLedColorSet {
@@ -63,7 +60,7 @@ static constexpr EnumMap<TrackStateMachine::Id, TrackLedColorSet>
                       Mcp23017::LedState::ON,
                       Mcp23017::LedState::OFF,
                   }},
-    };
+};
 
 static void Run(void);
 static TaskStatus HandlePanelRenderPayload(RtosPayload_PanelRender* payload);
@@ -92,24 +89,6 @@ void DisplayTask_Init(void* argument) {
 
   display_snapshot_mailbox = params->display_snapshot_mailbox;
 
-  Gmg12864::InitParams initparams = {
-      .hspi = params->hspi,
-      .CS_Pin = params->CS_Pin,
-      .RST_Pin = params->RST_Pin,
-      .DC_Pin = params->DC_Pin,
-      .CS_Port = params->CS_Port,
-      .RST_Port = params->RST_Port,
-      .DC_Port = params->DC_Port,
-  };
-
-  Gmg12864::LcdStatus status = Gmg12864::Init(&u8g2, &initparams);
-  if (status != Gmg12864::LcdStatus::OK) {
-    // TODO: 초기화 단계에서 오류 발생 시 처리 흐름에 대해 요구사항에서 정의하기
-    for (;;) {
-      osDelay(1);
-    }
-  }
-
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
                    osFlagsWaitAll | osFlagsNoClear, osWaitForever);
   Run();
@@ -131,39 +110,37 @@ static void Run(void) {
 
 static TaskStatus HandlePanelRenderPayload(
     RtosPayload_PanelRender* panel_render_payload) {
-  u8g2_ClearBuffer(&u8g2);
-
-  UiStateMachine::Id ui_state_id =
-      FromRtosEnumValue<UiStateMachine::Id>(panel_render_payload->rtos_enum_value_ui_state);
+  UiStateMachine::Id ui_state_id = FromRtosEnumValue<UiStateMachine::Id>(
+      panel_render_payload->rtos_enum_value_ui_state);
 
   const char* panel_label = UiStateLabelMap::Get(ui_state_id);
-  UiRenderer::DrawPanelLayout(&u8g2, panel_label,
-                              FromRtosEnumValue<PageNavigationFlag>(
-                                  panel_render_payload->rtos_enum_value_page_navigation_flag));
+  UiRenderer::DrawPanelLayout(
+      panel_label,
+      FromRtosEnumValue<PageNavigationFlag>(
+          panel_render_payload->rtos_enum_value_page_navigation_flag));
 
   for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
        i++) {
     const SlotPosition slot_position = static_cast<SlotPosition>(i);
-    RtosPayload_PageSlotRender* payload =
-        &panel_render_payload->page_slots[i];
-    PageSlotType type =
-        FromRtosEnumValue<PageSlotType>(payload->rtos_enum_value_page_slot_type);
+    RtosPayload_PageSlotRender* payload = &panel_render_payload->page_slots[i];
+    PageSlotType type = FromRtosEnumValue<PageSlotType>(
+        payload->rtos_enum_value_page_slot_type);
     if (type == PageSlotType::MENU) {
       RtosPayload_MenuRender* menu_render_payload = &payload->data.menu;
       MenuIconEncoding icon_encoding = FromRtosEnumValue<MenuIconEncoding>(
           menu_render_payload->rtos_enum_value16_menu_icon_encoding);
-      UiRenderer::DrawMenu(&u8g2, icon_encoding, menu_render_payload->label,
+      UiRenderer::DrawMenu(icon_encoding, menu_render_payload->label,
                            slot_position);
     } else if (type == PageSlotType::PARAMETER) {
       RtosPayload_ParameterRender* parameter_render_payload =
           &payload->data.parameter;
       Parameter parameter{parameter_render_payload->rtos_parameter_copy};
-      UiRenderer::DrawParameter(&u8g2, parameter,
-                                parameter_render_payload->label, slot_position);
+      UiRenderer::DrawParameter(parameter, parameter_render_payload->label,
+                                slot_position);
     }
   }
 
-  u8g2_SendBuffer(&u8g2);
+  Gmg12864::Driver::GetInstance().sendBuffer();
 
   return TASK_STATUS_OK;
 }

@@ -10,6 +10,8 @@
 
 namespace UiRenderer {
 
+using namespace Gmg12864;
+
 #define SLOT_WIDTH 32
 #define CHARACTER_HEIGHT 5
 #define PANEL_LABEL_HEIGHT (CHARACTER_HEIGHT + 1)
@@ -47,57 +49,56 @@ static constexpr EnumMap<SlotPosition, std::uint8_t> parameter_width_map{
     EnumEntry{SlotPosition::D, SLOT_WIDTH * 3},
 };
 
-static void DrawArrowLeft4x5(u8g2_t* u8g2, uint8_t x, uint8_t y);
-static void DrawArrowRight4x5(u8g2_t* u8g2, uint8_t x, uint8_t y);
-static Status DrawParameterValue(u8g2_t* u8g2, Parameter& parameter, uint8_t x,
-                                 uint8_t y);
-static Status DrawParameterWidget(u8g2_t* u8g2, Parameter& parameter, uint8_t x,
-                                  uint8_t y);
+static void DrawArrowLeft4x5(uint8_t x, uint8_t y);
+static void DrawArrowRight4x5(uint8_t x, uint8_t y);
+static Status DrawParameterValue(Parameter& parameter, uint8_t x, uint8_t y);
+static Status DrawParameterWidget(Parameter& parameter, uint8_t x, uint8_t y);
 static void ConvertNumberToString(int32_t number, char* string,
                                   uint8_t string_length);
-static Status DrawPanelMenuIcon(u8g2_t* u8g2, MenuIconEncoding icon, uint8_t x,
-                                uint8_t y);
-static Status DrawLabel(u8g2_t* u8g2, const char* label, uint8_t x, uint8_t y);
+static Status DrawPanelMenuIcon(MenuIconEncoding icon, uint8_t x, uint8_t y);
+static Status DrawLabel(const char* label, uint8_t x, uint8_t y);
 
 // TODO:
 // 패널 이동 화살표 표시도 자동화할 수 있지 않을까?
-Status DrawPanelLayout(u8g2_t* u8g2, const char* panel_name,
-                       PageNavigationFlag flag) {
-  u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
-  u8g2_ClearBuffer(u8g2);
-  u8g2_DrawStr(u8g2, 1, PANEL_LABEL_HEIGHT, panel_name);
-  u8g2_DrawLine(u8g2, 0, PANEL_LABEL_LINE_Y, SCREEN_WIDTH, PANEL_LABEL_LINE_Y);
+Status DrawPanelLayout(const char* panel_name, PageNavigationFlag flag) {
+  Driver& driver = Driver::GetInstance();
+  driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
+  driver.clearBuffer();
+  driver.drawStr(1, PANEL_LABEL_HEIGHT, panel_name);
+  driver.drawLine(0, PANEL_LABEL_LINE_Y, SCREEN_WIDTH, PANEL_LABEL_LINE_Y);
   if (HasPageNavigationFlag(flag, PageNavigationFlag::LEFT_ARROW)) {
-    DrawArrowLeft4x5(u8g2, 117, PANEL_LABEL_HEIGHT);
+    DrawArrowLeft4x5(117, PANEL_LABEL_HEIGHT);
   }
   if (HasPageNavigationFlag(flag, PageNavigationFlag::RIGHT_ARROW)) {
-    DrawArrowRight4x5(u8g2, 122, PANEL_LABEL_HEIGHT);
+    DrawArrowRight4x5(122, PANEL_LABEL_HEIGHT);
   }
   return Status::OK;
 }
 
-static void DrawArrowLeft4x5(u8g2_t* u8g2, uint8_t x, uint8_t y) {
-  u8g2_DrawVLine(u8g2, x, y - 3, 1);
-  u8g2_DrawVLine(u8g2, x + 1, y - 4, 3);
-  u8g2_DrawVLine(u8g2, x + 2, y - 4, 3);
-  u8g2_DrawVLine(u8g2, x + 3, y - 5, 5);
+static void DrawArrowLeft4x5(uint8_t x, uint8_t y) {
+  Driver& driver = Driver::GetInstance();
+  driver.drawVLine(x, y - 3, 1);
+  driver.drawVLine(x + 1, y - 4, 3);
+  driver.drawVLine(x + 2, y - 4, 3);
+  driver.drawVLine(x + 3, y - 5, 5);
 }
 
-static void DrawArrowRight4x5(u8g2_t* u8g2, uint8_t x, uint8_t y) {
-  u8g2_DrawVLine(u8g2, x, y - 5, 5);
-  u8g2_DrawVLine(u8g2, x + 1, y - 4, 3);
-  u8g2_DrawVLine(u8g2, x + 2, y - 4, 3);
-  u8g2_DrawVLine(u8g2, x + 3, y - 3, 1);
+static void DrawArrowRight4x5(uint8_t x, uint8_t y) {
+  Driver& driver = Driver::GetInstance();
+  driver.drawVLine(x, y - 5, 5);
+  driver.drawVLine(x + 1, y - 4, 3);
+  driver.drawVLine(x + 2, y - 4, 3);
+  driver.drawVLine(x + 3, y - 3, 1);
 }
 
-Status DrawParameter(u8g2_t* u8g2, Parameter& parameter, const char* label,
+Status DrawParameter(Parameter& parameter, const char* label,
                      SlotPosition slot_position) {
   uint8_t x, y;
   Status status;
 
   x = parameter_width_map[slot_position];
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING;
-  status = DrawParameterValue(u8g2, parameter, x, y);
+  status = DrawParameterValue(parameter, x, y);
   if (status != Status::OK) {
     return status;
   }
@@ -105,21 +106,21 @@ Status DrawParameter(u8g2_t* u8g2, Parameter& parameter, const char* label,
   x = parameter_width_map[slot_position];
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT +
       PARAMETER_PADDING;
-  status = DrawParameterWidget(u8g2, parameter, x, y);
+  status = DrawParameterWidget(parameter, x, y);
   if (status != Status::OK) {
     return status;
   }
 
   x = parameter_width_map[slot_position];
   y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
-  status = DrawLabel(u8g2, label, x, y);
+  status = DrawLabel(label, x, y);
   return status;
 }
 
-static Status DrawParameterValue(u8g2_t* u8g2, Parameter& parameter, uint8_t x,
-                                 uint8_t y) {
+static Status DrawParameterValue(Parameter& parameter, uint8_t x, uint8_t y) {
   char str[5];
   uint8_t string_width;
+  Driver& driver = Driver::GetInstance();
 
   if (parameter.GetType() == ParameterType::TOGGLE) {
     if (parameter.IsCurrentMaximum()) {
@@ -132,16 +133,16 @@ static Status DrawParameterValue(u8g2_t* u8g2, Parameter& parameter, uint8_t x,
       str[2] = 'F';
       str[3] = '\n';
     }
-    u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
-    string_width = u8g2_GetStrWidth(u8g2, str);
-    u8g2_DrawStr(u8g2, x + SLOT_WIDTH / 2 - string_width / 2,
-                 y + PARAMETER_VALUE_HEIGHT, str);
+    driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
+    string_width = driver.getStrWidth(str);
+    driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
+                   y + PARAMETER_VALUE_HEIGHT, str);
   } else if (parameter.GetType() == ParameterType::SLIDER) {
-    u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
+    driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
     ConvertNumberToString(parameter.GetCurrent(), str, 5);
-    string_width = u8g2_GetStrWidth(u8g2, str);
-    u8g2_DrawStr(u8g2, x + SLOT_WIDTH / 2 - string_width / 2,
-                 y + PARAMETER_VALUE_HEIGHT, str);
+    string_width = driver.getStrWidth(str);
+    driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
+                   y + PARAMETER_VALUE_HEIGHT, str);
   } else {
     // TODO:
     // RATE_SLIDER면 4,2,1,1/2~1/16,0~100와 같이 출력해야함.
@@ -149,16 +150,15 @@ static Status DrawParameterValue(u8g2_t* u8g2, Parameter& parameter, uint8_t x,
   return Status::OK;
 }
 
-static Status DrawParameterWidget(u8g2_t* u8g2, Parameter& parameter, uint8_t x,
-                                  uint8_t y) {
+static Status DrawParameterWidget(Parameter& parameter, uint8_t x, uint8_t y) {
   if (parameter.GetType() == ParameterType::TOGGLE) {
     x = x + SLOT_WIDTH / 2 - TOGGLE_SWITCH_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - TOGGLE_SWITCH_WIDGET_HEIGHT / 2;
-    UiWidget::DrawToggleSwitchWidget(u8g2, x, y, parameter);
+    UiWidget::DrawToggleSwitchWidget(x, y, parameter);
   } else if (parameter.GetType() == ParameterType::SLIDER) {
     x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
-    UiWidget::DrawKnobWidget(u8g2, x, y, parameter);
+    UiWidget::DrawKnobWidget(x, y, parameter);
   } else {
     // TODO:
     // RATE SLIDER형 파라미터 위젯 구현하기
@@ -191,33 +191,36 @@ static void ConvertNumberToString(int32_t number, char* string,
   }
 }
 
-Status DrawMenu(u8g2_t* u8g2, MenuIconEncoding icon_encoding, const char* label,
+Status DrawMenu(MenuIconEncoding icon_encoding, const char* label,
                 SlotPosition slot_position) {
   uint8_t x, y;
 
   x = parameter_width_map[slot_position];
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT +
       PARAMETER_PADDING + GRAPHIC_AREA_HEIGHT / 2 - ICON_HEIGHT / 2;
-  DrawPanelMenuIcon(u8g2, icon_encoding, x, y);
+  DrawPanelMenuIcon(icon_encoding, x, y);
 
   x = parameter_width_map[slot_position];
   y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
-  DrawLabel(u8g2, label, x, y);
+  DrawLabel(label, x, y);
   return Status::OK;
 }
 
-static Status DrawPanelMenuIcon(u8g2_t* u8g2, MenuIconEncoding icon_encoding,
-                                uint8_t x, uint8_t y) {
+static Status DrawPanelMenuIcon(MenuIconEncoding icon_encoding, uint8_t x,
+                                uint8_t y) {
+  Driver& driver = Driver::GetInstance();
   uint8_t glyph_width;
-  u8g2_SetFont(u8g2, u8g2_font_open_iconic_all_2x_t);
-  glyph_width = u8g2_GetGlyphWidth(u8g2, (std::uint16_t)icon_encoding);
-  u8g2_DrawGlyph(u8g2, x + SLOT_WIDTH / 2 - glyph_width / 2, y + ICON_HEIGHT,
-                 (std::uint16_t)icon_encoding);
+  driver.setFont(u8g2_font_open_iconic_all_2x_t);
+  glyph_width = driver.getXOffsetGlyph((std::uint16_t)icon_encoding);
+  driver.drawGlyph(x + SLOT_WIDTH / 2 - glyph_width / 2, y + ICON_HEIGHT,
+                   (std::uint16_t)icon_encoding);
 
   return Status::OK;
 }
 
-static Status DrawLabel(u8g2_t* u8g2, const char* label, uint8_t x, uint8_t y) {
+static Status DrawLabel(const char* label, uint8_t x, uint8_t y) {
+  Driver& driver = Driver::GetInstance();
+
   const char *first_line = label, *second_line;
   char* p = (char*)label;
   uint8_t string_width;
@@ -233,14 +236,14 @@ static Status DrawLabel(u8g2_t* u8g2, const char* label, uint8_t x, uint8_t y) {
     p++;
   }
 
-  u8g2_SetFont(u8g2, u8g2_font_ref4x5_prop_v4_tr);
-  string_width = u8g2_GetStrWidth(u8g2, first_line);
-  u8g2_DrawStr(u8g2, x + SLOT_WIDTH / 2 - string_width / 2,
-               y + CHARACTER_HEIGHT, first_line);
+  driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
+  string_width = driver.getStrWidth(first_line);
+  driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2, y + CHARACTER_HEIGHT,
+                 first_line);
   if (*second_line) {
-    string_width = u8g2_GetStrWidth(u8g2, second_line);
-    u8g2_DrawStr(u8g2, x + SLOT_WIDTH / 2 - string_width / 2,
-                 y + CHARACTER_HEIGHT + 1 + CHARACTER_HEIGHT, second_line);
+    string_width = driver.getStrWidth(second_line);
+    driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
+                   y + CHARACTER_HEIGHT + 1 + CHARACTER_HEIGHT, second_line);
   }
   return Status::OK;
 }
