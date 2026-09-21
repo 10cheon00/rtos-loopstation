@@ -71,8 +71,6 @@ void StateTask_Init(void* argument) {
   state_event_queue = params->state_event_queue;
   display_snapshot_mailbox = params->display_snapshot_mailbox;
 
-  Mcp23017::Driver::GetInstance().Initialize(params->hi2c, params->i2c_mutex);
-
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
                    osFlagsWaitAll | osFlagsNoClear, osWaitForever);
   Run();
