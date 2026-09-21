@@ -1,5 +1,5 @@
-#ifndef INPUT_TASK_H
-#define INPUT_TASK_H
+#ifndef SYSTEM_TASK_H
+#define SYSTEM_TASK_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,7 +9,7 @@ extern "C" {
 
 #include "app.h"
 
-void InputTask_Init(void* argument);
+void SystemTask_Init(void* argument);
 
 #ifdef __cplusplus
 }

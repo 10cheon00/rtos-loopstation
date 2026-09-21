@@ -62,10 +62,6 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_to_track_action_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/system_state_machine_context.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs/system_state_pointer_map.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states/system_state.cpp
-
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_state_pointer_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.cpp
@@ -73,6 +69,8 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_transition_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_pointer_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_navigation_tree.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/system/system_task.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864/gmg12864_lcd.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/mcp23017.cpp
@@ -101,15 +99,13 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/configs
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/system_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/system
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs

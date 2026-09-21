@@ -7,6 +7,7 @@
 #include "input_event_type.hpp"
 #include "input_messages.h"
 #include "stm32h7xx.h"
+#include "system_init_event_flag.hpp"
 #include "utils.h"
 
 #define ADC_POLLING_FREQEUNCY_HZ (100UL)
@@ -28,10 +29,9 @@ void AdcInputTask_Init(void* arguments) {
   hadc = params->hadc;
   input_message_queue = params->input_message_queue;
 
+  osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
+                   osFlagsWaitAll | osFlagsNoClear, osWaitForever);
   Run();
-  // for (;;) {
-  //     osDelay(1);
-  // }
 }
 
 static void Run() {

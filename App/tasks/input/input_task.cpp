@@ -3,16 +3,17 @@
 #include "button_state.hpp"
 #include "cmsis_os2.h"
 #include "encoder_id.hpp"
+#include "encoder_rotation_direction.hpp"
+#include "input_event_type.hpp"
 #include "input_initparams.h"
 #include "input_messages.h"
-#include "input_event_type.hpp"
-#include "state_event_type.hpp"
-#include "encoder_rotation_direction.hpp"
 #include "mcp23017.hpp"
 #include "mcp23017_gpio_map.hpp"
 #include "mcp23017_gpio_to_button_map.hpp"
 #include "mutable_enum_map.hpp"
+#include "state_event_type.hpp"
 #include "state_messages.h"
+#include "system_init_event_flag.hpp"
 #include "utils.h"
 
 typedef struct {
@@ -27,6 +28,7 @@ typedef struct {
 static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;
 
+static void Run(void);
 static TaskStatus HandleInputEvent(RtosMessage_InputEvent* input_event);
 static TaskStatus HandleMcp23017IntEvent(RtosPayload_Mcp23017Event* intEvent);
 static TaskStatus SendButtonPayload(Mcp23017::Address address,
@@ -57,10 +59,12 @@ void InputTask_Init(void* argument) {
   input_event_queue = params->input_event_queue;
   state_event_queue = params->state_event_queue;
 
-  InputTask_Run();
+  osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
+                   osFlagsWaitAll | osFlagsNoClear, osWaitForever);
+  Run();
 }
 
-void InputTask_Run(void) {
+static void Run(void) {
   TaskStatus task_status;
   RtosMessage_InputEvent input_event;
   osStatus_t os_status;
@@ -74,8 +78,8 @@ void InputTask_Run(void) {
 }
 
 static TaskStatus HandleInputEvent(RtosMessage_InputEvent* input_event) {
-  const InputEventType type =
-      FromRtosEnumValue<InputEventType>(input_event->rtos_enum_value_input_event_type);
+  const InputEventType type = FromRtosEnumValue<InputEventType>(
+      input_event->rtos_enum_value_input_event_type);
   if (type == InputEventType::MCP23017) {
     return HandleMcp23017IntEvent(&input_event->payload.mcp23017_int_event);
   } else if (type == InputEventType::ENCODER_ROTATION) {
@@ -162,7 +166,8 @@ static TaskStatus SendButtonPayload(Mcp23017::Address address,
       .rtos_enum_value_button_state = ToRtosEnumValue(button_state),
   };
   RtosMessage_StateEvent state_event = {
-      .rtos_enum_value_state_event_type = ToRtosEnumValue(StateEventType::BUTTON),
+      .rtos_enum_value_state_event_type =
+          ToRtosEnumValue(StateEventType::BUTTON),
       .payload = {.button = payload}};
   osMessageQueuePut(state_event_queue, &state_event, 0,
                     STATE_EVENT_QUEUE_TIMEOUT_500MS);
@@ -191,17 +196,19 @@ static TaskStatus HandleEncoderRotationEvent(
     delta = -1;
   }
 
-  EncoderId id =
-      FromRtosEnumValue<EncoderId>(encoder_rotation_event->rtos_enum_value_encoder_id);
+  EncoderId id = FromRtosEnumValue<EncoderId>(
+      encoder_rotation_event->rtos_enum_value_encoder_id);
   if (input_task_context.encoder_button_states[id] == ButtonState::PRESSED) {
     delta *= 10;
   }
   RtosMessage_StateEvent state_event = {
-      .rtos_enum_value_state_event_type = ToRtosEnumValue(StateEventType::ENCODER_ROTATION),
+      .rtos_enum_value_state_event_type =
+          ToRtosEnumValue(StateEventType::ENCODER_ROTATION),
       .payload = {
           .encoder_rotation = {
               .timestamp_ticks = encoder_rotation_event->timestamp_ticks,
-              .rtos_enum_value_encoder_id = encoder_rotation_event->rtos_enum_value_encoder_id,
+              .rtos_enum_value_encoder_id =
+                  encoder_rotation_event->rtos_enum_value_encoder_id,
               .delta = delta,
           }}};
   osMessageQueuePut(state_event_queue, &state_event, 0,
@@ -213,10 +220,12 @@ static TaskStatus HandleEncoderRotationEvent(
 static TaskStatus HandleAdcConversionEvent(
     RtosPayload_AdcConversion* adc_conversion_event) {
   RtosMessage_StateEvent state_event = {
-      .rtos_enum_value_state_event_type = ToRtosEnumValue(StateEventType::ADC_CONVERSION),
+      .rtos_enum_value_state_event_type =
+          ToRtosEnumValue(StateEventType::ADC_CONVERSION),
       .payload = {.adc_conversion = {
                       .timestamp_ticks = adc_conversion_event->timestamp_ticks,
-                      .rtos_enum_value_knob_id = adc_conversion_event->rtos_enum_value_knob_id,
+                      .rtos_enum_value_knob_id =
+                          adc_conversion_event->rtos_enum_value_knob_id,
                       .adc_value = adc_conversion_event->adc_value}}};
 
   osMessageQueuePut(state_event_queue, &state_event, 0,

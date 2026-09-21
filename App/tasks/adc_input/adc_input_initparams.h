@@ -6,6 +6,7 @@
 
 typedef struct {
   ADC_HandleTypeDef* hadc;
+  osEventFlagsId_t system_init_event;
   osMessageQueueId_t input_message_queue;
 } AdcInputInitParams;
 

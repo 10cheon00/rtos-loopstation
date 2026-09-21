@@ -13,6 +13,7 @@
 #include "u8g2.h"
 #include "ui_renderer.hpp"
 #include "ui_state_label_map.hpp"
+#include "system_init_event_flag.hpp"
 #include "utils.h"
 
 #define DISPLAY_RENDER_FREQEUNCY_HZ (100UL)
@@ -109,6 +110,8 @@ void DisplayTask_Init(void* argument) {
     }
   }
 
+  osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
+                   osFlagsWaitAll | osFlagsNoClear, osWaitForever);
   Run();
 }
 

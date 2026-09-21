@@ -1,5 +1,5 @@
-#ifndef INPUT_INITPARAMS_H
-#define INPUT_INITPARAMS_H
+#ifndef SYSTEM_INITPARAMS_H
+#define SYSTEM_INITPARAMS_H
 
 #include "cmsis_os2.h"
 #include "stm32h7xx.h"
@@ -10,6 +10,6 @@ typedef struct {
   I2C_HandleTypeDef* hi2c;
   osMutexId_t i2c1_mutex;
   osEventFlagsId_t system_init_event;
-} InputInitParams;
+} SystemInitParams;
 
 #endif
