@@ -72,6 +72,8 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/system/system_task.cpp
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_task.cpp
+
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864/gmg12864_lcd.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/mcp23017.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs/mcp23017_gpio_map.cpp
@@ -107,6 +109,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/system
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs
