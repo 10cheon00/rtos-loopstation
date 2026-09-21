@@ -31,6 +31,7 @@
 #include "input_event_sender.h"
 #include "adc_input_initparams.h"
 #include "state_initparams.h"
+#include "system_initparams.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,6 +65,8 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim5;
 TIM_HandleTypeDef htim8;
+
+SDRAM_HandleTypeDef hsdram1;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -100,6 +103,13 @@ const osThreadAttr_t adcInputTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityAboveNormal,
 };
+/* Definitions for systemTask */
+osThreadId_t systemTaskHandle;
+const osThreadAttr_t systemTask_attributes = {
+  .name = "systemTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityRealtime7,
+};
 /* Definitions for input_event_queue */
 osMessageQueueId_t input_event_queueHandle;
 const osMessageQueueAttr_t input_event_queue_attributes = {
@@ -120,11 +130,17 @@ osMutexId_t i2c1_mutexHandle;
 const osMutexAttr_t i2c1_mutex_attributes = {
   .name = "i2c1_mutex"
 };
+/* Definitions for SystemInitEvent */
+osEventFlagsId_t SystemInitEventHandle;
+const osEventFlagsAttr_t SystemInitEvent_attributes = {
+  .name = "SystemInitEvent"
+};
 /* USER CODE BEGIN PV */
 static InputInitParams input_init_params;
 static DisplayInitParams display_init_params;
 static StateInitParams state_init_params;
 static AdcInputInitParams adc_input_init_params;
+static SystemInitParams system_init_params;
 
 /* USER CODE END PV */
 
@@ -143,11 +159,13 @@ static void MX_SAI1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_TIM5_Init(void);
+static void MX_FMC_Init(void);
 void StartDefaultTask(void *argument);
 extern void InputTask_Init(void *argument);
 extern void DisplayTask_Init(void *argument);
 extern void StateTask_Init(void *argument);
 extern void AdcInputTask_Init(void *argument);
+extern void SystemTask_Init(void *argument);
 
 /* USER CODE BEGIN PFP */
 // 이 함수는 전역 콜백 함수이므로 애플리케이션에 처리를 위임한다.
@@ -232,6 +250,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM8_Init();
   MX_TIM5_Init();
+  MX_FMC_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Encoder_Start_IT(&htim2, htim2.Channel);
   HAL_TIM_Encoder_Start_IT(&htim3, htim3.Channel);
@@ -309,9 +328,15 @@ int main(void)
   /* creation of adcInputTask */
   adcInputTaskHandle = osThreadNew(AdcInputTask_Init, (void*) &adc_input_init_params, &adcInputTask_attributes);
 
+  /* creation of systemTask */
+  systemTaskHandle = osThreadNew(SystemTask_Init, (void*) &system_init_params, &systemTask_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
+
+  /* creation of SystemInitEvent */
+  SystemInitEventHandle = osEventFlagsNew(&SystemInitEvent_attributes);
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
@@ -896,6 +921,53 @@ static void MX_DMA_Init(void)
 
 }
 
+/* FMC initialization function */
+static void MX_FMC_Init(void)
+{
+
+  /* USER CODE BEGIN FMC_Init 0 */
+
+  /* USER CODE END FMC_Init 0 */
+
+  FMC_SDRAM_TimingTypeDef SdramTiming = {0};
+
+  /* USER CODE BEGIN FMC_Init 1 */
+
+  /* USER CODE END FMC_Init 1 */
+
+  /** Perform the SDRAM1 memory initialization sequence
+  */
+  hsdram1.Instance = FMC_SDRAM_DEVICE;
+  /* hsdram1.Init */
+  hsdram1.Init.SDBank = FMC_SDRAM_BANK1;
+  hsdram1.Init.ColumnBitsNumber = FMC_SDRAM_COLUMN_BITS_NUM_9;
+  hsdram1.Init.RowBitsNumber = FMC_SDRAM_ROW_BITS_NUM_13;
+  hsdram1.Init.MemoryDataWidth = FMC_SDRAM_MEM_BUS_WIDTH_16;
+  hsdram1.Init.InternalBankNumber = FMC_SDRAM_INTERN_BANKS_NUM_4;
+  hsdram1.Init.CASLatency = FMC_SDRAM_CAS_LATENCY_2;
+  hsdram1.Init.WriteProtection = FMC_SDRAM_WRITE_PROTECTION_DISABLE;
+  hsdram1.Init.SDClockPeriod = FMC_SDRAM_CLOCK_PERIOD_3;
+  hsdram1.Init.ReadBurst = FMC_SDRAM_RBURST_ENABLE;
+  hsdram1.Init.ReadPipeDelay = FMC_SDRAM_RPIPE_DELAY_0;
+  /* SdramTiming */
+  SdramTiming.LoadToActiveDelay = 16;
+  SdramTiming.ExitSelfRefreshDelay = 16;
+  SdramTiming.SelfRefreshTime = 16;
+  SdramTiming.RowCycleDelay = 16;
+  SdramTiming.WriteRecoveryTime = 16;
+  SdramTiming.RPDelay = 16;
+  SdramTiming.RCDDelay = 16;
+
+  if (HAL_SDRAM_Init(&hsdram1, &SdramTiming) != HAL_OK)
+  {
+    Error_Handler( );
+  }
+
+  /* USER CODE BEGIN FMC_Init 2 */
+
+  /* USER CODE END FMC_Init 2 */
+}
+
 /**
   * @brief GPIO Initialization Function
   * @param None
@@ -910,10 +982,12 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOG_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -994,6 +1068,19 @@ void MPU_Config(void)
   MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
   MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+
+  HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+  /** Initializes and configures the Region and the memory to be protected
+  */
+  MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+  MPU_InitStruct.BaseAddress = 0xC0000000;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_32MB;
+  MPU_InitStruct.SubRegionDisable = 0x0;
+  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
 
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
   /* Enables the MPU */
