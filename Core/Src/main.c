@@ -143,10 +143,10 @@ osMutexId_t i2c1_mutexHandle;
 const osMutexAttr_t i2c1_mutex_attributes = {
   .name = "i2c1_mutex"
 };
-/* Definitions for SystemInitEvent */
-osEventFlagsId_t SystemInitEventHandle;
-const osEventFlagsAttr_t SystemInitEvent_attributes = {
-  .name = "SystemInitEvent"
+/* Definitions for system_init_event */
+osEventFlagsId_t system_init_eventHandle;
+const osEventFlagsAttr_t system_init_event_attributes = {
+  .name = "system_init_event"
 };
 /* USER CODE BEGIN PV */
 static InputInitParams input_init_params;
@@ -328,6 +328,17 @@ int main(void)
   state_init_params.display_snapshot_mailbox = display_snapshot_mailboxHandle;
   state_init_params.hi2c = &hi2c1;
   state_init_params.i2c_mutex = i2c1_mutexHandle;
+
+  system_init_params.gmg12864_init_params.hspi = &hspi2;
+  system_init_params.gmg12864_init_params.CS_Port = GMG12864_CS_GPIO_Port;
+  system_init_params.gmg12864_init_params.CS_Pin = GMG12864_CS_Pin;
+  system_init_params.gmg12864_init_params.RST_Port = GMG12864_RST_GPIO_Port;
+  system_init_params.gmg12864_init_params.RST_Pin = GMG12864_RST_Pin;
+  system_init_params.gmg12864_init_params.DC_Port = GMG12864_DC_GPIO_Port;
+  system_init_params.gmg12864_init_params.DC_Pin = GMG12864_DC_Pin;
+  system_init_params.mcp23017_init_params.hi2c = &hi2c1;
+  system_init_params.mcp23017_init_params.i2c1_mutex = i2c1_mutexHandle;
+  system_init_params.sdram_init_params.hsdram = &hsdram1;
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -356,11 +367,17 @@ int main(void)
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
-  /* creation of SystemInitEvent */
-  SystemInitEventHandle = osEventFlagsNew(&SystemInitEvent_attributes);
+  /* creation of system_init_event */
+  system_init_eventHandle = osEventFlagsNew(&system_init_event_attributes);
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
+  system_init_params.system_init_event = system_init_eventHandle;
+  adc_input_init_params.system_init_event = system_init_eventHandle;
+  display_init_params.system_init_event = system_init_eventHandle;
+  input_init_params.system_init_event = system_init_eventHandle;
+  state_init_params.system_init_event = system_init_eventHandle;
+  audio_init_params.system_init_event = system_init_eventHandle;
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */

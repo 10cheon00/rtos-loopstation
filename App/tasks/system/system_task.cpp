@@ -25,6 +25,7 @@ void SystemTask_Init(void* argument) {
 
   if (Init(params) == SystemInitResult::SUCCESS) {
     osEventFlagsSet(params->system_init_event, SystemInitEventFlag::Inited);
+    osThreadExit();
   } else {
     ErrorHandler();
   }
@@ -36,8 +37,6 @@ bool IsValidParams(SystemInitParams* params) {
          params->mcp23017_init_params.i2c1_mutex != NULL &&
          params->sdram_init_params.hsdram != NULL &&
          params->gmg12864_init_params.hspi != NULL &&
-         params->gmg12864_init_params.hi2c != NULL &&
-         params->gmg12864_init_params.i2c1_mutex != NULL &&
          params->gmg12864_init_params.CS_Port != NULL &&
          params->gmg12864_init_params.CS_Pin != 0 &&
          params->gmg12864_init_params.RST_Port != NULL &&
