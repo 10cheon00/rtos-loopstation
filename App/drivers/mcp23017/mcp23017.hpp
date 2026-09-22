@@ -56,7 +56,7 @@ class Driver {
   }
 
   Status Initialize(I2C_HandleTypeDef* hi2c,
-                              osSemaphoreId_t i2c_mutex);
+                              osMutexId_t i2c_mutex);
   Status GetInterruptSnapshot(Address address,
                                         InterruptSnapshot* snapshot);
   Status GetMcp23017AddressFromInterruptPin(
@@ -69,7 +69,7 @@ class Driver {
  private:
   I2C_HandleTypeDef* hi2c;
   InitStatus init_status;
-  osSemaphoreId_t i2c_mutex;
+  osMutexId_t i2c_mutex;
 
   Status InternalInitialize(Address address);
   Status ReadRegister(Address address, uint8_t reg,

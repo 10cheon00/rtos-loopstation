@@ -48,7 +48,7 @@ static const AddressInterruptPinMap interrupt_pin_map[] = {
 };
 static const size_t interrupt_pin_map_count = ARRAY_COUNT(interrupt_pin_map);
 
-Status Driver::Initialize(I2C_HandleTypeDef* hi2c, osSemaphoreId_t i2c_mutex) {
+Status Driver::Initialize(I2C_HandleTypeDef* hi2c, osMutexId_t i2c_mutex) {
   MutexGuard lock{i2c_mutex, pdMS_TO_TICKS(500UL)};
   if (!lock.is_acquired()) {
     this->init_status = InitStatus::NOT_INITED;
