@@ -209,9 +209,9 @@ Status DrawMenu(MenuIconEncoding icon_encoding, const char* label,
 static Status DrawPanelMenuIcon(MenuIconEncoding icon_encoding, uint8_t x,
                                 uint8_t y) {
   Driver& driver = Driver::GetInstance();
-  uint8_t glyph_width;
+  int8_t glyph_width;
   driver.setFont(u8g2_font_open_iconic_all_2x_t);
-  glyph_width = driver.getXOffsetGlyph((std::uint16_t)icon_encoding);
+  glyph_width = driver.GetGlyphWidth((std::uint16_t)icon_encoding);
   driver.drawGlyph(x + SLOT_WIDTH / 2 - glyph_width / 2, y + ICON_HEIGHT,
                    (std::uint16_t)icon_encoding);
 

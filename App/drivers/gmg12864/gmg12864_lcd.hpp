@@ -69,6 +69,10 @@ class Driver : public U8G2 {
 
   SpiParams& GetSpiParams() { return spi_params; }
 
+  uint16_t GetGlyphWidth(const uint16_t encoding) {
+    return u8g2_GetGlyphWidth(&this->u8g2, encoding);
+  }
+
  private:
   Gmg12864Status status;
   SpiParams spi_params;
