@@ -241,7 +241,17 @@ SECTIONS
     . = ALIGN(8);
   } >DTCMRAM
 
+  /* USER CODE 1 BEGIN */
 
+  .ram_d1_area (NOLOAD) :
+  {
+    . = ALIGN(32);
+    *(.ram_d1)
+    *(.ram_d1*)
+    . = ALIGN(32);
+  } >RAM_D1
+  
+  /* USER CODE 1 END */
 
   /* Remove information from the standard libraries */
   /DISCARD/ :
