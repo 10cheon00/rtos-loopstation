@@ -61,6 +61,7 @@ void SPI2_IRQHandler(void);
 void TIM8_CC_IRQHandler(void);
 void TIM5_IRQHandler(void);
 void TIM7_IRQHandler(void);
+void MDMA_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

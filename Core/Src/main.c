@@ -67,6 +67,7 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim5;
 TIM_HandleTypeDef htim8;
 
+MDMA_HandleTypeDef hmdma_mdma_channel0_sw_0;
 SDRAM_HandleTypeDef hsdram1;
 
 /* Definitions for defaultTask */
@@ -164,6 +165,7 @@ void PeriphCommonClock_Config(void);
 static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
+static void MX_MDMA_Init(void);
 static void MX_SDMMC1_SD_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_I2C1_Init(void);
@@ -171,9 +173,9 @@ static void MX_TIM3_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_SAI1_Init(void);
 static void MX_TIM2_Init(void);
-static void MX_TIM8_Init(void);
-static void MX_TIM5_Init(void);
 static void MX_FMC_Init(void);
+static void MX_TIM5_Init(void);
+static void MX_TIM8_Init(void);
 void StartDefaultTask(void *argument);
 extern void InputTask_Init(void *argument);
 extern void DisplayTask_Init(void *argument);
@@ -255,6 +257,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
+  MX_MDMA_Init();
   MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
   MX_SPI2_Init();
@@ -263,9 +266,9 @@ int main(void)
   MX_ADC1_Init();
   MX_SAI1_Init();
   MX_TIM2_Init();
-  MX_TIM8_Init();
-  MX_TIM5_Init();
   MX_FMC_Init();
+  MX_TIM5_Init();
+  MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Encoder_Start_IT(&htim2, htim2.Channel);
   HAL_TIM_Encoder_Start_IT(&htim3, htim3.Channel);
@@ -956,6 +959,47 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+
+}
+
+/**
+  * Enable MDMA controller clock
+  * Configure MDMA for global transfers
+  *   hmdma_mdma_channel0_sw_0
+  */
+static void MX_MDMA_Init(void)
+{
+
+  /* MDMA controller clock enable */
+  __HAL_RCC_MDMA_CLK_ENABLE();
+  /* Local variables */
+
+  /* Configure MDMA channel MDMA_Channel0 */
+  /* Configure MDMA request hmdma_mdma_channel0_sw_0 on MDMA_Channel0 */
+  hmdma_mdma_channel0_sw_0.Instance = MDMA_Channel0;
+  hmdma_mdma_channel0_sw_0.Init.Request = MDMA_REQUEST_SW;
+  hmdma_mdma_channel0_sw_0.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
+  hmdma_mdma_channel0_sw_0.Init.Priority = MDMA_PRIORITY_MEDIUM;
+  hmdma_mdma_channel0_sw_0.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
+  hmdma_mdma_channel0_sw_0.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
+  hmdma_mdma_channel0_sw_0.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
+  hmdma_mdma_channel0_sw_0.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+  hmdma_mdma_channel0_sw_0.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
+  hmdma_mdma_channel0_sw_0.Init.DataAlignment = MDMA_DATAALIGN_PACKENABLE;
+  hmdma_mdma_channel0_sw_0.Init.BufferTransferLength = 128;
+  hmdma_mdma_channel0_sw_0.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
+  hmdma_mdma_channel0_sw_0.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
+  hmdma_mdma_channel0_sw_0.Init.SourceBlockAddressOffset = 0;
+  hmdma_mdma_channel0_sw_0.Init.DestBlockAddressOffset = 0;
+  if (HAL_MDMA_Init(&hmdma_mdma_channel0_sw_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* MDMA interrupt initialization */
+  /* MDMA_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(MDMA_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(MDMA_IRQn);
 
 }
 
