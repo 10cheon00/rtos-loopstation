@@ -131,11 +131,13 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload) {
       FromRtosEnumValue<ButtonId>(button_payload.rtos_enum_value_button_id);
 
   if (id != ButtonId::IFX_A_TOGGLE && id != ButtonId::TFX_A_TOGGLE &&
-      id != ButtonId::ENCODER_A_PUSH) {
+      id != ButtonId::ENCODER_A_PUSH && id != ButtonId::ENCODER_B_PUSH &&
+      id != ButtonId::ENCODER_C_PUSH && id != ButtonId::ENCODER_D_PUSH) {
     return TASK_STATUS_ERROR;
   }
 
-  if (id == ButtonId::ENCODER_A_PUSH) {
+  if (id == ButtonId::ENCODER_A_PUSH || id == ButtonId::ENCODER_B_PUSH ||
+      id == ButtonId::ENCODER_C_PUSH || id == ButtonId::ENCODER_D_PUSH) {
     // TODO:
     // Encoder_A~D 모두 처리 가능하게 해야함
     std::optional<SlotPosition> maybe_position = ToSlotPosition(id);
