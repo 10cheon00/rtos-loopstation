@@ -243,13 +243,13 @@ SECTIONS
 
   /* USER CODE 1 BEGIN */
 
-  .ram_d1_area (NOLOAD) :
+  .axi_sram_area (NOLOAD) :
   {
     . = ALIGN(32);
-    *(.ram_d1)
-    *(.ram_d1*)
+    *(.axi_sram)
+    *(.axi_sram*)
     . = ALIGN(32);
-  } >RAM_D1
+  } >RAM
   
   /* USER CODE 1 END */
 

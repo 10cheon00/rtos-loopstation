@@ -73,6 +73,7 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/system/system_task.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_task.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_event_sender.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864/gmg12864_lcd.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/mcp23017.cpp

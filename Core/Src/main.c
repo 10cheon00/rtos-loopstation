@@ -33,6 +33,7 @@
 #include "state_initparams.h"
 #include "system_initparams.h"
 #include "audio_initparams.h"
+#include "audio_event_sender.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +57,8 @@ I2C_HandleTypeDef hi2c1;
 
 SAI_HandleTypeDef hsai_BlockA1;
 SAI_HandleTypeDef hsai_BlockB1;
+DMA_HandleTypeDef hdma_sai1_a;
+DMA_HandleTypeDef hdma_sai1_b;
 
 SD_HandleTypeDef hsd1;
 
@@ -134,10 +137,15 @@ osMessageQueueId_t state_event_queueHandle;
 const osMessageQueueAttr_t state_event_queue_attributes = {
   .name = "state_event_queue"
 };
-/* Definitions for audio_event_queue */
-osMessageQueueId_t audio_event_queueHandle;
-const osMessageQueueAttr_t audio_event_queue_attributes = {
-  .name = "audio_event_queue"
+/* Definitions for audio_event_snapshot_mailbox */
+osMessageQueueId_t audio_event_snapshot_mailboxHandle;
+const osMessageQueueAttr_t audio_event_snapshot_mailbox_attributes = {
+  .name = "audio_event_snapshot_mailbox"
+};
+/* Definitions for audio_dma_event */
+osMessageQueueId_t audio_dma_eventHandle;
+const osMessageQueueAttr_t audio_dma_event_attributes = {
+  .name = "audio_dma_event"
 };
 /* Definitions for i2c1_mutex */
 osMutexId_t i2c1_mutexHandle;
@@ -214,6 +222,35 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
     }
 }
 
+void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef* hsai) {
+    if (hsai == &hsai_BlockB1) {
+        AudioDmaEvent_SendSaiRxHalfCplt(audio_dma_eventHandle);
+    }
+}
+
+void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai) {
+    if (hsai == &hsai_BlockB1) {
+        AudioDmaEvent_SendSaiRxCplt(audio_dma_eventHandle);
+    }
+}
+
+void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai) {
+    if (hsai == &hsai_BlockA1) {
+        AudioDmaEvent_SendSaiTxHalfCplt(audio_dma_eventHandle);
+    }
+}
+
+void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai) {
+    if (hsai == &hsai_BlockA1) {
+        AudioDmaEvent_SendSaiTxCplt(audio_dma_eventHandle);
+    }
+}
+
+void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai) {
+    if (hsai == &hsai_BlockA1 || hsai == &hsai_BlockB1) {
+        AudioDmaEvent_SendSaiError(audio_dma_eventHandle);
+    }
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -304,8 +341,11 @@ int main(void)
   /* creation of state_event_queue */
   state_event_queueHandle = osMessageQueueNew (16, sizeof(RtosMessage_StateEvent), &state_event_queue_attributes);
 
-  /* creation of audio_event_queue */
-  audio_event_queueHandle = osMessageQueueNew (16, sizeof(RtosMessage_AudioEvent), &audio_event_queue_attributes);
+  /* creation of audio_event_snapshot_mailbox */
+  audio_event_snapshot_mailboxHandle = osMessageQueueNew (1, sizeof(RtosMessage_AudioEventSnapshot), &audio_event_snapshot_mailbox_attributes);
+
+  /* creation of audio_dma_event */
+  audio_dma_eventHandle = osMessageQueueNew (16, sizeof(RtosMessage_AudioDmaEvent), &audio_dma_event_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   input_init_params.input_event_queue = input_event_queueHandle;
@@ -342,6 +382,13 @@ int main(void)
   system_init_params.mcp23017_init_params.hi2c = &hi2c1;
   system_init_params.mcp23017_init_params.i2c1_mutex = i2c1_mutexHandle;
   system_init_params.sdram_init_params.hsdram = &hsdram1;
+
+  audio_init_params.hsai_tx = &hsai_BlockA1;
+  audio_init_params.hsai_rx = &hsai_BlockB1;
+  audio_init_params.hsdram = &hsdram1;
+  audio_init_params.system_init_event = system_init_eventHandle;
+  audio_init_params.audio_event_snapshot_mailbox = audio_event_snapshot_mailboxHandle;
+  audio_init_params.audio_dma_event_queue = audio_dma_eventHandle;
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -659,7 +706,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
   hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_32BIT, 2) != HAL_OK)
+  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -959,6 +1006,12 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA1_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
+  /* DMA1_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
 
 }
 
@@ -998,7 +1051,7 @@ static void MX_MDMA_Init(void)
 
   /* MDMA interrupt initialization */
   /* MDMA_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(MDMA_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(MDMA_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(MDMA_IRQn);
 
 }
