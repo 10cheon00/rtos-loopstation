@@ -1,7 +1,7 @@
 #include "audio_event_sender.h"
 
 #include "audio_dma_event.hpp"
-#include "audio_message.h"
+#include "audio_messages.h"
 #include "utils.h"
 
 void AudioDmaEvent_SendSaiRxHalfCplt(osMessageQueueId_t queue) {

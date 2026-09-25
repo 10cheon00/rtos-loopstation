@@ -10,6 +10,7 @@ extern "C" {
 typedef struct {
   osMessageQueueId_t state_event_queue;
   osMessageQueueId_t display_snapshot_mailbox;
+  osMessageQueueId_t audio_event_snapshot_mailbox;
   I2C_HandleTypeDef* hi2c;
   osMutexId_t i2c_mutex;
   osEventFlagsId_t system_init_event;

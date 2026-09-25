@@ -2,6 +2,7 @@
 
 #include "FreeRTOS.h"
 #include "app.h"
+#include "audio_messages.h"
 #include "button_state.hpp"
 #include "button_to_track_action_map.hpp"
 #include "cmsis_os2.h"
@@ -27,6 +28,7 @@ static StateTaskContext state_task_context;
 
 static osMessageQueueId_t state_event_queue = 0;
 static osMessageQueueId_t display_snapshot_mailbox = 0;
+static osMessageQueueId_t audio_event_snapshot_mailbox = 0;
 
 static UiStateMachine::Context ui_state_machine_context;
 static UiStateMachine::StateMachine ui_state_machine{ui_state_machine_context,
@@ -53,9 +55,11 @@ static TaskStatus UpdateDisplaySnapshotMailbox();
 static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine& track_state_machine,
     RtosMessage_StateEvent& state_event);
+static void UpdateAudioEventSnapshotMailbox();
 
 static int IsValidInitParams(const StateInitParams* params) {
   return (params != 0) && (params->state_event_queue != 0) &&
+         (params->audio_event_snapshot_mailbox != 0) &&
          (params->display_snapshot_mailbox != 0) && (params->hi2c != NULL) &&
          (params->i2c_mutex != 0) && (params->system_init_event != 0);
 }
@@ -71,6 +75,7 @@ void StateTask_Init(void* argument) {
 
   state_event_queue = params->state_event_queue;
   display_snapshot_mailbox = params->display_snapshot_mailbox;
+  audio_event_snapshot_mailbox = params->audio_event_snapshot_mailbox;
 
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
                    osFlagsWaitAll | osFlagsNoClear, osWaitForever);
@@ -353,5 +358,24 @@ static TaskStatus TryTransitionTrackStateMachine(
   }
   track_state_machine.TryTransition(action_id);
 
+  UpdateAudioEventSnapshotMailbox();
+
   return TASK_STATUS_OK;
+}
+
+static void UpdateAudioEventSnapshotMailbox() {
+  RtosMessage_AudioEventSnapshot audio_event_snapshot = {
+
+      // TODO:
+      // IFX, TFX 파라미터값 복사하기
+  };
+
+  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+    audio_event_snapshot.rtos_enum_value_track_states[i] =
+        ToRtosEnumValue<TrackStateMachine::Id>(
+            track_state_machines[i].GetCurrentState()->GetId());
+  }
+
+  xQueueOverwrite((QueueHandle_t)audio_event_snapshot_mailbox,
+                  &audio_event_snapshot);
 }
