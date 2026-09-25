@@ -31,7 +31,9 @@
 
 struct ErrorLog {
   uint32_t sdram_write_error;
+  uint32_t sdram_write_none_error;
   uint32_t sdram_read_error;
+  uint32_t sdram_read_none_error;
 };
 
 using BitDepth_t = std::uint32_t;
@@ -42,11 +44,10 @@ struct SaiDmaState {
 };
 
 struct TrackPlaybackContext {
-  BitDepth_t* track_buffer_sdram_address;
-  BitDepth_t* current_frame_sdram_address;
-  BitDepth_t* track_frame_buffer_address;
-  uint32_t position_frames;   // 재생할 프레임의 번호
-  uint32_t loop_frame_count;  // 트랙의 길이
+  BitDepth_t* sdram_base_address;
+  BitDepth_t* sram_frame_buffer_address;
+  uint32_t frame_index;        // 재생할 프레임의 번호
+  uint32_t total_frame_count;  // 트랙의 길이
   TrackStateMachine::Id track_state;
 };
 
@@ -56,7 +57,7 @@ struct AudioInputContext {
   bool is_frame_ready;
 };
 
-static ErrorLog error_log;
+static ErrorLog error_log{0, 0, 0, 0};
 
 static osMessageQueueId_t audio_event_snapshot_mailbox;
 static osMessageQueueId_t audio_dma_event_queue;
@@ -97,6 +98,7 @@ static bool IsAudioInputFrameReady();
 static void UpdateAudioEventSnapshot();
 static void RecordActiveTracks();
 static void MixAudioFrames();
+static void UpdateTrackPlaybackContext();
 
 void AudioTask_Init(void* argument) {
   AudioInitParams* params = (AudioInitParams*)argument;
@@ -114,14 +116,11 @@ void AudioTask_Init(void* argument) {
   audio_dma_event_queue = params->audio_dma_event_queue;
 
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    track_playback_context[i].loop_frame_count = 0;
-    track_playback_context[i].position_frames = 0;
-    track_playback_context[i].track_buffer_sdram_address =
+    track_playback_context[i].total_frame_count = 0;
+    track_playback_context[i].frame_index = 0;
+    track_playback_context[i].sdram_base_address =
         (BitDepth_t*)(SDRAM_BASE_ADDRESS + TRACK_FRAME_BUFFER_SIZE * i);
-    track_playback_context[i].current_frame_sdram_address =
-        track_playback_context[i].track_buffer_sdram_address;
-    track_playback_context[i].track_frame_buffer_address =
-        track_frame_buffer[i];
+    track_playback_context[i].sram_frame_buffer_address = track_frame_buffer[i];
     track_playback_context[i].track_state = TrackStateMachine::Id::NONE;
   }
 
@@ -160,6 +159,7 @@ static void Run() {
       FetchActiveTrackFrames();
       MixAudioFrames();
       RecordActiveTracks();
+      UpdateTrackPlaybackContext();
     }
   }
 }
@@ -182,17 +182,18 @@ static void FetchActiveTrackFrames() {
             TrackStateMachine::Id::PLAYING ||
         track_playback_context[i].track_state ==
             TrackStateMachine::Id::OVERDUBBING) {
-      track_playback_context[i].current_frame_sdram_address =
-          track_playback_context[i].track_buffer_sdram_address +
-          track_playback_context[i].position_frames * FRAME_COUNT;
+      uint32_t* current_frame_sdram_address =
+          track_playback_context[i].sdram_base_address +
+          track_playback_context[i].frame_index * FRAME_COUNT;
+
       if (HAL_SDRAM_Read_DMA(
-              hsdram, track_playback_context[i].current_frame_sdram_address,
-              track_frame_buffer[i], FRAME_COUNT) != HAL_OK) {
+              hsdram, current_frame_sdram_address,
+              track_playback_context[i].sram_frame_buffer_address,
+              FRAME_COUNT) != HAL_OK) {
         error_log.sdram_read_error++;
+      } else {
+        error_log.sdram_read_none_error++;
       }
-      track_playback_context[i].position_frames =
-          (track_playback_context[i].position_frames + 1) %
-          track_playback_context[i].loop_frame_count;
     }
   }
 }
@@ -262,26 +263,6 @@ void UpdateAudioEventSnapshot() {
   }
 }
 
-static void RecordActiveTracks() {
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    if (track_playback_context[i].track_state ==
-            TrackStateMachine::Id::RECORDING ||
-        track_playback_context[i].track_state ==
-            TrackStateMachine::Id::OVERDUBBING) {
-      if (HAL_SDRAM_Write_DMA(
-              hsdram, track_playback_context[i].current_frame_sdram_address,
-              audio_input_context.input_frame_buffer,
-              FRAME_COUNT) != HAL_OK) {
-        error_log.sdram_write_error++;
-      }
-      if (track_playback_context[i].track_state ==
-          TrackStateMachine::Id::RECORDING) {
-        track_playback_context[i].loop_frame_count++;
-      }
-    }
-  }
-}
-
 static void MixAudioFrames() {
   for (size_t i = 0; i < FRAME_COUNT; i += CHANNEL_COUNT) {
     BitDepth_t sample = 0;
@@ -290,11 +271,66 @@ static void MixAudioFrames() {
               TrackStateMachine::Id::PLAYING ||
           track_playback_context[j].track_state ==
               TrackStateMachine::Id::OVERDUBBING) {
-        sample += track_playback_context[j].track_frame_buffer_address[i];
+        sample += track_playback_context[j]
+                      .sram_frame_buffer_address[i + INMP441_ALIGN_OFFSET];
       }
     }
     sample += audio_input_context.input_frame_buffer[i + INMP441_ALIGN_OFFSET];
     audio_input_context.output_frame_buffer[i] = sample;
     audio_input_context.output_frame_buffer[i + 1] = sample;
+  }
+}
+
+static void RecordActiveTracks() {
+  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+    if (track_playback_context[i].track_state ==
+            TrackStateMachine::Id::RECORDING ||
+        track_playback_context[i].track_state ==
+            TrackStateMachine::Id::OVERDUBBING) {
+      uint32_t* current_frame_sdram_address =
+          track_playback_context[i].sdram_base_address +
+          track_playback_context[i].frame_index * FRAME_COUNT;
+
+      if (track_playback_context[i].track_state ==
+          TrackStateMachine::Id::RECORDING) {
+        for (uint32_t j = 0; j < FRAME_COUNT; j++) {
+          track_playback_context[i].sram_frame_buffer_address[j] =
+              audio_input_context.input_frame_buffer[j];
+        }
+      } else if (track_playback_context[i].track_state ==
+                 TrackStateMachine::Id::OVERDUBBING) {
+        for (uint32_t j = 0; j < FRAME_COUNT; j++) {
+          track_playback_context[i].sram_frame_buffer_address[j] +=
+              audio_input_context.input_frame_buffer[j];
+        }
+      }
+
+      if (HAL_SDRAM_Write_DMA(
+              hsdram, current_frame_sdram_address,
+              track_playback_context[i].sram_frame_buffer_address,
+              FRAME_COUNT) != HAL_OK) {
+        error_log.sdram_write_error++;
+      } else {
+        error_log.sdram_write_none_error++;
+      }
+    }
+  }
+}
+
+void UpdateTrackPlaybackContext() {
+  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+    switch (track_playback_context[i].track_state) {
+      case TrackStateMachine::Id::RECORDING:
+        track_playback_context[i].total_frame_count++;
+        break;
+      case TrackStateMachine::Id::PLAYING:
+      case TrackStateMachine::Id::OVERDUBBING:
+        track_playback_context[i].frame_index =
+            (track_playback_context[i].frame_index + 1) %
+            track_playback_context[i].total_frame_count;
+        break;
+      default:
+        break;
+    }
   }
 }
