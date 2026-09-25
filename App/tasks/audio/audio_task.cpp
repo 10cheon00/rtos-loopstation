@@ -19,8 +19,9 @@
 #define SAMPLE_DURATION_MS (1000.0 / SAMPLING_FREQUENCY)
 #define SAMPLE_DURATION_TICKS (pdMS_TO_TICKS(SAMPLE_DURATION_MS))
 #define CHANNEL_COUNT 2U
-#define SAI_BUFFER_SIZE (SAMPLE_COUNT * CHANNEL_COUNT)
-#define INMP441_ALIGN_RIGHT 1
+#define BUFFER_COUNT 4U
+#define SAI_BUFFER_SIZE (SAMPLE_COUNT * BUFFER_COUNT)
+#define INMP441_ALIGN_OFFSET 1
 
 #define TRACK_BUFFER_BASE_ADDRESS 0xC0000000
 
@@ -59,7 +60,7 @@ static Parameter parameter_tfx_a;
 static Parameter parameter_tfx_b;
 static Parameter parameter_tfx_c;
 
-static SaiDmaState sai_dma_state[CHANNEL_COUNT];
+static SaiDmaState sai_dma_state[BUFFER_COUNT];
 
 TrackPlaybackContext track_playback_context[TRACK_COUNT];
 AudioInputContext audio_input_context;
@@ -72,17 +73,10 @@ __attribute__((
     section(".axi_sram"),
     aligned(
         sizeof(BitDepth_t)))) static BitDepth_t sai_tx_buffer[SAI_BUFFER_SIZE];
-__attribute__((section(".axi_sram"),
-               aligned(sizeof(BitDepth_t)))) static BitDepth_t
-    track_sample_buffer[TRACK_COUNT][SAI_BUFFER_SIZE];
 
 static bool IsValidParams(AudioInitParams* params);
-static void UpdateTrackPlaybackContext();
 static void Run();
 static TaskStatus StartSaiReceiveAndTransmit();
-static void GetFxParametersAndTrackState();
-static void FetchTrackSamples();
-static void FetchTrackSample(TrackPlaybackContext* context);
 static void WaitForAudioDmaEvent(
     RtosMessage_AudioDmaEvent& rtos_message_audio_dma_event);
 static void HandleAudioDmaEvent(RtosMessage_AudioDmaEvent& audio_dma_event);
@@ -103,16 +97,9 @@ void AudioTask_Init(void* argument) {
   audio_event_snapshot_mailbox = params->audio_event_snapshot_mailbox;
   audio_dma_event_queue = params->audio_dma_event_queue;
 
-  UpdateTrackPlaybackContext();
-
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
                    osFlagsWaitAll | osFlagsNoClear, osWaitForever);
   Run();
-}
-
-static void UpdateTrackPlaybackContext() {
-  // TODO:
-  // 트랙 버퍼의 메모리 크기를 정해주는 규칙 세우기
 }
 
 bool IsValidParams(AudioInitParams* params) {
@@ -138,11 +125,6 @@ static void Run() {
   StartSaiReceiveAndTransmit();
 
   for (;;) {
-    // GetFxParametersAndTrackState();
-    // TODO:
-    // 오디오 패스스루를 먼저 구현한 후 트랙 데이터를 믹싱하기
-    // FetchTrackSamples();
-
     WaitForAudioDmaEvent(rtos_message_audio_dma_event);
     HandleAudioDmaEvent(rtos_message_audio_dma_event);
     MixAudioSamples();
@@ -159,42 +141,6 @@ static TaskStatus StartSaiReceiveAndTransmit() {
     return TASK_STATUS_ERROR;
   }
   return TASK_STATUS_OK;
-}
-
-void GetFxParametersAndTrackState() {
-  RtosMessage_AudioEventSnapshot audio_event_snapshot;
-  osMessageQueueGet(audio_event_snapshot_mailbox, &audio_event_snapshot, NULL,
-                    0);
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    track_playback_context[i].track_state =
-        FromRtosEnumValue<TrackStateMachine::Id>(
-            audio_event_snapshot.rtos_enum_value_track_states[i]);
-  }
-  parameter_ifx_a = Parameter(audio_event_snapshot.rtos_parameter_copy_ifx_a);
-  parameter_ifx_b = Parameter(audio_event_snapshot.rtos_parameter_copy_ifx_b);
-  parameter_ifx_c = Parameter(audio_event_snapshot.rtos_parameter_copy_ifx_c);
-  parameter_tfx_a = Parameter(audio_event_snapshot.rtos_parameter_copy_tfx_a);
-  parameter_tfx_b = Parameter(audio_event_snapshot.rtos_parameter_copy_tfx_b);
-  parameter_tfx_c = Parameter(audio_event_snapshot.rtos_parameter_copy_tfx_c);
-}
-
-static void FetchTrackSamples() {
-  // for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-  //   if (track_playback_context[i].track_state ==
-  //           TrackStateMachine::Id::PLAYING ||
-  //       track_playback_context[i].track_state ==
-  //           TrackStateMachine::Id::OVERDUBBING) {
-  //     FetchTrackSample(&track_playback_context[i]);
-  //   }
-  // }
-}
-
-static void FetchTrackSample(TrackPlaybackContext* context) {
-  // 특정 트랙에서 가져와야할 샘플 위치 계산
-  // uint32_t* sample_address = context->track_buffer_address;
-  // // 샘플을 읽는 명령 실행
-  // HAL_SDRAM_Read_DMA(hsdram, sample_address,
-  //                    context->track_sample_buffer_address, SAMPLE_COUNT);
 }
 
 static void WaitForAudioDmaEvent(
@@ -248,8 +194,8 @@ static void MixAudioSamples() {
 
   for (size_t i = 0; i < SAMPLE_COUNT; i += CHANNEL_COUNT) {
     audio_input_context.output_sample_buffer[i] =
-        audio_input_context.input_sample_buffer[i + INMP441_ALIGN_RIGHT];
+        audio_input_context.input_sample_buffer[i + INMP441_ALIGN_OFFSET];
     audio_input_context.output_sample_buffer[i + 1] =
-        audio_input_context.input_sample_buffer[i + INMP441_ALIGN_RIGHT];
+        audio_input_context.input_sample_buffer[i + INMP441_ALIGN_OFFSET];
   }
 }
