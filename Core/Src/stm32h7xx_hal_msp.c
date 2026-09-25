@@ -41,7 +41,7 @@ extern DMA_HandleTypeDef hdma_spi2_tx;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+extern MDMA_HandleTypeDef hmdma_mdma_channel0_sw_0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -797,7 +797,7 @@ void HAL_SDRAM_MspInit(SDRAM_HandleTypeDef* hsdram){
   /* USER CODE END SDRAM_MspInit 0 */
   HAL_FMC_MspInit();
   /* USER CODE BEGIN SDRAM_MspInit 1 */
-
+  __HAL_LINKDMA(hsdram, hmdma, hmdma_mdma_channel0_sw_0);
   /* USER CODE END SDRAM_MspInit 1 */
 }
 

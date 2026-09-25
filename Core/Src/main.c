@@ -369,6 +369,7 @@ int main(void)
 
   state_init_params.state_event_queue = state_event_queueHandle;
   state_init_params.display_snapshot_mailbox = display_snapshot_mailboxHandle;
+  state_init_params.audio_event_snapshot_mailbox = audio_event_snapshot_mailboxHandle;
   state_init_params.hi2c = &hi2c1;
   state_init_params.i2c_mutex = i2c1_mutexHandle;
 
@@ -1099,7 +1100,7 @@ static void MX_FMC_Init(void)
   }
 
   /* USER CODE BEGIN FMC_Init 2 */
-
+  hsdram1.hmdma = &hmdma_mdma_channel0_sw_0;
   /* USER CODE END FMC_Init 2 */
 }
 
