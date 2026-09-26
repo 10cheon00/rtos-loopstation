@@ -24,23 +24,24 @@
 #include "ui_transition_map.hpp"
 #include "utils.h"
 
-static StateTaskContext state_task_context;
+struct StateTaskContext {
+  osMessageQueueId_t state_event_queue;
+  osMessageQueueId_t display_snapshot_mailbox;
+  osMessageQueueId_t audio_event_snapshot_mailbox;
 
-static osMessageQueueId_t state_event_queue = 0;
-static osMessageQueueId_t display_snapshot_mailbox = 0;
-static osMessageQueueId_t audio_event_snapshot_mailbox = 0;
+  UiStateMachine::Context ui_state_machine_context;
+  UiStateMachine::StateMachine ui_state_machine{ui_state_machine_context,
+                                                UiStateMachine::Id::HOME};
 
-static UiStateMachine::Context ui_state_machine_context;
-static UiStateMachine::StateMachine ui_state_machine{ui_state_machine_context,
-                                                     UiStateMachine::Id::HOME};
+  std::array<TrackStateMachine::Context, static_cast<std::size_t>(TRACK_COUNT)>
+      track_state_machine_contexts;
+  std::array<TrackStateMachine::StateMachine,
+             static_cast<std::size_t>(TRACK_COUNT)>
+      track_state_machines{TrackStateMachine::StateMachine{
+          track_state_machine_contexts[0], TrackStateMachine::Id::IDLE}};
+};
 
-static std::array<TrackStateMachine::Context,
-                  static_cast<std::size_t>(TRACK_COUNT)>
-    track_state_machine_contexts;
-static std::array<TrackStateMachine::StateMachine,
-                  static_cast<std::size_t>(TRACK_COUNT)>
-    track_state_machines{TrackStateMachine::StateMachine{
-        track_state_machine_contexts[0], TrackStateMachine::Id::IDLE}};
+static StateTaskContext context;
 
 static void Run(void);
 static TaskStatus TryUpdateParameter(RtosMessage_StateEvent& state_event);
@@ -73,9 +74,9 @@ void StateTask_Init(void* argument) {
     }
   }
 
-  state_event_queue = params->state_event_queue;
-  display_snapshot_mailbox = params->display_snapshot_mailbox;
-  audio_event_snapshot_mailbox = params->audio_event_snapshot_mailbox;
+  context.state_event_queue = params->state_event_queue;
+  context.display_snapshot_mailbox = params->display_snapshot_mailbox;
+  context.audio_event_snapshot_mailbox = params->audio_event_snapshot_mailbox;
 
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
                    osFlagsWaitAll | osFlagsNoClear, osWaitForever);
@@ -88,13 +89,14 @@ void Run(void) {
   TaskStatus task_status;
 
   for (;;) {
-    os_status =
-        osMessageQueueGet(state_event_queue, &state_event, NULL, osWaitForever);
+    os_status = osMessageQueueGet(context.state_event_queue, &state_event, NULL,
+                                  osWaitForever);
     if (os_status == osOK) {
       TryUpdateParameter(state_event);
       TryTransitionUiStateMachine(state_event);
       for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-        TryTransitionTrackStateMachine(track_state_machines[i], state_event);
+        TryTransitionTrackStateMachine(context.track_state_machines[i],
+                                       state_event);
       }
       if (task_status != TASK_STATUS_OK) {
         // TODO:
@@ -152,7 +154,7 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload) {
     SlotPosition slot_position = maybe_position.value();
 
     PageSlotVariant& page_slot_variant =
-        ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
+        context.ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
             slot_position);
 
     if (!std::holds_alternative<ParameterSlot>(page_slot_variant)) {
@@ -195,7 +197,8 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
   }
   SlotPosition slot_position = maybe_slot_position.value();
   PageSlotVariant& page_slot_variant =
-      ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(slot_position);
+      context.ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
+          slot_position);
   if (!std::holds_alternative<ParameterSlot>(page_slot_variant)) {
     return TASK_STATUS_OK;
   }
@@ -245,12 +248,12 @@ static TaskStatus TryTransitionUiStateMachine(
   if (button_id == ButtonId::EXIT) {
     // 3. exit 버튼이라면 상위 패널로 이동 가능한지 판단 후 전이
     next_ui_state_id = UiStateNavigationTree_GetParent(
-        ui_state_machine.GetCurrentState()->GetId());
+        context.ui_state_machine.GetCurrentState()->GetId());
   } else if (button_id == ButtonId::LEFT) {
     // 4. 좌우 버튼인 경우 페이지 증가
-    ui_state_machine.GetCurrentState()->IncreasePageIndex();
+    context.ui_state_machine.GetCurrentState()->IncreasePageIndex();
   } else if (button_id == ButtonId::RIGHT) {
-    ui_state_machine.GetCurrentState()->DecreasePageIndex();
+    context.ui_state_machine.GetCurrentState()->DecreasePageIndex();
   } else if (button_id == ButtonId::ENCODER_A_PUSH) {
     // 5. 엔코더 푸시 버튼이라면 현재 UiState가 보여주는 슬롯에 따라 전이
     std::optional<SlotPosition> maybe_slot_position = ToSlotPosition(button_id);
@@ -259,7 +262,7 @@ static TaskStatus TryTransitionUiStateMachine(
     }
     SlotPosition slot_position = maybe_slot_position.value();
     PageSlotVariant& page_slot_variant =
-        ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
+        context.ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
             slot_position);
     if (std::holds_alternative<MenuSlot>(page_slot_variant)) {
       next_ui_state_id = std::get<MenuSlot>(page_slot_variant).GetUiStateId();
@@ -272,7 +275,7 @@ static TaskStatus TryTransitionUiStateMachine(
     next_ui_state_id = UiTransitionMap::Get(button_id);
   }
   if (next_ui_state_id != UiStateMachine::Id::NONE) {
-    ui_state_machine.TryTransition(next_ui_state_id);
+    context.ui_state_machine.TryTransition(next_ui_state_id);
   }
 
   return TASK_STATUS_OK;
@@ -282,19 +285,19 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
   RtosMessage_DisplaySnapshot snapshot;
 
   snapshot.panel.rtos_enum_value_ui_state =
-      ToRtosEnumValue(ui_state_machine.GetCurrentState()->GetId());
+      ToRtosEnumValue(context.ui_state_machine.GetCurrentState()->GetId());
   PageNavigationFlag navigation_flags = PageNavigationFlag::NONE;
-  if (ui_state_machine.GetCurrentState()->CanDecreasePageIndex()) {
+  if (context.ui_state_machine.GetCurrentState()->CanDecreasePageIndex()) {
     navigation_flags = navigation_flags | PageNavigationFlag::LEFT_ARROW;
   }
-  if (ui_state_machine.GetCurrentState()->CanIncreasePageIndex()) {
+  if (context.ui_state_machine.GetCurrentState()->CanIncreasePageIndex()) {
     navigation_flags = navigation_flags | PageNavigationFlag::RIGHT_ARROW;
   }
 
   snapshot.panel.rtos_enum_value_page_navigation_flag =
       ToRtosEnumValue(navigation_flags);
 
-  Page& page = ui_state_machine.GetCurrentState()->GetCurrentPage();
+  Page& page = context.ui_state_machine.GetCurrentState()->GetCurrentPage();
   for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
        i++) {
     SlotPosition slot_position = static_cast<SlotPosition>(i);
@@ -324,11 +327,11 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
       .ToRtosParameterCopy(snapshot.led.tfx_a_state);
 
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    snapshot.led.rtos_enum_value_track_states[i] =
-        ToRtosEnumValue(track_state_machines[i].GetCurrentState()->GetId());
+    snapshot.led.rtos_enum_value_track_states[i] = ToRtosEnumValue(
+        context.track_state_machines[i].GetCurrentState()->GetId());
   }
 
-  xQueueOverwrite((QueueHandle_t)display_snapshot_mailbox, &snapshot);
+  xQueueOverwrite((QueueHandle_t)context.display_snapshot_mailbox, &snapshot);
   return TASK_STATUS_OK;
 }
 
@@ -373,9 +376,9 @@ static void UpdateAudioEventSnapshotMailbox() {
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     audio_event_snapshot.rtos_enum_value_track_states[i] =
         ToRtosEnumValue<TrackStateMachine::Id>(
-            track_state_machines[i].GetCurrentState()->GetId());
+            context.track_state_machines[i].GetCurrentState()->GetId());
   }
 
-  xQueueOverwrite((QueueHandle_t)audio_event_snapshot_mailbox,
+  xQueueOverwrite((QueueHandle_t)context.audio_event_snapshot_mailbox,
                   &audio_event_snapshot);
 }

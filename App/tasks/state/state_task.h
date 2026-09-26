@@ -8,10 +8,6 @@ extern "C" {
 #include "button_id.hpp"
 
 void StateTask_Init(void* argument);
-void StateTask_Run(void);
-
-typedef struct {
-} StateTaskContext;
 
 #ifdef __cplusplus
 }
