@@ -322,6 +322,8 @@ void UpdateTrackPlaybackContext() {
     switch (track_playback_context[i].track_state) {
       case TrackStateMachine::Id::RECORDING:
         track_playback_context[i].total_frame_count++;
+        track_playback_context[i].frame_index =
+            track_playback_context[i].total_frame_count;
         break;
       case TrackStateMachine::Id::PLAYING:
       case TrackStateMachine::Id::OVERDUBBING:
