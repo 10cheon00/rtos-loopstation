@@ -48,6 +48,7 @@ struct TrackPlaybackContext {
   BitDepth_t* sram_frame_buffer_address;
   uint32_t frame_index;        // 재생할 프레임의 번호
   uint32_t total_frame_count;  // 트랙의 길이
+  uint8_t volume;
   TrackStateMachine::Id track_state;
 };
 
@@ -95,7 +96,7 @@ static void WaitForAudioDmaEvent(
 static void HandleAudioDmaEvent(RtosMessage_AudioDmaEvent& audio_dma_event);
 static void UpdateAudioInputContext();
 static bool IsAudioInputFrameReady();
-static void UpdateAudioEventSnapshot();
+static void ParseAudioEventSnapshot();
 static void RecordActiveTracks();
 static void MixAudioFrames();
 static void UpdateTrackPlaybackContext();
@@ -122,6 +123,7 @@ void AudioTask_Init(void* argument) {
         (BitDepth_t*)(SDRAM_BASE_ADDRESS + TRACK_FRAME_BUFFER_SIZE * i);
     track_playback_context[i].sram_frame_buffer_address = track_frame_buffer[i];
     track_playback_context[i].track_state = TrackStateMachine::Id::NONE;
+    track_playback_context[i].volume = 0U;
   }
 
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
@@ -155,7 +157,7 @@ static void Run() {
     WaitForAudioDmaEvent(rtos_message_audio_dma_event);
     HandleAudioDmaEvent(rtos_message_audio_dma_event);
     if (IsAudioInputFrameReady()) {
-      UpdateAudioEventSnapshot();
+      ParseAudioEventSnapshot();
       FetchActiveTrackFrames();
       MixAudioFrames();
       RecordActiveTracks();
@@ -252,7 +254,7 @@ void UpdateAudioInputContext() {
 
 bool IsAudioInputFrameReady() { return audio_input_context.is_frame_ready; }
 
-void UpdateAudioEventSnapshot() {
+void ParseAudioEventSnapshot() {
   RtosMessage_AudioEventSnapshot audio_event_snapshot;
   xQueuePeek((QueueHandle_t)audio_event_snapshot_mailbox, &audio_event_snapshot,
              0);
@@ -260,6 +262,8 @@ void UpdateAudioEventSnapshot() {
     track_playback_context[i].track_state =
         FromRtosEnumValue<TrackStateMachine::Id>(
             audio_event_snapshot.rtos_enum_value_track_states[i]);
+    track_playback_context[i].volume =
+        audio_event_snapshot.rtos_parameter_track_volumes[i];
   }
 }
 
@@ -271,8 +275,10 @@ static void MixAudioFrames() {
               TrackStateMachine::Id::PLAYING ||
           track_playback_context[j].track_state ==
               TrackStateMachine::Id::OVERDUBBING) {
-        sample += track_playback_context[j]
-                      .sram_frame_buffer_address[i + INMP441_ALIGN_OFFSET];
+        sample +=
+            (double)(track_playback_context[j]
+                         .sram_frame_buffer_address[i + INMP441_ALIGN_OFFSET]) /
+            track_playback_context[i].volume;
       }
     }
     sample += audio_input_context.input_frame_buffer[i + INMP441_ALIGN_OFFSET];
