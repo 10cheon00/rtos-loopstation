@@ -8,6 +8,8 @@
 #include "cmsis_os2.h"
 #include "display_messages.h"
 #include "encoder_id.hpp"
+#include "knob_id.hpp"
+#include "knob_to_parameter_map.hpp"
 #include "loopstation_parameter_store.hpp"
 #include "mcp23017.hpp"
 #include "page_navigation_flag.hpp"
@@ -49,7 +51,7 @@ static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload);
 static TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationPayload& encoder_rotation_payload);
 static TaskStatus TryUpdateParameterFromAdc(
-    RtosMessage_StateEvent& state_event);
+    AdcConversionPayload& adc_conversion_payload);
 static TaskStatus TryTransitionUiStateMachine(
     RtosMessage_StateEvent& state_event);
 static TaskStatus UpdateDisplaySnapshotMailbox();
@@ -116,9 +118,7 @@ static TaskStatus TryUpdateParameter(RtosMessage_StateEvent& state_event) {
     return TryUpdateParameterFromEncoderRotation(
         state_event.payload.encoder_rotation);
   } else {
-    // TODO:
-    // ADC 입력에 대한 파라미터 값 변경 기능 구현하기
-    return TryUpdateParameterFromAdc(state_event);
+    return TryUpdateParameterFromAdc(state_event.payload.adc_conversion);
   }
 }
 
@@ -212,10 +212,17 @@ TaskStatus TryUpdateParameterFromEncoderRotation(
   return TASK_STATUS_OK;
 }
 
-TaskStatus TryUpdateParameterFromAdc(RtosMessage_StateEvent& state_event) {
-  // TODO:
-  // ADC 입력과 매핑된 파라미터를 수정하기
-  return TASK_STATUS_ERROR;
+TaskStatus TryUpdateParameterFromAdc(
+    AdcConversionPayload& adc_conversion_payload) {
+  KnobId id =
+      FromRtosEnumValue<KnobId>(adc_conversion_payload.rtos_enum_value_knob_id);
+  Parameter& parameter =
+      LoopstationStore::GetParameter(KnobToParameterMap::Get(id));
+  parameter.Set(MapRangeLinear(adc_conversion_payload.adc_value,
+                               std::numeric_limits<std::uint16_t>::min(),
+                               std::numeric_limits<std::uint16_t>::max(),
+                               parameter.GetMin(), parameter.GetMax()));
+  return TASK_STATUS_OK;
 }
 
 static TaskStatus TryTransitionUiStateMachine(

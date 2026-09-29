@@ -138,3 +138,9 @@ Hash_t djb2(const char* string) {
   }
   return hash % UINT32_MAX;
 }
+
+double MapRangeLinear(double x, double x_min, double x_max, double min, double max) {
+  if (x_max == x_min) return min;
+
+  return ((x - x_min) / (x_max - x_min)) * (max - min) + min;
+}

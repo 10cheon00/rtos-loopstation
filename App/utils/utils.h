@@ -26,6 +26,7 @@ double sine(int16_t degree);
 double tangent(int16_t degree);
 typedef uint32_t Hash_t;
 Hash_t djb2(const char* string);
+double MapRangeLinear(double x, double x_min, double x_max, double min, double max);
 
 template <typename Enum>
 inline std::underlying_type_t<Enum> ToRtosEnumValue(Enum id) {

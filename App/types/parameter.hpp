@@ -42,6 +42,8 @@ class Parameter {
                                 static_cast<std::int32_t>(value));
   }
 
+  constexpr void Set(const ParameterValue value) { this->current = value; }
+
   constexpr void Toggle() {
     this->current = IsCurrentMinimum() ? this->max : this->min;
   }
