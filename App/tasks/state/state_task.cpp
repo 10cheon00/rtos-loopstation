@@ -92,7 +92,7 @@ static void SetPageNavigationBitsetInPanelRenderPayload(
     RtosEnumValue& rtos_enum_value_page_navigation_bitset);
 static void CopyPanelSlotsToPanelRenderPayload(
     RtosPayload_PageSlotRender (&page_slots)[4]);
-static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender led);
+static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender& led);
 
 static int IsValidInitParams(const StateInitParams* params) {
   return (params != 0) && (params->state_event_queue != 0) &&
@@ -419,7 +419,7 @@ static void CopyPanelSlotsToPanelRenderPayload(
   }
 }
 
-static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender led) {
+static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender& led) {
   LoopstationStore::GetParameter(ParameterId::IFX_A_STATE)
       .ToRtosParameterCopy(led.ifx_a_state);
   LoopstationStore::GetParameter(ParameterId::TFX_A_STATE)
