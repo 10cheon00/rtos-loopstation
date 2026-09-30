@@ -17,10 +17,7 @@ static constexpr EnumMap<AdcRank_t, KnobId, 3> adc_rank_knob_map{
 void Foreach(AdcRankKnobConfigMapCallbackFunction CallbackFunction) {
   // TODO:
   // 하드웨어적으로 등록된 adc 채널에 대해서만 수행하도록 임시 수정
-  for (AdcRank_t i = 0; i < 5; i++) {
-    if (i == ID_NONE || i == ID_NULL) {
-      continue;
-    }
+  for (AdcRank_t i = 0; i < 3; i++) {
     CallbackFunction(i, adc_rank_knob_map[i]);
   }
 }
