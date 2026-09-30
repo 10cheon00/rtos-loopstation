@@ -1,5 +1,7 @@
 #include "state_task.h"
 
+#include <variant>
+
 #include "FreeRTOS.h"
 #include "app.h"
 #include "audio_messages.h"
@@ -12,7 +14,7 @@
 #include "knob_to_parameter_map.hpp"
 #include "loopstation_parameter_store.hpp"
 #include "mcp23017.hpp"
-#include "page_navigation_flag.hpp"
+#include "page_navigation_bitset.hpp"
 #include "queue.h"
 #include "state_event_type.hpp"
 #include "state_initparams.h"
@@ -25,6 +27,26 @@
 #include "ui_state_pointer_map.hpp"
 #include "ui_transition_map.hpp"
 #include "utils.h"
+
+struct ButtonEvent {
+  TickType_t timestamp_ticks;
+  ButtonId id;
+  ButtonState state;
+};
+
+struct EncoderRotationEvent {
+  TickType_t timestamp_ticks;
+  EncoderId id;
+  int32_t delta;
+};
+
+struct AdcConversionEvent {
+  KnobId id;
+  uint16_t adc_value;
+};
+
+using StateEventVariant =
+    std::variant<ButtonEvent, EncoderRotationEvent, AdcConversionEvent>;
 
 struct StateTaskContext {
   osMessageQueueId_t state_event_queue;
@@ -46,19 +68,31 @@ struct StateTaskContext {
 static StateTaskContext context;
 
 static void Run(void);
-static TaskStatus TryUpdateParameter(RtosMessage_StateEvent& state_event);
-static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload);
+static TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
+                                  StateEventVariant& state_event_variant);
+static TaskStatus TryUpdateParameter(StateEventVariant& state_event_variant);
+static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event);
+static Parameter& GetParameterFromCurrentPageAt(SlotIndex index);
 static TaskStatus TryUpdateParameterFromEncoderRotation(
-    EncoderRotationPayload& encoder_rotation_payload);
-static TaskStatus TryUpdateParameterFromAdc(
-    AdcConversionPayload& adc_conversion_payload);
-static TaskStatus TryTransitionUiStateMachine(
-    RtosMessage_StateEvent& state_event);
+    EncoderRotationEvent& event);
+static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event);
+static bool IsButtonPressedEvent(StateEventVariant& state_event_variant);
+static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event);
+static void TryChangePageIndex(ButtonId id);
+static void TryTransitionUiStateMachine(ButtonId id);
 static TaskStatus UpdateDisplaySnapshotMailbox();
 static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine& track_state_machine,
-    RtosMessage_StateEvent& state_event);
+    ButtonEvent& button_event);
 static void UpdateAudioEventSnapshotMailbox();
+static void FillPanelRenderPayload(RtosPayload_PanelRender& payload);
+static void SetUiStateIdInPanelRenderPayload(
+    RtosEnumValue& rtos_enum_value_ui_state_id);
+static void SetPageNavigationBitsetInPanelRenderPayload(
+    RtosEnumValue& rtos_enum_value_page_navigation_bitset);
+static void CopyPanelSlotsToPanelRenderPayload(
+    RtosPayload_PageSlotRender (&page_slots)[4]);
+static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender led);
 
 static int IsValidInitParams(const StateInitParams* params) {
   return (params != 0) && (params->state_event_queue != 0) &&
@@ -89,287 +123,229 @@ void Run(void) {
   RtosMessage_StateEvent state_event;
   osStatus_t os_status;
   TaskStatus task_status;
-
+  StateEventVariant state_event_variant;
   for (;;) {
+    // WaitForStateEvent
     os_status = osMessageQueueGet(context.state_event_queue, &state_event, NULL,
                                   osWaitForever);
     if (os_status == osOK) {
-      TryUpdateParameter(state_event);
-      TryTransitionUiStateMachine(state_event);
-      for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-        TryTransitionTrackStateMachine(context.track_state_machines[i],
-                                       state_event);
-      }
+      task_status = ParseStateEvent(state_event, state_event_variant);
       if (task_status != TASK_STATUS_OK) {
-        // TODO:
-        // 처리 실패에 대한 예외처리 구현하기
+        continue;
       }
+      TryUpdateParameter(state_event_variant);
+
+      if (IsButtonPressedEvent(state_event_variant)) {
+        // UpdateStateMachines
+        ButtonEvent& button_event = std::get<ButtonEvent>(state_event_variant);
+        HandlePanelControlButtonEvent(button_event);
+        for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+          TryTransitionTrackStateMachine(context.track_state_machines[i],
+                                         button_event);
+        }
+      }
+      // UpdatePanel
       UpdateDisplaySnapshotMailbox();
     }
   }
 }
 
-static TaskStatus TryUpdateParameter(RtosMessage_StateEvent& state_event) {
+TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
+                           StateEventVariant& state_event_variant) {
   const StateEventType type = FromRtosEnumValue<StateEventType>(
       state_event.rtos_enum_value_state_event_type);
   if (type == StateEventType::BUTTON) {
-    return TryUpdateParameterFromButton(state_event.payload.button);
+    state_event_variant = (ButtonEvent){
+        .timestamp_ticks = state_event.payload.button.timestamp_ticks,
+        .id = FromRtosEnumValue<ButtonId>(
+            state_event.payload.button.rtos_enum_value_button_id),
+        .state = FromRtosEnumValue<ButtonState>(
+            state_event.payload.button.rtos_enum_value_button_state),
+    };
   } else if (type == StateEventType::ENCODER_ROTATION) {
-    return TryUpdateParameterFromEncoderRotation(
-        state_event.payload.encoder_rotation);
+    state_event_variant = (EncoderRotationEvent){
+        .timestamp_ticks = state_event.payload.button.timestamp_ticks,
+        .id = FromRtosEnumValue<EncoderId>(
+            state_event.payload.encoder_rotation.rtos_enum_value_encoder_id),
+        .delta = state_event.payload.encoder_rotation.delta,
+    };
+  } else if (type == StateEventType::ADC_CONVERSION) {
+    state_event_variant = (AdcConversionEvent){
+        .id = FromRtosEnumValue<KnobId>(
+            state_event.payload.adc_conversion.rtos_enum_value_knob_id),
+        .adc_value = state_event.payload.adc_conversion.adc_value,
+    };
   } else {
-    return TryUpdateParameterFromAdc(state_event.payload.adc_conversion);
+    return TASK_STATUS_ERROR;
   }
+  return TASK_STATUS_OK;
+}
+
+static TaskStatus TryUpdateParameter(StateEventVariant& variant) {
+  if (std::holds_alternative<ButtonEvent>(variant)) {
+    return TryUpdateParameterFromButton(std::get<ButtonEvent>(variant));
+  } else if (std::holds_alternative<EncoderRotationEvent>(variant)) {
+    return TryUpdateParameterFromEncoderRotation(
+        std::get<EncoderRotationEvent>(variant));
+  } else if (std::holds_alternative<AdcConversionEvent>(variant)) {
+    // TODO:
+    // ADC 입력에 대한 파라미터 값 변경 기능 구현하기
+    return TryUpdateParameterFromAdc(std::get<AdcConversionEvent>(variant));
+  }
+  return TASK_STATUS_ERROR;
 }
 
 /**
  * 버튼 입력은 IFX/TFX 토글, 엔코더 버튼만 파라미터 값을 변경한다.
  * */
-static TaskStatus TryUpdateParameterFromButton(ButtonPayload& button_payload) {
-  ParameterId parameter_id;
-
-  ButtonState button_state = FromRtosEnumValue<ButtonState>(
-      button_payload.rtos_enum_value_button_state);
-  if (button_state != ButtonState::PRESSED) {
+static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event) {
+  if (event.state != ButtonState::PRESSED) {
     return TASK_STATUS_ERROR;
   }
 
-  ButtonId id =
-      FromRtosEnumValue<ButtonId>(button_payload.rtos_enum_value_button_id);
-
-  if (id != ButtonId::IFX_A_TOGGLE && id != ButtonId::TFX_A_TOGGLE &&
-      id != ButtonId::ENCODER_A_PUSH && id != ButtonId::ENCODER_B_PUSH &&
-      id != ButtonId::ENCODER_C_PUSH && id != ButtonId::ENCODER_D_PUSH) {
-    return TASK_STATUS_ERROR;
-  }
-
-  if (id == ButtonId::ENCODER_A_PUSH || id == ButtonId::ENCODER_B_PUSH ||
-      id == ButtonId::ENCODER_C_PUSH || id == ButtonId::ENCODER_D_PUSH) {
-    // TODO:
-    // Encoder_A~D 모두 처리 가능하게 해야함
-    std::optional<SlotPosition> maybe_position = ToSlotPosition(id);
-    if (!maybe_position.has_value()) {
-      return TASK_STATUS_ERROR;
-    }
-    SlotPosition slot_position = maybe_position.value();
-
-    PageSlotVariant& page_slot_variant =
-        context.ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
-            slot_position);
-
-    if (!std::holds_alternative<ParameterSlot>(page_slot_variant)) {
-      return TASK_STATUS_ERROR;
-    }
-    parameter_id = std::get<ParameterSlot>(page_slot_variant).GetParameterId();
-    if (parameter_id == ParameterId::NONE) {
-      return TASK_STATUS_ERROR;
-    }
-
-    Parameter& parameter = LoopstationStore::GetParameter(parameter_id);
-    if (parameter.GetType() == ParameterType::TOGGLE) {
+  switch (event.id) {
+    case ButtonId::ENCODER_A_PUSH:
+    case ButtonId::ENCODER_B_PUSH:
+    case ButtonId::ENCODER_C_PUSH:
+    case ButtonId::ENCODER_D_PUSH: {
+      SlotIndex index = ToSlotIndex(event.id);
+      Parameter& parameter = GetParameterFromCurrentPageAt(index);
+      if (parameter.GetType() == ParameterType::TOGGLE) {
+        parameter.Toggle();
+        return TASK_STATUS_OK;
+      }
+    } break;
+    case ButtonId::IFX_A_TOGGLE: {
+      Parameter& parameter =
+          LoopstationStore::GetParameter(ParameterId::IFX_A_STATE);
       parameter.Toggle();
-      return TASK_STATUS_OK;
-    }
-  } else if (id == ButtonId::IFX_A_TOGGLE) {
-    Parameter& parameter =
-        LoopstationStore::GetParameter(ParameterId::IFX_A_STATE);
-    parameter.Toggle();
-    return TASK_STATUS_OK;
-  } else if (id == ButtonId::TFX_A_TOGGLE) {
-    Parameter& parameter =
-        LoopstationStore::GetParameter(ParameterId::TFX_A_STATE);
-    parameter.Toggle();
-    return TASK_STATUS_OK;
+    } break;
+    case ButtonId::TFX_A_TOGGLE: {
+      Parameter& parameter =
+          LoopstationStore::GetParameter(ParameterId::TFX_A_STATE);
+      parameter.Toggle();
+    } break;
+    default:
+      return TASK_STATUS_ERROR;
   }
-
-  return TASK_STATUS_ERROR;
-}
-
-TaskStatus TryUpdateParameterFromEncoderRotation(
-    EncoderRotationPayload& encoder_rotation_payload) {
-  ParameterId parameter_id;
-
-  EncoderId id = FromRtosEnumValue<EncoderId>(
-      encoder_rotation_payload.rtos_enum_value_encoder_id);
-  std::optional<SlotPosition> maybe_slot_position = ToSlotPosition(id);
-  if (!maybe_slot_position.has_value()) {
-    return TASK_STATUS_ERROR;
-  }
-  SlotPosition slot_position = maybe_slot_position.value();
-  PageSlotVariant& page_slot_variant =
-      context.ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
-          slot_position);
-  if (!std::holds_alternative<ParameterSlot>(page_slot_variant)) {
-    return TASK_STATUS_OK;
-  }
-
-  parameter_id = std::get<ParameterSlot>(page_slot_variant).GetParameterId();
-  if (parameter_id == ParameterId::NONE) {
-    return TASK_STATUS_ERROR;
-  }
-  Parameter& parameter = LoopstationStore::GetParameter(parameter_id);
-  parameter.Add(encoder_rotation_payload.delta);
   return TASK_STATUS_OK;
 }
 
-TaskStatus TryUpdateParameterFromAdc(
-    AdcConversionPayload& adc_conversion_payload) {
-  KnobId id =
-      FromRtosEnumValue<KnobId>(adc_conversion_payload.rtos_enum_value_knob_id);
+static Parameter& GetParameterFromCurrentPageAt(SlotIndex index) {
+  Page& current_page =
+      context.ui_state_machine.GetCurrentState()->GetCurrentPage();
+
+  if (current_page.IsTypeAt<ParameterSlot>(index)) {
+    ParameterId parameter_id =
+        std::get<ParameterSlot>(current_page.GetAt(index)).GetParameterId();
+    return LoopstationStore::GetParameter(parameter_id);
+  }
+  return LoopstationStore::GetParameter(ParameterId::NONE);
+}
+
+/**
+ * 엔코더 입력은 패널에 엔코더와 매핑된 파라미터가 있어야 하며 그 파라미터가
+ * 토글형이라면 버튼입력과 회전입력으로 토글을 수행하고 노브형이라면
+ * 회전입력을 받아 값을 변경한다.
+ */
+static TaskStatus TryUpdateParameterFromEncoderRotation(
+    EncoderRotationEvent& event) {
+  SlotIndex index = ToSlotIndex(event.id);
+  Parameter& parameter = GetParameterFromCurrentPageAt(index);
+  parameter.Add(event.delta);
+  return TASK_STATUS_OK;
+}
+
+/**
+ * ADC입력은 16비트 해상도의 반환값을 파라미터 자료형에 맞도록 스케일한다.
+ * 이 입력을 곧바로 FX 파라미터에 적용하지 않고 별도의 파라미터에 저장한다음,
+ * 저장된 값을 FX 파라미터에 적용한다.
+ */
+static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event) {
   Parameter& parameter =
-      LoopstationStore::GetParameter(KnobToParameterMap::Get(id));
-  parameter.Set(MapRangeLinear(adc_conversion_payload.adc_value,
+      LoopstationStore::GetParameter(KnobToParameterMap::Get(event.id));
+  parameter.Set(MapRangeLinear(event.adc_value,
                                std::numeric_limits<std::uint16_t>::min(),
                                std::numeric_limits<std::uint16_t>::max(),
                                parameter.GetMin(), parameter.GetMax()));
   return TASK_STATUS_OK;
 }
 
-static TaskStatus TryTransitionUiStateMachine(
-    RtosMessage_StateEvent& state_event) {
-  // TODO:
-  // 좌우 버튼이 페이지 이동에만 사용되므로, 여기서 일어나는 전이들은 대부분
-  // System, Loop, IFX A/B/C, TFX A/B/C와 같이 특정 메뉴로 바로 이동하는 전역
-  // 버튼으로 발생하거나 Exit 버튼과 같이 상위 메뉴로 이동하는 버튼으로
-  // 발생한다. 그러므로, 버튼에 따라서 패널 전이를 하거나 패널 내 페이지 이동을
-  // 하도록 요청하면 된다. 패널 전이도 사실상 전역 이동, 상위 패널로 이동밖에
-  // 없으니까 기존에 transition_map 대신 상태 머신에서 전역으로 판단하는게
-  // 나을것 같다.
+static bool IsButtonPressedEvent(StateEventVariant& state_event_variant) {
+  if (!std::holds_alternative<ButtonEvent>(state_event_variant)) {
+    return false;
+  }
+  return std::get<ButtonEvent>(state_event_variant).state ==
+         ButtonState::PRESSED;
+}
+
+static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event) {
+  TryChangePageIndex(event.id);
+  TryTransitionUiStateMachine(event.id);
+
+  return TASK_STATUS_OK;
+}
+
+static void TryChangePageIndex(ButtonId id) {
+  if (id == ButtonId::LEFT) {
+    context.ui_state_machine.GetCurrentState()->IncreasePageIndex();
+  } else if (id == ButtonId::RIGHT) {
+    context.ui_state_machine.GetCurrentState()->DecreasePageIndex();
+  }
+}
+
+static void TryTransitionUiStateMachine(ButtonId id) {
   UiStateMachine::Id next_ui_state_id = UiStateMachine::Id::NONE;
 
-  // 1. 버튼 입력일때에만 패널이 바뀜
-  if (FromRtosEnumValue<StateEventType>(
-          state_event.rtos_enum_value_state_event_type) !=
-      StateEventType::BUTTON) {
-    return TASK_STATUS_ERROR;
-  }
-  ButtonId button_id = FromRtosEnumValue<ButtonId>(
-      state_event.payload.button.rtos_enum_value_button_id);
-  // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
-  ButtonState button_state = FromRtosEnumValue<ButtonState>(
-      state_event.payload.button.rtos_enum_value_button_state);
-  if (button_state != ButtonState::PRESSED) {
-    return TASK_STATUS_ERROR;
-  }
-
-  if (button_id == ButtonId::EXIT) {
-    // 3. exit 버튼이라면 상위 패널로 이동 가능한지 판단 후 전이
-    next_ui_state_id = UiStateNavigationTree_GetParent(
-        context.ui_state_machine.GetCurrentState()->GetId());
-  } else if (button_id == ButtonId::LEFT) {
-    // 4. 좌우 버튼인 경우 페이지 증가
-    context.ui_state_machine.GetCurrentState()->IncreasePageIndex();
-  } else if (button_id == ButtonId::RIGHT) {
-    context.ui_state_machine.GetCurrentState()->DecreasePageIndex();
-  } else if (button_id == ButtonId::ENCODER_A_PUSH) {
-    // 5. 엔코더 푸시 버튼이라면 현재 UiState가 보여주는 슬롯에 따라 전이
-    std::optional<SlotPosition> maybe_slot_position = ToSlotPosition(button_id);
-    if (!maybe_slot_position.has_value()) {
-      return TASK_STATUS_ERROR;
-    }
-    SlotPosition slot_position = maybe_slot_position.value();
-    PageSlotVariant& page_slot_variant =
-        context.ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
-            slot_position);
-    if (std::holds_alternative<MenuSlot>(page_slot_variant)) {
-      next_ui_state_id = std::get<MenuSlot>(page_slot_variant).GetUiStateId();
-    }
-  } else if (button_id == ButtonId::ENCODER_B_PUSH) {
-  } else if (button_id == ButtonId::ENCODER_C_PUSH) {
-  } else if (button_id == ButtonId::ENCODER_D_PUSH) {
-  } else {
-    // 6. 전역 버튼이라면 전역 패널 전이 테이블에 따라 전이
-    next_ui_state_id = UiTransitionMap::Get(button_id);
+  switch (id) {
+    case ButtonId::EXIT:
+      next_ui_state_id = UiStateNavigationTree_GetParent(
+          context.ui_state_machine.GetCurrentState()->GetId());
+      break;
+    case ButtonId::ENCODER_A_PUSH:
+    case ButtonId::ENCODER_B_PUSH:
+    case ButtonId::ENCODER_C_PUSH:
+    case ButtonId::ENCODER_D_PUSH: {
+      SlotIndex index = ToSlotIndex(id);
+      PageSlotVariant& page_slot_variant =
+          context.ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
+              index);
+      if (std::holds_alternative<MenuSlot>(page_slot_variant)) {
+        next_ui_state_id = std::get<MenuSlot>(page_slot_variant).GetUiStateId();
+      }
+    } break;
+    default:
+      next_ui_state_id = UiTransitionMap::Get(id);
   }
   if (next_ui_state_id != UiStateMachine::Id::NONE) {
     context.ui_state_machine.TryTransition(next_ui_state_id);
   }
-
-  return TASK_STATUS_OK;
 }
 
 static TaskStatus UpdateDisplaySnapshotMailbox() {
   RtosMessage_DisplaySnapshot snapshot;
 
-  snapshot.panel.rtos_enum_value_ui_state =
-      ToRtosEnumValue(context.ui_state_machine.GetCurrentState()->GetId());
-  PageNavigationFlag navigation_flags = PageNavigationFlag::NONE;
-  if (context.ui_state_machine.GetCurrentState()->CanDecreasePageIndex()) {
-    navigation_flags = navigation_flags | PageNavigationFlag::LEFT_ARROW;
-  }
-  if (context.ui_state_machine.GetCurrentState()->CanIncreasePageIndex()) {
-    navigation_flags = navigation_flags | PageNavigationFlag::RIGHT_ARROW;
-  }
-
-  snapshot.panel.rtos_enum_value_page_navigation_flag =
-      ToRtosEnumValue(navigation_flags);
-
-  Page& page = context.ui_state_machine.GetCurrentState()->GetCurrentPage();
-  for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
-       i++) {
-    SlotPosition slot_position = static_cast<SlotPosition>(i);
-    PageSlotVariant& page_slot_variant = page.GetAt(slot_position);
-    snapshot.panel.page_slots[i].rtos_enum_value_page_slot_type =
-        ToRtosEnumValue(GetPageSlotType(page_slot_variant));
-    if (std::holds_alternative<MenuSlot>(page_slot_variant)) {
-      MenuSlot& menu_slot = std::get<MenuSlot>(page_slot_variant);
-      snapshot.panel.page_slots[i].data.menu = (RtosPayload_MenuRender){
-          .rtos_enum_value16_menu_icon_encoding =
-              ToRtosEnumValue(menu_slot.GetIconEncoding()),
-          .label = menu_slot.GetLabel()};
-    } else if (std::holds_alternative<ParameterSlot>(page_slot_variant)) {
-      ParameterSlot& parameter_slot =
-          std::get<ParameterSlot>(page_slot_variant);
-      Parameter parameter =
-          LoopstationStore::GetParameter(parameter_slot.GetParameterId());
-      parameter.ToRtosParameterCopy(
-          snapshot.panel.page_slots[i].data.parameter.rtos_parameter_copy);
-      snapshot.panel.page_slots[i].data.parameter.label =
-          parameter_slot.GetLabel();
-    }
-  }
-  LoopstationStore::GetParameter(ParameterId::IFX_A_STATE)
-      .ToRtosParameterCopy(snapshot.led.ifx_a_state);
-  LoopstationStore::GetParameter(ParameterId::TFX_A_STATE)
-      .ToRtosParameterCopy(snapshot.led.tfx_a_state);
-
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    snapshot.led.rtos_enum_value_track_states[i] = ToRtosEnumValue(
-        context.track_state_machines[i].GetCurrentState()->GetId());
-  }
+  FillPanelRenderPayload(snapshot.panel);
+  FillDisplaySnapshotLedRenderPayload(snapshot.led);
 
   xQueueOverwrite((QueueHandle_t)context.display_snapshot_mailbox, &snapshot);
   return TASK_STATUS_OK;
 }
 
+/**
+ * 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
+ */
 static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine& track_state_machine,
-    RtosMessage_StateEvent& state_event) {
-  // 1. 버튼 입력일때에만 트랙 상태를 바꿈
-  if (FromRtosEnumValue<StateEventType>(
-          state_event.rtos_enum_value_state_event_type) !=
-      StateEventType::BUTTON) {
-    return TASK_STATUS_ERROR;
-  }
-  ButtonPayload& button_payload = state_event.payload.button;
-  ButtonId id =
-      FromRtosEnumValue<ButtonId>(button_payload.rtos_enum_value_button_id);
-  // 2. 버튼 입력은 무조건 PRESSED 상태일 때에만 처리
-  ButtonState state = FromRtosEnumValue<ButtonState>(
-      button_payload.rtos_enum_value_button_state);
-  if (state != ButtonState::PRESSED) {
-    return TASK_STATUS_ERROR;
-  }
-
-  // 3. 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
-  TrackStateMachine::ActionId action_id = ButtonToTrackActionMap::Get(id);
+    ButtonEvent& button_event) {
+  TrackStateMachine::ActionId action_id =
+      ButtonToTrackActionMap::Get(button_event.id);
   if (action_id == TrackStateMachine::ActionId::NONE) {
     return TASK_STATUS_ERROR;
   }
+
   track_state_machine.TryTransition(action_id);
-
   UpdateAudioEventSnapshotMailbox();
-
   return TASK_STATUS_OK;
 }
 
@@ -388,4 +364,69 @@ static void UpdateAudioEventSnapshotMailbox() {
 
   xQueueOverwrite((QueueHandle_t)context.audio_event_snapshot_mailbox,
                   &audio_event_snapshot);
+}
+
+static void FillPanelRenderPayload(RtosPayload_PanelRender& payload) {
+  SetUiStateIdInPanelRenderPayload(payload.rtos_enum_value_ui_state);
+  SetPageNavigationBitsetInPanelRenderPayload(
+      payload.rtos_enum_value_page_navigation_bitset);
+  CopyPanelSlotsToPanelRenderPayload(payload.page_slots);
+}
+
+static void SetUiStateIdInPanelRenderPayload(
+    RtosEnumValue& rtos_enum_value_ui_state_id) {
+  rtos_enum_value_ui_state_id =
+      ToRtosEnumValue(context.ui_state_machine.GetCurrentState()->GetId());
+}
+
+static void SetPageNavigationBitsetInPanelRenderPayload(
+    RtosEnumValue& rtos_enum_value_page_navigation_bitset) {
+  PageNavigationBitset bitset;
+  if (context.ui_state_machine.GetCurrentState()->CanDecreasePageIndex()) {
+    bitset |= PageNavigation::LEFT_ARROW;
+  }
+  if (context.ui_state_machine.GetCurrentState()->CanIncreasePageIndex()) {
+    bitset |= PageNavigation::RIGHT_ARROW;
+  }
+  rtos_enum_value_page_navigation_bitset = bitset.ToRtosEnumValue();
+}
+
+static void CopyPanelSlotsToPanelRenderPayload(
+    RtosPayload_PageSlotRender (&page_slots)[4]) {
+  Page& page = context.ui_state_machine.GetCurrentState()->GetCurrentPage();
+  for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotIndex::COUNT);
+       i++) {
+    SlotIndex slot_index = static_cast<SlotIndex>(i);
+    PageSlotVariant& page_slot_variant = page.GetAt(slot_index);
+    page_slots[i].rtos_enum_value_page_slot_type =
+        ToRtosEnumValue(GetPageSlotType(page_slot_variant));
+
+    if (std::holds_alternative<MenuSlot>(page_slot_variant)) {
+      MenuSlot& menu_slot = std::get<MenuSlot>(page_slot_variant);
+      page_slots[i].data.menu = (RtosPayload_MenuRender){
+          .rtos_enum_value16_menu_icon_encoding =
+              ToRtosEnumValue(menu_slot.GetIconEncoding()),
+          .label = menu_slot.GetLabel()};
+    } else if (std::holds_alternative<ParameterSlot>(page_slot_variant)) {
+      ParameterSlot& parameter_slot =
+          std::get<ParameterSlot>(page_slot_variant);
+      Parameter parameter =
+          LoopstationStore::GetParameter(parameter_slot.GetParameterId());
+      parameter.ToRtosParameterCopy(
+          page_slots[i].data.parameter.rtos_parameter_copy);
+      page_slots[i].data.parameter.label = parameter_slot.GetLabel();
+    }
+  }
+}
+
+static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender led) {
+  LoopstationStore::GetParameter(ParameterId::IFX_A_STATE)
+      .ToRtosParameterCopy(led.ifx_a_state);
+  LoopstationStore::GetParameter(ParameterId::TFX_A_STATE)
+      .ToRtosParameterCopy(led.tfx_a_state);
+
+  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+    led.rtos_enum_value_track_states[i] = ToRtosEnumValue(
+        context.track_state_machines[i].GetCurrentState()->GetId());
+  }
 }

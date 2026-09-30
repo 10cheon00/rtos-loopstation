@@ -30,7 +30,7 @@ typedef struct {
 
 typedef struct {
   RtosEnumValue rtos_enum_value_ui_state;
-  RtosEnumValue rtos_enum_value_page_navigation_flag;
+  RtosEnumValue rtos_enum_value_page_navigation_bitset;
   RtosPayload_PageSlotRender page_slots[4];
 } RtosPayload_PanelRender;
 

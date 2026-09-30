@@ -7,7 +7,7 @@
 #include "gmg12864_lcd.hpp"
 #include "menu_icon_encoding.hpp"
 #include "page.hpp"
-#include "page_navigation_flag.hpp"
+#include "page_navigation_bitset.hpp"
 #include "parameter.hpp"
 #include "parameter_id.hpp"
 #include "ui_state_id.hpp"
@@ -22,11 +22,11 @@ enum class Status : std::uint8_t {
 };
 
 Status DrawPanelLayout(const char* panel_name,
-                       PageNavigationFlag flag);
+                       PageNavigationBitset flag);
 Status DrawParameter(Parameter& parameter, const char* label,
-                     SlotPosition slot_position);
+                     SlotIndex slot_index);
 Status DrawMenu(MenuIconEncoding icon_id, const char* label,
-                SlotPosition slot_position);
+                SlotIndex slot_index);
 }  // namespace UiRenderer
 
 #endif

@@ -42,11 +42,11 @@ using namespace Gmg12864;
  *  기준 좌표를 좌상단으로 넘기면 출력을 처리하는 함수 내에서 좌하단으로
  변환하여 출력한다.
  */
-static constexpr EnumMap<SlotPosition, std::uint8_t> parameter_width_map{
-    EnumEntry{SlotPosition::A, 0},
-    EnumEntry{SlotPosition::B, SLOT_WIDTH},
-    EnumEntry{SlotPosition::C, SLOT_WIDTH * 2},
-    EnumEntry{SlotPosition::D, SLOT_WIDTH * 3},
+static constexpr EnumMap<SlotIndex, std::uint8_t> parameter_width_map{
+    EnumEntry{SlotIndex::A, 0},
+    EnumEntry{SlotIndex::B, SLOT_WIDTH},
+    EnumEntry{SlotIndex::C, SLOT_WIDTH * 2},
+    EnumEntry{SlotIndex::D, SLOT_WIDTH * 3},
 };
 
 static void DrawArrowLeft4x5(uint8_t x, uint8_t y);
@@ -60,16 +60,16 @@ static Status DrawLabel(const char* label, uint8_t x, uint8_t y);
 
 // TODO:
 // 패널 이동 화살표 표시도 자동화할 수 있지 않을까?
-Status DrawPanelLayout(const char* panel_name, PageNavigationFlag flag) {
+Status DrawPanelLayout(const char* panel_name, PageNavigationBitset bitset) {
   Driver& driver = Driver::GetInstance();
   driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
   driver.clearBuffer();
   driver.drawStr(1, PANEL_LABEL_HEIGHT, panel_name);
   driver.drawLine(0, PANEL_LABEL_LINE_Y, SCREEN_WIDTH, PANEL_LABEL_LINE_Y);
-  if (HasPageNavigationFlag(flag, PageNavigationFlag::LEFT_ARROW)) {
+  if (bitset.HasPageNavigation(PageNavigation::LEFT_ARROW)) {
     DrawArrowLeft4x5(117, PANEL_LABEL_HEIGHT);
   }
-  if (HasPageNavigationFlag(flag, PageNavigationFlag::RIGHT_ARROW)) {
+  if (bitset.HasPageNavigation(PageNavigation::RIGHT_ARROW)) {
     DrawArrowRight4x5(122, PANEL_LABEL_HEIGHT);
   }
   return Status::OK;
@@ -92,18 +92,18 @@ static void DrawArrowRight4x5(uint8_t x, uint8_t y) {
 }
 
 Status DrawParameter(Parameter& parameter, const char* label,
-                     SlotPosition slot_position) {
+                     SlotIndex slot_index) {
   uint8_t x, y;
   Status status;
 
-  x = parameter_width_map[slot_position];
+  x = parameter_width_map[slot_index];
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING;
   status = DrawParameterValue(parameter, x, y);
   if (status != Status::OK) {
     return status;
   }
 
-  x = parameter_width_map[slot_position];
+  x = parameter_width_map[slot_index];
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT +
       PARAMETER_PADDING;
   status = DrawParameterWidget(parameter, x, y);
@@ -111,7 +111,7 @@ Status DrawParameter(Parameter& parameter, const char* label,
     return status;
   }
 
-  x = parameter_width_map[slot_position];
+  x = parameter_width_map[slot_index];
   y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
   status = DrawLabel(label, x, y);
   return status;
@@ -192,15 +192,15 @@ static void ConvertNumberToString(int32_t number, char* string,
 }
 
 Status DrawMenu(MenuIconEncoding icon_encoding, const char* label,
-                SlotPosition slot_position) {
+                SlotIndex slot_index) {
   uint8_t x, y;
 
-  x = parameter_width_map[slot_position];
+  x = parameter_width_map[slot_index];
   y = PANEL_LABEL_LINE_Y + PARAMETER_PADDING + PARAMETER_VALUE_HEIGHT +
       PARAMETER_PADDING + GRAPHIC_AREA_HEIGHT / 2 - ICON_HEIGHT / 2;
   DrawPanelMenuIcon(icon_encoding, x, y);
 
-  x = parameter_width_map[slot_position];
+  x = parameter_width_map[slot_index];
   y = SCREEN_HEIGHT - 1 - CHARACTER_HEIGHT - 1 - CHARACTER_HEIGHT;
   DrawLabel(label, x, y);
   return Status::OK;

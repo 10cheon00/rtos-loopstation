@@ -3,12 +3,13 @@
 
 #include "enum_id.hpp"
 
-enum class SlotPosition : EnumId {
+enum class SlotIndex : EnumId {
   A = 0,
   B,
   C,
   D,
   COUNT,
+  INVALID = COUNT,
 };
 
 #endif

@@ -9,7 +9,7 @@ namespace LoopstationStore {
  * 제공하기 위해 이를 복사한 actual_parameters를 선언한다.
  */
 static constexpr ParameterStore initial_parameters{
-    EnumEntry{ParameterId::NONE, Parameter{0, 0, 0, ParameterType::SLIDER}},
+    EnumEntry{ParameterId::NONE, Parameter{0, 0, 0, ParameterType::NONE}},
     EnumEntry{ParameterId::IFX_KNOB,
               Parameter{0, 100, 0, ParameterType::SLIDER}},
     EnumEntry{ParameterId::TFX_KNOB,

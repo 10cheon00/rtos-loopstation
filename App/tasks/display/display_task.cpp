@@ -6,9 +6,9 @@
 #include "display_initparams.h"
 #include "display_messages.h"
 #include "enum_map.hpp"
+#include "gmg12864_lcd.hpp"
 #include "mcp23017.hpp"
 #include "mcp23017_gpio_map.hpp"
-#include "gmg12864_lcd.hpp"
 #include "page.hpp"
 #include "system_init_event_flag.hpp"
 #include "track_state_id.hpp"
@@ -118,12 +118,12 @@ static TaskStatus HandlePanelRenderPayload(
   const char* panel_label = UiStateLabelMap::Get(ui_state_id);
   UiRenderer::DrawPanelLayout(
       panel_label,
-      FromRtosEnumValue<PageNavigationFlag>(
-          panel_render_payload->rtos_enum_value_page_navigation_flag));
+      PageNavigationBitset(
+          panel_render_payload->rtos_enum_value_page_navigation_bitset));
 
-  for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotPosition::COUNT);
+  for (std::uint8_t i = 0; i < static_cast<std::uint8_t>(SlotIndex::COUNT);
        i++) {
-    const SlotPosition slot_position = static_cast<SlotPosition>(i);
+    const SlotIndex slot_index = static_cast<SlotIndex>(i);
     RtosPayload_PageSlotRender* payload = &panel_render_payload->page_slots[i];
     PageSlotType type = FromRtosEnumValue<PageSlotType>(
         payload->rtos_enum_value_page_slot_type);
@@ -132,13 +132,13 @@ static TaskStatus HandlePanelRenderPayload(
       MenuIconEncoding icon_encoding = FromRtosEnumValue<MenuIconEncoding>(
           menu_render_payload->rtos_enum_value16_menu_icon_encoding);
       UiRenderer::DrawMenu(icon_encoding, menu_render_payload->label,
-                           slot_position);
+                           slot_index);
     } else if (type == PageSlotType::PARAMETER) {
       RtosPayload_ParameterRender* parameter_render_payload =
           &payload->data.parameter;
       Parameter parameter{parameter_render_payload->rtos_parameter_copy};
       UiRenderer::DrawParameter(parameter, parameter_render_payload->label,
-                                slot_position);
+                                slot_index);
     }
   }
 

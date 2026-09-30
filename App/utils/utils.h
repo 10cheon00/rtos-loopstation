@@ -9,7 +9,7 @@
 #include "button_id.hpp"
 #include "encoder_id.hpp"
 #include "rtos_enum_value.h"
-#include "slot_position.hpp"
+#include "slot_index.hpp"
 
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))
 
@@ -39,41 +39,41 @@ Enum FromRtosEnumValue(std::underlying_type_t<Enum> rtos_enum_value) noexcept {
   return static_cast<Enum>(rtos_enum_value);
 }
 
-constexpr std::optional<SlotPosition> ToSlotPosition(ButtonId id) {
+constexpr SlotIndex ToSlotIndex(ButtonId id) {
   switch (id) {
     case ButtonId::ENCODER_A_PUSH:
-      return SlotPosition::A;
+      return SlotIndex::A;
 
     case ButtonId::ENCODER_B_PUSH:
-      return SlotPosition::B;
+      return SlotIndex::B;
 
     case ButtonId::ENCODER_C_PUSH:
-      return SlotPosition::C;
+      return SlotIndex::C;
 
     case ButtonId::ENCODER_D_PUSH:
-      return SlotPosition::D;
+      return SlotIndex::D;
 
     default:
-      return std::nullopt;
+      return SlotIndex::INVALID;
   }
 }
 
-constexpr std::optional<SlotPosition> ToSlotPosition(EncoderId id) {
+constexpr SlotIndex ToSlotIndex(EncoderId id) {
   switch (id) {
     case EncoderId::A:
-      return SlotPosition::A;
+      return SlotIndex::A;
 
     case EncoderId::B:
-      return SlotPosition::B;
+      return SlotIndex::B;
 
     case EncoderId::C:
-      return SlotPosition::C;
+      return SlotIndex::C;
 
     case EncoderId::D:
-      return SlotPosition::D;
+      return SlotIndex::D;
 
     default:
-      return std::nullopt;
+      return SlotIndex::INVALID;
   }
 }
 
