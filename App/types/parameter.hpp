@@ -48,8 +48,6 @@ class Parameter {
     this->current = IsCurrentMinimum() ? this->max : this->min;
   }
 
-  constexpr const ParameterValue GetCurrent() const { return this->current; }
-
   constexpr const bool IsCurrentMinimum() const {
     return this->current == this->min;
   }
@@ -65,6 +63,10 @@ class Parameter {
     raw.parameter_type_raw = ToRtosEnumValue(this->type);
   }
 
+  constexpr const ParameterValue GetCurrent() const { return this->current; }
+  const RtosParameterValue GetCurrentForRtos() const {
+    return static_cast<RtosParameterValue>(this->current);
+  }
   const ParameterValue GetMin() const { return this->min; }
   const ParameterValue GetMax() const { return this->max; }
   const ParameterType GetType() const { return this->type; }

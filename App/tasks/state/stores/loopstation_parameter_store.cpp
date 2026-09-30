@@ -20,6 +20,8 @@ static constexpr ParameterStore initial_parameters{
               Parameter{0, 1, 0, ParameterType::TOGGLE}},
     EnumEntry{ParameterId::SYSTEM_SETTING_LCD_CONSTRAST,
               Parameter{10, 80, 80, ParameterType::SLIDER}},
+    EnumEntry{ParameterId::TRACK_1_VOLUME,
+              Parameter{0, 100, 0, ParameterType::SLIDER}},
 };
 
 static ParameterStore actual_parameters{initial_parameters};

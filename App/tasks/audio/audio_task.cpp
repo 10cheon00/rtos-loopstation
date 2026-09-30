@@ -36,7 +36,7 @@ struct ErrorLog {
   uint32_t sdram_read_none_error;
 };
 
-using BitDepth_t = std::uint32_t;
+using BitDepth_t = std::int32_t;
 
 struct SaiDmaState {
   bool is_rx_complete;
@@ -44,11 +44,11 @@ struct SaiDmaState {
 };
 
 struct TrackPlaybackContext {
-  BitDepth_t* sdram_base_address;
-  BitDepth_t* sram_frame_buffer_address;
+  uint32_t* sdram_base_address;
+  uint32_t* sram_frame_buffer_address;
   uint32_t frame_index;        // 재생할 프레임의 번호
   uint32_t total_frame_count;  // 트랙의 길이
-  uint8_t volume;
+  ParameterValue volume;
   TrackStateMachine::Id track_state;
 };
 
@@ -120,8 +120,9 @@ void AudioTask_Init(void* argument) {
     track_playback_context[i].total_frame_count = 0;
     track_playback_context[i].frame_index = 0;
     track_playback_context[i].sdram_base_address =
-        (BitDepth_t*)(SDRAM_BASE_ADDRESS + TRACK_FRAME_BUFFER_SIZE * i);
-    track_playback_context[i].sram_frame_buffer_address = track_frame_buffer[i];
+        (uint32_t*)(SDRAM_BASE_ADDRESS + TRACK_FRAME_BUFFER_SIZE * i);
+    track_playback_context[i].sram_frame_buffer_address =
+        (uint32_t*)track_frame_buffer[i];
     track_playback_context[i].track_state = TrackStateMachine::Id::NONE;
     track_playback_context[i].volume = 0U;
   }
@@ -262,23 +263,24 @@ void ParseAudioEventSnapshot() {
     track_playback_context[i].track_state =
         FromRtosEnumValue<TrackStateMachine::Id>(
             audio_event_snapshot.rtos_enum_value_track_states[i]);
-    track_playback_context[i].volume =
-        audio_event_snapshot.rtos_parameter_track_volumes[i];
+    track_playback_context[i].volume = static_cast<ParameterValue>(
+        audio_event_snapshot.rtos_parameter_track_volumes[i]);
   }
 }
 
 static void MixAudioFrames() {
   for (size_t i = 0; i < FRAME_COUNT; i += CHANNEL_COUNT) {
-    BitDepth_t sample = 0;
+    BitDepth_t sample = 0, track_sample = 0;
     for (uint8_t j = 0; j < TRACK_COUNT; j++) {
       if (track_playback_context[j].track_state ==
               TrackStateMachine::Id::PLAYING ||
           track_playback_context[j].track_state ==
               TrackStateMachine::Id::OVERDUBBING) {
+        track_sample =
+            (track_playback_context[j]
+                 .sram_frame_buffer_address[i + INMP441_ALIGN_OFFSET]);
         sample +=
-            (double)(track_playback_context[j]
-                         .sram_frame_buffer_address[i + INMP441_ALIGN_OFFSET]) /
-            track_playback_context[i].volume;
+            ((double)track_sample / 100.0) * track_playback_context[j].volume;
       }
     }
     sample += audio_input_context.input_frame_buffer[i + INMP441_ALIGN_OFFSET];

@@ -146,6 +146,7 @@ void Run(void) {
       }
       // UpdatePanel
       UpdateDisplaySnapshotMailbox();
+      UpdateAudioEventSnapshotMailbox();
     }
   }
 }
@@ -345,7 +346,6 @@ static TaskStatus TryTransitionTrackStateMachine(
   }
 
   track_state_machine.TryTransition(action_id);
-  UpdateAudioEventSnapshotMailbox();
   return TASK_STATUS_OK;
 }
 
@@ -357,9 +357,11 @@ static void UpdateAudioEventSnapshotMailbox() {
   };
 
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    audio_event_snapshot.rtos_enum_value_track_states[i] =
-        ToRtosEnumValue<TrackStateMachine::Id>(
-            context.track_state_machines[i].GetCurrentState()->GetId());
+    audio_event_snapshot.rtos_enum_value_track_states[i] = ToRtosEnumValue(
+        context.track_state_machines[i].GetCurrentState()->GetId());
+    audio_event_snapshot.rtos_parameter_track_volumes[i] =
+        LoopstationStore::GetParameter(ParameterId::TRACK_1_VOLUME)
+            .GetCurrentForRtos();
   }
 
   xQueueOverwrite((QueueHandle_t)context.audio_event_snapshot_mailbox,
