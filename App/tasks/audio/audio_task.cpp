@@ -328,6 +328,9 @@ static void RecordActiveTracks() {
 void UpdateTrackPlaybackContext() {
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
     switch (track_playback_context[i].track_state) {
+      case TrackStateMachine::Id::IDLE:
+        track_playback_context[i].total_frame_count = 0;
+        break;
       case TrackStateMachine::Id::RECORDING:
         track_playback_context[i].total_frame_count++;
         track_playback_context[i].frame_index =

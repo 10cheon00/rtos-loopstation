@@ -14,6 +14,7 @@ enum class ActionId : std::uint8_t {
   NONE = ID_NONE,
   ENTER_RECORD_PLAY,
   ENTER_STOP,
+  HOLD_STOP,
   COUNT,
 };
 

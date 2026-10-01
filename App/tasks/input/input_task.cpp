@@ -14,7 +14,16 @@
 #include "state_event_type.hpp"
 #include "state_messages.h"
 #include "system_init_event_flag.hpp"
+#include "track_config.h"
 #include "utils.h"
+
+#define BUTTON_HOLD_THRESHOLD_TICKS pdMS_TO_TICKS(2000U)
+
+struct ButtonHoldContext {
+  TickType_t last_pressed_tick;
+  ButtonId id;
+  ButtonState state;
+};
 
 typedef struct {
   MutableEnumMap<EncoderId, ButtonState> encoder_button_states{
@@ -23,7 +32,8 @@ typedef struct {
       EnumEntry{EncoderId::C, ButtonState::RELEASED},
       EnumEntry{EncoderId::D, ButtonState::RELEASED},
   };
-} InputTaskContext;
+  ButtonHoldContext track_stop_button_hold_contexts[TRACK_COUNT];
+} ButtonContext;
 
 static osMessageQueueId_t input_event_queue;
 static osMessageQueueId_t state_event_queue;
@@ -31,16 +41,18 @@ static osMessageQueueId_t state_event_queue;
 static void Run(void);
 static TaskStatus HandleInputEvent(RtosMessage_InputEvent* input_event);
 static TaskStatus HandleMcp23017IntEvent(RtosPayload_Mcp23017Event* intEvent);
-static TaskStatus SendButtonPayload(Mcp23017::Address address,
-                                    Mcp23017::GpioId gpio_id,
-                                    ButtonState button_state,
+static TaskStatus SendButtonPayload(ButtonId id, ButtonState state,
                                     TickType_t timestamp_ticks);
+static void UpdateButtonContext(ButtonId id, ButtonState state,
+                                TickType_t timestamp_tick);
+static void TryHandleButtonHoldContext();
+static void TrySendButtonHoldEvent(ButtonHoldContext& context, TickType_t now);
 static TaskStatus HandleEncoderRotationEvent(
     RtosPayload_EncoderRotation* encoder_rotation_event);
 static TaskStatus HandleAdcConversionEvent(
     RtosPayload_AdcConversion* adc_conversion_event);
 
-static InputTaskContext input_task_context;
+static ButtonContext button_context;
 
 static int IsValidInitParams(const InputInitParams* params) {
   return (params != 0) && (params->input_event_queue != 0) &&
@@ -59,6 +71,11 @@ void InputTask_Init(void* argument) {
 
   input_event_queue = params->input_event_queue;
   state_event_queue = params->state_event_queue;
+  button_context.track_stop_button_hold_contexts[0] = {
+      .last_pressed_tick = 0,
+      .id = ButtonId::TRACK_1_STOP,
+      .state = ButtonState::RELEASED,
+  };
 
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
                    osFlagsWaitAll | osFlagsNoClear, osWaitForever);
@@ -70,11 +87,14 @@ static void Run(void) {
   RtosMessage_InputEvent input_event;
   osStatus_t os_status;
   for (;;) {
-    os_status =
-        osMessageQueueGet(input_event_queue, &input_event, NULL, osWaitForever);
+    TickType_t next_wait_ticks =
+        osKernelGetTickCount() + BUTTON_HOLD_THRESHOLD_TICKS;
+    os_status = osMessageQueueGet(input_event_queue, &input_event, NULL,
+                                  next_wait_ticks);
     if (os_status == osOK) {
       task_status = HandleInputEvent(&input_event);
     }
+    TryHandleButtonHoldContext();
   }
 }
 
@@ -131,7 +151,8 @@ static TaskStatus HandleMcp23017IntEvent(RtosPayload_Mcp23017Event* intEvent) {
       button_state = (snapshot.port_a.captured_pin_states & 0x1)
                          ? ButtonState::RELEASED
                          : ButtonState::PRESSED;
-      SendButtonPayload(address, gpio_id, button_state, timestamp_ticks);
+      ButtonId button_id = Mcp23017GpioToButtonMap::Get(gpio_id);
+      SendButtonPayload(button_id, button_state, timestamp_ticks);
     }
     snapshot.port_a.pin_mask >>= 1;
     snapshot.port_a.captured_pin_states >>= 1;
@@ -147,7 +168,9 @@ static TaskStatus HandleMcp23017IntEvent(RtosPayload_Mcp23017Event* intEvent) {
       button_state = (snapshot.port_b.captured_pin_states & 0x1)
                          ? ButtonState::RELEASED
                          : ButtonState::PRESSED;
-      SendButtonPayload(address, gpio_id, button_state, timestamp_ticks);
+      ButtonId button_id = Mcp23017GpioToButtonMap::Get(gpio_id);
+
+      SendButtonPayload(button_id, button_state, timestamp_ticks);
     }
     snapshot.port_b.pin_mask >>= 1;
     snapshot.port_b.captured_pin_states >>= 1;
@@ -156,15 +179,12 @@ static TaskStatus HandleMcp23017IntEvent(RtosPayload_Mcp23017Event* intEvent) {
   return TASK_STATUS_OK;
 }
 
-static TaskStatus SendButtonPayload(Mcp23017::Address address,
-                                    Mcp23017::GpioId gpio_id,
-                                    ButtonState button_state,
-                                    TickType_t timestamp_ticks) {
-  ButtonId button_id = Mcp23017GpioToButtonMap::Get(gpio_id);
+static TaskStatus SendButtonPayload(ButtonId id, ButtonState state,
+                                    TickType_t timestamp_tick) {
   ButtonPayload payload = {
-      .timestamp_ticks = timestamp_ticks,
-      .rtos_enum_value_button_id = ToRtosEnumValue(button_id),
-      .rtos_enum_value_button_state = ToRtosEnumValue(button_state),
+      .timestamp_ticks = timestamp_tick,
+      .rtos_enum_value_button_id = ToRtosEnumValue(id),
+      .rtos_enum_value_button_state = ToRtosEnumValue(state),
   };
   RtosMessage_StateEvent state_event = {
       .rtos_enum_value_state_event_type =
@@ -173,19 +193,50 @@ static TaskStatus SendButtonPayload(Mcp23017::Address address,
   osMessageQueuePut(state_event_queue, &state_event, 0,
                     STATE_EVENT_QUEUE_TIMEOUT_500MS);
 
-  if (button_id == ButtonId::ENCODER_A_PUSH) {
-    input_task_context.encoder_button_states[EncoderId::A] = button_state;
-  }
-  if (button_id == ButtonId::ENCODER_B_PUSH) {
-    input_task_context.encoder_button_states[EncoderId::B] = button_state;
-  }
-  if (button_id == ButtonId::ENCODER_C_PUSH) {
-    input_task_context.encoder_button_states[EncoderId::C] = button_state;
-  }
-  if (button_id == ButtonId::ENCODER_D_PUSH) {
-    input_task_context.encoder_button_states[EncoderId::D] = button_state;
-  }
+  UpdateButtonContext(id, state, timestamp_tick);
+
   return TASK_STATUS_OK;
+}
+
+static void UpdateButtonContext(ButtonId id, ButtonState state,
+                                TickType_t timestamp_tick) {
+  switch (id) {
+    case ButtonId::ENCODER_A_PUSH:
+      button_context.encoder_button_states[EncoderId::A] = state;
+      break;
+    case ButtonId::ENCODER_B_PUSH:
+      button_context.encoder_button_states[EncoderId::B] = state;
+      break;
+    case ButtonId::ENCODER_C_PUSH:
+      button_context.encoder_button_states[EncoderId::C] = state;
+      break;
+    case ButtonId::ENCODER_D_PUSH:
+      button_context.encoder_button_states[EncoderId::D] = state;
+      break;
+    case ButtonId::TRACK_1_STOP: {
+      button_context.track_stop_button_hold_contexts[0].state = state;
+      button_context.track_stop_button_hold_contexts[0].last_pressed_tick =
+          timestamp_tick;
+    } break;
+    default:
+      break;
+  }
+}
+
+static void TryHandleButtonHoldContext() {
+  TickType_t now = osKernelGetTickCount();
+  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+    TrySendButtonHoldEvent(button_context.track_stop_button_hold_contexts[i],
+                           now);
+  }
+}
+
+static void TrySendButtonHoldEvent(ButtonHoldContext& context, TickType_t now) {
+  if (context.state == ButtonState::PRESSED &&
+      context.last_pressed_tick + BUTTON_HOLD_THRESHOLD_TICKS < now) {
+    context.state = ButtonState::HOLD;
+    SendButtonPayload(context.id, context.state, now);
+  }
 }
 
 static TaskStatus HandleEncoderRotationEvent(
@@ -199,7 +250,7 @@ static TaskStatus HandleEncoderRotationEvent(
 
   EncoderId id = FromRtosEnumValue<EncoderId>(
       encoder_rotation_event->rtos_enum_value_encoder_id);
-  if (input_task_context.encoder_button_states[id] == ButtonState::PRESSED) {
+  if (button_context.encoder_button_states[id] == ButtonState::PRESSED) {
     delta *= 10;
   }
   RtosMessage_StateEvent state_event = {

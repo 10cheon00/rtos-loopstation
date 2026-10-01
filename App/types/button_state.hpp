@@ -6,6 +6,7 @@
 enum class ButtonState : std::uint8_t {
   RELEASED = 0,
   PRESSED,
+  HOLD,
   COUNT,
 };
 

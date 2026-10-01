@@ -65,6 +65,31 @@ struct StateTaskContext {
           track_state_machine_contexts[0], TrackStateMachine::Id::IDLE}};
 };
 
+using TrackIndex = std::uint8_t;
+
+struct TrackButtonIdSet {
+  ButtonId play_record_id;
+  ButtonId stop_id;
+};
+
+constexpr static std::array<TrackButtonIdSet,
+                            static_cast<std::size_t>(TRACK_COUNT)>
+    track_button_id_sets{
+        TrackButtonIdSet{.play_record_id = ButtonId::TRACK_1_PLAY_RECORD,
+                         .stop_id = ButtonId::TRACK_1_STOP},
+        // TODO:
+        // 주석처리된 부분은 현재 트랙이 단 하나이기 때문에 문법 에러를
+        // 방지하고자 주석처리된 것, 트랙 수를 늘렸을 때 주석 해제해야함F
+        // TrackButtonIdSet{.play_record_id = ButtonId::TRACK_2_PLAY_RECORD,
+        //                  .stop_id = ButtonId::TRACK_2_STOP},
+        // TrackButtonIdSet{.play_record_id = ButtonId::TRACK_3_PLAY_RECORD,
+        //                  .stop_id = ButtonId::TRACK_3_STOP},
+        // TrackButtonIdSet{.play_record_id = ButtonId::TRACK_4_PLAY_RECORD,
+        //                  .stop_id = ButtonId::TRACK_4_STOP},
+        // TrackButtonIdSet{.play_record_id = ButtonId::TRACK_5_PLAY_RECORD,
+        //                  .stop_id = ButtonId::TRACK_5_STOP}
+};
+
 static StateTaskContext context;
 
 static void Run(void);
@@ -84,6 +109,7 @@ static TaskStatus UpdateDisplaySnapshotMailbox();
 static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine& track_state_machine,
     ButtonEvent& button_event);
+static bool IsButtonHoldEvent(StateEventVariant& variant);
 static void UpdateAudioEventSnapshotMailbox();
 static void FillPanelRenderPayload(RtosPayload_PanelRender& payload);
 static void SetUiStateIdInPanelRenderPayload(
@@ -139,9 +165,20 @@ void Run(void) {
         // UpdateStateMachines
         ButtonEvent& button_event = std::get<ButtonEvent>(state_event_variant);
         HandlePanelControlButtonEvent(button_event);
-        for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+
+        for (TrackIndex i = 0; i < TRACK_COUNT; i++) {
           TryTransitionTrackStateMachine(context.track_state_machines[i],
-                                         button_event);
+                                          button_event);
+        }
+      } else if (IsButtonHoldEvent(state_event_variant)) {
+        ButtonEvent& button_event = std::get<ButtonEvent>(state_event_variant);
+        for (TrackIndex i = 0; i < TRACK_COUNT; i++) {
+          if (button_event.id == track_button_id_sets[i].stop_id) {
+            // 정지 버튼을 꾹 눌렀으므로 트랙을 초기화해야함
+            context.track_state_machines[i].TryTransition(
+                TrackStateMachine::ActionId::HOLD_STOP);
+            break;
+          }
         }
       }
       // UpdatePanel
@@ -276,8 +313,8 @@ static bool IsButtonPressedEvent(StateEventVariant& state_event_variant) {
   if (!std::holds_alternative<ButtonEvent>(state_event_variant)) {
     return false;
   }
-  return std::get<ButtonEvent>(state_event_variant).state ==
-         ButtonState::PRESSED;
+  ButtonEvent& event = std::get<ButtonEvent>(state_event_variant);
+  return event.state == ButtonState::PRESSED;
 }
 
 static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event) {
@@ -347,6 +384,14 @@ static TaskStatus TryTransitionTrackStateMachine(
 
   track_state_machine.TryTransition(action_id);
   return TASK_STATUS_OK;
+}
+
+static bool IsButtonHoldEvent(StateEventVariant& variant) {
+  if (!std::holds_alternative<ButtonEvent>(variant)) {
+    return false;
+  }
+  ButtonEvent& event = std::get<ButtonEvent>(variant);
+  return event.state == ButtonState::HOLD;
 }
 
 static void UpdateAudioEventSnapshotMailbox() {
