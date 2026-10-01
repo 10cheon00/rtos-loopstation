@@ -48,6 +48,18 @@ struct AdcConversionEvent {
 using StateEventVariant =
     std::variant<ButtonEvent, EncoderRotationEvent, AdcConversionEvent>;
 
+struct TrackButtonIdSet {
+  ButtonId play_record_id;
+  ButtonId stop_id;
+};
+
+struct TrackEntry {
+  TrackStateMachine::Context context;
+  TrackStateMachine::StateMachine state_machine{context,
+                                                TrackStateMachine::Id::IDLE};
+  TrackButtonIdSet track_button_id_set;
+};
+
 struct StateTaskContext {
   osMessageQueueId_t state_event_queue;
   osMessageQueueId_t display_snapshot_mailbox;
@@ -57,37 +69,7 @@ struct StateTaskContext {
   UiStateMachine::StateMachine ui_state_machine{ui_state_machine_context,
                                                 UiStateMachine::Id::HOME};
 
-  std::array<TrackStateMachine::Context, static_cast<std::size_t>(TRACK_COUNT)>
-      track_state_machine_contexts;
-  std::array<TrackStateMachine::StateMachine,
-             static_cast<std::size_t>(TRACK_COUNT)>
-      track_state_machines{TrackStateMachine::StateMachine{
-          track_state_machine_contexts[0], TrackStateMachine::Id::IDLE}};
-};
-
-using TrackIndex = std::uint8_t;
-
-struct TrackButtonIdSet {
-  ButtonId play_record_id;
-  ButtonId stop_id;
-};
-
-constexpr static std::array<TrackButtonIdSet,
-                            static_cast<std::size_t>(TRACK_COUNT)>
-    track_button_id_sets{
-        TrackButtonIdSet{.play_record_id = ButtonId::TRACK_1_PLAY_RECORD,
-                         .stop_id = ButtonId::TRACK_1_STOP},
-        // TODO:
-        // 주석처리된 부분은 현재 트랙이 단 하나이기 때문에 문법 에러를
-        // 방지하고자 주석처리된 것, 트랙 수를 늘렸을 때 주석 해제해야함F
-        // TrackButtonIdSet{.play_record_id = ButtonId::TRACK_2_PLAY_RECORD,
-        //                  .stop_id = ButtonId::TRACK_2_STOP},
-        // TrackButtonIdSet{.play_record_id = ButtonId::TRACK_3_PLAY_RECORD,
-        //                  .stop_id = ButtonId::TRACK_3_STOP},
-        // TrackButtonIdSet{.play_record_id = ButtonId::TRACK_4_PLAY_RECORD,
-        //                  .stop_id = ButtonId::TRACK_4_STOP},
-        // TrackButtonIdSet{.play_record_id = ButtonId::TRACK_5_PLAY_RECORD,
-        //                  .stop_id = ButtonId::TRACK_5_STOP}
+  std::array<TrackEntry, static_cast<std::size_t>(TRACK_COUNT)> track_entry;
 };
 
 static StateTaskContext context;
@@ -140,6 +122,11 @@ void StateTask_Init(void* argument) {
   context.display_snapshot_mailbox = params->display_snapshot_mailbox;
   context.audio_event_snapshot_mailbox = params->audio_event_snapshot_mailbox;
 
+  context.track_entry[0].track_button_id_set = {
+      .play_record_id = ButtonId::TRACK_1_PLAY_RECORD,
+      .stop_id = ButtonId::TRACK_1_STOP,
+  };
+
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
                    osFlagsWaitAll | osFlagsNoClear, osWaitForever);
   Run();
@@ -166,16 +153,15 @@ void Run(void) {
         ButtonEvent& button_event = std::get<ButtonEvent>(state_event_variant);
         HandlePanelControlButtonEvent(button_event);
 
-        for (TrackIndex i = 0; i < TRACK_COUNT; i++) {
-          TryTransitionTrackStateMachine(context.track_state_machines[i],
-                                          button_event);
+        for (auto& entry : context.track_entry) {
+          TryTransitionTrackStateMachine(entry.state_machine, button_event);
         }
       } else if (IsButtonHoldEvent(state_event_variant)) {
         ButtonEvent& button_event = std::get<ButtonEvent>(state_event_variant);
-        for (TrackIndex i = 0; i < TRACK_COUNT; i++) {
-          if (button_event.id == track_button_id_sets[i].stop_id) {
+        for (auto& entry : context.track_entry) {
+          if (button_event.id == entry.track_button_id_set.stop_id) {
             // 정지 버튼을 꾹 눌렀으므로 트랙을 초기화해야함
-            context.track_state_machines[i].TryTransition(
+            entry.state_machine.TryTransition(
                 TrackStateMachine::ActionId::HOLD_STOP);
             break;
           }
@@ -401,9 +387,9 @@ static void UpdateAudioEventSnapshotMailbox() {
       // IFX, TFX 파라미터값 복사하기
   };
 
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+  for (std::size_t i = 0; i < context.track_entry.size(); i++) {
     audio_event_snapshot.rtos_enum_value_track_states[i] = ToRtosEnumValue(
-        context.track_state_machines[i].GetCurrentState()->GetId());
+        context.track_entry[i].state_machine.GetCurrentState()->GetId());
     audio_event_snapshot.rtos_parameter_track_volumes[i] =
         LoopstationStore::GetParameter(ParameterId::TRACK_1_VOLUME)
             .GetCurrentForRtos();
@@ -472,8 +458,8 @@ static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender& led) {
   LoopstationStore::GetParameter(ParameterId::TFX_A_STATE)
       .ToRtosParameterCopy(led.tfx_a_state);
 
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+  for (std::size_t i = 0; i < context.track_entry.size(); i++) {
     led.rtos_enum_value_track_states[i] = ToRtosEnumValue(
-        context.track_state_machines[i].GetCurrentState()->GetId());
+        context.track_entry[i].state_machine.GetCurrentState()->GetId());
   }
 }
