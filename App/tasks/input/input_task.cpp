@@ -32,7 +32,7 @@ typedef struct {
       EnumEntry{EncoderId::C, ButtonState::RELEASED},
       EnumEntry{EncoderId::D, ButtonState::RELEASED},
   };
-  ButtonHoldContext track_stop_button_hold_contexts[TRACK_COUNT];
+  std::array<ButtonHoldContext, TRACK_COUNT> track_stop_button_hold_contexts;
 } ButtonContext;
 
 static osMessageQueueId_t input_event_queue;
@@ -225,9 +225,8 @@ static void UpdateButtonContext(ButtonId id, ButtonState state,
 
 static void TryHandleButtonHoldContext() {
   TickType_t now = osKernelGetTickCount();
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    TrySendButtonHoldEvent(button_context.track_stop_button_hold_contexts[i],
-                           now);
+  for (auto& context : button_context.track_stop_button_hold_contexts) {
+    TrySendButtonHoldEvent(context, now);
   }
 }
 

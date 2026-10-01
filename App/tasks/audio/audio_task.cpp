@@ -74,7 +74,7 @@ static Parameter parameter_tfx_b;
 static Parameter parameter_tfx_c;
 
 static SaiDmaState sai_dma_state[FRAME_BUFFER_COUNT];
-static TrackPlaybackContext track_playback_context[TRACK_COUNT];
+static std::array<TrackPlaybackContext, TRACK_COUNT> track_playback_contexts;
 static AudioInputContext audio_input_context;
 
 __attribute__((section(".axi_sram"),
@@ -116,15 +116,15 @@ void AudioTask_Init(void* argument) {
   audio_event_snapshot_mailbox = params->audio_event_snapshot_mailbox;
   audio_dma_event_queue = params->audio_dma_event_queue;
 
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    track_playback_context[i].total_frame_count = 0;
-    track_playback_context[i].frame_index = 0;
-    track_playback_context[i].sdram_base_address =
+  for (size_t i = 0; i < track_playback_contexts.size(); i++) {
+    auto& context = track_playback_contexts[i];
+    context.total_frame_count = 0;
+    context.frame_index = 0;
+    context.sdram_base_address =
         (uint32_t*)(SDRAM_BASE_ADDRESS + TRACK_FRAME_BUFFER_SIZE * i);
-    track_playback_context[i].sram_frame_buffer_address =
-        (uint32_t*)track_frame_buffer[i];
-    track_playback_context[i].track_state = TrackStateMachine::Id::NONE;
-    track_playback_context[i].volume = 0U;
+    context.sram_frame_buffer_address = (uint32_t*)track_frame_buffer[i];
+    context.track_state = TrackStateMachine::Id::NONE;
+    context.volume = 0U;
   }
 
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
@@ -180,19 +180,17 @@ static TaskStatus StartSaiReceiveAndTransmit() {
 }
 
 static void FetchActiveTrackFrames() {
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    if (track_playback_context[i].track_state ==
-            TrackStateMachine::Id::PLAYING ||
-        track_playback_context[i].track_state ==
+  for (auto& track_playback_context : track_playback_contexts) {
+    if (track_playback_context.track_state == TrackStateMachine::Id::PLAYING ||
+        track_playback_context.track_state ==
             TrackStateMachine::Id::OVERDUBBING) {
       uint32_t* current_frame_sdram_address =
-          track_playback_context[i].sdram_base_address +
-          track_playback_context[i].frame_index * FRAME_COUNT;
+          track_playback_context.sdram_base_address +
+          track_playback_context.frame_index * FRAME_COUNT;
 
-      if (HAL_SDRAM_Read_DMA(
-              hsdram, current_frame_sdram_address,
-              track_playback_context[i].sram_frame_buffer_address,
-              FRAME_COUNT) != HAL_OK) {
+      if (HAL_SDRAM_Read_DMA(hsdram, current_frame_sdram_address,
+                             track_playback_context.sram_frame_buffer_address,
+                             FRAME_COUNT) != HAL_OK) {
         error_log.sdram_read_error++;
       } else {
         error_log.sdram_read_none_error++;
@@ -259,11 +257,11 @@ void ParseAudioEventSnapshot() {
   RtosMessage_AudioEventSnapshot audio_event_snapshot;
   xQueuePeek((QueueHandle_t)audio_event_snapshot_mailbox, &audio_event_snapshot,
              0);
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    track_playback_context[i].track_state =
+  for (std::size_t i = 0; i < track_playback_contexts.size(); i++) {
+    track_playback_contexts[i].track_state =
         FromRtosEnumValue<TrackStateMachine::Id>(
             audio_event_snapshot.rtos_enum_value_track_states[i]);
-    track_playback_context[i].volume = static_cast<ParameterValue>(
+    track_playback_contexts[i].volume = static_cast<ParameterValue>(
         audio_event_snapshot.rtos_parameter_track_volumes[i]);
   }
 }
@@ -271,16 +269,12 @@ void ParseAudioEventSnapshot() {
 static void MixAudioFrames() {
   for (size_t i = 0; i < FRAME_COUNT; i += CHANNEL_COUNT) {
     BitDepth_t sample = 0, track_sample = 0;
-    for (uint8_t j = 0; j < TRACK_COUNT; j++) {
-      if (track_playback_context[j].track_state ==
-              TrackStateMachine::Id::PLAYING ||
-          track_playback_context[j].track_state ==
-              TrackStateMachine::Id::OVERDUBBING) {
+    for (auto& context : track_playback_contexts) {
+      if (context.track_state == TrackStateMachine::Id::PLAYING ||
+          context.track_state == TrackStateMachine::Id::OVERDUBBING) {
         track_sample =
-            (track_playback_context[j]
-                 .sram_frame_buffer_address[i + INMP441_ALIGN_OFFSET]);
-        sample +=
-            ((double)track_sample / 100.0) * track_playback_context[j].volume;
+            (context.sram_frame_buffer_address[i + INMP441_ALIGN_OFFSET]);
+        sample += ((double)track_sample / 100.0) * context.volume;
       }
     }
     sample += audio_input_context.input_frame_buffer[i + INMP441_ALIGN_OFFSET];
@@ -290,33 +284,27 @@ static void MixAudioFrames() {
 }
 
 static void RecordActiveTracks() {
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    if (track_playback_context[i].track_state ==
-            TrackStateMachine::Id::RECORDING ||
-        track_playback_context[i].track_state ==
-            TrackStateMachine::Id::OVERDUBBING) {
+  for (auto& context : track_playback_contexts) {
+    if (context.track_state == TrackStateMachine::Id::RECORDING ||
+        context.track_state == TrackStateMachine::Id::OVERDUBBING) {
       uint32_t* current_frame_sdram_address =
-          track_playback_context[i].sdram_base_address +
-          track_playback_context[i].frame_index * FRAME_COUNT;
+          context.sdram_base_address + context.frame_index * FRAME_COUNT;
 
-      if (track_playback_context[i].track_state ==
-          TrackStateMachine::Id::RECORDING) {
+      if (context.track_state == TrackStateMachine::Id::RECORDING) {
         for (uint32_t j = 0; j < FRAME_COUNT; j++) {
-          track_playback_context[i].sram_frame_buffer_address[j] =
+          context.sram_frame_buffer_address[j] =
               audio_input_context.input_frame_buffer[j];
         }
-      } else if (track_playback_context[i].track_state ==
-                 TrackStateMachine::Id::OVERDUBBING) {
+      } else if (context.track_state == TrackStateMachine::Id::OVERDUBBING) {
         for (uint32_t j = 0; j < FRAME_COUNT; j++) {
-          track_playback_context[i].sram_frame_buffer_address[j] +=
+          context.sram_frame_buffer_address[j] +=
               audio_input_context.input_frame_buffer[j];
         }
       }
 
-      if (HAL_SDRAM_Write_DMA(
-              hsdram, current_frame_sdram_address,
-              track_playback_context[i].sram_frame_buffer_address,
-              FRAME_COUNT) != HAL_OK) {
+      if (HAL_SDRAM_Write_DMA(hsdram, current_frame_sdram_address,
+                              context.sram_frame_buffer_address,
+                              FRAME_COUNT) != HAL_OK) {
         error_log.sdram_write_error++;
       } else {
         error_log.sdram_write_none_error++;
@@ -326,21 +314,19 @@ static void RecordActiveTracks() {
 }
 
 void UpdateTrackPlaybackContext() {
-  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    switch (track_playback_context[i].track_state) {
+  for (auto& context : track_playback_contexts) {
+    switch (context.track_state) {
       case TrackStateMachine::Id::IDLE:
-        track_playback_context[i].total_frame_count = 0;
+        context.total_frame_count = 0;
         break;
       case TrackStateMachine::Id::RECORDING:
-        track_playback_context[i].total_frame_count++;
-        track_playback_context[i].frame_index =
-            track_playback_context[i].total_frame_count;
+        context.total_frame_count++;
+        context.frame_index = context.total_frame_count;
         break;
       case TrackStateMachine::Id::PLAYING:
       case TrackStateMachine::Id::OVERDUBBING:
-        track_playback_context[i].frame_index =
-            (track_playback_context[i].frame_index + 1) %
-            track_playback_context[i].total_frame_count;
+        context.frame_index =
+            (context.frame_index + 1) % context.total_frame_count;
         break;
       default:
         break;
