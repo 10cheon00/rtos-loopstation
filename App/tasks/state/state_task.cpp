@@ -91,7 +91,7 @@ static TaskStatus UpdateDisplaySnapshotMailbox();
 static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine& track_state_machine,
     ButtonEvent& button_event);
-static bool IsButtonHoldEvent(StateEventVariant& variant);
+static bool IsButtonHoldEventOrDoubleTapEvent(StateEventVariant& variant);
 static void UpdateAudioEventSnapshotMailbox();
 static void FillPanelRenderPayload(RtosPayload_PanelRender& payload);
 static void SetUiStateIdInPanelRenderPayload(
@@ -156,13 +156,13 @@ void Run(void) {
         for (auto& entry : context.track_entry) {
           TryTransitionTrackStateMachine(entry.state_machine, button_event);
         }
-      } else if (IsButtonHoldEvent(state_event_variant)) {
+      } else if (IsButtonHoldEventOrDoubleTapEvent(state_event_variant)) {
         ButtonEvent& button_event = std::get<ButtonEvent>(state_event_variant);
         for (auto& entry : context.track_entry) {
           if (button_event.id == entry.track_button_id_set.stop_id) {
             // 정지 버튼을 꾹 눌렀으므로 트랙을 초기화해야함
             entry.state_machine.TryTransition(
-                TrackStateMachine::ActionId::HOLD_STOP);
+                TrackStateMachine::ActionId::ENTER_RESET);
             break;
           }
         }
@@ -372,12 +372,13 @@ static TaskStatus TryTransitionTrackStateMachine(
   return TASK_STATUS_OK;
 }
 
-static bool IsButtonHoldEvent(StateEventVariant& variant) {
+static bool IsButtonHoldEventOrDoubleTapEvent(StateEventVariant& variant) {
   if (!std::holds_alternative<ButtonEvent>(variant)) {
     return false;
   }
   ButtonEvent& event = std::get<ButtonEvent>(variant);
-  return event.state == ButtonState::HOLD;
+  return event.state == ButtonState::HOLD ||
+         event.state == ButtonState::DOUBLE_TAP;
 }
 
 static void UpdateAudioEventSnapshotMailbox() {

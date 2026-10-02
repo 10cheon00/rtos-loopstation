@@ -54,7 +54,7 @@ class StoppedState : public State {
       : State(Id::STOPPED, TransitionEntry{ActionId::NONE, Id::STOPPED},
               TransitionEntry{ActionId::ENTER_RECORD_PLAY, Id::PLAYING},
               TransitionEntry{ActionId::ENTER_STOP, Id::STOPPED},
-              TransitionEntry{ActionId::HOLD_STOP, Id::IDLE}) {}
+              TransitionEntry{ActionId::ENTER_RESET, Id::IDLE}) {}
 
   void OnEnter(Context& context) override {}
 };
