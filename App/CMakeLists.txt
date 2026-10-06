@@ -81,6 +81,7 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs/mcp23017_gpio_to_button_map.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/types/page.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/types/track_setting_map.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/mutex_guard.cpp
