@@ -15,8 +15,6 @@
 
 namespace LoopstationStore {
 
-using ParameterStore = EnumMap<ParameterId, Parameter>;
-
 Parameter& GetParameter(ParameterId parameter_id);
 
 }  // namespace LoopstationStore

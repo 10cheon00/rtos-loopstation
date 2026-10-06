@@ -4,6 +4,8 @@
 
 namespace LoopstationStore {
 
+using ParameterStore = EnumMap<ParameterId, Parameter>;
+
 /**
  * 파라미터 초기값 설정은 initial_parameters에서 하고, 변경 가능한 EnumMap을
  * 제공하기 위해 이를 복사한 actual_parameters를 선언한다.
