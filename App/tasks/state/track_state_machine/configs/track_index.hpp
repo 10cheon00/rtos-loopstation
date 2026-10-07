@@ -1,6 +1,7 @@
 #ifndef TRACK_INDEX_HPP
 #define TRACK_INDEX_HPP
 
+#include <cstddef>
 #include <cstdint>
 
 #include "track_config.h"
