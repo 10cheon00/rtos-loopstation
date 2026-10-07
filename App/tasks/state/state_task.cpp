@@ -15,12 +15,15 @@
 #include "loopstation_parameter_store.hpp"
 #include "mcp23017.hpp"
 #include "page_navigation_bitset.hpp"
+#include "parameter_updater.hpp"
 #include "queue.h"
 #include "state_event_type.hpp"
+#include "state_event_variant.hpp"
 #include "state_initparams.h"
 #include "state_messages.h"
+#include "state_task_context.hpp"
 #include "system_init_event_flag.hpp"
-#include "track_config.h"
+#include "track_start_mode.hpp"
 #include "track_state_machine.hpp"
 #include "ui_state_machine.hpp"
 #include "ui_state_navigation_tree.hpp"
@@ -28,61 +31,12 @@
 #include "ui_transition_map.hpp"
 #include "utils.h"
 
-struct ButtonEvent {
-  TickType_t timestamp_ticks;
-  ButtonId id;
-  ButtonState state;
-};
-
-struct EncoderRotationEvent {
-  TickType_t timestamp_ticks;
-  EncoderId id;
-  int32_t delta;
-};
-
-struct AdcConversionEvent {
-  KnobId id;
-  uint16_t adc_value;
-};
-
-using StateEventVariant =
-    std::variant<ButtonEvent, EncoderRotationEvent, AdcConversionEvent>;
-
-struct TrackButtonIdSet {
-  ButtonId play_record_id;
-  ButtonId stop_id;
-};
-
-struct TrackEntry {
-  TrackStateMachine::Context context;
-  TrackStateMachine::StateMachine state_machine{context,
-                                                TrackStateMachine::Id::IDLE};
-  TrackButtonIdSet track_button_id_set;
-};
-
-struct StateTaskContext {
-  osMessageQueueId_t state_event_queue;
-  osMessageQueueId_t display_snapshot_mailbox;
-  osMessageQueueId_t audio_event_snapshot_mailbox;
-
-  UiStateMachine::Context ui_state_machine_context;
-  UiStateMachine::StateMachine ui_state_machine{ui_state_machine_context,
-                                                UiStateMachine::Id::HOME};
-
-  std::array<TrackEntry, static_cast<std::size_t>(TRACK_COUNT)> track_entry;
-};
-
 static StateTaskContext context;
+static ParameterUpdater parameter_updater{context};
 
 static void Run(void);
 static TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
                                   StateEventVariant& state_event_variant);
-static TaskStatus TryUpdateParameter(StateEventVariant& state_event_variant);
-static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event);
-static Parameter& GetParameterFromCurrentPageAt(SlotIndex index);
-static TaskStatus TryUpdateParameterFromEncoderRotation(
-    EncoderRotationEvent& event);
-static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event);
 static bool IsButtonPressedEvent(StateEventVariant& state_event_variant);
 static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event);
 static void TryChangePageIndex(ButtonId id);
@@ -146,7 +100,7 @@ void Run(void) {
       if (task_status != TASK_STATUS_OK) {
         continue;
       }
-      TryUpdateParameter(state_event_variant);
+      parameter_updater.Update(state_event_variant);
 
       if (IsButtonPressedEvent(state_event_variant)) {
         // UpdateStateMachines
@@ -201,120 +155,6 @@ TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
     };
   } else {
     return TASK_STATUS_ERROR;
-  }
-  return TASK_STATUS_OK;
-}
-
-static TaskStatus TryUpdateParameter(StateEventVariant& variant) {
-  if (std::holds_alternative<ButtonEvent>(variant)) {
-    return TryUpdateParameterFromButton(std::get<ButtonEvent>(variant));
-  } else if (std::holds_alternative<EncoderRotationEvent>(variant)) {
-    return TryUpdateParameterFromEncoderRotation(
-        std::get<EncoderRotationEvent>(variant));
-  } else if (std::holds_alternative<AdcConversionEvent>(variant)) {
-    // TODO:
-    // ADC 입력에 대한 파라미터 값 변경 기능 구현하기
-    return TryUpdateParameterFromAdc(std::get<AdcConversionEvent>(variant));
-  }
-  return TASK_STATUS_ERROR;
-}
-
-/**
- * 버튼 입력은 IFX/TFX 토글, 엔코더 버튼만 파라미터 값을 변경한다.
- * */
-static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event) {
-  if (event.state != ButtonState::PRESSED) {
-    return TASK_STATUS_ERROR;
-  }
-
-  switch (event.id) {
-    case ButtonId::ENCODER_A_PUSH:
-    case ButtonId::ENCODER_B_PUSH:
-    case ButtonId::ENCODER_C_PUSH:
-    case ButtonId::ENCODER_D_PUSH: {
-      SlotIndex index = ToSlotIndex(event.id);
-      Parameter& parameter = GetParameterFromCurrentPageAt(index);
-      if (parameter.GetType() == ParameterType::TOGGLE) {
-        parameter.Toggle();
-        return TASK_STATUS_OK;
-      }
-    } break;
-    case ButtonId::IFX_A_TOGGLE: {
-      Parameter& parameter =
-          LoopstationStore::GetParameter(ParameterId::IFX_A_STATE);
-      parameter.Toggle();
-    } break;
-    case ButtonId::TFX_A_TOGGLE: {
-      Parameter& parameter =
-          LoopstationStore::GetParameter(ParameterId::TFX_A_STATE);
-      parameter.Toggle();
-    } break;
-    default:
-      return TASK_STATUS_ERROR;
-  }
-  return TASK_STATUS_OK;
-}
-
-static Parameter& GetParameterFromCurrentPageAt(SlotIndex index) {
-  Page& current_page =
-      context.ui_state_machine.GetCurrentState()->GetCurrentPage();
-
-  if (current_page.IsTypeAt<ParameterSlot>(index)) {
-    ParameterId parameter_id =
-        std::get<ParameterSlot>(current_page.GetAt(index)).GetParameterId();
-    return LoopstationStore::GetParameter(parameter_id);
-  }
-  return LoopstationStore::GetParameter(ParameterId::NONE);
-}
-
-/**
- * 엔코더 입력은 패널에 엔코더와 매핑된 파라미터가 있어야 하며 그 파라미터가
- * 토글형이라면 버튼입력과 회전입력으로 토글을 수행하고 노브형이라면
- * 회전입력을 받아 값을 변경한다.
- */
-static TaskStatus TryUpdateParameterFromEncoderRotation(
-    EncoderRotationEvent& event) {
-  SlotIndex index = ToSlotIndex(event.id);
-  Parameter& parameter = GetParameterFromCurrentPageAt(index);
-  parameter.Add(event.delta);
-  return TASK_STATUS_OK;
-}
-
-/**
- * ADC입력은 16비트 해상도의 반환값을 파라미터 자료형에 맞도록 스케일한다.
- * 이 입력을 곧바로 FX 파라미터에 적용하지 않고 별도의 파라미터에 저장한다음,
- * 저장된 값을 FX 파라미터에 적용한다.
- */
-static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event) {
-  const KnobToIdVariantMap::IdVariant& id_variant =
-      KnobToIdVariantMap::Get(event.id);
-  // TODO: 노브 값을 파라미터 또는 트랙 설정에 저장하는 구조 재설계
-  // 지금은 임시방편으로 붙였으나 깔끔한 구조가 아님.
-  if (std::holds_alternative<ParameterId>(id_variant)) {
-    Parameter& parameter =
-        LoopstationStore::GetParameter(std::get<ParameterId>(id_variant));
-
-    parameter.Set(MapRangeLinear(event.adc_value,
-                                 std::numeric_limits<std::uint16_t>::min(),
-                                 std::numeric_limits<std::uint16_t>::max(),
-                                 parameter.GetMin(), parameter.GetMax()));
-  } else if (std::holds_alternative<KnobToIdVariantMap::TrackAdcControl>(
-                 id_variant)) {
-    const KnobToIdVariantMap::TrackAdcControl& adc_control =
-        std::get<KnobToIdVariantMap::TrackAdcControl>(id_variant);
-    switch (adc_control.id) {
-      case TrackSettingId::PLAY_LEVEL: {
-        TrackPlayLevel& play_level =
-            context.track_entry[ToIndex(adc_control.index)]
-                .context.track_setting.GetPlayLevel();
-        play_level.SetCurrent(MapRangeLinear(
-            event.adc_value, std::numeric_limits<std::uint16_t>::min(),
-            std::numeric_limits<std::uint16_t>::max(), play_level.GetMin(),
-            play_level.GetMax()));
-      } break;
-      default:
-        break;
-    }
   }
   return TASK_STATUS_OK;
 }
