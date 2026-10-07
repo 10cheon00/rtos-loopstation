@@ -2,7 +2,6 @@
 
 #include <variant>
 
-#include "FreeRTOS.h"
 #include "app.h"
 #include "audio_messages.h"
 #include "button_state.hpp"
@@ -11,9 +10,7 @@
 #include "display_messages.h"
 #include "encoder_id.hpp"
 #include "knob_id.hpp"
-#include "knob_to_id_variant_map.hpp"
 #include "loopstation_parameter_store.hpp"
-#include "mcp23017.hpp"
 #include "page_navigation_bitset.hpp"
 #include "parameter_updater.hpp"
 #include "queue.h"
@@ -27,7 +24,6 @@
 #include "track_state_machine.hpp"
 #include "ui_state_machine.hpp"
 #include "ui_state_navigation_tree.hpp"
-#include "ui_state_pointer_map.hpp"
 #include "ui_transition_map.hpp"
 #include "utils.h"
 

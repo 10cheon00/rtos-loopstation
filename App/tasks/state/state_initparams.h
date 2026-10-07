@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include "cmsis_os2.h"
+#include "stm32h7xx_hal.h"
 
 typedef struct {
   osMessageQueueId_t state_event_queue;
