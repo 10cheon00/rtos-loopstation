@@ -22,7 +22,7 @@ class StateMachine {
   Context& GetContext() const { return this->context; }
 
   void TryTransition(ActionId action_id) {
-    Id next_state_id = this->current_state->GetTrackStateId(action_id);
+    Id next_state_id = this->current_state->GetNextStateIdFromActionId(action_id);
     State* next_state = TrackStatePointerMap::Get(next_state_id);
     if (next_state == NULL) {
       // TODO:

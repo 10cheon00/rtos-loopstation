@@ -29,7 +29,7 @@ class State {
       : id(id), transition_table(transition_entries...) {};
 
  public:
-  const Id GetTrackStateId(ActionId action_id) const {
+  const Id GetNextStateIdFromActionId(ActionId action_id) const {
     return this->transition_table[action_id];
   }
 
