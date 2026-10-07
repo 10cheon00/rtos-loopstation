@@ -6,6 +6,7 @@
 enum class TrackStopMode : std::uint8_t {
   IMMIDIATE,
   FADE_IN,
+  LOOP_END,
 };
 
 #endif

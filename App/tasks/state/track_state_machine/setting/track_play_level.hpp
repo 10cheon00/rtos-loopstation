@@ -5,7 +5,8 @@
 
 class TrackPlayLevel : public TrackSettingSliderValue {
  public:
-  TrackPlayLevel() : TrackSettingSliderValue(0, 100, 100) {}
+  TrackPlayLevel(TrackSettingValue init_current)
+      : TrackSettingSliderValue(0, 100, init_current) {}
 };
 
 #endif
