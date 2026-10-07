@@ -11,7 +11,6 @@ typedef struct {
   RtosTrackSettingValue min;
   RtosTrackSettingValue max;
   RtosTrackSettingValue current;
-  RtosEnumValue track_setting_type_raw;
 } RtosTrackSettingCopy;
 
 #endif

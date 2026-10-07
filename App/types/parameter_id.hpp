@@ -11,7 +11,6 @@ enum class ParameterId : std::uint8_t {
   TFX_KNOB,
   IFX_A_STATE,
   TFX_A_STATE,
-  TRACK_1_VOLUME,
   SYSTEM_SETTING_LCD_CONSTRAST,
   COUNT,  // 이 enum은 ParameterId의 개수를 표시하는 용도임
 };

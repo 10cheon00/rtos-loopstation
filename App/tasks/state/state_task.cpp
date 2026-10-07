@@ -11,7 +11,7 @@
 #include "display_messages.h"
 #include "encoder_id.hpp"
 #include "knob_id.hpp"
-#include "knob_to_parameter_map.hpp"
+#include "knob_to_id_variant_map.hpp"
 #include "loopstation_parameter_store.hpp"
 #include "mcp23017.hpp"
 #include "page_navigation_bitset.hpp"
@@ -286,12 +286,36 @@ static TaskStatus TryUpdateParameterFromEncoderRotation(
  * 저장된 값을 FX 파라미터에 적용한다.
  */
 static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event) {
-  Parameter& parameter =
-      LoopstationStore::GetParameter(KnobToParameterMap::Get(event.id));
-  parameter.Set(MapRangeLinear(event.adc_value,
-                               std::numeric_limits<std::uint16_t>::min(),
-                               std::numeric_limits<std::uint16_t>::max(),
-                               parameter.GetMin(), parameter.GetMax()));
+  const KnobToIdVariantMap::IdVariant& id_variant =
+      KnobToIdVariantMap::Get(event.id);
+  // TODO: 노브 값을 파라미터 또는 트랙 설정에 저장하는 구조 재설계
+  // 지금은 임시방편으로 붙였으나 깔끔한 구조가 아님.
+  if (std::holds_alternative<ParameterId>(id_variant)) {
+    Parameter& parameter =
+        LoopstationStore::GetParameter(std::get<ParameterId>(id_variant));
+
+    parameter.Set(MapRangeLinear(event.adc_value,
+                                 std::numeric_limits<std::uint16_t>::min(),
+                                 std::numeric_limits<std::uint16_t>::max(),
+                                 parameter.GetMin(), parameter.GetMax()));
+  } else if (std::holds_alternative<KnobToIdVariantMap::TrackAdcControl>(
+                 id_variant)) {
+    const KnobToIdVariantMap::TrackAdcControl& adc_control =
+        std::get<KnobToIdVariantMap::TrackAdcControl>(id_variant);
+    switch (adc_control.id) {
+      case TrackSettingId::PLAY_LEVEL: {
+        TrackPlayLevel& play_level =
+            context.track_entry[ToIndex(adc_control.index)]
+                .context.track_setting.GetPlayLevel();
+        play_level.SetCurrent(MapRangeLinear(
+            event.adc_value, std::numeric_limits<std::uint16_t>::min(),
+            std::numeric_limits<std::uint16_t>::max(), play_level.GetMin(),
+            play_level.GetMax()));
+      } break;
+      default:
+        break;
+    }
+  }
   return TASK_STATUS_OK;
 }
 
@@ -392,7 +416,8 @@ static void UpdateAudioEventSnapshotMailbox() {
     audio_event_snapshot.rtos_enum_value_track_states[i] = ToRtosEnumValue(
         context.track_entry[i].state_machine.GetCurrentState()->GetId());
     audio_event_snapshot.rtos_parameter_track_volumes[i] =
-        LoopstationStore::GetParameter(ParameterId::TRACK_1_VOLUME)
+        context.track_entry[i]
+            .context.track_setting.GetPlayLevel()
             .GetCurrentForRtos();
   }
 

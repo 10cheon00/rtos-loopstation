@@ -58,12 +58,13 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/toggle_switch_widget.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_to_parameter_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_to_id_variant_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_to_track_action_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_state_pointer_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_index.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_transition_map.cpp
@@ -81,7 +82,6 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs/mcp23017_gpio_to_button_map.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/types/page.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/types/track_setting_map.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/mutex_guard.cpp
@@ -109,6 +109,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/setting
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/system
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio
