@@ -2,6 +2,4 @@
 
 namespace TrackStateMachine {
 
-void InitContext(Context* context) {}
-
 }  // namespace TrackStateMachine

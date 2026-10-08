@@ -10,8 +10,6 @@ struct Context {
   TrackSetting track_setting;
 };
 
-void InitContext(Context* context);
-
 }  // namespace TrackStateMachine
 
 #endif
