@@ -23,20 +23,18 @@
 #include "track_start_mode.hpp"
 #include "track_state_machine.hpp"
 #include "ui_state_machine.hpp"
-#include "ui_state_navigation_tree.hpp"
+#include "ui_panel_handler.hpp"
 #include "ui_transition_map.hpp"
 #include "utils.h"
 
 static StateTaskContext context;
 static ParameterUpdater parameter_updater{context};
+static UiPanelHandler panel_handler{context};
 
 static void Run(void);
 static TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
                                   StateEventVariant& state_event_variant);
 static bool IsButtonPressedEvent(StateEventVariant& state_event_variant);
-static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event);
-static void TryChangePageIndex(ButtonId id);
-static void TryTransitionUiStateMachine(ButtonId id);
 static TaskStatus UpdateDisplaySnapshotMailbox();
 static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine& track_state_machine,
@@ -101,7 +99,7 @@ void Run(void) {
       if (IsButtonPressedEvent(state_event_variant)) {
         // UpdateStateMachines
         ButtonEvent& button_event = std::get<ButtonEvent>(state_event_variant);
-        HandlePanelControlButtonEvent(button_event);
+        panel_handler.Handle(button_event);
 
         for (auto& entry : context.track_entry) {
           TryTransitionTrackStateMachine(entry.state_machine, button_event);
@@ -161,49 +159,6 @@ static bool IsButtonPressedEvent(StateEventVariant& state_event_variant) {
   }
   ButtonEvent& event = std::get<ButtonEvent>(state_event_variant);
   return event.state == ButtonState::PRESSED;
-}
-
-static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event) {
-  TryChangePageIndex(event.id);
-  TryTransitionUiStateMachine(event.id);
-
-  return TASK_STATUS_OK;
-}
-
-static void TryChangePageIndex(ButtonId id) {
-  if (id == ButtonId::LEFT) {
-    context.ui_state_machine.GetCurrentState()->IncreasePageIndex();
-  } else if (id == ButtonId::RIGHT) {
-    context.ui_state_machine.GetCurrentState()->DecreasePageIndex();
-  }
-}
-
-static void TryTransitionUiStateMachine(ButtonId id) {
-  UiStateMachine::Id next_ui_state_id = UiStateMachine::Id::NONE;
-
-  switch (id) {
-    case ButtonId::EXIT:
-      next_ui_state_id = UiStateNavigationTree_GetParent(
-          context.ui_state_machine.GetCurrentState()->GetId());
-      break;
-    case ButtonId::ENCODER_A_PUSH:
-    case ButtonId::ENCODER_B_PUSH:
-    case ButtonId::ENCODER_C_PUSH:
-    case ButtonId::ENCODER_D_PUSH: {
-      SlotIndex index = ToSlotIndex(id);
-      PageSlotVariant& page_slot_variant =
-          context.ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
-              index);
-      if (std::holds_alternative<MenuSlot>(page_slot_variant)) {
-        next_ui_state_id = std::get<MenuSlot>(page_slot_variant).GetUiStateId();
-      }
-    } break;
-    default:
-      next_ui_state_id = UiTransitionMap::Get(id);
-  }
-  if (next_ui_state_id != UiStateMachine::Id::NONE) {
-    context.ui_state_machine.TryTransition(next_ui_state_id);
-  }
 }
 
 static TaskStatus UpdateDisplaySnapshotMailbox() {
