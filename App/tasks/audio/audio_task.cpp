@@ -60,7 +60,7 @@ struct AudioInputContext {
 
 static ErrorLog error_log{0, 0, 0, 0};
 
-static osMessageQueueId_t audio_event_snapshot_mailbox;
+static QueueHandle_t audio_event_snapshot_mailbox;
 static osMessageQueueId_t audio_dma_event_queue;
 static SAI_HandleTypeDef* hsai_rx;
 static SAI_HandleTypeDef* hsai_tx;
@@ -255,8 +255,7 @@ bool IsAudioInputFrameReady() { return audio_input_context.is_frame_ready; }
 
 void ParseAudioEventSnapshot() {
   RtosMessage_AudioEventSnapshot audio_event_snapshot;
-  xQueuePeek((QueueHandle_t)audio_event_snapshot_mailbox, &audio_event_snapshot,
-             0);
+  xQueuePeek(audio_event_snapshot_mailbox, &audio_event_snapshot, 0);
   for (std::size_t i = 0; i < track_playback_contexts.size(); i++) {
     track_playback_contexts[i].track_state =
         FromRtosEnumValue<TrackStateMachine::Id>(

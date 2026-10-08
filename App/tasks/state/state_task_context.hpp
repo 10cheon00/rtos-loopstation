@@ -6,6 +6,7 @@
 
 #include "FreeRTOS.h"
 #include "button_id.hpp"
+#include "queue.h"
 #include "track_config.h"
 #include "track_state_machine.hpp"
 #include "ui_state_machine.hpp"
@@ -24,8 +25,8 @@ struct TrackEntry {
 
 struct StateTaskContext {
   osMessageQueueId_t state_event_queue;
-  osMessageQueueId_t display_snapshot_mailbox;
-  osMessageQueueId_t audio_event_snapshot_mailbox;
+  QueueHandle_t display_snapshot_mailbox;
+  QueueHandle_t audio_event_snapshot_mailbox;
 
   UiStateMachine::Context ui_state_machine_context;
   UiStateMachine::StateMachine ui_state_machine{ui_state_machine_context,

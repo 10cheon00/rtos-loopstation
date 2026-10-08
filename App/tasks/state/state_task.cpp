@@ -167,7 +167,7 @@ static TaskStatus UpdateDisplaySnapshotMailbox() {
   FillPanelRenderPayload(snapshot.panel);
   FillDisplaySnapshotLedRenderPayload(snapshot.led);
 
-  xQueueOverwrite((QueueHandle_t)context.display_snapshot_mailbox, &snapshot);
+  xQueueOverwrite(context.display_snapshot_mailbox, &snapshot);
   return TASK_STATUS_OK;
 }
 
@@ -212,8 +212,7 @@ static void UpdateAudioEventSnapshotMailbox() {
             .GetCurrentForRtos();
   }
 
-  xQueueOverwrite((QueueHandle_t)context.audio_event_snapshot_mailbox,
-                  &audio_event_snapshot);
+  xQueueOverwrite(context.audio_event_snapshot_mailbox, &audio_event_snapshot);
 }
 
 static void FillPanelRenderPayload(RtosPayload_PanelRender& payload) {

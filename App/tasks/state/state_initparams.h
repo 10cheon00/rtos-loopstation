@@ -6,12 +6,13 @@ extern "C" {
 #endif
 
 #include "cmsis_os2.h"
+#include "queue.h"
 #include "stm32h7xx_hal.h"
 
 typedef struct {
   osMessageQueueId_t state_event_queue;
-  osMessageQueueId_t display_snapshot_mailbox;
-  osMessageQueueId_t audio_event_snapshot_mailbox;
+  QueueHandle_t display_snapshot_mailbox;
+  QueueHandle_t audio_event_snapshot_mailbox;
   I2C_HandleTypeDef* hi2c;
   osMutexId_t i2c_mutex;
   osEventFlagsId_t system_init_event;
