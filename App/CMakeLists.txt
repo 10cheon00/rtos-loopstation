@@ -92,6 +92,7 @@ target_include_directories(loopstation_app PUBLIC
 
     ${CMAKE_CURRENT_SOURCE_DIR}/types
     ${CMAKE_CURRENT_SOURCE_DIR}/types/parameter
+    ${CMAKE_CURRENT_SOURCE_DIR}/types/parameter/values
     ${CMAKE_CURRENT_SOURCE_DIR}/messages
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/configs
