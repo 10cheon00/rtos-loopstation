@@ -148,8 +148,8 @@ static TaskStatus HandlePanelRenderPayload(
 }
 
 static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender* payload) {
-  Parameter ifx_a_state{payload->ifx_a_state};
-  Parameter tfx_a_state{payload->tfx_a_state};
+  Parameter ifx_a_state{payload->rtos_parameter_copy_ifx_a_state};
+  Parameter tfx_a_state{payload->rtos_parameter_copy_tfx_a_state};
   if (RenderFxLed(ifx_a_state, Mcp23017::GpioId::LED_IFX_A) != TASK_STATUS_OK) {
     return TASK_STATUS_ERROR;
   }

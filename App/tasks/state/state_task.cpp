@@ -455,9 +455,9 @@ static void CopyPanelSlotsToPanelRenderPayload(
 
 static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender& led) {
   LoopstationStore::GetParameter(ParameterId::IFX_A_STATE)
-      .ToRtosParameterCopy(led.ifx_a_state);
+      .ToRtosParameterCopy(led.rtos_parameter_copy_ifx_a_state);
   LoopstationStore::GetParameter(ParameterId::TFX_A_STATE)
-      .ToRtosParameterCopy(led.tfx_a_state);
+      .ToRtosParameterCopy(led.rtos_parameter_copy_tfx_a_state);
 
   for (std::size_t i = 0; i < context.track_entry.size(); i++) {
     led.rtos_enum_value_track_states[i] = ToRtosEnumValue(
