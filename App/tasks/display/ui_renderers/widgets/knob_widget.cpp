@@ -28,7 +28,7 @@ void DrawKnobWidget(uint8_t x, uint8_t y, Parameter& parameter) {
   uint8_t cx, cy;
   int16_t degree;
 
-  if (parameter.GetType() != ParameterType::SLIDER) {
+  if (parameter.GetType() != ParameterType::UNSIGNED_RANGE) {
     return;
   }
 

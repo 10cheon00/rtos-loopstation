@@ -5,16 +5,11 @@
 #include <cstdint>
 
 #include "enum_id.hpp"
+#include "parameter_type.h"
 #include "rtos_parameter_copy.h"
 #include "utils.h"
 
 using ParameterValue = std::int8_t;
-
-enum class ParameterType : EnumId {
-  NONE = 0,
-  SLIDER,
-  TOGGLE,
-};
 
 class Parameter {
  public:

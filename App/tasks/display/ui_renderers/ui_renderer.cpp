@@ -5,6 +5,7 @@
 #include "enum_map.hpp"
 #include "knob_widget.hpp"
 #include "menu_icon_encoding.hpp"
+#include "parameter_type.h"
 #include "toggle_switch_widget.hpp"
 #include "utils.h"
 
@@ -137,7 +138,7 @@ static Status DrawParameterValue(Parameter& parameter, uint8_t x, uint8_t y) {
     string_width = driver.getStrWidth(str);
     driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
                    y + PARAMETER_VALUE_HEIGHT, str);
-  } else if (parameter.GetType() == ParameterType::SLIDER) {
+  } else if (parameter.GetType() == ParameterType::UNSIGNED_RANGE) {
     driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
     ConvertNumberToString(parameter.GetCurrent(), str, 5);
     string_width = driver.getStrWidth(str);
@@ -155,7 +156,7 @@ static Status DrawParameterWidget(Parameter& parameter, uint8_t x, uint8_t y) {
     x = x + SLOT_WIDTH / 2 - TOGGLE_SWITCH_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - TOGGLE_SWITCH_WIDGET_HEIGHT / 2;
     UiWidget::DrawToggleSwitchWidget(x, y, parameter);
-  } else if (parameter.GetType() == ParameterType::SLIDER) {
+  } else if (parameter.GetType() == ParameterType::UNSIGNED_RANGE) {
     x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
     UiWidget::DrawKnobWidget(x, y, parameter);
