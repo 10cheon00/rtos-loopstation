@@ -241,12 +241,12 @@ static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event) {
     } break;
     case ButtonId::IFX_A_TOGGLE: {
       Parameter& parameter =
-          LoopstationStore::GetParameter(ParameterId::IFX_A_STATE);
+          LoopstationStore::GetParameter(ParameterModel::Id::IFX_A_STATE);
       parameter.Toggle();
     } break;
     case ButtonId::TFX_A_TOGGLE: {
       Parameter& parameter =
-          LoopstationStore::GetParameter(ParameterId::TFX_A_STATE);
+          LoopstationStore::GetParameter(ParameterModel::Id::TFX_A_STATE);
       parameter.Toggle();
     } break;
     default:
@@ -260,11 +260,11 @@ static Parameter& GetParameterFromCurrentPageAt(SlotIndex index) {
       context.ui_state_machine.GetCurrentState()->GetCurrentPage();
 
   if (current_page.IsTypeAt<ParameterSlot>(index)) {
-    ParameterId parameter_id =
+    ParameterModel::Id parameter_id =
         std::get<ParameterSlot>(current_page.GetAt(index)).GetParameterId();
     return LoopstationStore::GetParameter(parameter_id);
   }
-  return LoopstationStore::GetParameter(ParameterId::NONE);
+  return LoopstationStore::GetParameter(ParameterModel::Id::NONE);
 }
 
 /**
@@ -392,7 +392,7 @@ static void UpdateAudioEventSnapshotMailbox() {
     audio_event_snapshot.rtos_enum_value_track_states[i] = ToRtosEnumValue(
         context.track_entry[i].state_machine.GetCurrentState()->GetId());
     audio_event_snapshot.rtos_parameter_track_volumes[i] =
-        LoopstationStore::GetParameter(ParameterId::TRACK_1_VOLUME)
+        LoopstationStore::GetParameter(ParameterModel::Id::TRACK_1_VOLUME)
             .GetCurrentForRtos();
   }
 
@@ -454,9 +454,9 @@ static void CopyPanelSlotsToPanelRenderPayload(
 }
 
 static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender& led) {
-  LoopstationStore::GetParameter(ParameterId::IFX_A_STATE)
+  LoopstationStore::GetParameter(ParameterModel::Id::IFX_A_STATE)
       .ToRtosParameterCopy(led.rtos_parameter_copy_ifx_a_state);
-  LoopstationStore::GetParameter(ParameterId::TFX_A_STATE)
+  LoopstationStore::GetParameter(ParameterModel::Id::TFX_A_STATE)
       .ToRtosParameterCopy(led.rtos_parameter_copy_tfx_a_state);
 
   for (std::size_t i = 0; i < context.track_entry.size(); i++) {

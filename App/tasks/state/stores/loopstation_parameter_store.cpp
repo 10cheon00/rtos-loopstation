@@ -9,24 +9,24 @@ namespace LoopstationStore {
  * 제공하기 위해 이를 복사한 actual_parameters를 선언한다.
  */
 static constexpr ParameterStore initial_parameters{
-    EnumEntry{ParameterId::NONE, Parameter{0, 0, 0, ParameterType::NONE}},
-    EnumEntry{ParameterId::IFX_KNOB,
+    EnumEntry{ParameterModel::Id::NONE, Parameter{0, 0, 0, ParameterType::NONE}},
+    EnumEntry{ParameterModel::Id::IFX_KNOB,
               Parameter{0, 100, 0, ParameterType::UNSIGNED_RANGE}},
-    EnumEntry{ParameterId::TFX_KNOB,
+    EnumEntry{ParameterModel::Id::TFX_KNOB,
               Parameter{0, 100, 0, ParameterType::UNSIGNED_RANGE}},
-    EnumEntry{ParameterId::IFX_A_STATE,
+    EnumEntry{ParameterModel::Id::IFX_A_STATE,
               Parameter{0, 1, 0, ParameterType::TOGGLE}},
-    EnumEntry{ParameterId::TFX_A_STATE,
+    EnumEntry{ParameterModel::Id::TFX_A_STATE,
               Parameter{0, 1, 0, ParameterType::TOGGLE}},
-    EnumEntry{ParameterId::SYSTEM_SETTING_LCD_CONSTRAST,
+    EnumEntry{ParameterModel::Id::SYSTEM_SETTING_LCD_CONSTRAST,
               Parameter{10, 80, 80, ParameterType::UNSIGNED_RANGE}},
-    EnumEntry{ParameterId::TRACK_1_VOLUME,
+    EnumEntry{ParameterModel::Id::TRACK_1_VOLUME,
               Parameter{0, 100, 0, ParameterType::UNSIGNED_RANGE}},
 };
 
 static ParameterStore actual_parameters{initial_parameters};
 
-Parameter& GetParameter(ParameterId parameter_id) {
+Parameter& GetParameter(ParameterModel::Id parameter_id) {
   return actual_parameters.Get(parameter_id);
 }
 
