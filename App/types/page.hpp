@@ -6,7 +6,6 @@
 
 #include "menu_descriptor.hpp"
 #include "page_slot.hpp"
-#include "parameter_descriptor.hpp"
 #include "slot_index.hpp"
 
 using PageSlotVariant = std::variant<PageSlot, MenuSlot, ParameterSlot>;
