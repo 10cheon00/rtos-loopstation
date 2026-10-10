@@ -11,9 +11,9 @@ namespace LoopstationStore {
 static constexpr ParameterStore initial_parameters{
     EnumEntry{ParameterModel::Id::NONE, Parameter{0, 0, 0, ParameterType::NONE}},
     EnumEntry{ParameterModel::Id::IFX_KNOB,
-              Parameter{0, 100, 0, ParameterType::UNSIGNED_RANGE}},
+              Parameter{0, 100, 100, ParameterType::UNSIGNED_RANGE}},
     EnumEntry{ParameterModel::Id::TFX_KNOB,
-              Parameter{0, 100, 0, ParameterType::UNSIGNED_RANGE}},
+              Parameter{0, 100, 100, ParameterType::UNSIGNED_RANGE}},
     EnumEntry{ParameterModel::Id::IFX_A_STATE,
               Parameter{0, 1, 0, ParameterType::TOGGLE}},
     EnumEntry{ParameterModel::Id::TFX_A_STATE,
@@ -21,7 +21,7 @@ static constexpr ParameterStore initial_parameters{
     EnumEntry{ParameterModel::Id::SYSTEM_SETTING_LCD_CONSTRAST,
               Parameter{10, 80, 80, ParameterType::UNSIGNED_RANGE}},
     EnumEntry{ParameterModel::Id::TRACK_1_VOLUME,
-              Parameter{0, 100, 0, ParameterType::UNSIGNED_RANGE}},
+              Parameter{0, 100, 100, ParameterType::UNSIGNED_RANGE}},
 };
 
 static ParameterStore actual_parameters{initial_parameters};
