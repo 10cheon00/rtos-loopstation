@@ -1,7 +1,9 @@
-#ifndef PARAMETER_TYPE_H
-#define PARAMETER_TYPE_H
+#ifndef PARAMETER_TYPE_HPP
+#define PARAMETER_TYPE_HPP
 
-typedef enum {
+#include <cstdint>
+
+enum class ParameterType {
   NONE = 0,
   TOGGLE,
   UNSIGNED_RANGE,  // 0 ~ 100
@@ -9,6 +11,6 @@ typedef enum {
   DECIMAL_RANGE,   // 0.0 ~ 10.0
   MEASURE,
   ENUM,
-} ParameterType;
+};
 
 #endif

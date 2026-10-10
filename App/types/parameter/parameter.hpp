@@ -7,7 +7,7 @@
 #include <variant>
 
 #include "enum_id.hpp"
-#include "parameter_type.h"
+#include "parameter_type.hpp"
 #include "parameter_value.hpp"
 #include "rtos_parameter_copy.h"
 #include "utils.h"
@@ -25,8 +25,10 @@ class Parameter {
   constexpr Parameter(ValueVariant& value_variant)
       : value_variant(value_variant) {}
 
-  constexpr Parameter(RtosParameterCopy& copy) {
-    switch (copy.rtos_enum_value_parameter_type) {
+  Parameter(RtosParameterCopy& copy) {
+    ParameterType type =
+        FromRtosEnumValue<ParameterType>(copy.rtos_enum_value_parameter_type);
+    switch (type) {
       case ParameterType::UNSIGNED_RANGE:
         value_variant = UnsignedRangeValue(
             copy.rtos_parameter_union.rtos_parameter_unsigned_range_value);

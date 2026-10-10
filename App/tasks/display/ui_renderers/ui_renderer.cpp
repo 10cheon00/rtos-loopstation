@@ -5,7 +5,7 @@
 #include "enum_map.hpp"
 #include "knob_widget.hpp"
 #include "menu_icon_encoding.hpp"
-#include "parameter_type.h"
+#include "parameter_type.hpp"
 #include "toggle_switch_widget.hpp"
 #include "utils.h"
 
