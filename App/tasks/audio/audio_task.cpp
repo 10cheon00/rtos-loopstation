@@ -89,7 +89,7 @@ static void WaitForAudioDmaEvent(
 static void HandleAudioDmaEvent(RtosMessage_AudioDmaEvent& audio_dma_event);
 static void UpdateAudioInputContext();
 static bool IsAudioInputFrameReady();
-static void ParseAudioEventSnapshot();
+static void ReadAudioEventSnapshot();
 static void RecordActiveTracks();
 static void MixAudioFrames();
 static void UpdateTrackPlaybackContext();
@@ -151,7 +151,7 @@ static void Run() {
     WaitForAudioDmaEvent(rtos_message_audio_dma_event);
     HandleAudioDmaEvent(rtos_message_audio_dma_event);
     if (IsAudioInputFrameReady()) {
-      ParseAudioEventSnapshot();
+      ReadAudioEventSnapshot();
       FetchActiveTrackFrames();
       MixAudioFrames();
       RecordActiveTracks();
@@ -246,7 +246,7 @@ void UpdateAudioInputContext() {
 
 bool IsAudioInputFrameReady() { return audio_input_context.is_frame_ready; }
 
-void ParseAudioEventSnapshot() {
+void ReadAudioEventSnapshot() {
   RtosMessage_AudioEventSnapshot audio_event_snapshot;
   xQueuePeek((QueueHandle_t)audio_event_snapshot_mailbox, &audio_event_snapshot,
              0);
