@@ -10,6 +10,7 @@
 #include "mcp23017.hpp"
 #include "mcp23017_gpio_map.hpp"
 #include "page.hpp"
+#include "parameter.hpp"
 #include "system_init_event_flag.hpp"
 #include "track_state_id.hpp"
 #include "ui_renderer.hpp"
@@ -65,7 +66,8 @@ static constexpr EnumMap<TrackStateMachine::Id, TrackLedColorSet>
 static void Run(void);
 static TaskStatus HandlePanelRenderPayload(RtosPayload_PanelRender* payload);
 static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender* payload);
-static TaskStatus RenderFxLed(Parameter& parameter, Mcp23017::GpioId gpio_id);
+static TaskStatus RenderFxLed(ParameterModel::ToggleValue& toggle_value,
+                              Mcp23017::GpioId gpio_id);
 static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id,
                                  uint8_t track_index);
 
@@ -136,7 +138,8 @@ static TaskStatus HandlePanelRenderPayload(
     } else if (type == PageSlotType::PARAMETER) {
       RtosPayload_ParameterRender* parameter_render_payload =
           &payload->data.parameter;
-      Parameter parameter{parameter_render_payload->rtos_parameter_copy};
+      ParameterModel::Parameter parameter{
+          parameter_render_payload->rtos_parameter_copy};
       UiRenderer::DrawParameter(parameter, parameter_render_payload->label,
                                 slot_index);
     }
@@ -148,12 +151,17 @@ static TaskStatus HandlePanelRenderPayload(
 }
 
 static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender* payload) {
-  Parameter ifx_a_state{payload->rtos_parameter_copy_ifx_a_state};
-  Parameter tfx_a_state{payload->rtos_parameter_copy_tfx_a_state};
-  if (RenderFxLed(ifx_a_state, Mcp23017::GpioId::LED_IFX_A) != TASK_STATUS_OK) {
+  ParameterModel::Parameter ifx_a_state{
+      payload->rtos_parameter_copy_ifx_a_state};
+  ParameterModel::Parameter tfx_a_state{
+      payload->rtos_parameter_copy_tfx_a_state};
+
+  if (RenderFxLed(std::get<ParameterModel::ToggleValue>(ifx_a_state.GetValueVariant()),
+                  Mcp23017::GpioId::LED_IFX_A) != TASK_STATUS_OK) {
     return TASK_STATUS_ERROR;
   }
-  if (RenderFxLed(tfx_a_state, Mcp23017::GpioId::LED_TFX_A) != TASK_STATUS_OK) {
+  if (RenderFxLed(std::get<ParameterModel::ToggleValue>(tfx_a_state.GetValueVariant()),
+                  Mcp23017::GpioId::LED_TFX_A) != TASK_STATUS_OK) {
     return TASK_STATUS_ERROR;
   }
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
@@ -166,16 +174,16 @@ static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender* payload) {
   return TASK_STATUS_OK;
 }
 
-// ParameterId에 매핑된 address, port, 레지스터 상 핀의 비트 위치를 찾아야 함
-// 현재 핀 상태에 따라 수정된 핀의 값을 Mcp23017 드라이버에게 넘겨 값을
-// 업데이트하라고 함
-static TaskStatus RenderFxLed(Parameter& parameter, Mcp23017::GpioId gpio_id) {
+// ParameterModel::Id에 매핑된 address, port, 레지스터 상 핀의 비트 위치를
+// 찾아야 함 현재 핀 상태에 따라 수정된 핀의 값을 Mcp23017 드라이버에게 넘겨
+// 값을 업데이트하라고 함
+static TaskStatus RenderFxLed(ParameterModel::ToggleValue& toggle_value,
+                              Mcp23017::GpioId gpio_id) {
   Mcp23017::Driver& driver = Mcp23017::Driver::GetInstance();
   const Mcp23017::PinConfigMap& pin_config_map = Mcp23017::GetPinConfigMap();
   const Mcp23017::PinConfig& pin_config = pin_config_map.Get(gpio_id);
-  Mcp23017::LedState pin_state = parameter.IsCurrentMaximum()
-                                     ? Mcp23017::LedState::ON
-                                     : Mcp23017::LedState::OFF;
+  Mcp23017::LedState pin_state =
+      toggle_value.is_on ? Mcp23017::LedState::ON : Mcp23017::LedState::OFF;
 
   if (driver.UpdateLedState(pin_config.address, gpio_id, pin_state) !=
       Mcp23017::Status::OK) {

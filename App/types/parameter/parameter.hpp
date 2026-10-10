@@ -3,87 +3,113 @@
 
 #include <cstdbool>
 #include <cstdint>
+#include <type_traits>
+#include <variant>
 
 #include "enum_id.hpp"
 #include "parameter_type.h"
+#include "parameter_value.hpp"
 #include "rtos_parameter_copy.h"
 #include "utils.h"
 
-using ParameterValue = std::int8_t;
+namespace ParameterModel {
 
 class Parameter {
  public:
-  constexpr Parameter()
-      : min(0), max(0), current(0), type(ParameterType::NONE) {}
+  constexpr Parameter() : value_variant() {}
 
-  constexpr Parameter(ParameterValue min, ParameterValue max,
-                      ParameterValue initial_value, ParameterType type)
-      : min(min), max(max), current(initial_value), type(type) {}
+  constexpr Parameter(UnsignedRangeValue value) : value_variant(value) {}
 
-  constexpr Parameter(RtosParameterCopy& raw)
-      : Parameter(raw.min, raw.max, raw.current,
-                  static_cast<ParameterType>(raw.parameter_type_raw)) {}
+  constexpr Parameter(ToggleValue value) : value_variant(value) {}
 
-  constexpr Parameter& operator=(const Parameter& parameter) {
-    this->min = parameter.min;
-    this->max = parameter.max;
-    this->current = parameter.current;
-    this->type = parameter.type;
-    return *this;
+  constexpr Parameter(ValueVariant& value_variant)
+      : value_variant(value_variant) {}
+
+  constexpr Parameter(RtosParameterCopy& copy) {
+    switch (copy.rtos_enum_value_parameter_type) {
+      case ParameterType::UNSIGNED_RANGE:
+        value_variant = UnsignedRangeValue(
+            copy.rtos_parameter_union.rtos_parameter_unsigned_range_value);
+        break;
+      case ParameterType::TOGGLE:
+        value_variant =
+            ToggleValue(copy.rtos_parameter_union.rtos_parameter_toggle_value);
+        break;
+      default:
+        break;
+    }
   }
 
-  constexpr void Add(const ParameterValue value) {
-    this->current = this->clamp(static_cast<std::int32_t>(this->current) +
-                                static_cast<std::int32_t>(value));
+  void Toggle() {
+    std::visit(
+        [](auto& value) {
+          using T = std::decay_t<decltype(value)>;
+
+          if constexpr (std::is_same_v<T, ToggleValue>) {
+            value.is_on = !value.is_on;
+          }
+        },
+        value_variant);
+  }
+  void Add(const std::int16_t amount) {
+    std::visit(
+        [amount](auto& value) {
+          using T = std::decay_t<decltype(value)>;
+
+          if constexpr (std::is_same_v<T, UnsignedRangeValue>) {
+            value.current = value.clamp(value.current + amount);
+          } else if constexpr (std::is_same_v<T, ToggleValue>) {
+            value.is_on = amount > 0 ? true : false;
+          }
+        },
+        value_variant);
+  }
+  void Set(const std::int16_t amount) {
+    std::visit(
+        [amount](auto& value) {
+          using T = std::decay_t<decltype(value)>;
+          if constexpr (std::is_same_v<T, UnsignedRangeValue>) {
+            value.current = value.clamp(amount);
+          } else if constexpr (std::is_same_v<T, ToggleValue>) {
+            value.is_on = amount > 0 ? true : false;
+          }
+        },
+        value_variant);
   }
 
-  constexpr void Set(const ParameterValue value) { this->current = value; }
+  void ToRtosParameterCopy(RtosParameterCopy& copy) const {
+    std::visit(
+        [&copy](const auto& value) {
+          using T = std::decay_t<decltype(value)>;
 
-  constexpr void Toggle() {
-    this->current = IsCurrentMinimum() ? this->max : this->min;
+          if constexpr (std::is_same_v<T, UnsignedRangeValue>) {
+            copy.rtos_enum_value_parameter_type =
+                ToRtosEnumValue(ParameterType::UNSIGNED_RANGE);
+            copy.rtos_parameter_union.rtos_parameter_unsigned_range_value = {
+                .min = value.min,
+                .max = value.max,
+                .current = value.current,
+            };
+          } else if constexpr (std::is_same_v<T, ToggleValue>) {
+            copy.rtos_enum_value_parameter_type =
+                ToRtosEnumValue(ParameterType::TOGGLE);
+            copy.rtos_parameter_union.rtos_parameter_toggle_value = {
+                .is_on = value.is_on,
+            };
+          } else {
+            copy.rtos_enum_value_parameter_type =
+                ToRtosEnumValue(ParameterType::NONE);
+          }
+        },
+        value_variant);
   }
 
-  constexpr const bool IsCurrentMinimum() const {
-    return this->current == this->min;
-  }
-
-  constexpr const bool IsCurrentMaximum() const {
-    return this->current == this->max;
-  }
-
-  const void ToRtosParameterCopy(RtosParameterCopy& raw) {
-    raw.min = this->min;
-    raw.max = this->max;
-    raw.current = this->current;
-    raw.parameter_type_raw = ToRtosEnumValue(this->type);
-  }
-
-  constexpr const ParameterValue GetCurrent() const { return this->current; }
-  const RtosParameterValue GetCurrentForRtos() const {
-    return static_cast<RtosParameterValue>(this->current);
-  }
-  const ParameterValue GetMin() const { return this->min; }
-  const ParameterValue GetMax() const { return this->max; }
-  const ParameterType GetType() const { return this->type; }
+  ValueVariant& GetValueVariant() { return value_variant; }
 
  private:
-  ParameterValue min;
-  ParameterValue max;
-  ParameterValue current;
-  ParameterType type;
+  ValueVariant value_variant;
+};  // namespace ParameterModel
 
-  constexpr ParameterValue clamp(std::int32_t value) {
-    std::int32_t min_int32 = static_cast<std::int32_t>(this->min),
-                 max_int32 = static_cast<std::int32_t>(this->max);
-
-    if (value < min_int32) {
-      return this->min;
-    }
-    if (value > max_int32) {
-      return this->max;
-    }
-    return value;
-  }
-};
+}  // namespace ParameterModel
 
 #endif

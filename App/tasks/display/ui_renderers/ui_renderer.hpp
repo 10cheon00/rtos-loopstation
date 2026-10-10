@@ -23,7 +23,7 @@ enum class Status : std::uint8_t {
 
 Status DrawPanelLayout(const char* panel_name,
                        PageNavigationBitset flag);
-Status DrawParameter(Parameter& parameter, const char* label,
+Status DrawParameter(ParameterModel::Parameter& parameter, const char* label,
                      SlotIndex slot_index);
 Status DrawMenu(MenuIconEncoding icon_id, const char* label,
                 SlotIndex slot_index);

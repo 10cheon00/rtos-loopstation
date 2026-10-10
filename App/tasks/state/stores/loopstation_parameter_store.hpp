@@ -15,9 +15,9 @@
 
 namespace LoopstationStore {
 
-using ParameterStore = EnumMap<ParameterModel::Id, Parameter>;
+using ParameterStore = EnumMap<ParameterModel::Id, ParameterModel::Parameter>;
 
-Parameter& GetParameter(ParameterModel::Id id);
+ParameterModel::Parameter& GetParameter(ParameterModel::Id id);
 
 }  // namespace LoopstationStore
 

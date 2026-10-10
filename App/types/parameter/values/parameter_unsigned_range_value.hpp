@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+#include "rtos_parameter_copy.h"
+
 namespace ParameterModel {
 
 struct UnsignedRangeValue {
@@ -10,8 +12,14 @@ struct UnsignedRangeValue {
   std::int16_t max;
   std::int16_t current;
 
-  constexpr UnsignedRangeValue(std::int16_t min, std::int16_t max, std::int16_t current)
+  constexpr UnsignedRangeValue(std::int16_t min, std::int16_t max,
+                               std::int16_t current)
       : min(min), max(max), current(current) {}
+
+  constexpr UnsignedRangeValue(
+      RtosParameterValue_UnsignedRangeValue rtos_parameter_value)
+      : UnsignedRangeValue(rtos_parameter_value.min, rtos_parameter_value.max,
+                           rtos_parameter_value.current) {}
 
   std::int16_t clamp(int16_t amount) {
     if (amount < min) {
