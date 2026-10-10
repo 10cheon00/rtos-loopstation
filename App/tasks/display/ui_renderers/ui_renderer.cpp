@@ -5,6 +5,7 @@
 #include "enum_map.hpp"
 #include "knob_widget.hpp"
 #include "menu_icon_encoding.hpp"
+#include "parameter_type.h"
 #include "toggle_switch_widget.hpp"
 #include "utils.h"
 
@@ -51,8 +52,10 @@ static constexpr EnumMap<SlotIndex, std::uint8_t> parameter_width_map{
 
 static void DrawArrowLeft4x5(uint8_t x, uint8_t y);
 static void DrawArrowRight4x5(uint8_t x, uint8_t y);
-static Status DrawParameterValue(Parameter& parameter, uint8_t x, uint8_t y);
-static Status DrawParameterWidget(Parameter& parameter, uint8_t x, uint8_t y);
+static Status DrawParameterValue(ParameterModel::Parameter& parameter,
+                                 uint8_t x, uint8_t y);
+static Status DrawParameterWidget(ParameterModel::Parameter& parameter,
+                                  uint8_t x, uint8_t y);
 static void ConvertNumberToString(int32_t number, char* string,
                                   uint8_t string_length);
 static Status DrawPanelMenuIcon(MenuIconEncoding icon, uint8_t x, uint8_t y);
@@ -91,7 +94,7 @@ static void DrawArrowRight4x5(uint8_t x, uint8_t y) {
   driver.drawVLine(x + 3, y - 3, 1);
 }
 
-Status DrawParameter(Parameter& parameter, const char* label,
+Status DrawParameter(ParameterModel::Parameter& parameter, const char* label,
                      SlotIndex slot_index) {
   uint8_t x, y;
   Status status;
@@ -117,13 +120,18 @@ Status DrawParameter(Parameter& parameter, const char* label,
   return status;
 }
 
-static Status DrawParameterValue(Parameter& parameter, uint8_t x, uint8_t y) {
+static Status DrawParameterValue(ParameterModel::Parameter& parameter,
+                                 uint8_t x, uint8_t y) {
   char str[5];
   uint8_t string_width;
   Driver& driver = Driver::GetInstance();
 
-  if (parameter.GetType() == ParameterType::TOGGLE) {
-    if (parameter.IsCurrentMaximum()) {
+  if (std::holds_alternative<ParameterModel::ToggleValue>(
+          parameter.GetValueVariant())) {
+    const auto& toggle_value =
+        std::get<ParameterModel::ToggleValue>(parameter.GetValueVariant());
+
+    if (toggle_value.is_on) {
       str[0] = 'O';
       str[1] = 'N';
       str[2] = '\n';
@@ -137,9 +145,13 @@ static Status DrawParameterValue(Parameter& parameter, uint8_t x, uint8_t y) {
     string_width = driver.getStrWidth(str);
     driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
                    y + PARAMETER_VALUE_HEIGHT, str);
-  } else if (parameter.GetType() == ParameterType::SLIDER) {
+  } else if (std::holds_alternative<ParameterModel::UnsignedRangeValue>(
+                 parameter.GetValueVariant())) {
+    const auto& unsigned_range_value =
+        std::get<ParameterModel::UnsignedRangeValue>(parameter.GetValueVariant());
+
     driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
-    ConvertNumberToString(parameter.GetCurrent(), str, 5);
+    ConvertNumberToString(unsigned_range_value.current, str, 5);
     string_width = driver.getStrWidth(str);
     driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
                    y + PARAMETER_VALUE_HEIGHT, str);
@@ -150,15 +162,21 @@ static Status DrawParameterValue(Parameter& parameter, uint8_t x, uint8_t y) {
   return Status::OK;
 }
 
-static Status DrawParameterWidget(Parameter& parameter, uint8_t x, uint8_t y) {
-  if (parameter.GetType() == ParameterType::TOGGLE) {
+static Status DrawParameterWidget(ParameterModel::Parameter& parameter,
+                                  uint8_t x, uint8_t y) {
+  if (std::holds_alternative<ParameterModel::ToggleValue>(
+          parameter.GetValueVariant())) {
     x = x + SLOT_WIDTH / 2 - TOGGLE_SWITCH_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - TOGGLE_SWITCH_WIDGET_HEIGHT / 2;
-    UiWidget::DrawToggleSwitchWidget(x, y, parameter);
-  } else if (parameter.GetType() == ParameterType::SLIDER) {
+    UiWidget::DrawToggleSwitchWidget(
+        x, y, std::get<ParameterModel::ToggleValue>(parameter.GetValueVariant()));
+  } else if (std::holds_alternative<ParameterModel::UnsignedRangeValue>(
+                 parameter.GetValueVariant())) {
     x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
-    UiWidget::DrawKnobWidget(x, y, parameter);
+    UiWidget::DrawKnobWidget(
+        x, y,
+        std::get<ParameterModel::UnsignedRangeValue>(parameter.GetValueVariant()));
   } else {
     // TODO:
     // RATE SLIDER형 파라미터 위젯 구현하기

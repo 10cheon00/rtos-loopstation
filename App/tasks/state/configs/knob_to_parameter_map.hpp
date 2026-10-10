@@ -9,7 +9,7 @@
 
 namespace KnobToParameterMap {
 
-ParameterId Get(KnobId id);
+ParameterModel::Id Get(KnobId id);
 
 }  // namespace KnobToParameterMap
 

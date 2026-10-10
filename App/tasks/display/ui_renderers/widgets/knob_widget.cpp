@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 
+#include <cstdint>
+
 #include "gmg12864_lcd.hpp"
 #include "utils.h"
 
@@ -11,10 +13,12 @@ namespace UiWidget {
 #define BOX_WIDTH 2
 #define BOX_HEIGHT 2
 
-static int16_t ConvertParameterToDegree(Parameter& parameter);
+static int16_t ConvertParameterToDegree(std::int16_t min, std::int16_t max,
+                                        std::int16_t current);
 static void DrawKnobIndicator(int16_t degree, uint8_t x, uint8_t y);
 
-void DrawKnobWidget(uint8_t x, uint8_t y, Parameter& parameter) {
+void DrawKnobWidget(uint8_t x, uint8_t y,
+                    ParameterModel::UnsignedRangeValue& unsigned_range_value) {
   /**
    * 바늘지시식으로 노브의 값을 보여주어야 함.
    * 1. 그러므로 일단 노브의 값을 수학적으로 표현하는 각도로 변환
@@ -28,11 +32,9 @@ void DrawKnobWidget(uint8_t x, uint8_t y, Parameter& parameter) {
   uint8_t cx, cy;
   int16_t degree;
 
-  if (parameter.GetType() != ParameterType::SLIDER) {
-    return;
-  }
-
-  degree = ConvertParameterToDegree(parameter);
+  degree = ConvertParameterToDegree(unsigned_range_value.min,
+                                    unsigned_range_value.max,
+                                    unsigned_range_value.current);
   cx = x + RADIUS + 1;
   cy = y + RADIUS;
 
@@ -45,17 +47,15 @@ void DrawKnobWidget(uint8_t x, uint8_t y, Parameter& parameter) {
   DrawKnobIndicator(degree, cx, cy);
 }
 
-static int16_t ConvertParameterToDegree(Parameter& parameter) {
+static int16_t ConvertParameterToDegree(std::int16_t min, std::int16_t max,
+                                        std::int16_t current) {
   int16_t degree;
 
   // 수학적 각도가 증가하는 방향과 파라미터가 증가하는 방향이 서로
   // 반대방향이므로 방향을 일치시키기 위해 계산
-  degree = parameter.GetMax() - parameter.GetCurrent() + parameter.GetMin();
+  degree = max - current + min;
   // 파라미터 값을 수학적 각도로 변환
-  return (((double)degree - parameter.GetMin()) /
-          (parameter.GetMax() - parameter.GetMin())) *
-             270.0 -
-         45;
+  return (((double)degree - min) / (max - min)) * 270.0 - 45;
 }
 
 /**
@@ -63,7 +63,7 @@ static int16_t ConvertParameterToDegree(Parameter& parameter) {
  */
 static void DrawKnobIndicator(int16_t degree, uint8_t x, uint8_t y) {
   Gmg12864::Driver& driver = Gmg12864::Driver::GetInstance();
-  
+
   int16_t dx, dy, sx, sy, err, x0, x1, y0, y1;
   x0 = x + cosine(degree) * 2;
   y0 = y - sine(degree) * 2;

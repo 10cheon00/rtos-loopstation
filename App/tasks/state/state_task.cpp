@@ -79,7 +79,8 @@ static TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
                                   StateEventVariant& state_event_variant);
 static TaskStatus TryUpdateParameter(StateEventVariant& state_event_variant);
 static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event);
-static Parameter& GetParameterFromCurrentPageAt(SlotIndex index);
+static ParameterModel::Parameter& GetParameterFromCurrentPageAt(
+    SlotIndex index);
 static TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationEvent& event);
 static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event);
@@ -233,20 +234,18 @@ static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event) {
     case ButtonId::ENCODER_C_PUSH:
     case ButtonId::ENCODER_D_PUSH: {
       SlotIndex index = ToSlotIndex(event.id);
-      Parameter& parameter = GetParameterFromCurrentPageAt(index);
-      if (parameter.GetType() == ParameterType::TOGGLE) {
-        parameter.Toggle();
-        return TASK_STATUS_OK;
-      }
+      ParameterModel::Parameter& parameter =
+          GetParameterFromCurrentPageAt(index);
+      parameter.Toggle();
     } break;
     case ButtonId::IFX_A_TOGGLE: {
-      Parameter& parameter =
-          LoopstationStore::GetParameter(ParameterId::IFX_A_STATE);
+      ParameterModel::Parameter& parameter =
+          LoopstationStore::GetParameter(ParameterModel::Id::IFX_A_STATE);
       parameter.Toggle();
     } break;
     case ButtonId::TFX_A_TOGGLE: {
-      Parameter& parameter =
-          LoopstationStore::GetParameter(ParameterId::TFX_A_STATE);
+      ParameterModel::Parameter& parameter =
+          LoopstationStore::GetParameter(ParameterModel::Id::TFX_A_STATE);
       parameter.Toggle();
     } break;
     default:
@@ -255,16 +254,17 @@ static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event) {
   return TASK_STATUS_OK;
 }
 
-static Parameter& GetParameterFromCurrentPageAt(SlotIndex index) {
+static ParameterModel::Parameter& GetParameterFromCurrentPageAt(
+    SlotIndex index) {
   Page& current_page =
       context.ui_state_machine.GetCurrentState()->GetCurrentPage();
 
   if (current_page.IsTypeAt<ParameterSlot>(index)) {
-    ParameterId parameter_id =
+    ParameterModel::Id parameter_id =
         std::get<ParameterSlot>(current_page.GetAt(index)).GetParameterId();
     return LoopstationStore::GetParameter(parameter_id);
   }
-  return LoopstationStore::GetParameter(ParameterId::NONE);
+  return LoopstationStore::GetParameter(ParameterModel::Id::NONE);
 }
 
 /**
@@ -275,7 +275,7 @@ static Parameter& GetParameterFromCurrentPageAt(SlotIndex index) {
 static TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationEvent& event) {
   SlotIndex index = ToSlotIndex(event.id);
-  Parameter& parameter = GetParameterFromCurrentPageAt(index);
+  ParameterModel::Parameter& parameter = GetParameterFromCurrentPageAt(index);
   parameter.Add(event.delta);
   return TASK_STATUS_OK;
 }
@@ -286,12 +286,15 @@ static TaskStatus TryUpdateParameterFromEncoderRotation(
  * 저장된 값을 FX 파라미터에 적용한다.
  */
 static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event) {
-  Parameter& parameter =
+  ParameterModel::Parameter& parameter =
       LoopstationStore::GetParameter(KnobToParameterMap::Get(event.id));
+  ParameterModel::UnsignedRangeValue& ifx_knob_parameter =
+      std::get<ParameterModel::UnsignedRangeValue>(parameter.GetValueVariant());
+
   parameter.Set(MapRangeLinear(event.adc_value,
                                std::numeric_limits<std::uint16_t>::min(),
                                std::numeric_limits<std::uint16_t>::max(),
-                               parameter.GetMin(), parameter.GetMax()));
+                               ifx_knob_parameter.min, ifx_knob_parameter.max));
   return TASK_STATUS_OK;
 }
 
@@ -391,9 +394,11 @@ static void UpdateAudioEventSnapshotMailbox() {
   for (std::size_t i = 0; i < context.track_entry.size(); i++) {
     audio_event_snapshot.rtos_enum_value_track_states[i] = ToRtosEnumValue(
         context.track_entry[i].state_machine.GetCurrentState()->GetId());
-    audio_event_snapshot.rtos_parameter_track_volumes[i] =
-        LoopstationStore::GetParameter(ParameterId::TRACK_1_VOLUME)
-            .GetCurrentForRtos();
+    ParameterModel::UnsignedRangeValue track_volume =
+        std::get<ParameterModel::UnsignedRangeValue>(
+            LoopstationStore::GetParameter(ParameterModel::Id::TRACK_1_VOLUME)
+                .GetValueVariant());
+    audio_event_snapshot.rtos_parameter_track_volumes[i] = track_volume.current;
   }
 
   xQueueOverwrite((QueueHandle_t)context.audio_event_snapshot_mailbox,
@@ -444,20 +449,21 @@ static void CopyPanelSlotsToPanelRenderPayload(
     } else if (std::holds_alternative<ParameterSlot>(page_slot_variant)) {
       ParameterSlot& parameter_slot =
           std::get<ParameterSlot>(page_slot_variant);
-      Parameter parameter =
+      ParameterModel::Parameter& parameter =
           LoopstationStore::GetParameter(parameter_slot.GetParameterId());
       parameter.ToRtosParameterCopy(
           page_slots[i].data.parameter.rtos_parameter_copy);
+
       page_slots[i].data.parameter.label = parameter_slot.GetLabel();
     }
   }
 }
 
 static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender& led) {
-  LoopstationStore::GetParameter(ParameterId::IFX_A_STATE)
-      .ToRtosParameterCopy(led.ifx_a_state);
-  LoopstationStore::GetParameter(ParameterId::TFX_A_STATE)
-      .ToRtosParameterCopy(led.tfx_a_state);
+  LoopstationStore::GetParameter(ParameterModel::Id::IFX_A_STATE)
+      .ToRtosParameterCopy(led.rtos_parameter_copy_ifx_a_state);
+  LoopstationStore::GetParameter(ParameterModel::Id::TFX_A_STATE)
+      .ToRtosParameterCopy(led.rtos_parameter_copy_tfx_a_state);
 
   for (std::size_t i = 0; i < context.track_entry.size(); i++) {
     led.rtos_enum_value_track_states[i] = ToRtosEnumValue(

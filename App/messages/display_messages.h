@@ -37,8 +37,8 @@ typedef struct {
 typedef struct {
   // TODO:
   // LED와 관련된 설정 구현하기
-  RtosParameterCopy ifx_a_state;
-  RtosParameterCopy tfx_a_state;
+  RtosParameterCopy rtos_parameter_copy_ifx_a_state;
+  RtosParameterCopy rtos_parameter_copy_tfx_a_state;
   RtosEnumValue rtos_enum_value_track_states[TRACK_COUNT];
 } RtosPayload_LedRender;
 

@@ -18,8 +18,8 @@ static SettingState setting_state{Page{
     PageSlot{}, PageSlot{}, PageSlot{}}};
 
 static SystemSettingState system_setting_state{Page{
-    ParameterSlot{ParameterId::SYSTEM_SETTING_LCD_CONSTRAST, "LCD CO-\nNTRAST"},
-    ParameterSlot{ParameterId::IFX_A_STATE, "IFX A\nSTATUS"}, PageSlot{},
+    ParameterSlot{ParameterModel::Id::SYSTEM_SETTING_LCD_CONSTRAST, "LCD CO-\nNTRAST"},
+    ParameterSlot{ParameterModel::Id::IFX_A_STATE, "IFX A\nSTATUS"}, PageSlot{},
     PageSlot{}}};
 
 }  // namespace UiStateClass

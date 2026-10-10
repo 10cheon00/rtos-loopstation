@@ -32,12 +32,12 @@ class MenuSlot : public PageSlot {
 
 class ParameterSlot : public PageSlot {
  public:
-  ParameterSlot(ParameterId id, const char* label) : PageSlot(label), id(id) {}
+  ParameterSlot(ParameterModel::Id id, const char* label) : PageSlot(label), id(id) {}
 
-  ParameterId GetParameterId() const { return id; }
+  ParameterModel::Id GetParameterId() const { return id; }
 
  private:
-  ParameterId id;
+  ParameterModel::Id id;
 };
 
 #endif

@@ -48,7 +48,7 @@ struct TrackPlaybackContext {
   uint32_t* sram_frame_buffer_address;
   uint32_t frame_index;        // 재생할 프레임의 번호
   uint32_t total_frame_count;  // 트랙의 길이
-  ParameterValue volume;
+  std::int16_t volume;
   TrackStateMachine::Id track_state;
 };
 
@@ -65,13 +65,6 @@ static osMessageQueueId_t audio_dma_event_queue;
 static SAI_HandleTypeDef* hsai_rx;
 static SAI_HandleTypeDef* hsai_tx;
 static SDRAM_HandleTypeDef* hsdram;
-
-static Parameter parameter_ifx_a;
-static Parameter parameter_ifx_b;
-static Parameter parameter_ifx_c;
-static Parameter parameter_tfx_a;
-static Parameter parameter_tfx_b;
-static Parameter parameter_tfx_c;
 
 static SaiDmaState sai_dma_state[FRAME_BUFFER_COUNT];
 static std::array<TrackPlaybackContext, TRACK_COUNT> track_playback_contexts;
@@ -261,7 +254,7 @@ void ParseAudioEventSnapshot() {
     track_playback_contexts[i].track_state =
         FromRtosEnumValue<TrackStateMachine::Id>(
             audio_event_snapshot.rtos_enum_value_track_states[i]);
-    track_playback_contexts[i].volume = static_cast<ParameterValue>(
+    track_playback_contexts[i].volume = static_cast<std::int16_t>(
         audio_event_snapshot.rtos_parameter_track_volumes[i]);
   }
 }

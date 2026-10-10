@@ -8,7 +8,7 @@ namespace UiWidget {
 #define KNOB_WIDGET_WIDTH 16
 #define KNOB_WIDGET_HEIGHT 16
 
-void DrawKnobWidget(uint8_t x, uint8_t y, Parameter& current);
+void DrawKnobWidget(uint8_t x, uint8_t y, ParameterModel::UnsignedRangeValue& unsigned_range_value);
 
 }  // namespace UiWidget
 
