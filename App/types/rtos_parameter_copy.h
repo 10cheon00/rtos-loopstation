@@ -9,6 +9,10 @@
 typedef int16_t RtosParameterValue;
 
 typedef struct {
+  RtosParameterValue enum_value;
+} RtosParameterValue_EnumValue;
+
+typedef struct {
   bool is_on;
 } RtosParameterValue_ToggleValue;
 
