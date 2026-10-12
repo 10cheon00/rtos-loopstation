@@ -9,8 +9,8 @@ namespace Store {
 using namespace ParameterModel;
 
 void FxParameterStore::Reset() {
-    // TODO:
-    // 초기화
+  // TODO:
+  // 초기화
 }
 
 ParameterModel::Parameter& FxParameterStore::Get(ParameterModel::Id id) {
