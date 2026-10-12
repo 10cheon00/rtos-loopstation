@@ -13,8 +13,6 @@ typedef struct {
   osMessageQueueId_t audio_event_snapshot_mailbox;
   I2C_HandleTypeDef* hi2c;
   osMutexId_t i2c_mutex;
-  osMutexId_t loopstation_parameter_mutex;
-  osMutexId_t fx_parameter_mutex;
   osEventFlagsId_t system_init_event;
 } StateInitParams;
 

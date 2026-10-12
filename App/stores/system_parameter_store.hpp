@@ -1,6 +1,7 @@
 #ifndef SYSTEM_PARAMETER_STORE_HPP
 #define SYSTEM_PARAMETER_STORE_HPP
 
+#include "cmsis_os2.h"
 #include "enum_map.hpp"
 #include "parameter.hpp"
 #include "parameter_id.hpp"
@@ -18,12 +19,13 @@ namespace Store {
 
 class SystemParameterStore : public Singleton<SystemParameterStore> {
  public:
-  void Reset();
+  void Reset(osMutexId_t system_parameter_mutex);
 
   ParameterModel::Parameter& Get(ParameterModel::Id id);
 
  private:
   EnumMap<ParameterModel::Id, ParameterModel::Parameter> system_parameters;
+  osMutexId_t mutex;
 };
 
 }  // namespace Store

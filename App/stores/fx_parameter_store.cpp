@@ -46,16 +46,17 @@ static constexpr FxStore initial_fx_store{
     },
 };
 
-void FxParameterStore::Reset() {
+void FxParameterStore::Reset(osMutexId_t mutex) {
   fx_stores = EnumMap<FxSlot, FxStore>{
       EnumEntry{FxSlot::A, initial_fx_store},
       EnumEntry{FxSlot::B, initial_fx_store},
       EnumEntry{FxSlot::C, initial_fx_store},
   };
+  this->mutex = mutex;
 }
 
-ParameterModel::Parameter& FxParameterStore::Get(FxSlot fx_slot, FxId id) {
-  return fx_stores.Get(fx_slot).Get(id);
+ParameterModel::Parameter& FxParameterStore::Get(FxSlot slot, FxId id) {
+  return fx_stores.Get(slot).Get(id);
 }
 
 }  // namespace Store
