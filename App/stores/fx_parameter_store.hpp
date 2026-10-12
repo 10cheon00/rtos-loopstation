@@ -5,6 +5,7 @@
 #include "enum_map.hpp"
 #include "fx_id.hpp"
 #include "fx_slot.hpp"
+#include "fx_variant.hpp"
 #include "parameter.hpp"
 #include "singleton.hpp"
 
@@ -15,11 +16,11 @@ class FxParameterStore : public Singleton<FxParameterStore> {
 
  public:
   void Reset(osMutexId_t fx_parameter_mutex);
-  ParameterModel::Parameter& Get(FxSlot slot, FxId id);
+  Fx::Variant& Get(Fx::Slot slot, Fx::Id id);
 
  private:
-  using FxStore = EnumMap<FxId, ParameterModel::Parameter>;
-  EnumMap<FxSlot, FxStore> fx_stores;
+  using FxStore = EnumMap<Fx::Id, Fx::Variant>;
+  EnumMap<Fx::Slot, FxStore> fx_stores;
   osMutexId_t mutex;
 };
 
