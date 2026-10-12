@@ -1,0 +1,16 @@
+#ifndef FX_ID_HPP
+#define FX_ID_HPP
+
+enum class FxId {
+  FX_LPF_RATE,
+  FX_LPF_DEPTH,
+  FX_LPF_RESONANCE,
+  FX_LPF_CUTOFF,
+  FX_HPF_RATE,
+  FX_HPF_DEPTH,
+  FX_HPF_RESONANCE,
+  FX_HPF_CUTOFF,
+  COUNT,
+};
+
+#endif
