@@ -106,7 +106,6 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs
-    ${CMAKE_CURRENT_SOURCE_DIR}/stores
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states
@@ -116,6 +115,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/system
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/fx
+    ${CMAKE_CURRENT_SOURCE_DIR}/stores
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs
