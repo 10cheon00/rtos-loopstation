@@ -152,6 +152,16 @@ osMutexId_t i2c1_mutexHandle;
 const osMutexAttr_t i2c1_mutex_attributes = {
   .name = "i2c1_mutex"
 };
+/* Definitions for loopstation_parameter_mutex */
+osMutexId_t loopstation_parameter_mutexHandle;
+const osMutexAttr_t loopstation_parameter_mutex_attributes = {
+  .name = "loopstation_parameter_mutex"
+};
+/* Definitions for fx_parameter_mutex */
+osMutexId_t fx_parameter_mutexHandle;
+const osMutexAttr_t fx_parameter_mutex_attributes = {
+  .name = "fx_parameter_mutex"
+};
 /* Definitions for system_init_event */
 osEventFlagsId_t system_init_eventHandle;
 const osEventFlagsAttr_t system_init_event_attributes = {
@@ -319,6 +329,12 @@ int main(void)
   /* creation of i2c1_mutex */
   i2c1_mutexHandle = osMutexNew(&i2c1_mutex_attributes);
 
+  /* creation of loopstation_parameter_mutex */
+  loopstation_parameter_mutexHandle = osMutexNew(&loopstation_parameter_mutex_attributes);
+
+  /* creation of fx_parameter_mutex */
+  fx_parameter_mutexHandle = osMutexNew(&fx_parameter_mutex_attributes);
+
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
@@ -372,6 +388,8 @@ int main(void)
   state_init_params.audio_event_snapshot_mailbox = audio_event_snapshot_mailboxHandle;
   state_init_params.hi2c = &hi2c1;
   state_init_params.i2c_mutex = i2c1_mutexHandle;
+  state_init_params.loopstation_parameter_mutex = loopstation_parameter_mutexHandle;
+  state_init_params.fx_parameter_mutex = fx_parameter_mutexHandle;
 
   system_init_params.gmg12864_init_params.hspi = &hspi2;
   system_init_params.gmg12864_init_params.CS_Port = GMG12864_CS_GPIO_Port;
@@ -389,6 +407,8 @@ int main(void)
   audio_init_params.hsdram = &hsdram1;
   audio_init_params.system_init_event = system_init_eventHandle;
   audio_init_params.audio_event_snapshot_mailbox = audio_event_snapshot_mailboxHandle;
+  audio_init_params.loopstation_parameter_mutex = loopstation_parameter_mutexHandle;
+  audio_init_params.fx_parameter_mutex = fx_parameter_mutexHandle;
   audio_init_params.audio_dma_event_queue = audio_dma_eventHandle;
   /* USER CODE END RTOS_QUEUES */
 
