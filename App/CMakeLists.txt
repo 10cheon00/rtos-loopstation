@@ -60,7 +60,6 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_to_parameter_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_to_track_action_map.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/stores/system_parameter_store.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_state_pointer_map.cpp
@@ -74,6 +73,9 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_task.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_event_sender.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/stores/system_parameter_store.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/stores/fx_parameter_store.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864/gmg12864_lcd.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/mcp23017.cpp
