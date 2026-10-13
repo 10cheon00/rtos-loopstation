@@ -1,6 +1,8 @@
 #include "audio_task.h"
 
+#include <array>
 #include <cstdbool>
+#include <cstddef>
 #include <cstdint>
 
 #include "FreeRTOS.h"
@@ -9,6 +11,9 @@
 #include "audio_initparams.h"
 #include "audio_messages.h"
 #include "cmsis_os2.h"
+#include "fx_parameter_store.hpp"
+#include "fx_slot.hpp"
+#include "fx_variant.hpp"
 #include "parameter.hpp"
 #include "queue.h"
 #include "system_init_event_flag.hpp"
@@ -69,6 +74,8 @@ static SDRAM_HandleTypeDef* hsdram;
 static SaiDmaState sai_dma_state[FRAME_BUFFER_COUNT];
 static std::array<TrackPlaybackContext, TRACK_COUNT> track_playback_contexts;
 static AudioInputContext audio_input_context;
+static Store::FxParameterStore::FxEntries ifx_context;
+static Store::FxParameterStore::FxEntries tfx_context;
 
 __attribute__((section(".axi_sram"),
                aligned(sizeof(BitDepth_t)))) static BitDepth_t
@@ -90,6 +97,7 @@ static void HandleAudioDmaEvent(RtosMessage_AudioDmaEvent& audio_dma_event);
 static void UpdateAudioInputContext();
 static bool IsAudioInputFrameReady();
 static void ReadAudioEventSnapshot();
+static void UpdateFxParameterSnapshot();
 static void RecordActiveTracks();
 static void MixAudioFrames();
 static void UpdateTrackPlaybackContext();
@@ -122,6 +130,10 @@ void AudioTask_Init(void* argument) {
 
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
                    osFlagsWaitAll | osFlagsNoClear, osWaitForever);
+
+  Store::FxParameterStore::GetInstance().GetSelectedFxEntries(ifx_context,
+                                                              tfx_context);
+
   Run();
 }
 
@@ -152,6 +164,7 @@ static void Run() {
     HandleAudioDmaEvent(rtos_message_audio_dma_event);
     if (IsAudioInputFrameReady()) {
       ReadAudioEventSnapshot();
+      UpdateFxParameterSnapshot();
       FetchActiveTrackFrames();
       MixAudioFrames();
       RecordActiveTracks();
@@ -256,6 +269,26 @@ void ReadAudioEventSnapshot() {
             audio_event_snapshot.rtos_enum_value_track_states[i]);
     track_playback_contexts[i].volume = static_cast<std::int16_t>(
         audio_event_snapshot.rtos_parameter_track_volumes[i]);
+  }
+}
+
+static void UpdateFxParameterSnapshot() {
+  Store::FxParameterStore::FxEntries ifx_entries, tfx_entries;
+  Store::FxParameterStore::GetInstance().GetSelectedFxEntriesOrSkip(
+      ifx_entries, tfx_entries);
+  for (std::size_t i = 0; i < ifx_entries.size(); i++) {
+    if (ifx_entries[i].id != Fx::Id::NONE) {
+      ifx_context[i].id = ifx_entries[i].id;
+      ifx_context[i].fx = ifx_entries[i].fx;
+      ifx_context[i].status = ifx_entries[i].status;
+    }
+  }
+  for (std::size_t i = 0; i < tfx_entries.size(); i++) {
+    if (tfx_entries[i].id != Fx::Id::NONE) {
+      tfx_context[i].id = tfx_entries[i].id;
+      tfx_context[i].fx = tfx_entries[i].fx;
+      tfx_context[i].status = tfx_entries[i].status;
+    }
   }
 }
 
