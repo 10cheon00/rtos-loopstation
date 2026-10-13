@@ -1,11 +1,15 @@
 #ifndef FX_SLOT_HPP
 #define FX_SLOT_HPP
 
-enum class FxSlot {
+namespace Fx {
+
+enum class Slot {
   A,
   B,
   C,
   COUNT,
 };
+
+}
 
 #endif

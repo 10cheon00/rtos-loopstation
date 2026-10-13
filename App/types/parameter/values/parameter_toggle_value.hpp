@@ -9,6 +9,7 @@ namespace ParameterModel {
 
 struct ToggleValue {
   bool is_on;
+  constexpr ToggleValue() : is_on(false) {}
   constexpr ToggleValue(bool is_on) : is_on(is_on) {}
   constexpr ToggleValue(RtosParameterValue_ToggleValue rtos_parameter_value)
       : ToggleValue(rtos_parameter_value.is_on) {}

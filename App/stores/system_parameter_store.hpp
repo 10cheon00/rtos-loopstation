@@ -1,9 +1,11 @@
-#ifndef LOOPSTATION_PARAMETER_STORE_HPP
-#define LOOPSTATION_PARAMETER_STORE_HPP
+#ifndef SYSTEM_PARAMETER_STORE_HPP
+#define SYSTEM_PARAMETER_STORE_HPP
 
+#include "cmsis_os2.h"
 #include "enum_map.hpp"
 #include "parameter.hpp"
 #include "parameter_id.hpp"
+#include "singleton.hpp"
 
 /**
  * TODO:
@@ -13,12 +15,19 @@
  * 저장소를 분리한다면 ParameterId도 저장소에 따라 분리해야한다.
  */
 
-namespace LoopstationStore {
+namespace Store {
 
-using ParameterStore = EnumMap<ParameterModel::Id, ParameterModel::Parameter>;
+class SystemParameterStore : public Singleton<SystemParameterStore> {
+ public:
+  void Reset(osMutexId_t system_parameter_mutex);
 
-ParameterModel::Parameter& GetParameter(ParameterModel::Id id);
+  ParameterModel::Parameter& Get(ParameterModel::Id id);
 
-}  // namespace LoopstationStore
+ private:
+  EnumMap<ParameterModel::Id, ParameterModel::Parameter> system_parameters;
+  osMutexId_t mutex;
+};
+
+}  // namespace Store
 
 #endif

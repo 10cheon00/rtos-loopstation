@@ -12,7 +12,6 @@
 #include "encoder_id.hpp"
 #include "knob_id.hpp"
 #include "knob_to_parameter_map.hpp"
-#include "loopstation_parameter_store.hpp"
 #include "mcp23017.hpp"
 #include "page_navigation_bitset.hpp"
 #include "queue.h"
@@ -20,6 +19,7 @@
 #include "state_initparams.h"
 #include "state_messages.h"
 #include "system_init_event_flag.hpp"
+#include "system_parameter_store.hpp"
 #include "track_config.h"
 #include "track_state_machine.hpp"
 #include "ui_state_machine.hpp"
@@ -240,12 +240,12 @@ static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event) {
     } break;
     case ButtonId::IFX_A_TOGGLE: {
       ParameterModel::Parameter& parameter =
-          LoopstationStore::GetParameter(ParameterModel::Id::IFX_A_STATE);
+          Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::IFX_A_STATE);
       parameter.Toggle();
     } break;
     case ButtonId::TFX_A_TOGGLE: {
       ParameterModel::Parameter& parameter =
-          LoopstationStore::GetParameter(ParameterModel::Id::TFX_A_STATE);
+          Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::TFX_A_STATE);
       parameter.Toggle();
     } break;
     default:
@@ -262,9 +262,9 @@ static ParameterModel::Parameter& GetParameterFromCurrentPageAt(
   if (current_page.IsTypeAt<ParameterSlot>(index)) {
     ParameterModel::Id parameter_id =
         std::get<ParameterSlot>(current_page.GetAt(index)).GetParameterId();
-    return LoopstationStore::GetParameter(parameter_id);
+    return Store::SystemParameterStore::GetInstance().Get(parameter_id);
   }
-  return LoopstationStore::GetParameter(ParameterModel::Id::NONE);
+  return Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::NONE);
 }
 
 /**
@@ -287,7 +287,7 @@ static TaskStatus TryUpdateParameterFromEncoderRotation(
  */
 static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event) {
   ParameterModel::Parameter& parameter =
-      LoopstationStore::GetParameter(KnobToParameterMap::Get(event.id));
+      Store::SystemParameterStore::GetInstance().Get(KnobToParameterMap::Get(event.id));
   ParameterModel::UnsignedRangeValue& ifx_knob_parameter =
       std::get<ParameterModel::UnsignedRangeValue>(parameter.GetValueVariant());
 
@@ -396,7 +396,7 @@ static void UpdateAudioEventSnapshotMailbox() {
         context.track_entry[i].state_machine.GetCurrentState()->GetId());
     ParameterModel::UnsignedRangeValue track_volume =
         std::get<ParameterModel::UnsignedRangeValue>(
-            LoopstationStore::GetParameter(ParameterModel::Id::TRACK_1_VOLUME)
+            Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::TRACK_1_VOLUME)
                 .GetValueVariant());
     audio_event_snapshot.rtos_parameter_track_volumes[i] = track_volume.current;
   }
@@ -450,7 +450,7 @@ static void CopyPanelSlotsToPanelRenderPayload(
       ParameterSlot& parameter_slot =
           std::get<ParameterSlot>(page_slot_variant);
       ParameterModel::Parameter& parameter =
-          LoopstationStore::GetParameter(parameter_slot.GetParameterId());
+          Store::SystemParameterStore::GetInstance().Get(parameter_slot.GetParameterId());
       parameter.ToRtosParameterCopy(
           page_slots[i].data.parameter.rtos_parameter_copy);
 
@@ -460,9 +460,9 @@ static void CopyPanelSlotsToPanelRenderPayload(
 }
 
 static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender& led) {
-  LoopstationStore::GetParameter(ParameterModel::Id::IFX_A_STATE)
+  Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::IFX_A_STATE)
       .ToRtosParameterCopy(led.rtos_parameter_copy_ifx_a_state);
-  LoopstationStore::GetParameter(ParameterModel::Id::TFX_A_STATE)
+  Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::TFX_A_STATE)
       .ToRtosParameterCopy(led.rtos_parameter_copy_tfx_a_state);
 
   for (std::size_t i = 0; i < context.track_entry.size(); i++) {

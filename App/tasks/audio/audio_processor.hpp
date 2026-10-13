@@ -1,4 +1,0 @@
-#ifndef AUDIO_PROCESSOR_HPP
-#define AUDIO_PROCESSOR_HPP
-
-#endif

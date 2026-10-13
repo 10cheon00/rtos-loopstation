@@ -10,7 +10,7 @@ typedef struct {
   osEventFlagsId_t system_init_event;
   osMessageQueueId_t audio_event_snapshot_mailbox;
   osMessageQueueId_t audio_dma_event_queue;
-  SDRAM_HandleTypeDef *hsdram;
+  SDRAM_HandleTypeDef* hsdram;
 } AudioInitParams;
 
 #endif
