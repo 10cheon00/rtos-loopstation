@@ -11,6 +11,7 @@
 #include "audio_initparams.h"
 #include "audio_messages.h"
 #include "cmsis_os2.h"
+#include "dsp_processor.hpp"
 #include "fx_parameter_store.hpp"
 #include "fx_slot.hpp"
 #include "fx_variant.hpp"
@@ -63,6 +64,13 @@ struct AudioInputContext {
   bool is_frame_ready;
 };
 
+struct FxContext {
+  Fx::Id id;
+  Fx::Variant fx;
+  bool is_on;
+  DSP::Processor processor;
+};
+
 static ErrorLog error_log{0, 0, 0, 0};
 
 static osMessageQueueId_t audio_event_snapshot_mailbox;
@@ -74,8 +82,10 @@ static SDRAM_HandleTypeDef* hsdram;
 static SaiDmaState sai_dma_state[FRAME_BUFFER_COUNT];
 static std::array<TrackPlaybackContext, TRACK_COUNT> track_playback_contexts;
 static AudioInputContext audio_input_context;
-static Store::FxParameterStore::FxEntries ifx_context;
-static Store::FxParameterStore::FxEntries tfx_context;
+static std::array<FxContext, static_cast<std::size_t>(Fx::Slot::COUNT)>
+    ifx_contexts;
+static std::array<FxContext, static_cast<std::size_t>(Fx::Slot::COUNT)>
+    tfx_contexts;
 
 __attribute__((section(".axi_sram"),
                aligned(sizeof(BitDepth_t)))) static BitDepth_t
@@ -88,6 +98,7 @@ __attribute__((section(".axi_sram"),
     track_frame_buffer[TRACK_COUNT][SAI_FRAME_BUFFER_SIZE];
 
 static bool IsValidParams(AudioInitParams* params);
+static void InitFxContexts();
 static void Run();
 static TaskStatus StartSaiReceiveAndTransmit();
 static void FetchActiveTrackFrames();
@@ -99,6 +110,8 @@ static bool IsAudioInputFrameReady();
 static void ReadAudioEventSnapshot();
 static void UpdateFxParameterSnapshot();
 static void RecordActiveTracks();
+static void ApplyIfxOnInputFrameBuffer();
+static void ApplyTfxOnTrackFrameBuffers();
 static void MixAudioFrames();
 static void UpdateTrackPlaybackContext();
 
@@ -131,9 +144,7 @@ void AudioTask_Init(void* argument) {
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
                    osFlagsWaitAll | osFlagsNoClear, osWaitForever);
 
-  Store::FxParameterStore::GetInstance().GetSelectedFxEntries(ifx_context,
-                                                              tfx_context);
-
+  InitFxContexts();
   Run();
 }
 
@@ -144,6 +155,21 @@ bool IsValidParams(AudioInitParams* params) {
          params->audio_dma_event_queue != NULL;
 }
 
+static void InitFxContexts() {
+  Store::FxParameterStore::FxEntries ifx_entries, tfx_entries;
+  Store::FxParameterStore::GetInstance().GetSelectedFxEntries(ifx_entries,
+                                                              tfx_entries);
+  for (std::size_t i = 0; i < ifx_entries.size(); i++) {
+    ifx_contexts[i].id = ifx_entries[i].id;
+    ifx_contexts[i].fx = ifx_entries[i].fx;
+    ifx_contexts[i].is_on = ifx_entries[i].is_on;
+  }
+  for (std::size_t i = 0; i < tfx_entries.size(); i++) {
+    tfx_contexts[i].id = tfx_entries[i].id;
+    tfx_contexts[i].fx = tfx_entries[i].fx;
+    tfx_contexts[i].is_on = tfx_entries[i].is_on;
+  }
+}
 /**
  * 1. SAI B를 통해 얻은 오디오 샘플 확보
  * 2. 현재 재생중인 트랙의 오디오 샘플 확보
@@ -166,6 +192,8 @@ static void Run() {
       ReadAudioEventSnapshot();
       UpdateFxParameterSnapshot();
       FetchActiveTrackFrames();
+      ApplyIfxOnInputFrameBuffer();
+      ApplyTfxOnTrackFrameBuffers();
       MixAudioFrames();
       RecordActiveTracks();
       UpdateTrackPlaybackContext();
@@ -278,19 +306,29 @@ static void UpdateFxParameterSnapshot() {
       ifx_entries, tfx_entries);
   for (std::size_t i = 0; i < ifx_entries.size(); i++) {
     if (ifx_entries[i].id != Fx::Id::NONE) {
-      ifx_context[i].id = ifx_entries[i].id;
-      ifx_context[i].fx = ifx_entries[i].fx;
-      ifx_context[i].status = ifx_entries[i].status;
+      ifx_contexts[i].id = ifx_entries[i].id;
+      ifx_contexts[i].fx = ifx_entries[i].fx;
+      ifx_contexts[i].is_on = ifx_entries[i].is_on;
     }
   }
   for (std::size_t i = 0; i < tfx_entries.size(); i++) {
     if (tfx_entries[i].id != Fx::Id::NONE) {
-      tfx_context[i].id = tfx_entries[i].id;
-      tfx_context[i].fx = tfx_entries[i].fx;
-      tfx_context[i].status = tfx_entries[i].status;
+      tfx_contexts[i].id = tfx_entries[i].id;
+      tfx_contexts[i].fx = tfx_entries[i].fx;
+      tfx_contexts[i].is_on = tfx_entries[i].is_on;
     }
   }
 }
+
+static void ApplyIfxOnInputFrameBuffer() {
+  // for (const auto& fx_entry : ifx_entries) {
+  //   if (fx_entry.is_on) {
+  //     Dispatch
+  //   }
+  // }
+}
+
+static void ApplyTfxOnTrackFrameBuffers() {}
 
 static void MixAudioFrames() {
   for (size_t i = 0; i < FRAME_COUNT; i += CHANNEL_COUNT) {

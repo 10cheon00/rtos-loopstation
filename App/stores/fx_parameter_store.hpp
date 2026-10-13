@@ -18,13 +18,13 @@ class FxParameterStore : public Singleton<FxParameterStore> {
   struct FxEntry {
     Fx::Id id;
     Fx::Variant fx;
-    bool status;
+    bool is_on;
   };
 
   struct FxStore {
     EnumMap<Fx::Id, Fx::Variant> fx_map;
     Fx::Id selected_fx;
-    bool status;
+    bool is_on;
   };
 
  public:

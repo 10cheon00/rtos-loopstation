@@ -13,7 +13,7 @@ static constexpr EnumMap<Fx::Id, Fx::Variant> INITIAL_FX_PARAMETERS{
 static constexpr FxParameterStore::FxStore INITIAL_FX_STORE{
     .fx_map = INITIAL_FX_PARAMETERS,
     .selected_fx = Fx::Id::LPF,
-    .status = false,
+    .is_on = false,
 };
 
 void FxParameterStore::Reset(osMutexId_t mutex) {
@@ -42,12 +42,12 @@ void FxParameterStore::GetSelectedFxEntries(
     Fx::Id selected_fx = this->ifx_stores[fx_slot].selected_fx;
     ifx_entries[i].id = selected_fx;
     ifx_entries[i].fx = this->ifx_stores[fx_slot].fx_map[selected_fx];
-    ifx_entries[i].status = this->ifx_stores[fx_slot].status;
+    ifx_entries[i].is_on = this->ifx_stores[fx_slot].is_on;
 
     selected_fx = this->tfx_stores[fx_slot].selected_fx;
     tfx_entries[i].id = selected_fx;
     tfx_entries[i].fx = this->tfx_stores[fx_slot].fx_map[selected_fx];
-    tfx_entries[i].status = this->tfx_stores[fx_slot].status;
+    tfx_entries[i].is_on = this->tfx_stores[fx_slot].is_on;
   }
 }
 
@@ -59,12 +59,12 @@ void FxParameterStore::GetSelectedFxEntriesOrSkip(
     for (auto& fx_entry : ifx_entries) {
       fx_entry.id = Fx::Id::NONE;
       fx_entry.fx = std::monostate{};
-      fx_entry.status = false;
+      fx_entry.is_on = false;
     }
     for (auto& fx_entry : tfx_entries) {
       fx_entry.id = Fx::Id::NONE;
       fx_entry.fx = std::monostate{};
-      fx_entry.status = false;
+      fx_entry.is_on = false;
     }
     return;
   }
@@ -76,12 +76,12 @@ void FxParameterStore::GetSelectedFxEntriesOrSkip(
     Fx::Id selected_fx = this->ifx_stores[fx_slot].selected_fx;
     ifx_entries[i].id = selected_fx;
     ifx_entries[i].fx = this->ifx_stores[fx_slot].fx_map[selected_fx];
-    ifx_entries[i].status = this->ifx_stores[fx_slot].status;
+    ifx_entries[i].is_on = this->ifx_stores[fx_slot].is_on;
 
     selected_fx = this->tfx_stores[fx_slot].selected_fx;
     tfx_entries[i].id = selected_fx;
     tfx_entries[i].fx = this->tfx_stores[fx_slot].fx_map[selected_fx];
-    tfx_entries[i].status = this->tfx_stores[fx_slot].status;
+    tfx_entries[i].is_on = this->tfx_stores[fx_slot].is_on;
   }
 }
 
