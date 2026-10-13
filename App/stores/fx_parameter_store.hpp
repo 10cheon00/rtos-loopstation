@@ -15,12 +15,33 @@ class FxParameterStore : public Singleton<FxParameterStore> {
   friend class Singleton<FxParameterStore>;
 
  public:
+  struct FxEntry {
+    Fx::Id id;
+    Fx::Variant fx;
+    bool status;
+  };
+
+  struct FxStore {
+    EnumMap<Fx::Id, Fx::Variant> fx_map;
+    Fx::Id selected_fx;
+    bool status;
+  };
+
+ public:
   void Reset(osMutexId_t fx_parameter_mutex);
-  Fx::Variant& Get(Fx::Slot slot, Fx::Id id);
+
+  using FxEntries = std::array<FxParameterStore::FxEntry,
+                               static_cast<std::size_t>(Fx::Slot::COUNT)>;
+
+  void GetSelectedFxEntries(FxParameterStore::FxEntries& ifx_entries,
+                            FxParameterStore::FxEntries& tfx_entries);
+
+  void GetSelectedFxEntriesOrSkip(FxParameterStore::FxEntries& ifx_entries,
+                                  FxParameterStore::FxEntries& tfx_entries);
 
  private:
-  using FxStore = EnumMap<Fx::Id, Fx::Variant>;
-  EnumMap<Fx::Slot, FxStore> fx_stores;
+  EnumMap<Fx::Slot, FxStore> ifx_stores;
+  EnumMap<Fx::Slot, FxStore> tfx_stores;
   osMutexId_t mutex;
 };
 

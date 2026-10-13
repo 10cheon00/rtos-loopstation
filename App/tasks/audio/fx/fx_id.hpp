@@ -4,6 +4,7 @@
 namespace Fx {
 
 enum class Id {
+  NONE,
   LPF,
   COUNT,
 };

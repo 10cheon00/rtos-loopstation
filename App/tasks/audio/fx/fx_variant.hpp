@@ -1,5 +1,5 @@
-#ifndef FX_PARAMETER_SET_HPP
-#define FX_PARAMETER_SET_HPP
+#ifndef FX_VARIANT_HPP
+#define FX_VARIANT_HPP
 
 #include <variant>
 
@@ -17,7 +17,7 @@ struct Lpf {
   UnsignedRangeValue cutoff{0, 100, 50};
 };
 
-using Variant = std::variant<Lpf>;
+using Variant = std::variant<std::monostate, Lpf>;
 
 }  // namespace Fx
 
