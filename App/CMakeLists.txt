@@ -115,6 +115,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/system
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/fx
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp
     ${CMAKE_CURRENT_SOURCE_DIR}/stores
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017
