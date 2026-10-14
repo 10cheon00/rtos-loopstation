@@ -22,8 +22,6 @@
 #include "track_state.hpp"
 #include "utils.h"
 
-#define INMP441_ALIGN_OFFSET 1
-
 #define SDRAM_BASE_ADDRESS 0xC0000000
 #define SDRAM_SIZE 0x3FFFFFF
 #define TRACK_FRAME_BUFFER_SIZE \
@@ -306,7 +304,7 @@ static void ApplyIfxOnInputFrameBuffer() {
   for (auto& ifx_context : ifx_contexts) {
     ifx_context.processor.Dispatch(ifx_context.fx_entry,
                                    audio_input_context.input_frame_buffer,
-                                   SAI_FRAME_BUFFER_SIZE);
+                                   FRAME_COUNT);
   }
 }
 

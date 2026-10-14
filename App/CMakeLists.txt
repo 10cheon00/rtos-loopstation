@@ -74,6 +74,7 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_task.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_event_sender.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp/dsp_dispatcher.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp/dsp_utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp/fx/dsp_fx_lpf.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/stores/system_parameter_store.cpp

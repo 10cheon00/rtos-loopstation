@@ -8,8 +8,19 @@ namespace DSP::FxProcessor {
 
 class Lpf {
  public:
+  Lpf() { Reset(); }
+
+  void Reset() {
+    a1 = a2 = b0 = b1 = b2 = 0;
+    x1 = x2 = y1 = y2 = 0;
+  }
+
   void Process(Fx::Parameters::Lpf& lpf_parameters, BitDepth_t* buffer,
-               uint32_t size);
+               std::size_t size);
+
+ private:
+  float a1, a2, b0, b1, b2;
+  float x1, x2, y1, y2;
 };
 
 };  // namespace DSP::FxProcessor

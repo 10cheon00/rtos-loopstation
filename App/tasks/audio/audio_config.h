@@ -10,6 +10,7 @@
 #define CHANNEL_COUNT 2U
 #define FRAME_BUFFER_COUNT 2U
 #define SAI_FRAME_BUFFER_SIZE (FRAME_COUNT * FRAME_BUFFER_COUNT)
+#define INMP441_ALIGN_OFFSET 1
 
 using BitDepth_t = std::int32_t;
 
