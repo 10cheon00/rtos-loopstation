@@ -73,6 +73,8 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_task.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_event_sender.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp/dsp_dispatcher.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp/fx/dsp_fx_lpf.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/stores/system_parameter_store.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stores/fx_parameter_store.cpp
@@ -116,6 +118,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/fx
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp/fx
     ${CMAKE_CURRENT_SOURCE_DIR}/stores
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017

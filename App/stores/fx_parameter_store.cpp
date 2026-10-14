@@ -8,7 +8,7 @@ namespace Store {
 using namespace ParameterModel;
 
 static constexpr EnumMap<Fx::Id, Fx::Variant> INITIAL_FX_PARAMETERS{
-    EnumEntry{Fx::Id::LPF, Fx::Variant{Fx::Lpf{}}}};
+    EnumEntry{Fx::Id::LPF, Fx::Variant{Fx::Parameters::Lpf{}}}};
 
 static constexpr FxParameterStore::FxStore INITIAL_FX_STORE{
     .fx_map = INITIAL_FX_PARAMETERS,
@@ -30,9 +30,8 @@ void FxParameterStore::Reset(osMutexId_t mutex) {
   this->mutex = mutex;
 }
 
-void FxParameterStore::GetSelectedFxEntries(
-    FxParameterStore::FxEntries& ifx_entries,
-    FxParameterStore::FxEntries& tfx_entries) {
+void FxParameterStore::GetSelectedFxEntries(Fx::SlotEntries& ifx_entries,
+                                            Fx::SlotEntries& tfx_entries) {
   MutexGuard lock{this->mutex, 500UL};
 
   using Underlying = std::underlying_type_t<Fx::Slot>;
@@ -52,8 +51,7 @@ void FxParameterStore::GetSelectedFxEntries(
 }
 
 void FxParameterStore::GetSelectedFxEntriesOrSkip(
-    FxParameterStore::FxEntries& ifx_entries,
-    FxParameterStore::FxEntries& tfx_entries) {
+    Fx::SlotEntries& ifx_entries, Fx::SlotEntries& tfx_entries) {
   MutexGuard lock{this->mutex, 0UL};
   if (!lock.is_acquired()) {
     for (auto& fx_entry : ifx_entries) {

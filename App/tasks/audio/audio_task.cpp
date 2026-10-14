@@ -7,11 +7,12 @@
 
 #include "FreeRTOS.h"
 #include "app.h"
+#include "audio_config.h"
 #include "audio_dma_event.hpp"
 #include "audio_initparams.h"
 #include "audio_messages.h"
 #include "cmsis_os2.h"
-#include "dsp_processor.hpp"
+#include "dsp_dispatcher.hpp"
 #include "fx_parameter_store.hpp"
 #include "fx_slot.hpp"
 #include "fx_variant.hpp"
@@ -21,13 +22,6 @@
 #include "track_state.hpp"
 #include "utils.h"
 
-#define SAMPLING_FREQUENCY 44100UL
-#define FRAME_DURATION_MS (1000.0 / SAMPLING_FREQUENCY)
-#define FRAME_DURATION_TICKS (pdMS_TO_TICKS(FRAME_DURATION_MS))
-#define FRAME_COUNT 512U
-#define CHANNEL_COUNT 2U
-#define FRAME_BUFFER_COUNT 2U
-#define SAI_FRAME_BUFFER_SIZE (FRAME_COUNT * FRAME_BUFFER_COUNT)
 #define INMP441_ALIGN_OFFSET 1
 
 #define SDRAM_BASE_ADDRESS 0xC0000000
@@ -41,8 +35,6 @@ struct ErrorLog {
   uint32_t sdram_read_error;
   uint32_t sdram_read_none_error;
 };
-
-using BitDepth_t = std::int32_t;
 
 struct SaiDmaState {
   bool is_rx_complete;
@@ -65,10 +57,8 @@ struct AudioInputContext {
 };
 
 struct FxContext {
-  Fx::Id id;
-  Fx::Variant fx;
-  bool is_on;
-  DSP::Processor processor;
+  Fx::Entry fx_entry;
+  DSP::Dispatcher processor;
 };
 
 static ErrorLog error_log{0, 0, 0, 0};
@@ -156,18 +146,14 @@ bool IsValidParams(AudioInitParams* params) {
 }
 
 static void InitFxContexts() {
-  Store::FxParameterStore::FxEntries ifx_entries, tfx_entries;
+  Fx::SlotEntries ifx_entries, tfx_entries;
   Store::FxParameterStore::GetInstance().GetSelectedFxEntries(ifx_entries,
                                                               tfx_entries);
   for (std::size_t i = 0; i < ifx_entries.size(); i++) {
-    ifx_contexts[i].id = ifx_entries[i].id;
-    ifx_contexts[i].fx = ifx_entries[i].fx;
-    ifx_contexts[i].is_on = ifx_entries[i].is_on;
+    ifx_contexts[i].fx_entry = ifx_entries[i];
   }
   for (std::size_t i = 0; i < tfx_entries.size(); i++) {
-    tfx_contexts[i].id = tfx_entries[i].id;
-    tfx_contexts[i].fx = tfx_entries[i].fx;
-    tfx_contexts[i].is_on = tfx_entries[i].is_on;
+    tfx_contexts[i].fx_entry = tfx_entries[i];
   }
 }
 /**
@@ -301,31 +287,27 @@ void ReadAudioEventSnapshot() {
 }
 
 static void UpdateFxParameterSnapshot() {
-  Store::FxParameterStore::FxEntries ifx_entries, tfx_entries;
+  Fx::SlotEntries ifx_entries, tfx_entries;
   Store::FxParameterStore::GetInstance().GetSelectedFxEntriesOrSkip(
       ifx_entries, tfx_entries);
   for (std::size_t i = 0; i < ifx_entries.size(); i++) {
     if (ifx_entries[i].id != Fx::Id::NONE) {
-      ifx_contexts[i].id = ifx_entries[i].id;
-      ifx_contexts[i].fx = ifx_entries[i].fx;
-      ifx_contexts[i].is_on = ifx_entries[i].is_on;
+      ifx_contexts[i].fx_entry = ifx_entries[i];
     }
   }
   for (std::size_t i = 0; i < tfx_entries.size(); i++) {
     if (tfx_entries[i].id != Fx::Id::NONE) {
-      tfx_contexts[i].id = tfx_entries[i].id;
-      tfx_contexts[i].fx = tfx_entries[i].fx;
-      tfx_contexts[i].is_on = tfx_entries[i].is_on;
+      tfx_contexts[i].fx_entry = tfx_entries[i];
     }
   }
 }
 
 static void ApplyIfxOnInputFrameBuffer() {
-  // for (const auto& fx_entry : ifx_entries) {
-  //   if (fx_entry.is_on) {
-  //     Dispatch
-  //   }
-  // }
+  for (auto& ifx_context : ifx_contexts) {
+    ifx_context.processor.Dispatch(ifx_context.fx_entry,
+                                   audio_input_context.input_frame_buffer,
+                                   SAI_FRAME_BUFFER_SIZE);
+  }
 }
 
 static void ApplyTfxOnTrackFrameBuffers() {}

@@ -10,14 +10,19 @@ namespace Fx {
 
 using namespace ParameterModel;
 
+namespace Parameters {
+
 struct Lpf {
-  UnsignedRangeValue rate{0, 100, 100}; // TODO: 음표와 숫자를 혼합한 타입으로 변경해야함
+  UnsignedRangeValue rate{
+      0, 100, 100};  // TODO: 음표와 숫자를 혼합한 타입으로 변경해야함
   UnsignedRangeValue depth{0, 100, 50};
   UnsignedRangeValue resonance{0, 100, 50};
   UnsignedRangeValue cutoff{0, 100, 50};
 };
 
-using Variant = std::variant<std::monostate, Lpf>;
+}  // namespace Parameters
+
+using Variant = std::variant<std::monostate, Parameters::Lpf>;
 
 }  // namespace Fx
 
