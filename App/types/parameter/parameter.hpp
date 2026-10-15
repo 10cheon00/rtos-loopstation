@@ -10,7 +10,7 @@
 #include "parameter_type.hpp"
 #include "parameter_value.hpp"
 #include "rtos_parameter_copy.h"
-#include "utils.h"
+#include "utils.hpp"
 
 namespace ParameterModel {
 
@@ -27,7 +27,7 @@ class Parameter {
 
   Parameter(RtosParameterCopy& copy) {
     ParameterType type =
-        FromRtosEnumValue<ParameterType>(copy.rtos_enum_value_parameter_type);
+        Utils::FromRtosEnumValue<ParameterType>(copy.rtos_enum_value_parameter_type);
     switch (type) {
       case ParameterType::UNSIGNED_RANGE:
         value_variant = UnsignedRangeValue(
@@ -86,7 +86,7 @@ class Parameter {
 
           if constexpr (std::is_same_v<T, UnsignedRangeValue>) {
             copy.rtos_enum_value_parameter_type =
-                ToRtosEnumValue(ParameterType::UNSIGNED_RANGE);
+                Utils::ToRtosEnumValue(ParameterType::UNSIGNED_RANGE);
             copy.rtos_parameter_union.rtos_parameter_unsigned_range_value = {
                 .min = value.min,
                 .max = value.max,
@@ -94,13 +94,13 @@ class Parameter {
             };
           } else if constexpr (std::is_same_v<T, ToggleValue>) {
             copy.rtos_enum_value_parameter_type =
-                ToRtosEnumValue(ParameterType::TOGGLE);
+                Utils::ToRtosEnumValue(ParameterType::TOGGLE);
             copy.rtos_parameter_union.rtos_parameter_toggle_value = {
                 .is_on = value.is_on,
             };
           } else {
             copy.rtos_enum_value_parameter_type =
-                ToRtosEnumValue(ParameterType::NONE);
+                Utils::ToRtosEnumValue(ParameterType::NONE);
           }
         },
         value_variant);

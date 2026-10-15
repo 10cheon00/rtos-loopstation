@@ -15,8 +15,8 @@ class Lpf {
     x1 = x2 = y1 = y2 = 0;
   }
 
-  void Process(Fx::Parameters::Lpf& lpf_parameters, BitDepth_t* buffer,
-               std::size_t size);
+  void Process(Fx::Parameters::Lpf& lpf_parameters, bool is_on,
+               BitDepth_t* buffer, std::size_t size);
 
  private:
   float a1, a2, b0, b1, b2;

@@ -20,7 +20,7 @@
 #include "queue.h"
 #include "system_init_event_flag.hpp"
 #include "track_state.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 #define SDRAM_BASE_ADDRESS 0xC0000000
 #define SDRAM_SIZE 0x3FFFFFF
@@ -224,7 +224,7 @@ static void WaitForAudioDmaEvent(
 }
 
 static void HandleAudioDmaEvent(RtosMessage_AudioDmaEvent& audio_dma_event) {
-  AudioDmaEvent sai_dma_event = FromRtosEnumValue<AudioDmaEvent>(
+  AudioDmaEvent sai_dma_event = Utils::FromRtosEnumValue<AudioDmaEvent>(
       audio_dma_event.rtos_enum_value_audio_dma_event);
 
   switch (sai_dma_event) {
@@ -277,7 +277,7 @@ void ReadAudioEventSnapshot() {
              0);
   for (std::size_t i = 0; i < track_playback_contexts.size(); i++) {
     track_playback_contexts[i].track_state =
-        FromRtosEnumValue<TrackStateMachine::Id>(
+        Utils::FromRtosEnumValue<TrackStateMachine::Id>(
             audio_event_snapshot.rtos_enum_value_track_states[i]);
     track_playback_contexts[i].volume = static_cast<std::int16_t>(
         audio_event_snapshot.rtos_parameter_track_volumes[i]);

@@ -15,7 +15,7 @@
 #include "track_state_id.hpp"
 #include "ui_renderer.hpp"
 #include "ui_state_label_map.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 #define DISPLAY_RENDER_FREQEUNCY_HZ (100UL)
 #define DISPLAY_RENDER_DELAY_MS (1000UL / DISPLAY_RENDER_FREQEUNCY_HZ)
@@ -114,7 +114,7 @@ static void Run(void) {
 
 static TaskStatus HandlePanelRenderPayload(
     RtosPayload_PanelRender* panel_render_payload) {
-  UiStateMachine::Id ui_state_id = FromRtosEnumValue<UiStateMachine::Id>(
+  UiStateMachine::Id ui_state_id = Utils::FromRtosEnumValue<UiStateMachine::Id>(
       panel_render_payload->rtos_enum_value_ui_state);
 
   const char* panel_label = UiStateLabelMap::Get(ui_state_id);
@@ -127,11 +127,11 @@ static TaskStatus HandlePanelRenderPayload(
        i++) {
     const SlotIndex slot_index = static_cast<SlotIndex>(i);
     RtosPayload_PageSlotRender* payload = &panel_render_payload->page_slots[i];
-    PageSlotType type = FromRtosEnumValue<PageSlotType>(
+    PageSlotType type = Utils::FromRtosEnumValue<PageSlotType>(
         payload->rtos_enum_value_page_slot_type);
     if (type == PageSlotType::MENU) {
       RtosPayload_MenuRender* menu_render_payload = &payload->data.menu;
-      MenuIconEncoding icon_encoding = FromRtosEnumValue<MenuIconEncoding>(
+      MenuIconEncoding icon_encoding = Utils::FromRtosEnumValue<MenuIconEncoding>(
           menu_render_payload->rtos_enum_value16_menu_icon_encoding);
       UiRenderer::DrawMenu(icon_encoding, menu_render_payload->label,
                            slot_index);
@@ -165,7 +165,7 @@ static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender* payload) {
     return TASK_STATUS_ERROR;
   }
   for (uint8_t i = 0; i < TRACK_COUNT; i++) {
-    TrackStateMachine::Id id = FromRtosEnumValue<TrackStateMachine::Id>(
+    TrackStateMachine::Id id = Utils::FromRtosEnumValue<TrackStateMachine::Id>(
         payload->rtos_enum_value_track_states[i]);
     if (RenderTrackLed(id, i) != TASK_STATUS_OK) {
       return TASK_STATUS_ERROR;

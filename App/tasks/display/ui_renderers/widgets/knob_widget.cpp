@@ -5,7 +5,7 @@
 #include <cstdint>
 
 #include "gmg12864_lcd.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 namespace UiWidget {
 
@@ -65,13 +65,13 @@ static void DrawKnobIndicator(int16_t degree, uint8_t x, uint8_t y) {
   Gmg12864::Driver& driver = Gmg12864::Driver::GetInstance();
 
   int16_t dx, dy, sx, sy, err, x0, x1, y0, y1;
-  x0 = x + cosine(degree) * 2;
-  y0 = y - sine(degree) * 2;
-  x1 = x + cosine(degree) * (RADIUS - 2);
-  y1 = y - sine(degree) * (RADIUS - 2);
-  dx = abs_int16(x1 - x0);
+  x0 = x + Utils::CosineFromDegrees(degree) * 2;
+  y0 = y - Utils::SineFromDegrees(degree) * 2;
+  x1 = x + Utils::CosineFromDegrees(degree) * (RADIUS - 2);
+  y1 = y - Utils::SineFromDegrees(degree) * (RADIUS - 2);
+  dx = Utils::AbsInt16(x1 - x0);
   sx = x0 < x1 ? 1 : -1;
-  dy = -abs_int16(y1 - y0);
+  dy = -Utils::AbsInt16(y1 - y0);
   sy = y0 < y1 ? 1 : -1;
   err = dx + dy;
 

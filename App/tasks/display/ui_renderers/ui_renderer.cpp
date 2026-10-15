@@ -7,7 +7,7 @@
 #include "menu_icon_encoding.hpp"
 #include "parameter_type.hpp"
 #include "toggle_switch_widget.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 namespace UiRenderer {
 

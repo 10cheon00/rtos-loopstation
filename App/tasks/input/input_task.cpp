@@ -15,7 +15,7 @@
 #include "state_messages.h"
 #include "system_init_event_flag.hpp"
 #include "track_config.h"
-#include "utils.h"
+#include "utils.hpp"
 
 #define BUTTON_HOLD_THRESHOLD_TICKS pdMS_TO_TICKS(2000U)
 #define BUTTON_DOUBLE_TAP_THRESHOLD_TICKS pdMS_TO_TICKS(200U)
@@ -136,7 +136,7 @@ static void Run(void) {
 }
 
 static TaskStatus HandleInputEvent(RtosMessage_InputEvent* input_event) {
-  const InputEventType type = FromRtosEnumValue<InputEventType>(
+  const InputEventType type = Utils::FromRtosEnumValue<InputEventType>(
       input_event->rtos_enum_value_input_event_type);
   if (type == InputEventType::MCP23017) {
     return HandleMcp23017IntEvent(&input_event->payload.mcp23017_int_event);
@@ -294,12 +294,12 @@ static TaskStatus SendButtonPayload(ButtonId id, ButtonState state,
                                     TickType_t timestamp_ticks) {
   ButtonPayload payload = {
       .timestamp_ticks = timestamp_ticks,
-      .rtos_enum_value_button_id = ToRtosEnumValue(id),
-      .rtos_enum_value_button_state = ToRtosEnumValue(state),
+      .rtos_enum_value_button_id = Utils::ToRtosEnumValue(id),
+      .rtos_enum_value_button_state = Utils::ToRtosEnumValue(state),
   };
   RtosMessage_StateEvent state_event = {
       .rtos_enum_value_state_event_type =
-          ToRtosEnumValue(StateEventType::BUTTON),
+          Utils::ToRtosEnumValue(StateEventType::BUTTON),
       .payload = {.button = payload}};
   osMessageQueuePut(state_event_queue, &state_event, 0,
                     STATE_EVENT_QUEUE_TIMEOUT_500MS);
@@ -330,20 +330,20 @@ static void UpdateButtonContext(ButtonId id, ButtonState state,
 static TaskStatus HandleEncoderRotationEvent(
     RtosPayload_EncoderRotation* encoder_rotation_event) {
   int32_t delta = 1;
-  if (FromRtosEnumValue<EncoderRotationDirection>(
+  if (Utils::FromRtosEnumValue<EncoderRotationDirection>(
           encoder_rotation_event->rtos_enum_value_encoder_rotation_direction) ==
       EncoderRotationDirection::COUNTER_CLOCKWISE) {
     delta = -1;
   }
 
-  EncoderId id = FromRtosEnumValue<EncoderId>(
+  EncoderId id = Utils::FromRtosEnumValue<EncoderId>(
       encoder_rotation_event->rtos_enum_value_encoder_id);
   if (input_task_context.encoder_button_states[id] == ButtonState::PRESSED) {
     delta *= 10;
   }
   RtosMessage_StateEvent state_event = {
       .rtos_enum_value_state_event_type =
-          ToRtosEnumValue(StateEventType::ENCODER_ROTATION),
+          Utils::ToRtosEnumValue(StateEventType::ENCODER_ROTATION),
       .payload = {
           .encoder_rotation = {
               .timestamp_ticks = encoder_rotation_event->timestamp_ticks,
@@ -361,7 +361,7 @@ static TaskStatus HandleAdcConversionEvent(
     RtosPayload_AdcConversion* adc_conversion_event) {
   RtosMessage_StateEvent state_event = {
       .rtos_enum_value_state_event_type =
-          ToRtosEnumValue(StateEventType::ADC_CONVERSION),
+          Utils::ToRtosEnumValue(StateEventType::ADC_CONVERSION),
       .payload = {.adc_conversion = {
                       .timestamp_ticks = adc_conversion_event->timestamp_ticks,
                       .rtos_enum_value_knob_id =

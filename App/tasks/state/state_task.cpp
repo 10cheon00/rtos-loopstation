@@ -26,7 +26,7 @@
 #include "ui_state_navigation_tree.hpp"
 #include "ui_state_pointer_map.hpp"
 #include "ui_transition_map.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 struct ButtonEvent {
   TickType_t timestamp_ticks;
@@ -177,26 +177,26 @@ void Run(void) {
 
 TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
                            StateEventVariant& state_event_variant) {
-  const StateEventType type = FromRtosEnumValue<StateEventType>(
+  const StateEventType type = Utils::FromRtosEnumValue<StateEventType>(
       state_event.rtos_enum_value_state_event_type);
   if (type == StateEventType::BUTTON) {
     state_event_variant = (ButtonEvent){
         .timestamp_ticks = state_event.payload.button.timestamp_ticks,
-        .id = FromRtosEnumValue<ButtonId>(
+        .id = Utils::FromRtosEnumValue<ButtonId>(
             state_event.payload.button.rtos_enum_value_button_id),
-        .state = FromRtosEnumValue<ButtonState>(
+        .state = Utils::FromRtosEnumValue<ButtonState>(
             state_event.payload.button.rtos_enum_value_button_state),
     };
   } else if (type == StateEventType::ENCODER_ROTATION) {
     state_event_variant = (EncoderRotationEvent){
         .timestamp_ticks = state_event.payload.button.timestamp_ticks,
-        .id = FromRtosEnumValue<EncoderId>(
+        .id = Utils::FromRtosEnumValue<EncoderId>(
             state_event.payload.encoder_rotation.rtos_enum_value_encoder_id),
         .delta = state_event.payload.encoder_rotation.delta,
     };
   } else if (type == StateEventType::ADC_CONVERSION) {
     state_event_variant = (AdcConversionEvent){
-        .id = FromRtosEnumValue<KnobId>(
+        .id = Utils::FromRtosEnumValue<KnobId>(
             state_event.payload.adc_conversion.rtos_enum_value_knob_id),
         .adc_value = state_event.payload.adc_conversion.adc_value,
     };
@@ -233,7 +233,7 @@ static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event) {
     case ButtonId::ENCODER_B_PUSH:
     case ButtonId::ENCODER_C_PUSH:
     case ButtonId::ENCODER_D_PUSH: {
-      SlotIndex index = ToSlotIndex(event.id);
+      SlotIndex index = Utils::ToSlotIndex(event.id);
       ParameterModel::Parameter& parameter =
           GetParameterFromCurrentPageAt(index);
       parameter.Toggle();
@@ -274,7 +274,7 @@ static ParameterModel::Parameter& GetParameterFromCurrentPageAt(
  */
 static TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationEvent& event) {
-  SlotIndex index = ToSlotIndex(event.id);
+  SlotIndex index = Utils::ToSlotIndex(event.id);
   ParameterModel::Parameter& parameter = GetParameterFromCurrentPageAt(index);
   parameter.Add(event.delta);
   return TASK_STATUS_OK;
@@ -291,7 +291,7 @@ static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event) {
   ParameterModel::UnsignedRangeValue& ifx_knob_parameter =
       std::get<ParameterModel::UnsignedRangeValue>(parameter.GetValueVariant());
 
-  parameter.Set(MapRangeLinear(event.adc_value,
+  parameter.Set(Utils::MapRangeLinear(event.adc_value,
                                std::numeric_limits<std::uint16_t>::min(),
                                std::numeric_limits<std::uint16_t>::max(),
                                ifx_knob_parameter.min, ifx_knob_parameter.max));
@@ -333,7 +333,7 @@ static void TryTransitionUiStateMachine(ButtonId id) {
     case ButtonId::ENCODER_B_PUSH:
     case ButtonId::ENCODER_C_PUSH:
     case ButtonId::ENCODER_D_PUSH: {
-      SlotIndex index = ToSlotIndex(id);
+      SlotIndex index = Utils::ToSlotIndex(id);
       PageSlotVariant& page_slot_variant =
           context.ui_state_machine.GetCurrentState()->GetCurrentPage().GetAt(
               index);
@@ -392,7 +392,7 @@ static void UpdateAudioEventSnapshotMailbox() {
   };
 
   for (std::size_t i = 0; i < context.track_entry.size(); i++) {
-    audio_event_snapshot.rtos_enum_value_track_states[i] = ToRtosEnumValue(
+    audio_event_snapshot.rtos_enum_value_track_states[i] = Utils::ToRtosEnumValue(
         context.track_entry[i].state_machine.GetCurrentState()->GetId());
     ParameterModel::UnsignedRangeValue track_volume =
         std::get<ParameterModel::UnsignedRangeValue>(
@@ -415,7 +415,7 @@ static void FillPanelRenderPayload(RtosPayload_PanelRender& payload) {
 static void SetUiStateIdInPanelRenderPayload(
     RtosEnumValue& rtos_enum_value_ui_state_id) {
   rtos_enum_value_ui_state_id =
-      ToRtosEnumValue(context.ui_state_machine.GetCurrentState()->GetId());
+      Utils::ToRtosEnumValue(context.ui_state_machine.GetCurrentState()->GetId());
 }
 
 static void SetPageNavigationBitsetInPanelRenderPayload(
@@ -438,13 +438,13 @@ static void CopyPanelSlotsToPanelRenderPayload(
     SlotIndex slot_index = static_cast<SlotIndex>(i);
     PageSlotVariant& page_slot_variant = page.GetAt(slot_index);
     page_slots[i].rtos_enum_value_page_slot_type =
-        ToRtosEnumValue(GetPageSlotType(page_slot_variant));
+        Utils::ToRtosEnumValue(GetPageSlotType(page_slot_variant));
 
     if (std::holds_alternative<MenuSlot>(page_slot_variant)) {
       MenuSlot& menu_slot = std::get<MenuSlot>(page_slot_variant);
       page_slots[i].data.menu = (RtosPayload_MenuRender){
           .rtos_enum_value16_menu_icon_encoding =
-              ToRtosEnumValue(menu_slot.GetIconEncoding()),
+              Utils::ToRtosEnumValue(menu_slot.GetIconEncoding()),
           .label = menu_slot.GetLabel()};
     } else if (std::holds_alternative<ParameterSlot>(page_slot_variant)) {
       ParameterSlot& parameter_slot =
@@ -466,7 +466,7 @@ static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender& led) {
       .ToRtosParameterCopy(led.rtos_parameter_copy_tfx_a_state);
 
   for (std::size_t i = 0; i < context.track_entry.size(); i++) {
-    led.rtos_enum_value_track_states[i] = ToRtosEnumValue(
+    led.rtos_enum_value_track_states[i] = Utils::ToRtosEnumValue(
         context.track_entry[i].state_machine.GetCurrentState()->GetId());
   }
 }

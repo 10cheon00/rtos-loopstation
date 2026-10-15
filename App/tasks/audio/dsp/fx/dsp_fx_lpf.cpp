@@ -2,14 +2,19 @@
 
 #include "audio_config.h"
 #include "dsp_utils.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 namespace DSP::FxProcessor {
 
-#define DSP_PI 3.141592653
+void Lpf::Process(Fx::Parameters::Lpf& lpf_parameters, bool is_on,
+                  BitDepth_t* buffer, std::size_t size) {
+  // 0. 현재 선택한 Fx를 적용할지 판단.
+  // 만약 적용하지 않는다면 LPF의 경우 처리를 하지 않지만, Delay나 Reverb같은
+  // Fx들은 기존에 처리한 잔향 소리를 계속 처리할 수 있다.
+  if (!is_on) {
+    return;
+  }
 
-void Lpf::Process(Fx::Parameters::Lpf& lpf_parameters, BitDepth_t* buffer,
-                  std::size_t size) {
   // 1. 파라미터를 수식에 적용가능한 형태로 변환
   // TODO: Rate와 Depth는 LFO를 구현한 후 적용하기
   float rate = SAMPLING_FREQUENCY;
@@ -18,8 +23,8 @@ void Lpf::Process(Fx::Parameters::Lpf& lpf_parameters, BitDepth_t* buffer,
 
   // 2. 수식에 필요한 변수를 업데이트
   float omega_degree = 360.0f * cutoff / rate;
-  float cos = cosine(static_cast<int16_t>(omega_degree));
-  float sin = sine(static_cast<int16_t>(omega_degree));
+  float cos = Utils::CosineFromDegrees(omega_degree);
+  float sin = Utils::SineFromDegrees(omega_degree);
   float alpha = sin / (2.0f * q);
 
   float a0 = 1.0f + alpha;
