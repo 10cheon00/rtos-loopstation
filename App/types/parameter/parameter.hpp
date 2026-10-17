@@ -18,16 +18,12 @@ class Parameter {
  public:
   constexpr Parameter() : value_variant() {}
 
-  constexpr Parameter(UnsignedRangeValue value) : value_variant(value) {}
-
-  constexpr Parameter(ToggleValue value) : value_variant(value) {}
-
   constexpr Parameter(ValueVariant& value_variant)
       : value_variant(value_variant) {}
 
   Parameter(RtosParameterCopy& copy) {
-    ParameterType type =
-        Utils::FromRtosEnumValue<ParameterType>(copy.rtos_enum_value_parameter_type);
+    ParameterType type = Utils::FromRtosEnumValue<ParameterType>(
+        copy.rtos_enum_value_parameter_type);
     switch (type) {
       case ParameterType::UNSIGNED_RANGE:
         value_variant = UnsignedRangeValue(

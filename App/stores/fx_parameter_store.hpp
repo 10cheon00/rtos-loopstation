@@ -6,8 +6,9 @@
 #include "cmsis_os2.h"
 #include "enum_map.hpp"
 #include "fx_entry.hpp"
-#include "fx_id.hpp"
+#include "fx_type.hpp"
 #include "fx_parameter_id.hpp"
+#include "fx_section.hpp"
 #include "fx_slot.hpp"
 #include "fx_variant.hpp"
 #include "parameter.hpp"
@@ -19,12 +20,11 @@ class FxParameterStore : public Singleton<FxParameterStore> {
   friend class Singleton<FxParameterStore>;
 
  public:
-  using FxParameterMap =
-      EnumMap<Fx::ParameterId, ParameterModel::Parameter>;
+  using FxParameterMap = EnumMap<Fx::ParameterId, ParameterModel::Parameter>;
 
   struct FxStore {
     FxParameterMap fx_map;
-    Fx::Id selected_fx;
+    Fx::Type selected_fx;
     bool is_on;
   };
 
@@ -37,9 +37,13 @@ class FxParameterStore : public Singleton<FxParameterStore> {
   void GetSelectedFxEntriesOrSkip(Fx::SlotEntries& ifx_entries,
                                   Fx::SlotEntries& tfx_entries);
 
+  ParameterModel::Parameter& Get(Fx::Section section, Fx::Slot slot,
+                                 Fx::ParameterId parameter_id);
+
  private:
-  EnumMap<Fx::Slot, FxStore> ifx_stores;
-  EnumMap<Fx::Slot, FxStore> tfx_stores;
+  EnumMap<Fx::Section, EnumMap<Fx::Slot, FxStore>> stores;
+  // EnumMap<Fx::Slot, FxStore> ifx_stores;
+  // EnumMap<Fx::Slot, FxStore> tfx_stores;
   osMutexId_t mutex;
 };
 

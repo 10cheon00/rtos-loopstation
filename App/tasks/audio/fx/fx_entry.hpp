@@ -5,14 +5,14 @@
 #include <cstdbool>
 #include <cstddef>
 
-#include "fx_id.hpp"
+#include "fx_type.hpp"
 #include "fx_slot.hpp"
 #include "fx_variant.hpp"
 
 namespace Fx {
 
 struct Entry {
-  Fx::Id id;
+  Fx::Type type;
   Fx::Variant fx;
   bool is_on;
 };

@@ -4,6 +4,8 @@
 
 #include "mutex_guard.hpp"
 #include "parameter_value.hpp"
+#include "fx_section.hpp"
+#include "fx_slot.hpp"
 
 namespace Store {
 
@@ -17,27 +19,35 @@ static constexpr EnumMap<ParameterModel::Id, ParameterModel::Parameter>
         },
         EnumEntry{
             Id::IFX_KNOB,
-            UnsignedRangeValue(0, 100, 100),
+            ValueVariant(UnsignedRangeValue(0, 100, 100)),
         },
         EnumEntry{
             Id::TFX_KNOB,
-            UnsignedRangeValue(0, 100, 100),
+            ValueVariant(UnsignedRangeValue(0, 100, 100)),
         },
         EnumEntry{
             Id::IFX_A_STATE,
-            ToggleValue(false),
+            ValueVariant(ToggleValue(false)),
         },
         EnumEntry{
             Id::TFX_A_STATE,
-            ToggleValue(false),
+            ValueVariant(ToggleValue(false)),
         },
         EnumEntry{
             Id::SYSTEM_SETTING_LCD_CONSTRAST,
-            UnsignedRangeValue(10, 80, 80),
+            ValueVariant(UnsignedRangeValue(10, 80, 80)),
         },
         EnumEntry{
             Id::TRACK_1_VOLUME,
-            UnsignedRangeValue(0, 100, 100),
+            ValueVariant(UnsignedRangeValue(0, 100, 100)),
+        },
+        EnumEntry{
+            Id::SELECTED_FX_SECTION,
+            ValueVariant(EnumValue(Fx::Section::IFX)),
+        },
+        EnumEntry{
+            Id::SELECTED_FX_SLOT,
+            ValueVariant(EnumValue(Fx::Slot::A)),
         },
 };
 

@@ -4,14 +4,13 @@
 #include "ui_state.hpp"
 #include "ui_state_id.hpp"
 
-namespace UiStatePointerMap {
+namespace UiStateMap {
 
 using namespace UiStateMachine;
+using StatePointer = State*;
 
-using UiStatePointer = State*;
+StatePointer Get(Id ui_state_id);
 
-UiStatePointer Get(Id ui_state_id);
-
-}  // namespace UiStatePointerMap
+}  // namespace UiStateMap
 
 #endif

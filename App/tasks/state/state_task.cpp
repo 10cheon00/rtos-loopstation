@@ -10,10 +10,12 @@
 #include "cmsis_os2.h"
 #include "display_messages.h"
 #include "encoder_id.hpp"
+#include "fx_parameter_store.hpp"
 #include "knob_id.hpp"
 #include "knob_to_parameter_map.hpp"
 #include "mcp23017.hpp"
 #include "page_navigation_bitset.hpp"
+#include "parameter_enum_value.hpp"
 #include "queue.h"
 #include "state_event_type.hpp"
 #include "state_initparams.h"
@@ -23,8 +25,8 @@
 #include "track_config.h"
 #include "track_state_machine.hpp"
 #include "ui_state_machine.hpp"
+#include "ui_state_map.hpp"
 #include "ui_state_navigation_tree.hpp"
-#include "ui_state_pointer_map.hpp"
 #include "ui_transition_map.hpp"
 #include "utils.hpp"
 
@@ -79,10 +81,13 @@ static TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
                                   StateEventVariant& state_event_variant);
 static TaskStatus TryUpdateParameter(StateEventVariant& state_event_variant);
 static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event);
-static ParameterModel::Parameter& GetParameterFromCurrentPageAt(
-    SlotIndex index);
+static void ToggleParameterMappedBySlotIndex(SlotIndex index);
+static ParameterModel::Parameter&
+GetFxParameterFromSectionAndSlotAndParameterId(
+    FxParameterRef& fx_parameter_ref);
 static TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationEvent& event);
+static void AddParameterMappedBySlotIndex(SlotIndex index, int32_t delta);
 static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event);
 static bool IsButtonPressedEvent(StateEventVariant& state_event_variant);
 static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event);
@@ -234,18 +239,18 @@ static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event) {
     case ButtonId::ENCODER_C_PUSH:
     case ButtonId::ENCODER_D_PUSH: {
       SlotIndex index = Utils::ToSlotIndex(event.id);
-      ParameterModel::Parameter& parameter =
-          GetParameterFromCurrentPageAt(index);
-      parameter.Toggle();
+      ToggleParameterMappedBySlotIndex(index);
     } break;
     case ButtonId::IFX_A_TOGGLE: {
       ParameterModel::Parameter& parameter =
-          Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::IFX_A_STATE);
+          Store::SystemParameterStore::GetInstance().Get(
+              ParameterModel::Id::IFX_A_STATE);
       parameter.Toggle();
     } break;
     case ButtonId::TFX_A_TOGGLE: {
       ParameterModel::Parameter& parameter =
-          Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::TFX_A_STATE);
+          Store::SystemParameterStore::GetInstance().Get(
+              ParameterModel::Id::TFX_A_STATE);
       parameter.Toggle();
     } break;
     default:
@@ -254,17 +259,46 @@ static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event) {
   return TASK_STATUS_OK;
 }
 
-static ParameterModel::Parameter& GetParameterFromCurrentPageAt(
-    SlotIndex index) {
-  Page& current_page =
-      context.ui_state_machine.GetCurrentState()->GetCurrentPage();
-
-  if (current_page.IsTypeAt<ParameterSlot>(index)) {
-    ParameterModel::Id parameter_id =
-        std::get<ParameterSlot>(current_page.GetAt(index)).GetParameterId();
-    return Store::SystemParameterStore::GetInstance().Get(parameter_id);
+static void ToggleParameterMappedBySlotIndex(SlotIndex index) {
+  Page& page = context.ui_state_machine.GetCurrentState()->GetCurrentPage();
+  if (page.IsTypeAt<ParameterSlot>(index)) {
+    ParameterSlot& parameter_slot = std::get<ParameterSlot>(page.GetAt(index));
+    ParameterRef& parameter_ref = parameter_slot.GetParameterRef();
+    if (std::holds_alternative<SystemParameterRef>(parameter_ref)) {
+      SystemParameterRef system_parameter_ref =
+          std::get<SystemParameterRef>(parameter_ref);
+      ParameterModel::Parameter& parameter =
+          Store::SystemParameterStore::GetInstance().Get(
+              system_parameter_ref.id);
+      parameter.Toggle();
+    } else if (std::holds_alternative<FxParameterRef>(parameter_ref)) {
+      FxParameterRef& fx_parameter_ref =
+          std::get<FxParameterRef>(parameter_ref);
+      ParameterModel::Parameter& fx_parameter =
+          GetFxParameterFromSectionAndSlotAndParameterId(fx_parameter_ref);
+      fx_parameter.Toggle();
+    }
   }
-  return Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::NONE);
+}
+
+static ParameterModel::Parameter&
+GetFxParameterFromSectionAndSlotAndParameterId(
+    FxParameterRef& fx_parameter_ref) {
+  Fx::Section fx_section = static_cast<Fx::Section>(
+      std::get<ParameterModel::EnumValue<Fx::Section>>(
+          Store::SystemParameterStore::GetInstance()
+              .Get(ParameterModel::Id::SELECTED_FX_SECTION)
+              .GetValueVariant())
+          .value);
+  Fx::Slot fx_slot =
+      static_cast<Fx::Slot>(std::get<ParameterModel::EnumValue<Fx::Slot>>(
+                                Store::SystemParameterStore::GetInstance()
+                                    .Get(ParameterModel::Id::SELECTED_FX_SLOT)
+                                    .GetValueVariant())
+                                .value);
+  Fx::ParameterId fx_parameter_id = fx_parameter_ref.id;
+  return Store::FxParameterStore::GetInstance().Get(fx_section, fx_slot,
+                                                    fx_parameter_id);
 }
 
 /**
@@ -275,9 +309,30 @@ static ParameterModel::Parameter& GetParameterFromCurrentPageAt(
 static TaskStatus TryUpdateParameterFromEncoderRotation(
     EncoderRotationEvent& event) {
   SlotIndex index = Utils::ToSlotIndex(event.id);
-  ParameterModel::Parameter& parameter = GetParameterFromCurrentPageAt(index);
-  parameter.Add(event.delta);
+  AddParameterMappedBySlotIndex(index, event.delta);
   return TASK_STATUS_OK;
+}
+
+static void AddParameterMappedBySlotIndex(SlotIndex index, int32_t delta) {
+  Page& page = context.ui_state_machine.GetCurrentState()->GetCurrentPage();
+  if (page.IsTypeAt<ParameterSlot>(index)) {
+    ParameterSlot& parameter_slot = std::get<ParameterSlot>(page.GetAt(index));
+    ParameterRef& parameter_ref = parameter_slot.GetParameterRef();
+    if (std::holds_alternative<SystemParameterRef>(parameter_ref)) {
+      SystemParameterRef system_parameter_ref =
+          std::get<SystemParameterRef>(parameter_ref);
+      ParameterModel::Parameter& parameter =
+          Store::SystemParameterStore::GetInstance().Get(
+              system_parameter_ref.id);
+      parameter.Add(delta);
+    } else if (std::holds_alternative<FxParameterRef>(parameter_ref)) {
+      FxParameterRef& fx_parameter_ref =
+          std::get<FxParameterRef>(parameter_ref);
+      ParameterModel::Parameter& fx_parameter =
+          GetFxParameterFromSectionAndSlotAndParameterId(fx_parameter_ref);
+      fx_parameter.Add(delta);
+    }
+  }
 }
 
 /**
@@ -287,14 +342,15 @@ static TaskStatus TryUpdateParameterFromEncoderRotation(
  */
 static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event) {
   ParameterModel::Parameter& parameter =
-      Store::SystemParameterStore::GetInstance().Get(KnobToParameterMap::Get(event.id));
+      Store::SystemParameterStore::GetInstance().Get(
+          KnobToParameterMap::Get(event.id));
   ParameterModel::UnsignedRangeValue& ifx_knob_parameter =
       std::get<ParameterModel::UnsignedRangeValue>(parameter.GetValueVariant());
 
-  parameter.Set(Utils::MapRangeLinear(event.adc_value,
-                               std::numeric_limits<std::uint16_t>::min(),
-                               std::numeric_limits<std::uint16_t>::max(),
-                               ifx_knob_parameter.min, ifx_knob_parameter.max));
+  parameter.Set(Utils::MapRangeLinear(
+      event.adc_value, std::numeric_limits<std::uint16_t>::min(),
+      std::numeric_limits<std::uint16_t>::max(), ifx_knob_parameter.min,
+      ifx_knob_parameter.max));
   return TASK_STATUS_OK;
 }
 
@@ -323,7 +379,6 @@ static void TryChangePageIndex(ButtonId id) {
 
 static void TryTransitionUiStateMachine(ButtonId id) {
   UiStateMachine::Id next_ui_state_id = UiStateMachine::Id::NONE;
-
   switch (id) {
     case ButtonId::EXIT:
       next_ui_state_id = UiStateNavigationTree_GetParent(
@@ -392,11 +447,13 @@ static void UpdateAudioEventSnapshotMailbox() {
   };
 
   for (std::size_t i = 0; i < context.track_entry.size(); i++) {
-    audio_event_snapshot.rtos_enum_value_track_states[i] = Utils::ToRtosEnumValue(
-        context.track_entry[i].state_machine.GetCurrentState()->GetId());
+    audio_event_snapshot.rtos_enum_value_track_states[i] =
+        Utils::ToRtosEnumValue(
+            context.track_entry[i].state_machine.GetCurrentState()->GetId());
     ParameterModel::UnsignedRangeValue track_volume =
         std::get<ParameterModel::UnsignedRangeValue>(
-            Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::TRACK_1_VOLUME)
+            Store::SystemParameterStore::GetInstance()
+                .Get(ParameterModel::Id::TRACK_1_VOLUME)
                 .GetValueVariant());
     audio_event_snapshot.rtos_parameter_track_volumes[i] = track_volume.current;
   }
@@ -414,8 +471,8 @@ static void FillPanelRenderPayload(RtosPayload_PanelRender& payload) {
 
 static void SetUiStateIdInPanelRenderPayload(
     RtosEnumValue& rtos_enum_value_ui_state_id) {
-  rtos_enum_value_ui_state_id =
-      Utils::ToRtosEnumValue(context.ui_state_machine.GetCurrentState()->GetId());
+  rtos_enum_value_ui_state_id = Utils::ToRtosEnumValue(
+      context.ui_state_machine.GetCurrentState()->GetId());
 }
 
 static void SetPageNavigationBitsetInPanelRenderPayload(
@@ -449,20 +506,36 @@ static void CopyPanelSlotsToPanelRenderPayload(
     } else if (std::holds_alternative<ParameterSlot>(page_slot_variant)) {
       ParameterSlot& parameter_slot =
           std::get<ParameterSlot>(page_slot_variant);
-      ParameterModel::Parameter& parameter =
-          Store::SystemParameterStore::GetInstance().Get(parameter_slot.GetParameterId());
-      parameter.ToRtosParameterCopy(
-          page_slots[i].data.parameter.rtos_parameter_copy);
+      if (std::holds_alternative<SystemParameterRef>(
+              parameter_slot.GetParameterRef())) {
+        SystemParameterRef& system_parameter_ref =
+            std::get<SystemParameterRef>(parameter_slot.GetParameterRef());
+        ParameterModel::Parameter& parameter =
+            Store::SystemParameterStore::GetInstance().Get(
+                system_parameter_ref.id);
 
-      page_slots[i].data.parameter.label = parameter_slot.GetLabel();
+        parameter.ToRtosParameterCopy(
+            page_slots[i].data.parameter.rtos_parameter_copy);
+        page_slots[i].data.parameter.label = parameter_slot.GetLabel();
+      } else {
+        FxParameterRef& fx_parameter_ref =
+            std::get<FxParameterRef>(parameter_slot.GetParameterRef());
+        ParameterModel::Parameter& fx_parameter =
+            GetFxParameterFromSectionAndSlotAndParameterId(fx_parameter_ref);
+        fx_parameter.ToRtosParameterCopy(
+            page_slots[i].data.parameter.rtos_parameter_copy);
+        page_slots[i].data.parameter.label = parameter_slot.GetLabel();
+      }
     }
   }
 }
 
 static void FillDisplaySnapshotLedRenderPayload(RtosPayload_LedRender& led) {
-  Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::IFX_A_STATE)
+  Store::SystemParameterStore::GetInstance()
+      .Get(ParameterModel::Id::IFX_A_STATE)
       .ToRtosParameterCopy(led.rtos_parameter_copy_ifx_a_state);
-  Store::SystemParameterStore::GetInstance().Get(ParameterModel::Id::TFX_A_STATE)
+  Store::SystemParameterStore::GetInstance()
+      .Get(ParameterModel::Id::TFX_A_STATE)
       .ToRtosParameterCopy(led.rtos_parameter_copy_tfx_a_state);
 
   for (std::size_t i = 0; i < context.track_entry.size(); i++) {

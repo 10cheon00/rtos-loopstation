@@ -66,7 +66,8 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_transition_map.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_pointer_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/page/page.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_navigation_tree.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/system/system_task.cpp
@@ -85,7 +86,6 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs/mcp23017_gpio_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs/mcp23017_gpio_to_button_map.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/types/page.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/mutex_guard.cpp
@@ -111,6 +111,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/page
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs

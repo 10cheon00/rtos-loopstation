@@ -3,23 +3,17 @@
 
 #include "cmsis_os2.h"
 #include "ui_state.hpp"
-#include "ui_state_pointer_map.hpp"
 #include "ui_state_machine_context.hpp"
+#include "ui_state_map.hpp"
 
 namespace UiStateMachine {
 
-using namespace UiStatePointerMap;
-
 class StateMachine {
  public:
-  StateMachine(Context& context, Id id) : context(context) {
-    UiStatePointer next_ui_state = Get(id);
-    if (next_ui_state != nullptr) {
-      this->current_state = next_ui_state;
-    }
-  }
+  StateMachine(Context& context, Id id)
+      : current_state(UiStateMap::Get(Id::HOME)), context(context) {}
 
-  UiStatePointer GetCurrentState() const { return this->current_state; }
+  UiStateMap::StatePointer GetCurrentState() const { return current_state; }
   Context& GetContext() const { return this->context; }
 
   void TryTransition(Id next_ui_state_id) {
@@ -32,14 +26,12 @@ class StateMachine {
     if (next_ui_state_id == Id::NONE) {
       return;
     }
-    UiStatePointer next_ui_state = Get(next_ui_state_id);
-    if (next_ui_state != NULL) {
-      this->current_state = next_ui_state;
-    }
+    UiStateMap::StatePointer next_ui_state = UiStateMap::Get(next_ui_state_id);
+    this->current_state = next_ui_state;
   }
 
  private:
-  UiStatePointer current_state;
+  UiStateMap::StatePointer current_state;
   Context& context;
 };
 

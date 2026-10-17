@@ -4,6 +4,7 @@
 namespace Fx {
 
 enum class ParameterId {
+  NONE,
   FX_LPF_RATE,
   FX_LPF_DEPTH,
   FX_LPF_RESONANCE,
