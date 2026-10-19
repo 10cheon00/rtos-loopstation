@@ -1,8 +1,11 @@
 #ifndef SYSTEM_PARAMETER_STORE_HPP
 #define SYSTEM_PARAMETER_STORE_HPP
 
+#include <functional>
+
 #include "cmsis_os2.h"
 #include "enum_map.hpp"
+#include "mutex_guard.hpp"
 #include "parameter.hpp"
 #include "parameter_id.hpp"
 #include "singleton.hpp"
@@ -22,6 +25,14 @@ class SystemParameterStore : public Singleton<SystemParameterStore> {
   void Reset(osMutexId_t system_parameter_mutex);
 
   ParameterModel::Parameter& Get(ParameterModel::Id id);
+
+  template <typename Operation>
+  void WithParameterLocked(ParameterModel::Id id, Operation operation) {
+    MutexGuard lock{mutex, 500UL};
+    if (lock.is_acquired()) {
+      operation(system_parameters.Get(id));
+    }
+  }
 
  private:
   EnumMap<ParameterModel::Id, ParameterModel::Parameter> system_parameters;

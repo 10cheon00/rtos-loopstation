@@ -40,8 +40,6 @@ struct SystemParameterRef {
 };
 
 struct FxParameterRef {
-  // Fx::Section section;
-  // Fx::Slot slot;
   Fx::ParameterId id;
 };
 

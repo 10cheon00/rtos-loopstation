@@ -25,6 +25,7 @@ typedef struct {
 typedef union {
   RtosParameterValue_UnsignedRangeValue rtos_parameter_unsigned_range_value;
   RtosParameterValue_ToggleValue rtos_parameter_toggle_value;
+  RtosParameterValue_EnumValue rtos_parameter_enum_value;
 } RtosParameterUnion;
 
 typedef struct {

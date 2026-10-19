@@ -10,6 +10,10 @@ using namespace ParameterModel;
 namespace {
 
 constexpr FxParameterStore::FxParameterMap INITIAL_FX_PARAMETERS{
+    EnumEntry{Fx::ParameterId::FX_SYSTEM_SELECTED_FX,
+              ValueVariant(FxSelectedFxEnumValue{Fx::Type::LPF})},
+    EnumEntry{Fx::ParameterId::FX_SYSTEM_FX_STATE,
+              ValueVariant(ToggleValue{false})},
     EnumEntry{Fx::ParameterId::FX_LPF_RATE,
               ValueVariant{UnsignedRangeValue{0, 100, 100}}},
     EnumEntry{Fx::ParameterId::FX_LPF_DEPTH,
@@ -20,26 +24,24 @@ constexpr FxParameterStore::FxParameterMap INITIAL_FX_PARAMETERS{
               ValueVariant{UnsignedRangeValue{0, 100, 50}}},
 };
 
-static constexpr FxParameterStore::FxStore INITIAL_FX_STORE{
-    .fx_map = INITIAL_FX_PARAMETERS,
-    .selected_fx = Fx::Type::LPF,
-    .is_on = false,
-};
-
 // 저장된 파라미터를 오디오 태스크에 전달할 DTO로 변환한다.
-Fx::Variant GetSelectedFxVariant(FxParameterStore::FxStore& store) {
-  switch (store.selected_fx) {
+Fx::Variant GetSelectedFxVariant(FxParameterStore::FxParameterMap& fx_map) {
+  Fx::Type selected_fx = static_cast<Fx::Type>(
+      std::get<FxSelectedFxEnumValue>(
+          fx_map[Fx::ParameterId::FX_SYSTEM_SELECTED_FX].GetValueVariant())
+          .value);
+
+  switch (selected_fx) {
     case Fx::Type::LPF:
       return Fx::Parameters::Lpf{
           .rate = std::get<UnsignedRangeValue>(
-              store.fx_map[Fx::ParameterId::FX_LPF_RATE].GetValueVariant()),
+              fx_map[Fx::ParameterId::FX_LPF_RATE].GetValueVariant()),
           .depth = std::get<UnsignedRangeValue>(
-              store.fx_map[Fx::ParameterId::FX_LPF_DEPTH].GetValueVariant()),
+              fx_map[Fx::ParameterId::FX_LPF_DEPTH].GetValueVariant()),
           .resonance = std::get<UnsignedRangeValue>(
-              store.fx_map[Fx::ParameterId::FX_LPF_RESONANCE]
-                  .GetValueVariant()),
+              fx_map[Fx::ParameterId::FX_LPF_RESONANCE].GetValueVariant()),
           .cutoff = std::get<UnsignedRangeValue>(
-              store.fx_map[Fx::ParameterId::FX_LPF_CUTOFF].GetValueVariant()),
+              fx_map[Fx::ParameterId::FX_LPF_CUTOFF].GetValueVariant()),
       };
     default:
       return std::monostate{};
@@ -49,15 +51,15 @@ Fx::Variant GetSelectedFxVariant(FxParameterStore::FxStore& store) {
 }  // namespace
 
 void FxParameterStore::Reset(osMutexId_t mutex) {
-  this->stores[Fx::Section::IFX] = EnumMap<Fx::Slot, FxStore>{
-      EnumEntry{Fx::Slot::A, INITIAL_FX_STORE},
-      EnumEntry{Fx::Slot::B, INITIAL_FX_STORE},
-      EnumEntry{Fx::Slot::C, INITIAL_FX_STORE},
+  this->stores[Fx::Section::IFX] = EnumMap<Fx::Slot, FxParameterMap>{
+      EnumEntry{Fx::Slot::A, INITIAL_FX_PARAMETERS},
+      EnumEntry{Fx::Slot::B, INITIAL_FX_PARAMETERS},
+      EnumEntry{Fx::Slot::C, INITIAL_FX_PARAMETERS},
   };
-  this->stores[Fx::Section::TFX] = EnumMap<Fx::Slot, FxStore>{
-      EnumEntry{Fx::Slot::A, INITIAL_FX_STORE},
-      EnumEntry{Fx::Slot::B, INITIAL_FX_STORE},
-      EnumEntry{Fx::Slot::C, INITIAL_FX_STORE},
+  this->stores[Fx::Section::TFX] = EnumMap<Fx::Slot, FxParameterMap>{
+      EnumEntry{Fx::Slot::A, INITIAL_FX_PARAMETERS},
+      EnumEntry{Fx::Slot::B, INITIAL_FX_PARAMETERS},
+      EnumEntry{Fx::Slot::C, INITIAL_FX_PARAMETERS},
   };
   this->mutex = mutex;
 }
@@ -66,21 +68,15 @@ void FxParameterStore::GetSelectedFxEntries(Fx::SlotEntries& ifx_entries,
                                             Fx::SlotEntries& tfx_entries) {
   MutexGuard lock{this->mutex, 500UL};
 
-  using Underlying = std::underlying_type_t<Fx::Slot>;
+  if (lock.is_acquired()) {
+    using Underlying = std::underlying_type_t<Fx::Slot>;
 
-  for (Underlying i = 0; i < static_cast<Underlying>(Fx::Slot::COUNT); ++i) {
-    const auto fx_slot = static_cast<Fx::Slot>(i);
-    Fx::Type selected_fx = this->stores[Fx::Section::IFX][fx_slot].selected_fx;
-    ifx_entries[i].type = selected_fx;
-    ifx_entries[i].fx =
-        GetSelectedFxVariant(this->stores[Fx::Section::IFX][fx_slot]);
-    ifx_entries[i].is_on = this->stores[Fx::Section::IFX][fx_slot].is_on;
+    for (Underlying i = 0; i < static_cast<Underlying>(Fx::Slot::COUNT); ++i) {
+      const auto slot = static_cast<Fx::Slot>(i);
 
-    selected_fx = this->stores[Fx::Section::TFX][fx_slot].selected_fx;
-    tfx_entries[i].type = selected_fx;
-    tfx_entries[i].fx =
-        GetSelectedFxVariant(this->stores[Fx::Section::TFX][fx_slot]);
-    tfx_entries[i].is_on = this->stores[Fx::Section::TFX][fx_slot].is_on;
+      CopyToFxEntry(Fx::Section::IFX, slot, ifx_entries[i]);
+      CopyToFxEntry(Fx::Section::TFX, slot, tfx_entries[i]);
+    }
   }
 }
 
@@ -104,30 +100,45 @@ void FxParameterStore::GetSelectedFxEntriesOrSkip(
   using Underlying = std::underlying_type_t<Fx::Slot>;
 
   for (Underlying i = 0; i < static_cast<Underlying>(Fx::Slot::COUNT); ++i) {
-    const auto fx_slot = static_cast<Fx::Slot>(i);
-    Fx::Type selected_fx = this->stores[Fx::Section::IFX][fx_slot].selected_fx;
-    ifx_entries[i].type = selected_fx;
-    ifx_entries[i].fx =
-        GetSelectedFxVariant(this->stores[Fx::Section::IFX][fx_slot]);
-    ifx_entries[i].is_on = this->stores[Fx::Section::IFX][fx_slot].is_on;
-
-    selected_fx = this->stores[Fx::Section::TFX][fx_slot].selected_fx;
-    tfx_entries[i].type = selected_fx;
-    tfx_entries[i].fx =
-        GetSelectedFxVariant(this->stores[Fx::Section::TFX][fx_slot]);
-    tfx_entries[i].is_on = this->stores[Fx::Section::TFX][fx_slot].is_on;
+    const auto slot = static_cast<Fx::Slot>(i);
+    CopyToFxEntry(Fx::Section::IFX, slot, ifx_entries[i]);
+    CopyToFxEntry(Fx::Section::TFX, slot, tfx_entries[i]);
   }
 }
 
-ParameterModel::Parameter& FxParameterStore::Get(Fx::Section section,
-                                                 Fx::Slot slot,
-                                                 Fx::ParameterId parameter_id) {
+const ParameterModel::Parameter& FxParameterStore::Get(
+    Fx::Section section, Fx::Slot slot, Fx::ParameterId parameter_id) {
   MutexGuard lock{this->mutex, 500UL};
   if (lock.is_acquired()) {
-    // TODO: ifx인지 tfx인지 결정하는 인자 추가해야함
-    return this->stores[section][slot].fx_map.Get(parameter_id);
+    return this->stores[section][slot][parameter_id];
   }
-  return this->stores[section][slot].fx_map.Get(Fx::ParameterId::NONE);
+  return this->stores[section][slot][Fx::ParameterId::NONE];
+}
+
+Fx::Type FxParameterStore::GetSelectedFxType(Fx::Section section,
+                                             Fx::Slot slot) {
+  return static_cast<Fx::Type>(
+      std::get<FxSelectedFxEnumValue>(
+          stores[section][slot][Fx::ParameterId::FX_SYSTEM_SELECTED_FX]
+              .GetValueVariant())
+          .value);
+}
+
+bool FxParameterStore::GetFxState(Fx::Section section, Fx::Slot slot) {
+  return std::get<ToggleValue>(
+             stores[section][slot][Fx::ParameterId::FX_SYSTEM_FX_STATE]
+                 .GetValueVariant())
+      .is_on;
+}
+
+void FxParameterStore::CopyToFxEntry(Fx::Section section, Fx::Slot slot,
+                                     Fx::Entry& entry) {
+  Fx::Type selected_fx = GetSelectedFxType(section, slot);
+  bool is_on = GetFxState(section, slot);
+
+  entry.type = selected_fx;
+  entry.is_on = is_on;
+  entry.fx = GetSelectedFxVariant(stores[section][slot]);
 }
 
 }  // namespace Store

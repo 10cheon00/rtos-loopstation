@@ -61,6 +61,25 @@ class HomeState : public UiStateMachine::State {
       : State(UiStateMachine::Id::HOME, "HOME", page_group) {}
 };
 
+class SettingState : public UiStateMachine::State {
+ public:
+  SettingState(PageGroup& page_group)
+      : State(UiStateMachine::Id::SETTING, "SETTING", page_group) {}
+};
+
+class SystemSettingState : public UiStateMachine::State {
+ public:
+  SystemSettingState(PageGroup& page_group)
+      : State(UiStateMachine::Id::SYSTEM_SETTING, "SYSTEM SETTING",
+              page_group) {}
+};
+
+class FxEditState : public UiStateMachine::State {
+ public:
+  FxEditState(PageGroup& page_group)
+      : State(UiStateMachine::Id::FX_EDIT, "FX EDIT", page_group) {}
+};
+
 }  // namespace UiStateMachine
 
 #endif

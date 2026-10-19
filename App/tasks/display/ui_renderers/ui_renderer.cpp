@@ -155,6 +155,7 @@ static Status DrawParameterValue(ParameterModel::Parameter& parameter,
     string_width = driver.getStrWidth(str);
     driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
                    y + PARAMETER_VALUE_HEIGHT, str);
+  } else if (std::holds_alternative<ParameterModel::FxSelectedFxEnumValue>(parameter.GetValueVariant())){
   } else {
     // TODO:
     // RATE_SLIDER면 4,2,1,1/2~1/16,0~100와 같이 출력해야함.

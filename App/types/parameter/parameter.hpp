@@ -33,6 +33,9 @@ class Parameter {
         value_variant =
             ToggleValue(copy.rtos_parameter_union.rtos_parameter_toggle_value);
         break;
+      case ParameterType::SELECTED_FX:
+        value_variant = FxSelectedFxEnumValue(
+            copy.rtos_parameter_union.rtos_parameter_enum_value);
       default:
         break;
     }
@@ -94,6 +97,12 @@ class Parameter {
             copy.rtos_parameter_union.rtos_parameter_toggle_value = {
                 .is_on = value.is_on,
             };
+          } else if constexpr (IsEnumValueV<T>) {
+            copy.rtos_enum_value_parameter_type =
+                Utils::ToRtosEnumValue(ParameterType::ENUM);
+            copy.rtos_parameter_union.rtos_parameter_enum_value = {
+                .enum_value = static_cast<RtosParameterValue>(value.value),
+            };
           } else {
             copy.rtos_enum_value_parameter_type =
                 Utils::ToRtosEnumValue(ParameterType::NONE);
@@ -103,6 +112,11 @@ class Parameter {
   }
 
   ValueVariant& GetValueVariant() { return value_variant; }
+
+  template <typename ValueType>
+  ValueType& GetValue() {
+    return std::get<ValueType>(GetValueVariant());
+  }
 
  private:
   ValueVariant value_variant;

@@ -82,20 +82,37 @@ class SystemSettingPageGroup : public FixedPageGroup<1> {
         }) {}
 };
 
-class LpfEditPageGroup : public FixedPageGroup<1> {
+class LpfEditPageGroup : public FixedPageGroup<2> {
  public:
   LpfEditPageGroup()
-      : FixedPageGroup<1>(Page{
-            ParameterSlot{ParameterRef{FxParameterRef{
-                            //   Fx::Section::IFX,
-                            //   Fx::Slot::A,
-                              Fx::ParameterId::FX_LPF_RATE,
-                          }},
-                          "RATE"},
-            PageSlot{},
-            PageSlot{},
-            PageSlot{},
-        }) {}
+      : FixedPageGroup<2>(
+            Page{
+                ParameterSlot{ParameterRef{FxParameterRef{
+                                  Fx::ParameterId::FX_SYSTEM_SELECTED_FX,
+                              }},
+                              "LPF"},
+                ParameterSlot{ParameterRef{FxParameterRef{
+                                  Fx::ParameterId::FX_LPF_RATE,
+                              }},
+                              "RATE"},
+                ParameterSlot{ParameterRef{FxParameterRef{
+                                  Fx::ParameterId::FX_LPF_DEPTH,
+                              }},
+                              "DEPTH"},
+                ParameterSlot{ParameterRef{FxParameterRef{
+                                  Fx::ParameterId::FX_LPF_RESONANCE,
+                              }},
+                              "RESONANCE"},
+            },
+            Page{
+                ParameterSlot{ParameterRef{FxParameterRef{
+                                  Fx::ParameterId::FX_LPF_CUTOFF,
+                              }},
+                              "CUTOFF"},
+                PageSlot{},
+                PageSlot{},
+                PageSlot{},
+            }) {}
 };
 
 #endif

@@ -12,7 +12,7 @@ enum class Id : std::uint8_t {
   HOME,
   SETTING,
   SYSTEM_SETTING,
-  IFX_A_EDIT,
+  FX_EDIT,
   COUNT  // 이 enum은 UiStateId 개수를 표시하는 용도임
 };
 
