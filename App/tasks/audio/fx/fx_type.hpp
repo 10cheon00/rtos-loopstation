@@ -1,6 +1,8 @@
 #ifndef FX_TYPE_HPP
 #define FX_TYPE_HPP
 
+#include <array>
+
 namespace Fx {
 
 enum class Type {
@@ -9,6 +11,11 @@ enum class Type {
   COUNT,
 };
 
-}
+inline constexpr const char* TYPE_NAME_TABLE[] = {
+    " ",
+    "LPF",
+};
+
+}  // namespace Fx
 
 #endif

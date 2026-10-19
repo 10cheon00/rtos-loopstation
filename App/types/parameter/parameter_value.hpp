@@ -14,13 +14,10 @@
 namespace ParameterModel {
 
 // 파라미터에 쓰이는 모든 Enum들을 여기에 정의한다.
-using FxSelectedSectionEnumValue = EnumValue<Fx::Section>;
-using FxSelectedSlotEnumValue = EnumValue<Fx::Slot>;
 using FxSelectedFxEnumValue = EnumValue<Fx::Type>;
 
 using ValueVariant =
-    std::variant<std::monostate, UnsignedRangeValue, ToggleValue,
-                 FxSelectedSectionEnumValue, FxSelectedSlotEnumValue, FxSelectedFxEnumValue>;
+    std::variant<std::monostate, UnsignedRangeValue, ToggleValue, FxSelectedFxEnumValue>;
 
 }  // namespace ParameterModel
 

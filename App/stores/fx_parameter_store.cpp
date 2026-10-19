@@ -9,9 +9,9 @@ using namespace ParameterModel;
 
 namespace {
 
-constexpr FxParameterStore::FxParameterMap INITIAL_FX_PARAMETERS{
+static constexpr FxParameterStore::FxParameterMap INITIAL_FX_PARAMETERS{
     EnumEntry{Fx::ParameterId::FX_SYSTEM_SELECTED_FX,
-              ValueVariant(FxSelectedFxEnumValue{Fx::Type::LPF})},
+              ValueVariant(FxSelectedFxEnumValue{Fx::Type::LPF, (const char**)Fx::TYPE_NAME_TABLE})},
     EnumEntry{Fx::ParameterId::FX_SYSTEM_FX_STATE,
               ValueVariant(ToggleValue{false})},
     EnumEntry{Fx::ParameterId::FX_LPF_RATE,

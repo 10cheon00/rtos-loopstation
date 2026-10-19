@@ -90,7 +90,7 @@ class LpfEditPageGroup : public FixedPageGroup<2> {
                 ParameterSlot{ParameterRef{FxParameterRef{
                                   Fx::ParameterId::FX_SYSTEM_SELECTED_FX,
                               }},
-                              "LPF"},
+                              "TYPE"},
                 ParameterSlot{ParameterRef{FxParameterRef{
                                   Fx::ParameterId::FX_LPF_RATE,
                               }},

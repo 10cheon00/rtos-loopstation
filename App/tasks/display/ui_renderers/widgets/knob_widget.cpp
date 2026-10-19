@@ -1,9 +1,5 @@
 #include "knob_widget.hpp"
 
-#include <stdlib.h>
-
-#include <cstdint>
-
 #include "gmg12864_lcd.hpp"
 #include "utils.hpp"
 
@@ -17,8 +13,8 @@ static int16_t ConvertParameterToDegree(std::int16_t min, std::int16_t max,
                                         std::int16_t current);
 static void DrawKnobIndicator(int16_t degree, uint8_t x, uint8_t y);
 
-void DrawKnobWidget(uint8_t x, uint8_t y,
-                    ParameterModel::UnsignedRangeValue& unsigned_range_value) {
+void DrawKnobWidget(uint8_t x, uint8_t y, std::int16_t min, std::int16_t max,
+                    std::int16_t current) {
   /**
    * 바늘지시식으로 노브의 값을 보여주어야 함.
    * 1. 그러므로 일단 노브의 값을 수학적으로 표현하는 각도로 변환
@@ -32,9 +28,7 @@ void DrawKnobWidget(uint8_t x, uint8_t y,
   uint8_t cx, cy;
   int16_t degree;
 
-  degree = ConvertParameterToDegree(unsigned_range_value.min,
-                                    unsigned_range_value.max,
-                                    unsigned_range_value.current);
+  degree = ConvertParameterToDegree(min, max, current);
   cx = x + RADIUS + 1;
   cy = y + RADIUS;
 

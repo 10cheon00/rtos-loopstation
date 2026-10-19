@@ -1,15 +1,18 @@
 #ifndef PARAMETER_RAW_H
 #define PARAMETER_RAW_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "rtos_enum_value.h"
 
 typedef int16_t RtosParameterValue;
 
 typedef struct {
+  RtosParameterValue enum_min;
   RtosParameterValue enum_value;
+  RtosParameterValue enum_max;
+  const char** enum_name_table;
 } RtosParameterValue_EnumValue;
 
 typedef struct {
