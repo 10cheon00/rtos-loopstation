@@ -51,16 +51,12 @@ Fx::Variant GetSelectedFxVariant(FxParameterStore::FxParameterMap& fx_map) {
 }  // namespace
 
 void FxParameterStore::Reset(osMutexId_t mutex) {
-  this->stores[Fx::Section::IFX] = EnumMap<Fx::Slot, FxParameterMap>{
-      EnumEntry{Fx::Slot::A, INITIAL_FX_PARAMETERS},
-      EnumEntry{Fx::Slot::B, INITIAL_FX_PARAMETERS},
-      EnumEntry{Fx::Slot::C, INITIAL_FX_PARAMETERS},
-  };
-  this->stores[Fx::Section::TFX] = EnumMap<Fx::Slot, FxParameterMap>{
-      EnumEntry{Fx::Slot::A, INITIAL_FX_PARAMETERS},
-      EnumEntry{Fx::Slot::B, INITIAL_FX_PARAMETERS},
-      EnumEntry{Fx::Slot::C, INITIAL_FX_PARAMETERS},
-  };
+  stores[Fx::Section::IFX][Fx::Slot::A] = INITIAL_FX_PARAMETERS;
+  stores[Fx::Section::IFX][Fx::Slot::B] = INITIAL_FX_PARAMETERS;
+  stores[Fx::Section::IFX][Fx::Slot::C] = INITIAL_FX_PARAMETERS;
+  stores[Fx::Section::TFX][Fx::Slot::A] = INITIAL_FX_PARAMETERS;
+  stores[Fx::Section::TFX][Fx::Slot::B] = INITIAL_FX_PARAMETERS;
+  stores[Fx::Section::TFX][Fx::Slot::C] = INITIAL_FX_PARAMETERS;
   this->mutex = mutex;
 }
 
