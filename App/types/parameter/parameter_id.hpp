@@ -13,8 +13,6 @@ enum class Id : std::uint8_t {
   TFX_KNOB,
   TRACK_1_VOLUME,
   SYSTEM_SETTING_LCD_CONSTRAST,
-  SELECTED_FX_SECTION,
-  SELECTED_FX_SLOT,
   COUNT,  // 이 enum은 ParameterModel::Id의 개수를 표시하는 용도임
 };
 

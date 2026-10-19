@@ -33,14 +33,6 @@ static constexpr EnumMap<ParameterModel::Id, ParameterModel::Parameter>
             Id::TRACK_1_VOLUME,
             ValueVariant(UnsignedRangeValue(0, 100, 100)),
         },
-        EnumEntry{
-            Id::SELECTED_FX_SECTION,
-            ValueVariant(EnumValue(Fx::Section::IFX)),
-        },
-        EnumEntry{
-            Id::SELECTED_FX_SLOT,
-            ValueVariant(EnumValue(Fx::Slot::A)),
-        },
 };
 
 void SystemParameterStore::Reset(osMutexId_t mutex) {

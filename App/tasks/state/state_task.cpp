@@ -73,6 +73,8 @@ struct StateTaskContext {
                                                 UiStateMachine::Id::HOME};
 
   std::array<TrackEntry, static_cast<std::size_t>(TRACK_COUNT)> track_entry;
+  Fx::Section fx_selected_section;
+  Fx::Slot fx_selected_slot;
 };
 
 static StateTaskContext context;
@@ -314,6 +316,8 @@ static void ToggleParameterMappedBySlotIndex(SlotIndex index) {
 
 static void ToggleFxStateFromSectionAndSlot(Fx::Section section,
                                             Fx::Slot slot) {
+  context.fx_selected_section = section;
+  context.fx_selected_slot = slot;
   Store::FxParameterStore::GetInstance().WithParameterLocked(
       section, slot, Fx::ParameterId::FX_SYSTEM_FX_STATE,
       [](auto& fx_parameter) { fx_parameter.Toggle(); });
@@ -322,34 +326,9 @@ static void ToggleFxStateFromSectionAndSlot(Fx::Section section,
 template <typename Operation>
 static void UpdateFxParameterFromSectionAndSlotAndParameterId(
     Fx::ParameterId fx_parameter_id, Operation update_method) {
-  Fx::Section fx_section;
-  Fx::Slot fx_slot;
-  bool section_copied = false;
-  bool slot_copied = false;
-  auto& system_store = Store::SystemParameterStore::GetInstance();
-  system_store.WithParameterLocked(
-      ParameterModel::Id::SELECTED_FX_SECTION,
-      [&section_copied = section_copied,
-       &section = fx_section](ParameterModel::Parameter& parameter) {
-        section =
-            parameter.GetValue<ParameterModel::FxSelectedSectionEnumValue>()
-                .value;
-        section_copied = true;
-      });
-  system_store.WithParameterLocked(
-      ParameterModel::Id::SELECTED_FX_SLOT,
-      [&slot_copied = slot_copied,
-       &slot = fx_slot](ParameterModel::Parameter& parameter) {
-        slot =
-            parameter.GetValue<ParameterModel::FxSelectedSlotEnumValue>().value;
-        slot_copied = true;
-      });
-
-  if (!section_copied || !slot_copied) {
-    return;
-  }
   Store::FxParameterStore::GetInstance().WithParameterLocked(
-      fx_section, fx_slot, fx_parameter_id, update_method);
+      context.fx_selected_section, context.fx_selected_slot, fx_parameter_id,
+      update_method);
 }
 
 /**
@@ -610,38 +589,12 @@ static TaskStatus FillPanelRenderPayloadSystemParameter(
 
 static TaskStatus FillPanelRenderPayloadFxParameter(
     RtosPayload_PageSlotRender& payload, ParameterSlot& slot) {
+  bool copied = false;
   FxParameterRef& fx_parameter_ref =
       std::get<FxParameterRef>(slot.GetParameterRef());
-  Fx::Section fx_section{};
-  Fx::Slot fx_slot{};
-  bool copied = false;
-  bool section_copied = false;
-  bool slot_copied = false;
-  auto& system_store = Store::SystemParameterStore::GetInstance();
-  system_store.WithParameterLocked(
-      ParameterModel::Id::SELECTED_FX_SECTION,
-      [&section_copied = section_copied,
-       &section = fx_section](ParameterModel::Parameter& parameter) {
-        section =
-            parameter.GetValue<ParameterModel::FxSelectedSectionEnumValue>()
-                .value;
-        section_copied = true;
-      });
-  system_store.WithParameterLocked(
-      ParameterModel::Id::SELECTED_FX_SLOT,
-      [&slot_copied = slot_copied,
-       &slot = fx_slot](ParameterModel::Parameter& parameter) {
-        slot =
-            parameter.GetValue<ParameterModel::FxSelectedSlotEnumValue>().value;
-        slot_copied = true;
-      });
-
-  if (!section_copied || !slot_copied) {
-    return TASK_STATUS_ERROR;
-  }
   Fx::ParameterId fx_parameter_id = fx_parameter_ref.id;
   Store::FxParameterStore::GetInstance().WithParameterLocked(
-      fx_section, fx_slot, fx_parameter_id,
+      context.fx_selected_section, context.fx_selected_slot, fx_parameter_id,
       [&rtos_parameter_copy = payload.data.parameter.rtos_parameter_copy,
        &copied](auto& fx_parameter) {
         fx_parameter.ToRtosParameterCopy(rtos_parameter_copy);
@@ -666,6 +619,8 @@ static TaskStatus FillDisplaySnapshotLedRenderPayload(
     RtosPayload_LedRender& led) {
   bool ifx_copied = false;
   bool tfx_copied = false;
+  // TODO:
+  // Slot::A에 대해서만 복사를 하고 있음
   Store::FxParameterStore::GetInstance().WithParameterLocked(
       Fx::Section::IFX, Fx::Slot::A, Fx::ParameterId::FX_SYSTEM_FX_STATE,
       [&rtos_parameter_copy = led.rtos_parameter_copy_ifx_a_state,
