@@ -401,9 +401,9 @@ static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event) {
 
 static void TryChangePageIndex(ButtonId id) {
   if (id == ButtonId::LEFT) {
-    context.ui_state_machine.GetCurrentState()->IncreasePageIndex();
-  } else if (id == ButtonId::RIGHT) {
     context.ui_state_machine.GetCurrentState()->DecreasePageIndex();
+  } else if (id == ButtonId::RIGHT) {
+    context.ui_state_machine.GetCurrentState()->IncreasePageIndex();
   }
 }
 
