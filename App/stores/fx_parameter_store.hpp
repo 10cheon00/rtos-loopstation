@@ -45,8 +45,6 @@ class FxParameterStore : public Singleton<FxParameterStore> {
 
  private:
   EnumMap<Fx::Section, EnumMap<Fx::Slot, FxParameterMap>> stores;
-  // EnumMap<Fx::Slot, FxStore> ifx_stores;
-  // EnumMap<Fx::Slot, FxStore> tfx_stores;
   osMutexId_t mutex;
 
   void CopyToFxEntry(Fx::Section section, Fx::Slot slot, Fx::Entry& entry);

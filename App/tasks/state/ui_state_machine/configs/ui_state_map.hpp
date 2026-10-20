@@ -3,6 +3,9 @@
 
 #include "ui_state.hpp"
 #include "ui_state_id.hpp"
+#include "fx_section.hpp"
+#include "fx_slot.hpp"
+#include "fx_type.hpp"
 
 namespace UiStateMap {
 

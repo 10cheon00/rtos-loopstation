@@ -1,5 +1,6 @@
 #include "state_task.h"
 
+#include <cstdio>
 #include <variant>
 
 #include "FreeRTOS.h"
@@ -10,6 +11,7 @@
 #include "cmsis_os2.h"
 #include "display_messages.h"
 #include "encoder_id.hpp"
+#include "fx_page_group_map.hpp"
 #include "fx_parameter_store.hpp"
 #include "knob_id.hpp"
 #include "knob_to_parameter_map.hpp"
@@ -86,7 +88,7 @@ static TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
 static TaskStatus TryUpdateParameter(StateEventVariant& state_event_variant);
 static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event);
 static void ToggleParameterMappedBySlotIndex(SlotIndex index);
-static void ToggleFxStateFromSectionAndSlot(Fx::Section section, Fx::Slot slot);
+static void ToggleFxStateFromSectionAndSlot();
 template <typename Operation>
 static void UpdateFxParameterFromSectionAndSlotAndParameterId(
     Fx::ParameterId parameter_id, Operation update_method);
@@ -96,6 +98,7 @@ static void AddParameterMappedBySlotIndex(SlotIndex index, int32_t delta);
 static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event);
 static bool IsButtonPressedEvent(StateEventVariant& state_event_variant);
 static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event);
+static void TryUpdateFxEditPanel();
 static void TryChangePageIndex(ButtonId id);
 static void TryTransitionUiStateMachine(ButtonId id);
 static TaskStatus UpdateDisplaySnapshotMailbox();
@@ -216,6 +219,9 @@ void Run(void) {
         }
       }
       // UpdatePanel
+      if (!IsButtonPressedEvent(state_event_variant)) {
+        TryUpdateFxEditPanel();
+      }
       UpdateDisplaySnapshotMailbox();
       UpdateAudioEventSnapshotMailbox();
     }
@@ -284,10 +290,14 @@ static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event) {
       ToggleParameterMappedBySlotIndex(index);
     } break;
     case ButtonId::IFX_A_TOGGLE:
-      ToggleFxStateFromSectionAndSlot(Fx::Section::IFX, Fx::Slot::A);
+      context.fx_selected_section = Fx::Section::IFX;
+      context.fx_selected_slot = Fx::Slot::A;
+      ToggleFxStateFromSectionAndSlot();
       break;
     case ButtonId::TFX_A_TOGGLE:
-      ToggleFxStateFromSectionAndSlot(Fx::Section::TFX, Fx::Slot::A);
+      context.fx_selected_section = Fx::Section::TFX;
+      context.fx_selected_slot = Fx::Slot::A;
+      ToggleFxStateFromSectionAndSlot();
       break;
     default:
       return TASK_STATUS_ERROR;
@@ -314,12 +324,10 @@ static void ToggleParameterMappedBySlotIndex(SlotIndex index) {
   }
 }
 
-static void ToggleFxStateFromSectionAndSlot(Fx::Section section,
-                                            Fx::Slot slot) {
-  context.fx_selected_section = section;
-  context.fx_selected_slot = slot;
+static void ToggleFxStateFromSectionAndSlot() {
   Store::FxParameterStore::GetInstance().WithParameterLocked(
-      section, slot, Fx::ParameterId::FX_SYSTEM_FX_STATE,
+      context.fx_selected_section, context.fx_selected_slot,
+      Fx::ParameterId::FX_SYSTEM_FX_STATE,
       [](auto& fx_parameter) { fx_parameter.Toggle(); });
 }
 
@@ -395,8 +403,26 @@ static bool IsButtonPressedEvent(StateEventVariant& state_event_variant) {
 static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event) {
   TryChangePageIndex(event.id);
   TryTransitionUiStateMachine(event.id);
+  TryUpdateFxEditPanel();
 
   return TASK_STATUS_OK;
+}
+
+static void TryUpdateFxEditPanel() {
+  if (context.ui_state_machine.GetCurrentState()->GetId() !=
+      UiStateMachine::Id::FX_EDIT) {
+    return;
+  }
+  Store::FxParameterStore::GetInstance().WithParameterLocked(
+      context.fx_selected_section, context.fx_selected_slot,
+      Fx::ParameterId::FX_SYSTEM_SELECTED_FX, [](auto& fx_parameter) {
+        Fx::Type selected_fx = std::get<ParameterModel::FxSelectedFxEnumValue>(
+                                   fx_parameter.GetValueVariant())
+                                   .value;
+
+        context.ui_state_machine.UpdatePanel(
+            context.fx_selected_section, context.fx_selected_slot, selected_fx);
+      });
 }
 
 static void TryChangePageIndex(ButtonId id) {
@@ -499,6 +525,8 @@ static void UpdateAudioEventSnapshotMailbox() {
 
 static TaskStatus FillPanelRenderPayload(RtosPayload_PanelRender& payload) {
   SetUiStateIdInPanelRenderPayload(payload.rtos_enum_value_ui_state);
+  const auto& label = context.ui_state_machine.GetCurrentState()->GetLabel();
+  std::snprintf(payload.label, sizeof(payload.label), "%s", label.data());
   SetPageNavigationBitsetInPanelRenderPayload(
       payload.rtos_enum_value_page_navigation_bitset);
   return CopyPanelSlotsToPanelRenderPayload(payload.page_slots);

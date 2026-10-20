@@ -16,7 +16,7 @@ static constexpr EnumMap<ButtonId, UiStateMachine::Id> map{
     EnumEntry{ButtonId::ENCODER_C_PUSH, UiStateMachine::Id::NONE},
     EnumEntry{ButtonId::ENCODER_D_PUSH, UiStateMachine::Id::NONE},
     EnumEntry{ButtonId::IFX_A_TOGGLE, UiStateMachine::Id::FX_EDIT},
-    EnumEntry{ButtonId::TFX_A_TOGGLE, UiStateMachine::Id::NONE},
+    EnumEntry{ButtonId::TFX_A_TOGGLE, UiStateMachine::Id::FX_EDIT},
     EnumEntry{ButtonId::SETTING, UiStateMachine::Id::SETTING},
     EnumEntry{ButtonId::LOOP, UiStateMachine::Id::NONE},
     EnumEntry{ButtonId::TRACK_1_EDIT, UiStateMachine::Id::SETTING},

@@ -82,6 +82,31 @@ class SystemSettingPageGroup : public FixedPageGroup<1> {
         }) {}
 };
 
+class FxTypePageGroup : public FixedPageGroup<1> {
+ public:
+  FxTypePageGroup()
+      : FixedPageGroup<1>(Page{
+            ParameterSlot{ParameterRef{FxParameterRef{
+                              Fx::ParameterId::FX_SYSTEM_SELECTED_FX}},
+                          "TYPE"},
+            PageSlot{}, PageSlot{}, PageSlot{}}) {}
+};
+
+class NoneEditPageGroup : public FixedPageGroup<1> {
+ public:
+  NoneEditPageGroup()
+      : FixedPageGroup<1>(
+            Page{
+                 ParameterSlot{ParameterRef{FxParameterRef{
+                                  Fx::ParameterId::FX_SYSTEM_SELECTED_FX,
+                              }},
+                              "TYPE"},
+                PageSlot{},
+                PageSlot{},
+                PageSlot{},
+            }) {}
+};
+
 class LpfEditPageGroup : public FixedPageGroup<2> {
  public:
   LpfEditPageGroup()

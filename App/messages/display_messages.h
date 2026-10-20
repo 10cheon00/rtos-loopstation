@@ -9,6 +9,7 @@
 #include "track_config.h"
 
 #define DISPLAY_COMMAND_QUEUE_TIMEOUT_500MS (500UL)
+#define DISPLAY_PANEL_LABEL_CAPACITY 16
 
 typedef struct {
   RtosParameterCopy rtos_parameter_copy;
@@ -30,6 +31,7 @@ typedef struct {
 
 typedef struct {
   RtosEnumValue rtos_enum_value_ui_state;
+  char label[DISPLAY_PANEL_LABEL_CAPACITY];
   RtosEnumValue rtos_enum_value_page_navigation_bitset;
   RtosPayload_PageSlotRender page_slots[4];
 } RtosPayload_PanelRender;

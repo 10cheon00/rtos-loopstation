@@ -30,6 +30,29 @@ class StateMachine {
     this->current_state = next_ui_state;
   }
 
+  void UpdatePanel(Fx::Section section, Fx::Slot slot, Fx::Type type) {
+    std::array<char, 16> label{};
+    PageGroup& page_group = FxPageGroupMap::Get(type);
+
+    const char* str = "?FX ? EDIT";
+    for (std::size_t i = 0; str[i]; i++) {
+      label[i] = str[i];
+    }
+    if (section == Fx::Section::IFX) {
+      label[0] = 'I';
+    } else {
+      label[0] = 'T';
+    }
+    if (slot == Fx::Slot::A) {
+      label[4] = 'A';
+    } else if (slot == Fx::Slot::B) {
+      label[4] = 'B';
+    } else if (slot == Fx::Slot::C) {
+      label[4] = 'C';
+    }
+    current_state->UpdatePanel(page_group, label);
+  }
+
  private:
   UiStateMap::StatePointer current_state;
   Context& context;
