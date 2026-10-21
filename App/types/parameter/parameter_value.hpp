@@ -8,6 +8,7 @@
 #include "fx_slot.hpp"
 #include "fx_type.hpp"
 #include "parameter_enum_value.hpp"
+#include "parameter_measure_with_unsigned_range_value.hpp"
 #include "parameter_toggle_value.hpp"
 #include "parameter_unsigned_range_value.hpp"
 
@@ -17,7 +18,8 @@ namespace ParameterModel {
 using FxSelectedFxEnumValue = EnumValue<Fx::Type>;
 
 using ValueVariant =
-    std::variant<std::monostate, UnsignedRangeValue, ToggleValue, FxSelectedFxEnumValue>;
+    std::variant<std::monostate, UnsignedRangeValue, ToggleValue,
+                 FxSelectedFxEnumValue, MeasureWithUnsignedRangeValue>;
 
 }  // namespace ParameterModel
 

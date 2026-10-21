@@ -54,6 +54,7 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs/ui_state_label_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/symbols/measure_symbols.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/knob_widget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/toggle_switch_widget.cpp
 
@@ -107,6 +108,7 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/symbols
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs

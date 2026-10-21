@@ -9,7 +9,9 @@ enum class ParameterType {
   UNSIGNED_RANGE,  // 0 ~ 100
   SIGNED_RANGE,    // -50 ~ 50
   DECIMAL_RANGE,   // 0.0 ~ 10.0
-  MEASURE,
+  MEASURE, // 음표만
+  MEASURE_WITH_UNSIGNED_RANGE, // 음표 + 0 ~ 100
+  MEASURE_WITH_MILLISECONDS,
   SELECTED_FX,
   ENUM,
 };
