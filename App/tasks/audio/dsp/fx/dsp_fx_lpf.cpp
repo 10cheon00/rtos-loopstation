@@ -1,10 +1,15 @@
 #include "dsp_fx_lpf.hpp"
 
+#include <cmath>
+
 #include "audio_config.h"
 #include "dsp_utils.hpp"
 #include "utils.hpp"
 
 namespace DSP::FxProcessor {
+
+constexpr float q_min = 0.70710678f;
+constexpr float q_max = 10.0f;  // 원하는 최대 공진 세기로 조정
 
 void Lpf::Process(Fx::Parameters::Lpf& lpf_parameters, bool is_on,
                   BitDepth_t* buffer, std::size_t size) {
@@ -19,7 +24,9 @@ void Lpf::Process(Fx::Parameters::Lpf& lpf_parameters, bool is_on,
   // TODO: Rate와 Depth는 LFO를 구현한 후 적용하기
   float rate = SAMPLING_FREQUENCY;
   float cutoff = Dsp::Utils::GetCutoffFrequency(lpf_parameters.cutoff);
-  float q = 1;  // TODO: 파라미터의 resonance를 변환하여 사용하기
+  // float q = 1;  // TODO: 파라미터의 resonance를 변환하여 사용하기
+  const float normalized = (float)lpf_parameters.resonance.current / 100.0f;
+  const float q = q_min * std::pow(q_max / q_min, normalized);
 
   // 2. 수식에 필요한 변수를 업데이트
   float omega_degree = 360.0f * cutoff / rate;
