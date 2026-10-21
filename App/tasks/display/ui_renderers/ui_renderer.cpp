@@ -212,9 +212,12 @@ static void ConvertNumberToString(int32_t number, char* string,
                                   uint8_t string_length) {
   uint8_t i = 0, j = 0, is_negative = number < 0 ? 1 : 0;
   char c;
-  string[i] = '\0';
-  i++;
-  string[i] = '0';
+  if (number == 0) {
+    string[0] = '0';
+    string[1] = '\0';
+    return;
+  }
+  string[i++] = '\0';
   while (number != 0) {
     string[i] = number % 10 + '0';
     number /= 10;
