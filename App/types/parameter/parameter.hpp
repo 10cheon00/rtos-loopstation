@@ -18,16 +18,12 @@ class Parameter {
  public:
   constexpr Parameter() : value_variant() {}
 
-  constexpr Parameter(UnsignedRangeValue value) : value_variant(value) {}
-
-  constexpr Parameter(ToggleValue value) : value_variant(value) {}
-
   constexpr Parameter(ValueVariant& value_variant)
       : value_variant(value_variant) {}
 
   Parameter(RtosParameterCopy& copy) {
-    ParameterType type =
-        Utils::FromRtosEnumValue<ParameterType>(copy.rtos_enum_value_parameter_type);
+    ParameterType type = Utils::FromRtosEnumValue<ParameterType>(
+        copy.rtos_enum_value_parameter_type);
     switch (type) {
       case ParameterType::UNSIGNED_RANGE:
         value_variant = UnsignedRangeValue(
@@ -37,6 +33,9 @@ class Parameter {
         value_variant =
             ToggleValue(copy.rtos_parameter_union.rtos_parameter_toggle_value);
         break;
+      case ParameterType::SELECTED_FX:
+        value_variant = FxSelectedFxEnumValue(
+            copy.rtos_parameter_union.rtos_parameter_enum_value);
       default:
         break;
     }
@@ -62,6 +61,12 @@ class Parameter {
             value.current = value.clamp(value.current + amount);
           } else if constexpr (std::is_same_v<T, ToggleValue>) {
             value.is_on = amount > 0 ? true : false;
+          } else if constexpr (IsEnumValueV<T>) {
+            using Enum = std::decay_t<decltype(value.value)>;
+            const auto next = static_cast<std::int16_t>(value.value) + amount;
+            const auto min = static_cast<std::int16_t>(value.min);
+            const auto max = static_cast<std::int16_t>(value.max);
+            value.value = static_cast<Enum>(next < min ? min : next > max ? max : next);
           }
         },
         value_variant);
@@ -98,6 +103,15 @@ class Parameter {
             copy.rtos_parameter_union.rtos_parameter_toggle_value = {
                 .is_on = value.is_on,
             };
+          } else if constexpr (std::is_same_v<T, FxSelectedFxEnumValue>) {
+            copy.rtos_enum_value_parameter_type =
+                Utils::ToRtosEnumValue(ParameterType::SELECTED_FX);
+            copy.rtos_parameter_union.rtos_parameter_enum_value = {
+                .enum_min = static_cast<RtosParameterValue>(value.min),
+                .enum_value = static_cast<RtosParameterValue>(value.value),
+                .enum_max = static_cast<RtosParameterValue>(value.max),
+                .enum_name_table = value.enum_name_table,
+            };
           } else {
             copy.rtos_enum_value_parameter_type =
                 Utils::ToRtosEnumValue(ParameterType::NONE);
@@ -107,6 +121,11 @@ class Parameter {
   }
 
   ValueVariant& GetValueVariant() { return value_variant; }
+
+  template <typename ValueType>
+  ValueType& GetValue() {
+    return std::get<ValueType>(GetValueVariant());
+  }
 
  private:
   ValueVariant value_variant;

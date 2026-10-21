@@ -2,6 +2,8 @@
 
 #include <cstddef>
 
+#include "fx_section.hpp"
+#include "fx_slot.hpp"
 #include "mutex_guard.hpp"
 #include "parameter_value.hpp"
 
@@ -24,14 +26,6 @@ static constexpr EnumMap<ParameterModel::Id, ParameterModel::Parameter>
             ValueVariant(UnsignedRangeValue(0, 100, 100)),
         },
         EnumEntry{
-            Id::IFX_A_STATE,
-            ValueVariant(ToggleValue(false)),
-        },
-        EnumEntry{
-            Id::TFX_A_STATE,
-            ValueVariant(ToggleValue(false)),
-        },
-        EnumEntry{
             Id::SYSTEM_SETTING_LCD_CONSTRAST,
             ValueVariant(UnsignedRangeValue(10, 80, 80)),
         },
@@ -48,7 +42,10 @@ void SystemParameterStore::Reset(osMutexId_t mutex) {
 
 ParameterModel::Parameter& SystemParameterStore::Get(ParameterModel::Id id) {
   MutexGuard lock{mutex, 500UL};
-  return system_parameters.Get(id);
+  if (lock.is_acquired()) {
+    return system_parameters.Get(id);
+  }
+  return system_parameters.Get(ParameterModel::Id::NONE);
 }
 
 }  // namespace Store

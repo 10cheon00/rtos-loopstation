@@ -10,6 +10,7 @@ enum class ParameterType {
   SIGNED_RANGE,    // -50 ~ 50
   DECIMAL_RANGE,   // 0.0 ~ 10.0
   MEASURE,
+  SELECTED_FX,
   ENUM,
 };
 

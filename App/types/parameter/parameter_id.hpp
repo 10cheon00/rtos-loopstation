@@ -11,8 +11,6 @@ enum class Id : std::uint8_t {
   NONE = ID_NONE,
   IFX_KNOB,
   TFX_KNOB,
-  IFX_A_STATE,
-  TFX_A_STATE,
   TRACK_1_VOLUME,
   SYSTEM_SETTING_LCD_CONSTRAST,
   COUNT,  // 이 enum은 ParameterModel::Id의 개수를 표시하는 용도임

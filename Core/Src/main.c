@@ -91,14 +91,14 @@ const osThreadAttr_t inputTask_attributes = {
 osThreadId_t displayTaskHandle;
 const osThreadAttr_t displayTask_attributes = {
   .name = "displayTask",
-  .stack_size = 1024 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* Definitions for stateTask */
 osThreadId_t stateTaskHandle;
 const osThreadAttr_t stateTask_attributes = {
   .name = "stateTask",
-  .stack_size = 128 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for adcInputTask */
@@ -112,7 +112,7 @@ const osThreadAttr_t adcInputTask_attributes = {
 osThreadId_t systemTaskHandle;
 const osThreadAttr_t systemTask_attributes = {
   .name = "systemTask",
-  .stack_size = 128 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityRealtime7,
 };
 /* Definitions for audioTask */

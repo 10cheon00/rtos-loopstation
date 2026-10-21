@@ -148,13 +148,27 @@ static Status DrawParameterValue(ParameterModel::Parameter& parameter,
   } else if (std::holds_alternative<ParameterModel::UnsignedRangeValue>(
                  parameter.GetValueVariant())) {
     const auto& unsigned_range_value =
-        std::get<ParameterModel::UnsignedRangeValue>(parameter.GetValueVariant());
+        std::get<ParameterModel::UnsignedRangeValue>(
+            parameter.GetValueVariant());
 
     driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
     ConvertNumberToString(unsigned_range_value.current, str, 5);
     string_width = driver.getStrWidth(str);
     driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
                    y + PARAMETER_VALUE_HEIGHT, str);
+  } else if (std::holds_alternative<ParameterModel::FxSelectedFxEnumValue>(
+                 parameter.GetValueVariant())) {
+    const auto& fx_selected_fx_enum_value =
+        std::get<ParameterModel::FxSelectedFxEnumValue>(
+            parameter.GetValueVariant());
+    const char* enum_name =
+        fx_selected_fx_enum_value.enum_name_table[static_cast<std::int16_t>(
+            fx_selected_fx_enum_value.value)];
+
+    driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
+    string_width = driver.getStrWidth(enum_name);
+    driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
+                   y + PARAMETER_VALUE_HEIGHT, enum_name);
   } else {
     // TODO:
     // RATE_SLIDER면 4,2,1,1/2~1/16,0~100와 같이 출력해야함.
@@ -169,14 +183,24 @@ static Status DrawParameterWidget(ParameterModel::Parameter& parameter,
     x = x + SLOT_WIDTH / 2 - TOGGLE_SWITCH_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - TOGGLE_SWITCH_WIDGET_HEIGHT / 2;
     UiWidget::DrawToggleSwitchWidget(
-        x, y, std::get<ParameterModel::ToggleValue>(parameter.GetValueVariant()));
+        x, y,
+        std::get<ParameterModel::ToggleValue>(parameter.GetValueVariant()));
   } else if (std::holds_alternative<ParameterModel::UnsignedRangeValue>(
                  parameter.GetValueVariant())) {
     x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
-    UiWidget::DrawKnobWidget(
-        x, y,
-        std::get<ParameterModel::UnsignedRangeValue>(parameter.GetValueVariant()));
+    auto& value = std::get<ParameterModel::UnsignedRangeValue>(
+        parameter.GetValueVariant());
+    UiWidget::DrawKnobWidget(x, y, value.min, value.max, value.current);
+  } else if (std::holds_alternative<ParameterModel::FxSelectedFxEnumValue>(
+                 parameter.GetValueVariant())) {
+    x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
+    y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
+    auto& value = std::get<ParameterModel::FxSelectedFxEnumValue>(
+        parameter.GetValueVariant());
+    UiWidget::DrawKnobWidget(x, y, static_cast<std::int16_t>(value.min),
+                             static_cast<std::int16_t>(value.max),
+                             static_cast<std::int16_t>(value.value));
   } else {
     // TODO:
     // RATE SLIDER형 파라미터 위젯 구현하기

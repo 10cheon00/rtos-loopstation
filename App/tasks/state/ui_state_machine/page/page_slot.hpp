@@ -1,15 +1,20 @@
 #ifndef PAGE_SLOT_HPP
 #define PAGE_SLOT_HPP
 
+#include "fx_parameter_id.hpp"
+#include "fx_section.hpp"
+#include "fx_slot.hpp"
 #include "menu_icon_encoding.hpp"
 #include "page_slot_type.hpp"
 #include "parameter_id.hpp"
+#include "parameter_value.hpp"
 #include "ui_state_id.hpp"
 
 class PageSlot {
  public:
-  PageSlot() : PageSlot("") {}
-  PageSlot(const char* label) : label(label) {}
+  constexpr PageSlot() : PageSlot("") {}
+  constexpr PageSlot(const char* label) : label(label) {}
+
   const char* GetLabel() const { return this->label; }
 
  private:
@@ -30,14 +35,26 @@ class MenuSlot : public PageSlot {
   UiStateMachine::Id state_id;
 };
 
+struct SystemParameterRef {
+  ParameterModel::Id id;
+};
+
+struct FxParameterRef {
+  Fx::ParameterId id;
+};
+
+using ParameterRef =
+    std::variant<std::monostate, SystemParameterRef, FxParameterRef>;
+
 class ParameterSlot : public PageSlot {
  public:
-  ParameterSlot(ParameterModel::Id id, const char* label) : PageSlot(label), id(id) {}
+  ParameterSlot(ParameterRef parameter_ref, const char* label)
+      : PageSlot(label), parameter_ref(parameter_ref) {}
 
-  ParameterModel::Id GetParameterId() const { return id; }
+  ParameterRef& GetParameterRef() { return parameter_ref; }
 
  private:
-  ParameterModel::Id id;
+  ParameterRef parameter_ref;
 };
 
 #endif

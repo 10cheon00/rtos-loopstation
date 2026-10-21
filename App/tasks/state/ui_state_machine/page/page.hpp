@@ -4,7 +4,6 @@
 #include <array>
 #include <variant>
 
-#include "menu_descriptor.hpp"
 #include "page_slot.hpp"
 #include "slot_index.hpp"
 
@@ -35,5 +34,6 @@ class Page {
       page_slots;
   PageSlotVariant dummy_page_slot{PageSlot{}};
 };
+
 
 #endif

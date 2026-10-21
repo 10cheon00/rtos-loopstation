@@ -114,12 +114,8 @@ static void Run(void) {
 
 static TaskStatus HandlePanelRenderPayload(
     RtosPayload_PanelRender* panel_render_payload) {
-  UiStateMachine::Id ui_state_id = Utils::FromRtosEnumValue<UiStateMachine::Id>(
-      panel_render_payload->rtos_enum_value_ui_state);
-
-  const char* panel_label = UiStateLabelMap::Get(ui_state_id);
   UiRenderer::DrawPanelLayout(
-      panel_label,
+      panel_render_payload->label,
       PageNavigationBitset(
           panel_render_payload->rtos_enum_value_page_navigation_bitset));
 
