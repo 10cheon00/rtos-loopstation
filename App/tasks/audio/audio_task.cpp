@@ -290,14 +290,10 @@ static void UpdateFxParameterSnapshot() {
   Store::FxParameterStore::GetInstance().GetSelectedFxEntriesOrSkip(
       ifx_entries, tfx_entries);
   for (std::size_t i = 0; i < ifx_entries.size(); i++) {
-    if (ifx_entries[i].type != Fx::Type::NONE) {
-      ifx_contexts[i].fx_entry = ifx_entries[i];
-    }
+    ifx_contexts[i].fx_entry = ifx_entries[i];
   }
   for (std::size_t i = 0; i < tfx_entries.size(); i++) {
-    if (tfx_entries[i].type != Fx::Type::NONE) {
-      tfx_contexts[i].fx_entry = tfx_entries[i];
-    }
+    tfx_contexts[i].fx_entry = tfx_entries[i];
   }
 }
 
