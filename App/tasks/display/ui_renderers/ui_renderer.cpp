@@ -4,6 +4,7 @@
 
 #include "enum_map.hpp"
 #include "knob_widget.hpp"
+#include "measure_symbols.hpp"
 #include "menu_icon_encoding.hpp"
 #include "parameter_type.hpp"
 #include "toggle_switch_widget.hpp"
@@ -169,6 +170,24 @@ static Status DrawParameterValue(ParameterModel::Parameter& parameter,
     string_width = driver.getStrWidth(enum_name);
     driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
                    y + PARAMETER_VALUE_HEIGHT, enum_name);
+  } else if (std::holds_alternative<
+                 ParameterModel::MeasureWithUnsignedRangeValue>(
+                 parameter.GetValueVariant())) {
+    auto& measure_with_unsigned_range_value =
+        std::get<ParameterModel::MeasureWithUnsignedRangeValue>(
+            parameter.GetValueVariant());
+    if (measure_with_unsigned_range_value.IsMeasure()) {
+      UiRenderer::Symbol::RenderMeasureSymbol(
+          measure_with_unsigned_range_value.ToMeasure(), x + SLOT_WIDTH / 2,
+          y + PARAMETER_VALUE_HEIGHT);
+    } else {
+      driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
+      ConvertNumberToString(
+          measure_with_unsigned_range_value.ToUnsignedRangeValue(), str, 5);
+      string_width = driver.getStrWidth(str);
+      driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
+                     y + PARAMETER_VALUE_HEIGHT, str);
+    }
   } else {
     // TODO:
     // RATE_SLIDER면 4,2,1,1/2~1/16,0~100와 같이 출력해야함.
@@ -201,6 +220,14 @@ static Status DrawParameterWidget(ParameterModel::Parameter& parameter,
     UiWidget::DrawKnobWidget(x, y, static_cast<std::int16_t>(value.min),
                              static_cast<std::int16_t>(value.max),
                              static_cast<std::int16_t>(value.value));
+  } else if (std::holds_alternative<
+                 ParameterModel::MeasureWithUnsignedRangeValue>(
+                 parameter.GetValueVariant())) {
+    x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
+    y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
+    auto& value = std::get<ParameterModel::MeasureWithUnsignedRangeValue>(
+        parameter.GetValueVariant());
+    UiWidget::DrawKnobWidget(x, y, value.min, value.max + value.measure_offset, value.current);
   } else {
     // TODO:
     // RATE SLIDER형 파라미터 위젯 구현하기

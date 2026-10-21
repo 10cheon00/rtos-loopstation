@@ -11,11 +11,12 @@ namespace {
 
 static constexpr FxParameterStore::FxParameterMap INITIAL_FX_PARAMETERS{
     EnumEntry{Fx::ParameterId::FX_SYSTEM_SELECTED_FX,
-              ValueVariant(FxSelectedFxEnumValue{Fx::Type::LPF, (const char**)Fx::TYPE_NAME_TABLE})},
+              ValueVariant(FxSelectedFxEnumValue{
+                  Fx::Type::LPF, (const char**)Fx::TYPE_NAME_TABLE})},
     EnumEntry{Fx::ParameterId::FX_SYSTEM_FX_STATE,
               ValueVariant(ToggleValue{false})},
     EnumEntry{Fx::ParameterId::FX_LPF_RATE,
-              ValueVariant{UnsignedRangeValue{0, 100, 100}}},
+              ValueVariant{MeasureWithUnsignedRangeValue{0, 100, 100}}},
     EnumEntry{Fx::ParameterId::FX_LPF_DEPTH,
               ValueVariant{UnsignedRangeValue{0, 100, 50}}},
     EnumEntry{Fx::ParameterId::FX_LPF_RESONANCE,
@@ -34,7 +35,7 @@ Fx::Variant GetSelectedFxVariant(FxParameterStore::FxParameterMap& fx_map) {
   switch (selected_fx) {
     case Fx::Type::LPF:
       return Fx::Parameters::Lpf{
-          .rate = std::get<UnsignedRangeValue>(
+          .rate = std::get<MeasureWithUnsignedRangeValue>(
               fx_map[Fx::ParameterId::FX_LPF_RATE].GetValueVariant()),
           .depth = std::get<UnsignedRangeValue>(
               fx_map[Fx::ParameterId::FX_LPF_DEPTH].GetValueVariant()),

@@ -25,10 +25,18 @@ typedef struct {
   RtosParameterValue current;
 } RtosParameterValue_UnsignedRangeValue;
 
+typedef struct {
+  RtosParameterValue min;
+  RtosParameterValue max;
+  RtosParameterValue current;
+} RtosParameterValue_MeasureWithUnsignedRangeValue;
+
 typedef union {
   RtosParameterValue_UnsignedRangeValue rtos_parameter_unsigned_range_value;
   RtosParameterValue_ToggleValue rtos_parameter_toggle_value;
   RtosParameterValue_EnumValue rtos_parameter_enum_value;
+  RtosParameterValue_MeasureWithUnsignedRangeValue
+      rtos_parameter_measure_with_unsigned_range_value;
 } RtosParameterUnion;
 
 typedef struct {

@@ -36,6 +36,12 @@ class Parameter {
       case ParameterType::SELECTED_FX:
         value_variant = FxSelectedFxEnumValue(
             copy.rtos_parameter_union.rtos_parameter_enum_value);
+        break;
+      case ParameterType::MEASURE_WITH_UNSIGNED_RANGE:
+        value_variant = MeasureWithUnsignedRangeValue(
+            copy.rtos_parameter_union
+                .rtos_parameter_measure_with_unsigned_range_value);
+        break;
       default:
         break;
     }
@@ -66,7 +72,12 @@ class Parameter {
             const auto next = static_cast<std::int16_t>(value.value) + amount;
             const auto min = static_cast<std::int16_t>(value.min);
             const auto max = static_cast<std::int16_t>(value.max);
-            value.value = static_cast<Enum>(next < min ? min : next > max ? max : next);
+            value.value = static_cast<Enum>(next < min   ? min
+                                            : next > max ? max
+                                                         : next);
+          } else if constexpr (std::is_same_v<T,
+                                              MeasureWithUnsignedRangeValue>) {
+            value.current = value.clamp(value.current + amount);
           }
         },
         value_variant);
@@ -111,6 +122,16 @@ class Parameter {
                 .enum_value = static_cast<RtosParameterValue>(value.value),
                 .enum_max = static_cast<RtosParameterValue>(value.max),
                 .enum_name_table = value.enum_name_table,
+            };
+          } else if constexpr (std::is_same_v<T,
+                                              MeasureWithUnsignedRangeValue>) {
+            copy.rtos_enum_value_parameter_type = Utils::ToRtosEnumValue(
+                ParameterType::MEASURE_WITH_UNSIGNED_RANGE);
+            copy.rtos_parameter_union
+                .rtos_parameter_measure_with_unsigned_range_value = {
+                .min = value.min,
+                .max = value.max,
+                .current = value.current,
             };
           } else {
             copy.rtos_enum_value_parameter_type =

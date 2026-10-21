@@ -13,7 +13,7 @@ using namespace ParameterModel;
 namespace Parameters {
 
 struct Lpf {
-  UnsignedRangeValue rate{
+  MeasureWithUnsignedRangeValue rate{
       0, 100, 100};  // TODO: 음표와 숫자를 혼합한 타입으로 변경해야함
   UnsignedRangeValue depth{0, 100, 50};
   UnsignedRangeValue resonance{0, 100, 50};
