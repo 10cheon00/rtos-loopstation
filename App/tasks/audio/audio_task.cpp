@@ -305,7 +305,16 @@ static void ApplyIfxOnInputFrameBuffer() {
   }
 }
 
-static void ApplyTfxOnTrackFrameBuffers() {}
+static void ApplyTfxOnTrackFrameBuffers() {
+  for (auto& tfx_context : tfx_contexts) {
+    for (auto& track_playback_context : track_playback_contexts) {
+      tfx_context.processor.Dispatch(
+          tfx_context.fx_entry,
+          (BitDepth_t*)track_playback_context.sram_frame_buffer_address,
+          FRAME_COUNT);
+    }
+  }
+}
 
 static void MixAudioFrames() {
   for (size_t i = 0; i < FRAME_COUNT; i += CHANNEL_COUNT) {
