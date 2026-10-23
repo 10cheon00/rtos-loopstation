@@ -15,6 +15,17 @@ namespace Utils {
 
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))
 
+template <typename T>
+inline T Clamp(T min, T max, T current) {
+  if (current < min) {
+    return min;
+  }
+  if (current > max) {
+    return max;
+  }
+  return current;
+}
+
 int16_t AbsInt16(int16_t n);
 float CosineFromDegrees(float degree);
 float SineFromDegrees(float degree);
