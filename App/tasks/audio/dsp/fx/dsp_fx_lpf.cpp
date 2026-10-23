@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "audio_config.h"
+#include "audio_config.hpp"
 #include "dsp_utils.hpp"
 #include "utils.hpp"
 

@@ -1,7 +1,7 @@
 #ifndef DSP_FX_LPF_HPP
 #define DSP_FX_LPF_HPP
 
-#include "audio_config.h"
+#include "audio_config.hpp"
 #include "fx_variant.hpp"
 
 namespace DSP::FxProcessor {

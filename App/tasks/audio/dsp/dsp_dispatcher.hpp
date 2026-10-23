@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#include "audio_config.h"
+#include "audio_config.hpp"
 #include "dsp_fx_lpf.hpp"
 #include "fx_entry.hpp"
 #include "fx_parameter_store.hpp"

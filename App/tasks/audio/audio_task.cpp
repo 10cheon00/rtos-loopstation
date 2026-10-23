@@ -7,7 +7,7 @@
 
 #include "FreeRTOS.h"
 #include "app.h"
-#include "audio_config.h"
+#include "audio_config.hpp"
 #include "audio_dma_event.hpp"
 #include "audio_initparams.h"
 #include "audio_messages.h"

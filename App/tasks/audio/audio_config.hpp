@@ -1,5 +1,5 @@
-#ifndef AUDIO_CONFIG_H
-#define AUDIO_CONFIG_H
+#ifndef AUDIO_CONFIG_HPP
+#define AUDIO_CONFIG_HPP
 
 #include <cstdint>
 
@@ -13,5 +13,11 @@
 #define INMP441_ALIGN_OFFSET 1
 
 using BitDepth_t = std::int32_t;
+
+namespace AudioConfig {
+
+inline constexpr float REVERSE_SAMPLING_FREQUENCY = 1.0f / SAMPLING_FREQUENCY;
+
+}
 
 #endif
