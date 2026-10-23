@@ -1,5 +1,5 @@
-#ifndef PARAMETER_MEASURE_WITH_UNSIGNED_RANGE_VALUE_HPP
-#define PARAMETER_MEASURE_WITH_UNSIGNED_RANGE_VALUE_HPP
+#ifndef PARAMETER_RATE_VALUE_HPP
+#define PARAMETER_RATE_VALUE_HPP
 
 #include <cstdbool>
 #include <cstdint>
@@ -13,24 +13,25 @@ namespace ParameterModel {
  * Measure + UnsignedRangeValue
  * 0 부터 Measure::COUNT까지는 Measure, Measure::COUNT보다 큰 값은
  * UnsignedRangeValue로 취급 current가 인덱스로 동작
+ * TODO:
+ * 음표 + 1~100이 아니라 음표 + 0~100이어야 함
  */
-struct MeasureWithUnsignedRangeValue {
+struct RateValue {
   std::int16_t measure_offset;
   std::int16_t min;
   std::int16_t max;
   std::int16_t current;
 
-  constexpr MeasureWithUnsignedRangeValue(std::int16_t min, std::int16_t max,
+  constexpr RateValue(std::int16_t min, std::int16_t max,
                                           std::int16_t current)
-      : measure_offset(static_cast<std::int16_t>(Fx::Measure::WHOLE) -
-                       static_cast<std::int16_t>(Fx::Measure::SIXTEENTH)),
+      : measure_offset(static_cast<std::int16_t>(Fx::Measure::COUNT)),
         min(min),
         max(max),
         current(current) {}
 
-  constexpr MeasureWithUnsignedRangeValue(
+  constexpr RateValue(
       RtosParameterValue_MeasureWithUnsignedRangeValue rtos_parameter_value)
-      : MeasureWithUnsignedRangeValue(rtos_parameter_value.min,
+      : RateValue(rtos_parameter_value.min,
                                       rtos_parameter_value.max,
                                       rtos_parameter_value.current) {}
 
@@ -44,7 +45,7 @@ struct MeasureWithUnsignedRangeValue {
     return value;
   }
 
-  bool IsMeasure() { return current <= min + measure_offset; }
+  bool IsMeasure() { return current < min + measure_offset; }
 
   Fx::Measure ToMeasure() {
     if (!IsMeasure()) {

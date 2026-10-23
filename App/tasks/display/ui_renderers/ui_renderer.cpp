@@ -171,10 +171,10 @@ static Status DrawParameterValue(ParameterModel::Parameter& parameter,
     driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
                    y + PARAMETER_VALUE_HEIGHT, enum_name);
   } else if (std::holds_alternative<
-                 ParameterModel::MeasureWithUnsignedRangeValue>(
+                 ParameterModel::RateValue>(
                  parameter.GetValueVariant())) {
     auto& measure_with_unsigned_range_value =
-        std::get<ParameterModel::MeasureWithUnsignedRangeValue>(
+        std::get<ParameterModel::RateValue>(
             parameter.GetValueVariant());
     if (measure_with_unsigned_range_value.IsMeasure()) {
       UiRenderer::Symbol::RenderMeasureSymbol(
@@ -221,11 +221,11 @@ static Status DrawParameterWidget(ParameterModel::Parameter& parameter,
                              static_cast<std::int16_t>(value.max),
                              static_cast<std::int16_t>(value.value));
   } else if (std::holds_alternative<
-                 ParameterModel::MeasureWithUnsignedRangeValue>(
+                 ParameterModel::RateValue>(
                  parameter.GetValueVariant())) {
     x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
-    auto& value = std::get<ParameterModel::MeasureWithUnsignedRangeValue>(
+    auto& value = std::get<ParameterModel::RateValue>(
         parameter.GetValueVariant());
     UiWidget::DrawKnobWidget(x, y, value.min, value.max + value.measure_offset, value.current);
   } else {

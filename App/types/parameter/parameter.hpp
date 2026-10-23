@@ -38,7 +38,7 @@ class Parameter {
             copy.rtos_parameter_union.rtos_parameter_enum_value);
         break;
       case ParameterType::MEASURE_WITH_UNSIGNED_RANGE:
-        value_variant = MeasureWithUnsignedRangeValue(
+        value_variant = RateValue(
             copy.rtos_parameter_union
                 .rtos_parameter_measure_with_unsigned_range_value);
         break;
@@ -76,7 +76,7 @@ class Parameter {
                                             : next > max ? max
                                                          : next);
           } else if constexpr (std::is_same_v<T,
-                                              MeasureWithUnsignedRangeValue>) {
+                                              RateValue>) {
             value.current = value.clamp(value.current + amount);
           }
         },
@@ -124,7 +124,7 @@ class Parameter {
                 .enum_name_table = value.enum_name_table,
             };
           } else if constexpr (std::is_same_v<T,
-                                              MeasureWithUnsignedRangeValue>) {
+                                              RateValue>) {
             copy.rtos_enum_value_parameter_type = Utils::ToRtosEnumValue(
                 ParameterType::MEASURE_WITH_UNSIGNED_RANGE);
             copy.rtos_parameter_union
