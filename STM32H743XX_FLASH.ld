@@ -73,6 +73,15 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Define output sections */
 SECTIONS
 {
+  .rtt (NOLOAD) :
+  {
+    . = ALIGN(32);
+    __rtt_start__ = .;
+    KEEP(*(.rtt))
+    . = ALIGN(32);
+    __rtt_end__ = .;
+  } >RAM_D3
+
   /* The startup code goes first into FLASH */
   .isr_vector :
   {

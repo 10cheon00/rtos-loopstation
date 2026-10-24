@@ -1,0 +1,2 @@
+https://github.com/SEGGERMicro/RTT
+commit 4d8feab3150f86f37a9d323ddc88d6cdf5673072

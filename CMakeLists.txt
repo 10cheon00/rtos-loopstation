@@ -79,3 +79,18 @@ set_target_properties(
     ${CMAKE_PROJECT_NAME}
     PROPERTIES LINKER_LANGUAGE CXX
 )
+
+option(LOOPSTATION_SYSTEMVIEW "Enable SystemView RTT tracing" ON)
+if(LOOPSTATION_SYSTEMVIEW)
+    set(SYSVIEW_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/SEGGER/SystemView)
+    set(RTT_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/SEGGER/RTT)
+    target_include_directories(stm32cubemx INTERFACE
+        ${SYSVIEW_DIR}/SYSVIEW ${SYSVIEW_DIR}/SEGGER
+        ${SYSVIEW_DIR}/Sample/FreeRTOSV10.4 ${RTT_DIR}/RTT)
+    target_compile_definitions(stm32cubemx INTERFACE LOOPSTATION_SYSTEMVIEW=1)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+        ${SYSVIEW_DIR}/SYSVIEW/SEGGER_SYSVIEW.c
+        ${SYSVIEW_DIR}/Sample/FreeRTOSV10.4/SEGGER_SYSVIEW_FreeRTOS.c
+        ${RTT_DIR}/RTT/SEGGER_RTT.c
+        Core/Src/systemview_config.c)
+endif()

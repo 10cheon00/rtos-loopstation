@@ -168,6 +168,12 @@ standard names. */
 /* USER CODE BEGIN Defines */
 #define configRECORD_STACK_HIGH_ADDRESS         1
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
+#ifdef LOOPSTATION_SYSTEMVIEW
+#include "SEGGER_SYSVIEW_FreeRTOS.h"
+#define traceTASK_SWITCHED_OUT() SEGGER_SYSVIEW_OnTaskStopExec()
+#undef traceTASK_SUSPEND
+#define traceTASK_SUSPEND(pxTCB) SEGGER_SYSVIEW_OnTaskStopReady((U32)(pxTCB), 3)
+#endif
 /* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */
