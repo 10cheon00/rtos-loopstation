@@ -72,7 +72,7 @@ float Lpf::GetCutoffFrequency(ParameterModel::RateValue& rate,
     }
   }
 
-  const float T = 1.0f - std::fabsf(2.0f * phase - 1.0f);  // 삼각파의 현재 위치
+  const float T = 1.0f - std::fabs(2.0f * phase - 1.0f);  // 삼각파의 현재 위치
   const float x_cut =
       std::fmaxf(c, h - a + a * T);  // cutoff보다 낮은 값은 cutoff로 고정
 

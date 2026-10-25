@@ -1,7 +1,10 @@
 ---
 title: Windows SystemView LAN 연결
-version: 0.1.2
+version: 0.2.0
 change_history:
+  - date: 2026-10-25
+    version: 0.2.0
+    summary: RTT 수집과 송신을 메모리 큐 및 디스크 임시 저장으로 분리하고 운용 및 한계를 명시함
   - date: 2026-10-24
     version: 0.1.2
     summary: TCP IP Recorder의 32바이트 HELLO 및 길이 프레임 처리와 검증 결과를 수정함
@@ -73,10 +76,31 @@ Windows에서 오는 명령은 1바이트 길이와 해당 길이의 데이터�
 타깃에서 오는 이벤트는 그대로 Windows에 전달한다. UART용 4바이트 SV HELLO는 TCP IP Recorder에 사용하지 않는다.
 수집 기능을 제외하려면 `cmake --preset Debug -DLOOPSTATION_SYSTEMVIEW=OFF` 후 빌드한다.
 
+## 수집과 송신의 분리
+
+RTT 수집과 Windows 송신은 독립 비동기 작업으로 실행한다. 수집 작업은 Windows 소켓의 `drain()`을 기다리지 않고 FIFO에 데이터를 저장하며, 송신 작업이 FIFO에서 꺼내 순서대로 전달한다. 같은 프로세스에서도 네트워크 대기는 이벤트 루프에 제어를 반환하므로 수집을 막지 않는다. 임시 파일 I/O는 별도 작업 스레드에서 실행한다.
+
+FIFO 데이터는 기본 256 MiB까지 Mac 메모리에 저장한다. 한도 초과 데이터는 로컬 임시 파일에 저장하고, 메모리 데이터와 동일한 FIFO 순서로 읽어 송신한다. 가득 찬 메모리 큐에서 수집을 멈추거나 임의 바이트를 버리지 않는다. 메모리 한도는 큐의 데이터 기준이며 Python 관리 정보, 소켓 및 전송 중 청크는 별도다.
+
+```sh
+# 메모리 큐를 512 MiB로 설정하고 서버 실행 (펌웨어 재기록 불필요)
+SYSTEMVIEW_BUFFER_MIB=512 ./scripts/start-systemview.sh
+
+# 임시 저장 위치를 변경하려면 미리 존재하는 로컬 디렉터리 지정
+SYSTEMVIEW_BUFFER_MIB=512 SYSTEMVIEW_SPOOL_DIR=/private/tmp ./scripts/start-systemview.sh
+```
+
+메모리 사용은 미리 전부 할당하지 않고 대기 데이터에 따라 증가한다. `Capture RAM budget reached`는 디스크 저장으로 전환했다는 알림이며 수집 중단 오류가 아니다. 종료 시 최대 대기 바이트, 디스크 저장 누계, 미송신 대기 바이트를 출력한다.
+
+임시 파일은 연결 세션 종료 시 삭제되며 복구용 녹화 파일이 아니다. 디스크에 넘긴 공간은 세션 종료까지 유지되므로 긴 정체에는 충분한 로컬 저장 공간이 필요하다. 디스크 부족·I/O 오류는 로그와 함께 해당 연결을 종료한다. 무한한 정체를 유한 메모리와 디스크로 무손실 처리할 수는 없다. OpenOCD/SWD 자체의 수집 속도 부족이나 타깃 RTT 버퍼 오버플로는 이 호스트 큐로 해결되지 않는다.
+
+RTT의 정상 EOF 시 대기 데이터를 모두 전송한 뒤 연결을 닫는다. Windows 연결 끊김, 서버 종료, Ctrl+C에서는 해당 세션의 수집·송신을 취소하고 남은 큐를 폐기한다. 연결 복구 시 이전 세션을 자동 재생하지 않는다. 변경한 코드를 적용하려면 기존 서버를 Ctrl+C로 종료하고 다시 실행한다.
+
 ## 검증 상태
 
 Debug 펌웨어 빌드와 링크 성공. SRAM4 사용량 33,952 B / 64 KiB.
 로컬 소켓 모의 시험으로 32바이트 분할 IP HELLO, 분할·연속 명령 프레임의 길이 제거, 이벤트 전달과 재접속 검증 통과.
+Windows 송신을 의도적으로 정체시킨 시험에서 RTT 수집 완료, RAM 한도 유지, 디스크 넘김, FIFO 무손실 전송, RTT EOF 후 큐 전송 완료와 취소 처리를 검증했다. 실제 LAN 장시간 부하 시험은 아직 수행하지 않았다.
 사용자 실행 로그에서 flash 기록과 검증 성공을 확인했다.
 시작 명령 수정 후 실제 보드 RTT 제어 블록(0x38008008) 검색과 raw RTT TCP 19021 및 IP Recorder TCP 19111 대기를 확인했다.
 Windows SystemView 타임라인 수신은 아직 검증되지 않았다.

@@ -17,6 +17,19 @@ for host, port in (("0.0.0.0", 19111), ("127.0.0.1", 19021)):
             print("Stop the existing session with Ctrl+C, then retry.", file=sys.stderr)
             sys.exit(1)
 PORTCHECK
+buffer_mib="${SYSTEMVIEW_BUFFER_MIB:-256}"
+if ! [[ "$buffer_mib" =~ ^[1-9][0-9]*$ ]]; then
+  echo "SYSTEMVIEW_BUFFER_MIB must be a positive integer (MiB)." >&2
+  exit 2
+fi
+bridge_args=(--buffer-mib "$buffer_mib")
+if [[ -n "${SYSTEMVIEW_SPOOL_DIR:-}" ]]; then
+  if [[ ! -d "$SYSTEMVIEW_SPOOL_DIR" || ! -w "$SYSTEMVIEW_SPOOL_DIR" ]]; then
+    echo "SYSTEMVIEW_SPOOL_DIR must be an existing writable local directory." >&2
+    exit 2
+  fi
+  bridge_args+=(--spool-dir "$SYSTEMVIEW_SPOOL_DIR")
+fi
 args=()
 case "${1:-}" in
   --flash)
@@ -58,7 +71,7 @@ while (( SECONDS < startup_deadline )); do
   fi
   if python3 -c 'import socket; socket.create_connection(("127.0.0.1",19021),0.1).close()' 2>/dev/null; then
     echo "OpenOCD RTT ready at 127.0.0.1:19021; starting SystemView IP Recorder on TCP 19111."
-    python3 tools/systemview/bridge.py &
+    python3 tools/systemview/bridge.py "${bridge_args[@]}" &
     bridge_pid=$!
     # End the whole session if either component exits; do not leave an orphan bridge.
     while kill -0 "$openocd_pid" 2>/dev/null && kill -0 "$bridge_pid" 2>/dev/null; do
