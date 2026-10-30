@@ -65,7 +65,8 @@ float Lpf::GetCutoffFrequency(ParameterModel::RateValue& rate,
   } else {
     std::int16_t numeric_rate = rate.ToUnsignedRangeValue();
     if (numeric_rate > 0) {
-      phase += Dsp::Utils::GetRateFrequency(numeric_rate) * AudioConfig::REVERSE_SAMPLING_FREQUENCY;
+      phase += Dsp::Utils::GetRateFrequency(numeric_rate) *
+               AudioConfig::REVERSE_SAMPLING_FREQUENCY;
       phase -= std::floor(phase);
     } else {
       phase = 0;
@@ -75,9 +76,10 @@ float Lpf::GetCutoffFrequency(ParameterModel::RateValue& rate,
   const float T = 1.0f - std::fabs(2.0f * phase - 1.0f);  // 삼각파의 현재 위치
   const float x_cut =
       std::fmaxf(c, h - a + a * T);  // cutoff보다 낮은 값은 cutoff로 고정
-
+  const float lnHZ_MAX = 8.85366f;
+  const float lnHZ_MIN = 3.40119f;
   const float cutoff_hz =
-      Dsp::Utils::HZ_MIN * powf(Dsp::Utils::HZ_MAX / Dsp::Utils::HZ_MIN, x_cut);
+      std::exp(x_cut * lnHZ_MAX + lnHZ_MIN - x_cut * lnHZ_MIN);
   return cutoff_hz;
 }
 
