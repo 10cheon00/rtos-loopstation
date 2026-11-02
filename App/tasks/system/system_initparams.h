@@ -24,11 +24,17 @@ typedef struct {
 } Gmg12864InitParams;
 
 typedef struct {
+  osMutexId_t system_parameter_mutex;
+  osMutexId_t fx_parameter_mutex;
+} StoreInitParams;
+
+typedef struct {
   osEventFlagsId_t system_init_event;
 
   Mcp23017InitParams mcp23017_init_params;
   SdramInitParams sdram_init_params;
   Gmg12864InitParams gmg12864_init_params;
+  StoreInitParams store_init_params;
 } SystemInitParams;
 
 #endif

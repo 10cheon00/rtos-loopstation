@@ -1,0 +1,3 @@
+https://github.com/SEGGERMicro/SystemView
+commit 92ca7a810c5765ba64911919acd511c61b6b083f
+Local change: FreeRTOS task registry capacity increased from 8 to 32.

@@ -4,9 +4,11 @@
 
 #include "enum_map.hpp"
 #include "knob_widget.hpp"
+#include "measure_symbols.hpp"
 #include "menu_icon_encoding.hpp"
+#include "parameter_type.hpp"
 #include "toggle_switch_widget.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 namespace UiRenderer {
 
@@ -51,8 +53,10 @@ static constexpr EnumMap<SlotIndex, std::uint8_t> parameter_width_map{
 
 static void DrawArrowLeft4x5(uint8_t x, uint8_t y);
 static void DrawArrowRight4x5(uint8_t x, uint8_t y);
-static Status DrawParameterValue(Parameter& parameter, uint8_t x, uint8_t y);
-static Status DrawParameterWidget(Parameter& parameter, uint8_t x, uint8_t y);
+static Status DrawParameterValue(ParameterModel::Parameter& parameter,
+                                 uint8_t x, uint8_t y);
+static Status DrawParameterWidget(ParameterModel::Parameter& parameter,
+                                  uint8_t x, uint8_t y);
 static void ConvertNumberToString(int32_t number, char* string,
                                   uint8_t string_length);
 static Status DrawPanelMenuIcon(MenuIconEncoding icon, uint8_t x, uint8_t y);
@@ -91,7 +95,7 @@ static void DrawArrowRight4x5(uint8_t x, uint8_t y) {
   driver.drawVLine(x + 3, y - 3, 1);
 }
 
-Status DrawParameter(Parameter& parameter, const char* label,
+Status DrawParameter(ParameterModel::Parameter& parameter, const char* label,
                      SlotIndex slot_index) {
   uint8_t x, y;
   Status status;
@@ -117,13 +121,18 @@ Status DrawParameter(Parameter& parameter, const char* label,
   return status;
 }
 
-static Status DrawParameterValue(Parameter& parameter, uint8_t x, uint8_t y) {
+static Status DrawParameterValue(ParameterModel::Parameter& parameter,
+                                 uint8_t x, uint8_t y) {
   char str[5];
   uint8_t string_width;
   Driver& driver = Driver::GetInstance();
 
-  if (parameter.GetType() == ParameterType::TOGGLE) {
-    if (parameter.IsCurrentMaximum()) {
+  if (std::holds_alternative<ParameterModel::ToggleValue>(
+          parameter.GetValueVariant())) {
+    const auto& toggle_value =
+        std::get<ParameterModel::ToggleValue>(parameter.GetValueVariant());
+
+    if (toggle_value.is_on) {
       str[0] = 'O';
       str[1] = 'N';
       str[2] = '\n';
@@ -137,12 +146,48 @@ static Status DrawParameterValue(Parameter& parameter, uint8_t x, uint8_t y) {
     string_width = driver.getStrWidth(str);
     driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
                    y + PARAMETER_VALUE_HEIGHT, str);
-  } else if (parameter.GetType() == ParameterType::SLIDER) {
+  } else if (std::holds_alternative<ParameterModel::UnsignedRangeValue>(
+                 parameter.GetValueVariant())) {
+    const auto& unsigned_range_value =
+        std::get<ParameterModel::UnsignedRangeValue>(
+            parameter.GetValueVariant());
+
     driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
-    ConvertNumberToString(parameter.GetCurrent(), str, 5);
+    ConvertNumberToString(unsigned_range_value.current, str, 5);
     string_width = driver.getStrWidth(str);
     driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
                    y + PARAMETER_VALUE_HEIGHT, str);
+  } else if (std::holds_alternative<ParameterModel::FxSelectedFxEnumValue>(
+                 parameter.GetValueVariant())) {
+    const auto& fx_selected_fx_enum_value =
+        std::get<ParameterModel::FxSelectedFxEnumValue>(
+            parameter.GetValueVariant());
+    const char* enum_name =
+        fx_selected_fx_enum_value.enum_name_table[static_cast<std::int16_t>(
+            fx_selected_fx_enum_value.value)];
+
+    driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
+    string_width = driver.getStrWidth(enum_name);
+    driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
+                   y + PARAMETER_VALUE_HEIGHT, enum_name);
+  } else if (std::holds_alternative<
+                 ParameterModel::RateValue>(
+                 parameter.GetValueVariant())) {
+    auto& measure_with_unsigned_range_value =
+        std::get<ParameterModel::RateValue>(
+            parameter.GetValueVariant());
+    if (measure_with_unsigned_range_value.IsMeasure()) {
+      UiRenderer::Symbol::RenderMeasureSymbol(
+          measure_with_unsigned_range_value.ToMeasure(), x + SLOT_WIDTH / 2,
+          y + PARAMETER_VALUE_HEIGHT);
+    } else {
+      driver.setFont(u8g2_font_ref4x5_prop_v4_tr);
+      ConvertNumberToString(
+          measure_with_unsigned_range_value.ToUnsignedRangeValue(), str, 5);
+      string_width = driver.getStrWidth(str);
+      driver.drawStr(x + SLOT_WIDTH / 2 - string_width / 2,
+                     y + PARAMETER_VALUE_HEIGHT, str);
+    }
   } else {
     // TODO:
     // RATE_SLIDER면 4,2,1,1/2~1/16,0~100와 같이 출력해야함.
@@ -150,15 +195,39 @@ static Status DrawParameterValue(Parameter& parameter, uint8_t x, uint8_t y) {
   return Status::OK;
 }
 
-static Status DrawParameterWidget(Parameter& parameter, uint8_t x, uint8_t y) {
-  if (parameter.GetType() == ParameterType::TOGGLE) {
+static Status DrawParameterWidget(ParameterModel::Parameter& parameter,
+                                  uint8_t x, uint8_t y) {
+  if (std::holds_alternative<ParameterModel::ToggleValue>(
+          parameter.GetValueVariant())) {
     x = x + SLOT_WIDTH / 2 - TOGGLE_SWITCH_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - TOGGLE_SWITCH_WIDGET_HEIGHT / 2;
-    UiWidget::DrawToggleSwitchWidget(x, y, parameter);
-  } else if (parameter.GetType() == ParameterType::SLIDER) {
+    UiWidget::DrawToggleSwitchWidget(
+        x, y,
+        std::get<ParameterModel::ToggleValue>(parameter.GetValueVariant()));
+  } else if (std::holds_alternative<ParameterModel::UnsignedRangeValue>(
+                 parameter.GetValueVariant())) {
     x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
     y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
-    UiWidget::DrawKnobWidget(x, y, parameter);
+    auto& value = std::get<ParameterModel::UnsignedRangeValue>(
+        parameter.GetValueVariant());
+    UiWidget::DrawKnobWidget(x, y, value.min, value.max, value.current);
+  } else if (std::holds_alternative<ParameterModel::FxSelectedFxEnumValue>(
+                 parameter.GetValueVariant())) {
+    x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
+    y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
+    auto& value = std::get<ParameterModel::FxSelectedFxEnumValue>(
+        parameter.GetValueVariant());
+    UiWidget::DrawKnobWidget(x, y, static_cast<std::int16_t>(value.min),
+                             static_cast<std::int16_t>(value.max),
+                             static_cast<std::int16_t>(value.value));
+  } else if (std::holds_alternative<
+                 ParameterModel::RateValue>(
+                 parameter.GetValueVariant())) {
+    x = x + SLOT_WIDTH / 2 - KNOB_WIDGET_WIDTH / 2;
+    y = y + GRAPHIC_AREA_HEIGHT / 2 - KNOB_WIDGET_HEIGHT / 2;
+    auto& value = std::get<ParameterModel::RateValue>(
+        parameter.GetValueVariant());
+    UiWidget::DrawKnobWidget(x, y, value.min, value.max + value.measure_offset, value.current);
   } else {
     // TODO:
     // RATE SLIDER형 파라미터 위젯 구현하기
@@ -170,9 +239,12 @@ static void ConvertNumberToString(int32_t number, char* string,
                                   uint8_t string_length) {
   uint8_t i = 0, j = 0, is_negative = number < 0 ? 1 : 0;
   char c;
-  string[i] = '\0';
-  i++;
-  string[i] = '0';
+  if (number == 0) {
+    string[0] = '0';
+    string[1] = '\0';
+    return;
+  }
+  string[i++] = '\0';
   while (number != 0) {
     string[i] = number % 10 + '0';
     number /= 10;

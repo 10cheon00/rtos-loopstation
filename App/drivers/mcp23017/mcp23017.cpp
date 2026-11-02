@@ -2,7 +2,7 @@
 
 #include "mcp23017_gpio_map.hpp"
 #include "mutex_guard.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 #define IODIRA 0x0
 #define IODIRB 0x1

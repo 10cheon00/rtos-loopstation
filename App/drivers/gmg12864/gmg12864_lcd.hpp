@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include "U8g2lib.h"
+#include "singleton.hpp"
 #include "stm32h7xx.h"
 
 namespace Gmg12864 {
@@ -40,18 +41,13 @@ uint8_t u8g2MessageCallback(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int,
 uint8_t u8g2GpioAndDelayCallback(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int,
                                  void* arg_ptr);
 
-class Driver : public U8G2 {
+class Driver : public U8G2, public Singleton<Driver> {
+  friend class Singleton<Driver>;  // 이 클래스를 friend로 선언하여 싱글톤
+                                   // 클래스의 생성자에 접근가능하게 함
+
  private:
   Driver() : U8G2() {}
   ~Driver() {}
-  Driver(const Driver& ref) = delete;
-  Driver& operator=(const Driver& ref) = delete;
-
- public:
-  static Driver& GetInstance() {
-    static Driver driver;
-    return driver;
-  }
 
  public:
   Gmg12864Status Initialize(InitParams* params) {

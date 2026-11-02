@@ -27,12 +27,15 @@ struct StateTaskContext {
   osMessageQueueId_t state_event_queue;
   QueueHandle_t display_snapshot_mailbox;
   QueueHandle_t audio_event_snapshot_mailbox;
+  RtosMessage_DisplaySnapshot last_display_snapshot{};
 
   UiStateMachine::Context ui_state_machine_context;
   UiStateMachine::StateMachine ui_state_machine{ui_state_machine_context,
                                                 UiStateMachine::Id::HOME};
 
   std::array<TrackEntry, static_cast<std::size_t>(TRACK_COUNT)> track_entry;
+  Fx::Section fx_selected_section;
+  Fx::Slot fx_selected_slot;
 };
 
 #endif

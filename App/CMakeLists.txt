@@ -54,15 +54,13 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/display_task.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/ui_renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs/ui_state_label_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/symbols/measure_symbols.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/knob_widget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/toggle_switch_widget.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_panel_handler.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/parameter_updater.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_to_id_variant_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_to_parameter_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_to_track_action_map.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores/loopstation_parameter_store.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_state_pointer_map.cpp
@@ -70,20 +68,27 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_transition_map.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_pointer_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/page/page.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/fx_page_group_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_state_navigation_tree.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/system/system_task.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_task.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/audio_event_sender.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp/dsp_dispatcher.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp/dsp_utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp/fx/dsp_fx_lpf.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/stores/system_parameter_store.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/stores/fx_parameter_store.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864/gmg12864_lcd.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/mcp23017.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs/mcp23017_gpio_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs/mcp23017_gpio_to_button_map.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/types/page.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/mutex_guard.cpp
@@ -94,6 +99,8 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/u8g2/cppsrc
 
     ${CMAKE_CURRENT_SOURCE_DIR}/types
+    ${CMAKE_CURRENT_SOURCE_DIR}/types/parameter
+    ${CMAKE_CURRENT_SOURCE_DIR}/types/parameter/values
     ${CMAKE_CURRENT_SOURCE_DIR}/messages
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/input/configs
@@ -102,12 +109,13 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/symbols
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/stores
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/page
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs
@@ -115,6 +123,10 @@ target_include_directories(loopstation_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/system
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/fx
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/audio/dsp/fx
+    ${CMAKE_CURRENT_SOURCE_DIR}/stores
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gmg12864
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp23017/configs

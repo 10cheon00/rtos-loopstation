@@ -24,6 +24,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#ifdef LOOPSTATION_SYSTEMVIEW
+#include "SEGGER_SYSVIEW.h"
+#endif
 #include "app_messages.h"
 #include "debug_fault.h"
 #include "display_initparams.h"
@@ -91,14 +94,14 @@ const osThreadAttr_t inputTask_attributes = {
 osThreadId_t displayTaskHandle;
 const osThreadAttr_t displayTask_attributes = {
   .name = "displayTask",
-  .stack_size = 1024 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* Definitions for stateTask */
 osThreadId_t stateTaskHandle;
 const osThreadAttr_t stateTask_attributes = {
   .name = "stateTask",
-  .stack_size = 128 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for adcInputTask */
@@ -112,7 +115,7 @@ const osThreadAttr_t adcInputTask_attributes = {
 osThreadId_t systemTaskHandle;
 const osThreadAttr_t systemTask_attributes = {
   .name = "systemTask",
-  .stack_size = 128 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityRealtime7,
 };
 /* Definitions for audioTask */
@@ -151,6 +154,16 @@ const osMessageQueueAttr_t audio_dma_event_attributes = {
 osMutexId_t i2c1_mutexHandle;
 const osMutexAttr_t i2c1_mutex_attributes = {
   .name = "i2c1_mutex"
+};
+/* Definitions for system_parameter_mutex */
+osMutexId_t system_parameter_mutexHandle;
+const osMutexAttr_t system_parameter_mutex_attributes = {
+  .name = "system_parameter_mutex"
+};
+/* Definitions for fx_parameter_mutex */
+osMutexId_t fx_parameter_mutexHandle;
+const osMutexAttr_t fx_parameter_mutex_attributes = {
+  .name = "fx_parameter_mutex"
 };
 /* Definitions for system_init_event */
 osEventFlagsId_t system_init_eventHandle;
@@ -288,6 +301,9 @@ int main(void)
   PeriphCommonClock_Config();
 
   /* USER CODE BEGIN SysInit */
+#ifdef LOOPSTATION_SYSTEMVIEW
+  SEGGER_SYSVIEW_Conf();
+#endif
 
   /* USER CODE END SysInit */
 
@@ -318,6 +334,12 @@ int main(void)
   /* Create the mutex(es) */
   /* creation of i2c1_mutex */
   i2c1_mutexHandle = osMutexNew(&i2c1_mutex_attributes);
+
+  /* creation of system_parameter_mutex */
+  system_parameter_mutexHandle = osMutexNew(&system_parameter_mutex_attributes);
+
+  /* creation of fx_parameter_mutex */
+  fx_parameter_mutexHandle = osMutexNew(&fx_parameter_mutex_attributes);
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -373,6 +395,8 @@ int main(void)
   state_init_params.hi2c = &hi2c1;
   state_init_params.i2c_mutex = i2c1_mutexHandle;
 
+  system_init_params.store_init_params.system_parameter_mutex = system_parameter_mutexHandle;
+  system_init_params.store_init_params.fx_parameter_mutex = fx_parameter_mutexHandle;
   system_init_params.gmg12864_init_params.hspi = &hspi2;
   system_init_params.gmg12864_init_params.CS_Port = GMG12864_CS_GPIO_Port;
   system_init_params.gmg12864_init_params.CS_Pin = GMG12864_CS_Pin;
@@ -461,7 +485,7 @@ void SystemClock_Config(void)
 
   /** Configure the main internal regulator output voltage
   */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
 
   while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
 
@@ -474,9 +498,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 12;
+  RCC_OscInitStruct.PLL.PLLN = 60;
   RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 15;
+  RCC_OscInitStruct.PLL.PLLQ = 5;
   RCC_OscInitStruct.PLL.PLLR = 42;
   RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
@@ -493,13 +517,13 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV1;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV1;
-  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
+  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
   {
     Error_Handler();
   }
@@ -553,7 +577,7 @@ static void MX_ADC1_Init(void)
   /** Common config
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV2;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
   hadc1.Init.Resolution = ADC_RESOLUTION_16B;
   hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
@@ -634,7 +658,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x20303E5D;
+  hi2c1.Init.Timing = 0x307075B1;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -771,7 +795,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;

@@ -2,10 +2,12 @@
 
 #include <cstdbool>
 
+#include "fx_parameter_store.hpp"
 #include "gmg12864_lcd.hpp"
 #include "mcp23017.hpp"
 #include "system_init_event_flag.hpp"
 #include "system_initparams.h"
+#include "system_parameter_store.hpp"
 
 enum class SystemInitResult {
   SUCCESS = 0,
@@ -16,6 +18,7 @@ static bool IsValidParams(SystemInitParams* params);
 static void ErrorHandler();
 static SystemInitResult Init(SystemInitParams* params);
 static SystemInitResult InitSdram(SDRAM_HandleTypeDef* hsdram);
+static SystemInitResult InitStore(StoreInitParams* params);
 
 void SystemTask_Init(void* argument) {
   SystemInitParams* params = (SystemInitParams*)argument;
@@ -42,7 +45,9 @@ bool IsValidParams(SystemInitParams* params) {
          params->gmg12864_init_params.RST_Port != NULL &&
          params->gmg12864_init_params.RST_Pin != 0 &&
          params->gmg12864_init_params.DC_Port != NULL &&
-         params->gmg12864_init_params.DC_Pin != 0;
+         params->gmg12864_init_params.DC_Pin != 0 &&
+         params->store_init_params.fx_parameter_mutex != NULL &&
+         params->store_init_params.system_parameter_mutex != NULL;
 }
 
 static void ErrorHandler() {
@@ -56,6 +61,7 @@ static void ErrorHandler() {
  * 1. Mcp23017
  * 2. Sdram
  * 3. Gmg12864
+ * 4. 설정값 저장소
  */
 SystemInitResult Init(SystemInitParams* params) {
   if (Mcp23017::Driver::GetInstance().Initialize(
@@ -84,6 +90,10 @@ SystemInitResult Init(SystemInitParams* params) {
   };
   if (Gmg12864::Driver::GetInstance().Initialize(&initparams) !=
       Gmg12864::Gmg12864Status::OK) {
+    return SystemInitResult::FAILED;
+  }
+
+  if (InitStore(&params->store_init_params) != SystemInitResult::SUCCESS) {
     return SystemInitResult::FAILED;
   }
 
@@ -143,6 +153,14 @@ SystemInitResult InitSdram(SDRAM_HandleTypeDef* hsdram) {
   if (HAL_SDRAM_ProgramRefreshRate(hsdram, FMC_SDRTR_COUNT) != HAL_OK) {
     return SystemInitResult::FAILED;
   }
+
+  return SystemInitResult::SUCCESS;
+}
+
+static SystemInitResult InitStore(StoreInitParams* params) {
+  Store::SystemParameterStore::GetInstance().Reset(
+      params->system_parameter_mutex);
+  Store::FxParameterStore::GetInstance().Reset(params->fx_parameter_mutex);
 
   return SystemInitResult::SUCCESS;
 }

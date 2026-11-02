@@ -2,7 +2,7 @@
 
 #include "enum_map.hpp"
 #include "track_config.h"
-#include "utils.h"
+#include "utils.hpp"
 
 #define INDEX_TO_MASK(index) ((Mcp23017GpioPinMask)1 << index)
 

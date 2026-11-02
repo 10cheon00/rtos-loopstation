@@ -55,7 +55,7 @@ extern uint32_t SystemCoreClock;
 #define CMSIS_device_header "stm32h7xx.h"
 #endif /* CMSIS_device_header */
 
-#define configENABLE_FPU                         0
+#define configENABLE_FPU                         1
 #define configENABLE_MPU                         0
 
 #define configUSE_PREEMPTION                     1
@@ -79,6 +79,7 @@ extern uint32_t SystemCoreClock;
 #define configUSE_RECURSIVE_MUTEXES              1
 #define configUSE_COUNTING_SEMAPHORES            1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION  0
+#define configRECORD_STACK_HIGH_ADDRESS          1
 /* USER CODE BEGIN MESSAGE_BUFFER_LENGTH_TYPE */
 /* Defaults to size_t for backward compatibility, but can be changed
    if lengths will always be less than the number of bytes in a size_t. */
@@ -165,7 +166,14 @@ standard names. */
 #define USE_CUSTOM_SYSTICK_HANDLER_IMPLEMENTATION 0
 
 /* USER CODE BEGIN Defines */
+#define configRECORD_STACK_HIGH_ADDRESS         1
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
+#ifdef LOOPSTATION_SYSTEMVIEW
+#include "SEGGER_SYSVIEW_FreeRTOS.h"
+#define traceTASK_SWITCHED_OUT() SEGGER_SYSVIEW_OnTaskStopExec()
+#undef traceTASK_SUSPEND
+#define traceTASK_SUSPEND(pxTCB) SEGGER_SYSVIEW_OnTaskStopReady((U32)(pxTCB), 3)
+#endif
 /* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */

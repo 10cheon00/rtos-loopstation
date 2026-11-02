@@ -5387,6 +5387,9 @@ TickType_t uxTaskResetEventItemValue( void )
 static void prvAddCurrentTaskToDelayedList( TickType_t xTicksToWait,
                                             const BaseType_t xCanBlockIndefinitely )
 {
+#ifdef LOOPSTATION_SYSTEMVIEW
+    SEGGER_SYSVIEW_OnTaskStopReady((U32)pxCurrentTCB, 4);
+#endif
     TickType_t xTimeToWake;
     const TickType_t xConstTickCount = xTickCount;
 

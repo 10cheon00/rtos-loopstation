@@ -1,28 +1,27 @@
 #include "audio_task.h"
 
+#include <array>
 #include <cstdbool>
+#include <cstddef>
 #include <cstdint>
 
 #include "FreeRTOS.h"
 #include "app.h"
+#include "audio_config.hpp"
 #include "audio_dma_event.hpp"
 #include "audio_initparams.h"
 #include "audio_messages.h"
 #include "cmsis_os2.h"
+#include "dsp_dispatcher.hpp"
+#include "fx_parameter_store.hpp"
+#include "fx_slot.hpp"
+#include "fx_type.hpp"
+#include "fx_variant.hpp"
 #include "parameter.hpp"
 #include "queue.h"
 #include "system_init_event_flag.hpp"
 #include "track_state.hpp"
-#include "utils.h"
-
-#define SAMPLING_FREQUENCY 44100UL
-#define FRAME_DURATION_MS (1000.0 / SAMPLING_FREQUENCY)
-#define FRAME_DURATION_TICKS (pdMS_TO_TICKS(FRAME_DURATION_MS))
-#define FRAME_COUNT 512U
-#define CHANNEL_COUNT 2U
-#define FRAME_BUFFER_COUNT 2U
-#define SAI_FRAME_BUFFER_SIZE (FRAME_COUNT * FRAME_BUFFER_COUNT)
-#define INMP441_ALIGN_OFFSET 1
+#include "utils.hpp"
 
 #define SDRAM_BASE_ADDRESS 0xC0000000
 #define SDRAM_SIZE 0x3FFFFFF
@@ -36,8 +35,6 @@ struct ErrorLog {
   uint32_t sdram_read_none_error;
 };
 
-using BitDepth_t = std::int32_t;
-
 struct SaiDmaState {
   bool is_rx_complete;
   bool is_tx_complete;
@@ -48,7 +45,7 @@ struct TrackPlaybackContext {
   uint32_t* sram_frame_buffer_address;
   uint32_t frame_index;        // 재생할 프레임의 번호
   uint32_t total_frame_count;  // 트랙의 길이
-  ParameterValue volume;
+  std::int16_t volume;
   TrackStateMachine::Id track_state;
 };
 
@@ -56,6 +53,11 @@ struct AudioInputContext {
   BitDepth_t* input_frame_buffer;
   BitDepth_t* output_frame_buffer;
   bool is_frame_ready;
+};
+
+struct FxContext {
+  Fx::Entry fx_entry;
+  DSP::Dispatcher processor;
 };
 
 static ErrorLog error_log{0, 0, 0, 0};
@@ -66,16 +68,13 @@ static SAI_HandleTypeDef* hsai_rx;
 static SAI_HandleTypeDef* hsai_tx;
 static SDRAM_HandleTypeDef* hsdram;
 
-static Parameter parameter_ifx_a;
-static Parameter parameter_ifx_b;
-static Parameter parameter_ifx_c;
-static Parameter parameter_tfx_a;
-static Parameter parameter_tfx_b;
-static Parameter parameter_tfx_c;
-
 static SaiDmaState sai_dma_state[FRAME_BUFFER_COUNT];
 static std::array<TrackPlaybackContext, TRACK_COUNT> track_playback_contexts;
 static AudioInputContext audio_input_context;
+static std::array<FxContext, static_cast<std::size_t>(Fx::Slot::COUNT)>
+    ifx_contexts;
+static std::array<FxContext, static_cast<std::size_t>(Fx::Slot::COUNT)>
+    tfx_contexts;
 
 __attribute__((section(".axi_sram"),
                aligned(sizeof(BitDepth_t)))) static BitDepth_t
@@ -88,6 +87,7 @@ __attribute__((section(".axi_sram"),
     track_frame_buffer[TRACK_COUNT][SAI_FRAME_BUFFER_SIZE];
 
 static bool IsValidParams(AudioInitParams* params);
+static void InitFxContexts();
 static void Run();
 static TaskStatus StartSaiReceiveAndTransmit();
 static void FetchActiveTrackFrames();
@@ -96,8 +96,11 @@ static void WaitForAudioDmaEvent(
 static void HandleAudioDmaEvent(RtosMessage_AudioDmaEvent& audio_dma_event);
 static void UpdateAudioInputContext();
 static bool IsAudioInputFrameReady();
-static void ParseAudioEventSnapshot();
+static void ReadAudioEventSnapshot();
+static void UpdateFxParameterSnapshot();
 static void RecordActiveTracks();
+static void ApplyIfxOnInputFrameBuffer();
+static void ApplyTfxOnTrackFrameBuffers();
 static void MixAudioFrames();
 static void UpdateTrackPlaybackContext();
 
@@ -129,6 +132,8 @@ void AudioTask_Init(void* argument) {
 
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
                    osFlagsWaitAll | osFlagsNoClear, osWaitForever);
+
+  InitFxContexts();
   Run();
 }
 
@@ -139,6 +144,17 @@ bool IsValidParams(AudioInitParams* params) {
          params->audio_dma_event_queue != NULL;
 }
 
+static void InitFxContexts() {
+  Fx::SlotEntries ifx_entries, tfx_entries;
+  Store::FxParameterStore::GetInstance().GetSelectedFxEntries(ifx_entries,
+                                                              tfx_entries);
+  for (std::size_t i = 0; i < ifx_entries.size(); i++) {
+    ifx_contexts[i].fx_entry = ifx_entries[i];
+  }
+  for (std::size_t i = 0; i < tfx_entries.size(); i++) {
+    tfx_contexts[i].fx_entry = tfx_entries[i];
+  }
+}
 /**
  * 1. SAI B를 통해 얻은 오디오 샘플 확보
  * 2. 현재 재생중인 트랙의 오디오 샘플 확보
@@ -158,8 +174,11 @@ static void Run() {
     WaitForAudioDmaEvent(rtos_message_audio_dma_event);
     HandleAudioDmaEvent(rtos_message_audio_dma_event);
     if (IsAudioInputFrameReady()) {
-      ParseAudioEventSnapshot();
+      ReadAudioEventSnapshot();
+      UpdateFxParameterSnapshot();
       FetchActiveTrackFrames();
+      ApplyIfxOnInputFrameBuffer();
+      ApplyTfxOnTrackFrameBuffers();
       MixAudioFrames();
       RecordActiveTracks();
       UpdateTrackPlaybackContext();
@@ -206,7 +225,7 @@ static void WaitForAudioDmaEvent(
 }
 
 static void HandleAudioDmaEvent(RtosMessage_AudioDmaEvent& audio_dma_event) {
-  AudioDmaEvent sai_dma_event = FromRtosEnumValue<AudioDmaEvent>(
+  AudioDmaEvent sai_dma_event = Utils::FromRtosEnumValue<AudioDmaEvent>(
       audio_dma_event.rtos_enum_value_audio_dma_event);
 
   switch (sai_dma_event) {
@@ -253,15 +272,46 @@ void UpdateAudioInputContext() {
 
 bool IsAudioInputFrameReady() { return audio_input_context.is_frame_ready; }
 
-void ParseAudioEventSnapshot() {
+void ReadAudioEventSnapshot() {
   RtosMessage_AudioEventSnapshot audio_event_snapshot;
   xQueuePeek(audio_event_snapshot_mailbox, &audio_event_snapshot, 0);
   for (std::size_t i = 0; i < track_playback_contexts.size(); i++) {
     track_playback_contexts[i].track_state =
-        FromRtosEnumValue<TrackStateMachine::Id>(
+        Utils::FromRtosEnumValue<TrackStateMachine::Id>(
             audio_event_snapshot.rtos_enum_value_track_states[i]);
-    track_playback_contexts[i].volume = static_cast<ParameterValue>(
+    track_playback_contexts[i].volume = static_cast<std::int16_t>(
         audio_event_snapshot.rtos_parameter_track_volumes[i]);
+  }
+}
+
+static void UpdateFxParameterSnapshot() {
+  Fx::SlotEntries ifx_entries, tfx_entries;
+  Store::FxParameterStore::GetInstance().GetSelectedFxEntriesOrSkip(
+      ifx_entries, tfx_entries);
+  for (std::size_t i = 0; i < ifx_entries.size(); i++) {
+    ifx_contexts[i].fx_entry = ifx_entries[i];
+  }
+  for (std::size_t i = 0; i < tfx_entries.size(); i++) {
+    tfx_contexts[i].fx_entry = tfx_entries[i];
+  }
+}
+
+static void ApplyIfxOnInputFrameBuffer() {
+  for (auto& ifx_context : ifx_contexts) {
+    ifx_context.processor.Dispatch(ifx_context.fx_entry,
+                                   audio_input_context.input_frame_buffer,
+                                   FRAME_COUNT);
+  }
+}
+
+static void ApplyTfxOnTrackFrameBuffers() {
+  for (auto& tfx_context : tfx_contexts) {
+    for (auto& track_playback_context : track_playback_contexts) {
+      tfx_context.processor.Dispatch(
+          tfx_context.fx_entry,
+          (BitDepth_t*)track_playback_context.sram_frame_buffer_address,
+          FRAME_COUNT);
+    }
   }
 }
 

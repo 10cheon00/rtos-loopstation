@@ -521,14 +521,23 @@ void xPortSysTickHandler( void )
      * save and then restore the interrupt mask value as its value is already
      * known. */
     portDISABLE_INTERRUPTS();
+#ifdef LOOPSTATION_SYSTEMVIEW
+    traceISR_ENTER();
+#endif
     {
         /* Increment the RTOS tick. */
         if( xTaskIncrementTick() != pdFALSE )
         {
             /* A context switch is required.  Context switching is performed in
              * the PendSV interrupt.  Pend the PendSV interrupt. */
+#ifdef LOOPSTATION_SYSTEMVIEW
+            traceISR_EXIT_TO_SCHEDULER();
+#endif
             portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;
         }
+#ifdef LOOPSTATION_SYSTEMVIEW
+        else { traceISR_EXIT(); }
+#endif
     }
     portENABLE_INTERRUPTS();
 }

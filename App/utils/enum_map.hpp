@@ -22,11 +22,12 @@ template <typename Key, typename Value,
           std::size_t MapSize = static_cast<std::size_t>(Key::COUNT)>
 class EnumMap {
  public:
-  template <typename... Entries>
+  constexpr EnumMap() : array{}, assigned{} {}
   /**
    * 내부 array를 초기화하기 위해 가변 템플릿을 사용해 Entry들을 받은 후 하나씩
    * array에 대입한다.
    */
+  template <typename... Entries>
   constexpr explicit EnumMap(Entries... entries) : array{}, assigned{} {
     ((array[static_cast<std::size_t>(entries.key)] = entries.value,
       assigned[static_cast<std::size_t>(entries.key)] = true),
