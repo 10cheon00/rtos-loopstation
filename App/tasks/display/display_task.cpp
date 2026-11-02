@@ -6,7 +6,6 @@
 #include "cmsis_os2.h"
 #include "display_initparams.h"
 #include "display_messages.h"
-#include "display_trace.h"
 #include "enum_map.hpp"
 #include "fx_slot.hpp"
 #include "gmg12864_lcd.hpp"
