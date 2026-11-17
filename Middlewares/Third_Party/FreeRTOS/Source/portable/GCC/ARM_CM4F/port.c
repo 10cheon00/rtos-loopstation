@@ -535,6 +535,9 @@ void xPortSysTickHandler( void )
 #endif
             portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;
         }
+#ifdef LOOPSTATION_SYSTEMVIEW
+        else { traceISR_EXIT(); }
+#endif
     }
     portENABLE_INTERRUPTS();
 }
