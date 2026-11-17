@@ -410,6 +410,7 @@ int main(void)
   system_init_params.mcp23017_init_params.hi2c = &hi2c1;
   system_init_params.mcp23017_init_params.i2c1_mutex = i2c1_mutexHandle;
   system_init_params.sdram_init_params.hsdram = &hsdram1;
+  system_init_params.xl_5050_rgbw_init_params.htim = &htim16;
 
   audio_init_params.hsai_tx = &hsai_BlockA1;
   audio_init_params.hsai_rx = &hsai_BlockB1;

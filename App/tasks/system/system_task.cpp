@@ -8,6 +8,7 @@
 #include "system_init_event_flag.hpp"
 #include "system_initparams.h"
 #include "system_parameter_store.hpp"
+#include "xl5050_rgbw.hpp"
 
 enum class SystemInitResult {
   SUCCESS = 0,
@@ -19,6 +20,7 @@ static void ErrorHandler();
 static SystemInitResult Init(SystemInitParams* params);
 static SystemInitResult InitSdram(SDRAM_HandleTypeDef* hsdram);
 static SystemInitResult InitStore(StoreInitParams* params);
+static SystemInitResult InitXl5050Rgbw(Xl5050RgbwInitParams* params);
 
 void SystemTask_Init(void* argument) {
   SystemInitParams* params = (SystemInitParams*)argument;
@@ -47,7 +49,8 @@ bool IsValidParams(SystemInitParams* params) {
          params->gmg12864_init_params.DC_Port != NULL &&
          params->gmg12864_init_params.DC_Pin != 0 &&
          params->store_init_params.fx_parameter_mutex != NULL &&
-         params->store_init_params.system_parameter_mutex != NULL;
+         params->store_init_params.system_parameter_mutex != NULL &&
+         params->xl_5050_rgbw_init_params.htim != NULL;
 }
 
 static void ErrorHandler() {
@@ -62,6 +65,7 @@ static void ErrorHandler() {
  * 2. Sdram
  * 3. Gmg12864
  * 4. 설정값 저장소
+ * 5. Xl5050Rgbw
  */
 SystemInitResult Init(SystemInitParams* params) {
   if (Mcp23017::Driver::GetInstance().Initialize(
@@ -94,6 +98,10 @@ SystemInitResult Init(SystemInitParams* params) {
   }
 
   if (InitStore(&params->store_init_params) != SystemInitResult::SUCCESS) {
+    return SystemInitResult::FAILED;
+  }
+
+  if (InitXl5050Rgbw(&params->xl_5050_rgbw_init_params) != SystemInitResult::SUCCESS) {
     return SystemInitResult::FAILED;
   }
 
@@ -161,6 +169,12 @@ static SystemInitResult InitStore(StoreInitParams* params) {
   Store::SystemParameterStore::GetInstance().Reset(
       params->system_parameter_mutex);
   Store::FxParameterStore::GetInstance().Reset(params->fx_parameter_mutex);
+
+  return SystemInitResult::SUCCESS;
+}
+
+SystemInitResult InitXl5050Rgbw(Xl5050RgbwInitParams* params) {
+  Xl5050Rgbw::Driver::GetInstance().Initialize(params->htim);
 
   return SystemInitResult::SUCCESS;
 }
