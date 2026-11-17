@@ -29,12 +29,17 @@ typedef struct {
 } StoreInitParams;
 
 typedef struct {
+  TIM_HandleTypeDef* htim;
+} Xl5050RgbwInitParams;
+
+typedef struct {
   osEventFlagsId_t system_init_event;
 
   Mcp23017InitParams mcp23017_init_params;
   SdramInitParams sdram_init_params;
   Gmg12864InitParams gmg12864_init_params;
   StoreInitParams store_init_params;
+  Xl5050RgbwInitParams xl_5050_rgbw_init_params;
 } SystemInitParams;
 
 #endif

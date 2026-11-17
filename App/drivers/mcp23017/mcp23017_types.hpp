@@ -14,8 +14,10 @@ enum class Status : uint8_t {
 
 enum class Address : std::uint8_t {
   NONE = 0,
-  b100 = (0x20 | 0b100),
+  b001 = (0x20 | 0b001),
   b101 = (0x20 | 0b101),
+  b011 = (0x20 | 0b011),
+  b111 = (0x20 | 0b111),
 };
 using PinMask = std::uint8_t;
 using PinStates = std::uint8_t;

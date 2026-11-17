@@ -49,6 +49,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -57,12 +59,15 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define MCP23017_100_INTA_Pin GPIO_PIN_0
-#define MCP23017_100_INTA_GPIO_Port GPIOB
-#define MCP23017_100_INTA_EXTI_IRQn EXTI0_IRQn
-#define MCP23017_101_INTA_Pin GPIO_PIN_1
-#define MCP23017_101_INTA_GPIO_Port GPIOB
-#define MCP23017_101_INTA_EXTI_IRQn EXTI1_IRQn
+#define MCP23017_001_INTB_Pin GPIO_PIN_11
+#define MCP23017_001_INTB_GPIO_Port GPIOI
+#define MCP23017_001_INTB_EXTI_IRQn EXTI15_10_IRQn
+#define MCP23017_111_INTB_Pin GPIO_PIN_8
+#define MCP23017_111_INTB_GPIO_Port GPIOF
+#define MCP23017_111_INTB_EXTI_IRQn EXTI9_5_IRQn
+#define MCP23017_101_INTA_Pin GPIO_PIN_4
+#define MCP23017_101_INTA_GPIO_Port GPIOH
+#define MCP23017_101_INTA_EXTI_IRQn EXTI4_IRQn
 #define ENCODER4_CH1_Pin GPIO_PIN_10
 #define ENCODER4_CH1_GPIO_Port GPIOH
 #define ENCODER4_CH2_Pin GPIO_PIN_11
@@ -71,6 +76,9 @@ void Error_Handler(void);
 #define ENCODER3_CH1_GPIO_Port GPIOC
 #define ENCODER3_CH2_Pin GPIO_PIN_7
 #define ENCODER3_CH2_GPIO_Port GPIOC
+#define MCP23017_011_INTA_Pin GPIO_PIN_0
+#define MCP23017_011_INTA_GPIO_Port GPIOI
+#define MCP23017_011_INTA_EXTI_IRQn EXTI0_IRQn
 #define ENCODER2_CH1_Pin GPIO_PIN_15
 #define ENCODER2_CH1_GPIO_Port GPIOA
 #define GMG12864_CS_Pin GPIO_PIN_3

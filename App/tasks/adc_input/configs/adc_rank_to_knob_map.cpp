@@ -8,16 +8,20 @@ namespace AdcRankToKnobMap {
  * ADC의 어느 채널에 어떤 노브가 매핑되어 있는지 소프트웨어적으로는 알 수
  * 없으므로, 여기서 하드코딩으로 정의한다.
  */
-static constexpr EnumMap<AdcRank_t, KnobId, 3> adc_rank_knob_map{
+static constexpr EnumMap<AdcRank_t, KnobId, 7> adc_rank_knob_map{
     {static_cast<AdcRank_t>(0), KnobId::IFX},
     {static_cast<AdcRank_t>(1), KnobId::TFX},
     {static_cast<AdcRank_t>(2), KnobId::TRACK_1_VOLUME_FADER},
+    {static_cast<AdcRank_t>(3), KnobId::TRACK_2_VOLUME_FADER},
+    {static_cast<AdcRank_t>(4), KnobId::TRACK_3_VOLUME_FADER},
+    {static_cast<AdcRank_t>(5), KnobId::TRACK_4_VOLUME_FADER},
+    {static_cast<AdcRank_t>(6), KnobId::TRACK_5_VOLUME_FADER},
 };
 
 void Foreach(AdcRankKnobConfigMapCallbackFunction CallbackFunction) {
   // TODO:
   // 하드웨어적으로 등록된 adc 채널에 대해서만 수행하도록 임시 수정
-  for (AdcRank_t i = 0; i < 3; i++) {
+  for (AdcRank_t i = 0; i < 7; i++) {
     CallbackFunction(i, adc_rank_knob_map[i]);
   }
 }
