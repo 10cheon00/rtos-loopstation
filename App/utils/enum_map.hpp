@@ -3,7 +3,7 @@
 
 #include <array>
 #include <cstddef>
-#include <type_traits>
+#include <initializer_list>
 
 template <typename Key, typename Value>
 struct EnumEntry {
@@ -24,14 +24,15 @@ class EnumMap {
  public:
   constexpr EnumMap() : array{}, assigned{} {}
   /**
-   * 내부 array를 초기화하기 위해 가변 템플릿을 사용해 Entry들을 받은 후 하나씩
-   * array에 대입한다.
+   * {key, value} 초기화 목록을 받아 내부 array에 순서대로 대입한다.
    */
-  template <typename... Entries>
-  constexpr explicit EnumMap(Entries... entries) : array{}, assigned{} {
-    ((array[static_cast<std::size_t>(entries.key)] = entries.value,
-      assigned[static_cast<std::size_t>(entries.key)] = true),
-     ...);
+  constexpr EnumMap(std::initializer_list<EnumEntry<Key, Value>> entries)
+      : array{}, assigned{} {
+    for (const auto& entry : entries) {
+      const auto index = static_cast<std::size_t>(entry.key);
+      array[index] = entry.value;
+      assigned[index] = true;
+    }
   }
 
   constexpr const Value& Get(Key key) const {

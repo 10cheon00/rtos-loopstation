@@ -24,9 +24,8 @@ using TransitionEntryArray =
 
 class State {
  protected:
-  template <typename... TransitionEntries>
-  explicit State(Id id, TransitionEntries... transition_entries)
-      : id(id), transition_table(transition_entries...) {};
+  explicit State(Id id, std::initializer_list<TransitionEntry> transition_entries)
+      : id(id), transition_table(transition_entries) {}
 
  public:
   const Id GetNextStateIdFromActionId(ActionId action_id) const {

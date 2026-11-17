@@ -45,10 +45,10 @@ using namespace Gmg12864;
  변환하여 출력한다.
  */
 static constexpr EnumMap<SlotIndex, std::uint8_t> parameter_width_map{
-    EnumEntry{SlotIndex::A, 0},
-    EnumEntry{SlotIndex::B, SLOT_WIDTH},
-    EnumEntry{SlotIndex::C, SLOT_WIDTH * 2},
-    EnumEntry{SlotIndex::D, SLOT_WIDTH * 3},
+    {SlotIndex::A, 0},
+    {SlotIndex::B, SLOT_WIDTH},
+    {SlotIndex::C, SLOT_WIDTH * 2},
+    {SlotIndex::D, SLOT_WIDTH * 3},
 };
 
 static void DrawArrowLeft4x5(uint8_t x, uint8_t y);

@@ -34,10 +34,10 @@ struct TrackStopButtonContext {
 
 struct InputTaskContext {
   MutableEnumMap<EncoderId, ButtonState> encoder_button_states{
-      EnumEntry{EncoderId::A, ButtonState::RELEASED},
-      EnumEntry{EncoderId::B, ButtonState::RELEASED},
-      EnumEntry{EncoderId::C, ButtonState::RELEASED},
-      EnumEntry{EncoderId::D, ButtonState::RELEASED},
+      {EncoderId::A, ButtonState::RELEASED},
+      {EncoderId::B, ButtonState::RELEASED},
+      {EncoderId::C, ButtonState::RELEASED},
+      {EncoderId::D, ButtonState::RELEASED},
   };
   std::array<TrackStopButtonContext, TRACK_COUNT> track_stop_button_contexts;
   TickType_t next_wait_ticks;

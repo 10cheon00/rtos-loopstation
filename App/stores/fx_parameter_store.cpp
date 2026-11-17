@@ -10,19 +10,17 @@ using namespace ParameterModel;
 namespace {
 
 static constexpr FxParameterStore::FxParameterMap INITIAL_FX_PARAMETERS{
-    EnumEntry{Fx::ParameterId::FX_SYSTEM_SELECTED_FX,
-              ValueVariant(FxSelectedFxEnumValue{
-                  Fx::Type::LPF, (const char**)Fx::TYPE_NAME_TABLE})},
-    EnumEntry{Fx::ParameterId::FX_SYSTEM_FX_STATE,
-              ValueVariant(ToggleValue{false})},
-    EnumEntry{Fx::ParameterId::FX_LPF_RATE,
-              ValueVariant{RateValue{0, 100, 100}}},
-    EnumEntry{Fx::ParameterId::FX_LPF_DEPTH,
-              ValueVariant{UnsignedRangeValue{0, 100, 50}}},
-    EnumEntry{Fx::ParameterId::FX_LPF_RESONANCE,
-              ValueVariant{UnsignedRangeValue{0, 100, 50}}},
-    EnumEntry{Fx::ParameterId::FX_LPF_CUTOFF,
-              ValueVariant{UnsignedRangeValue{0, 100, 50}}},
+    {Fx::ParameterId::FX_SYSTEM_SELECTED_FX,
+     ValueVariant(FxSelectedFxEnumValue{
+         Fx::Type::LPF, (const char**)Fx::TYPE_NAME_TABLE})},
+    {Fx::ParameterId::FX_SYSTEM_FX_STATE, ValueVariant(ToggleValue{false})},
+    {Fx::ParameterId::FX_LPF_RATE, ValueVariant{RateValue{0, 100, 100}}},
+    {Fx::ParameterId::FX_LPF_DEPTH,
+     ValueVariant{UnsignedRangeValue{0, 100, 50}}},
+    {Fx::ParameterId::FX_LPF_RESONANCE,
+     ValueVariant{UnsignedRangeValue{0, 100, 50}}},
+    {Fx::ParameterId::FX_LPF_CUTOFF,
+     ValueVariant{UnsignedRangeValue{0, 100, 50}}},
 };
 
 // 저장된 파라미터를 오디오 태스크에 전달할 DTO로 변환한다.

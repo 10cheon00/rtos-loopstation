@@ -9,9 +9,9 @@ namespace AdcRankToKnobMap {
  * 없으므로, 여기서 하드코딩으로 정의한다.
  */
 static constexpr EnumMap<AdcRank_t, KnobId, 3> adc_rank_knob_map{
-    EnumEntry{static_cast<AdcRank_t>(0), KnobId::IFX},
-    EnumEntry{static_cast<AdcRank_t>(1), KnobId::TFX},
-    EnumEntry{static_cast<AdcRank_t>(2), KnobId::TRACK_1_VOLUME_FADER},
+    {static_cast<AdcRank_t>(0), KnobId::IFX},
+    {static_cast<AdcRank_t>(1), KnobId::TFX},
+    {static_cast<AdcRank_t>(2), KnobId::TRACK_1_VOLUME_FADER},
 };
 
 void Foreach(AdcRankKnobConfigMapCallbackFunction CallbackFunction) {

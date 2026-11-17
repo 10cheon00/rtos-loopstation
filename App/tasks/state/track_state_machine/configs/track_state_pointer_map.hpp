@@ -21,9 +21,10 @@ using namespace TrackStateMachine;
 class IdleState : public State {
  public:
   IdleState()
-      : State(Id::IDLE, TransitionEntry{ActionId::NONE, Id::IDLE},
-              TransitionEntry{ActionId::ENTER_RECORD_PLAY, Id::RECORDING},
-              TransitionEntry{ActionId::ENTER_STOP, Id::IDLE}) {}
+      : State(Id::IDLE,
+              {{ActionId::NONE, Id::IDLE},
+               {ActionId::ENTER_RECORD_PLAY, Id::RECORDING},
+               {ActionId::ENTER_STOP, Id::IDLE}}) {}
 
   void OnEnter(Context& context) override {}
 };
@@ -31,9 +32,10 @@ class IdleState : public State {
 class RecordingState : public State {
  public:
   RecordingState()
-      : State(Id::RECORDING, TransitionEntry{ActionId::NONE, Id::RECORDING},
-              TransitionEntry{ActionId::ENTER_RECORD_PLAY, Id::PLAYING},
-              TransitionEntry{ActionId::ENTER_STOP, Id::STOPPED}) {}
+      : State(Id::RECORDING,
+              {{ActionId::NONE, Id::RECORDING},
+               {ActionId::ENTER_RECORD_PLAY, Id::PLAYING},
+               {ActionId::ENTER_STOP, Id::STOPPED}}) {}
 
   void OnEnter(Context& context) override {}
 };
@@ -41,9 +43,10 @@ class RecordingState : public State {
 class PlayingState : public State {
  public:
   PlayingState()
-      : State(Id::PLAYING, TransitionEntry{ActionId::NONE, Id::PLAYING},
-              TransitionEntry{ActionId::ENTER_RECORD_PLAY, Id::OVERDUBBING},
-              TransitionEntry{ActionId::ENTER_STOP, Id::STOPPED}) {}
+      : State(Id::PLAYING,
+              {{ActionId::NONE, Id::PLAYING},
+               {ActionId::ENTER_RECORD_PLAY, Id::OVERDUBBING},
+               {ActionId::ENTER_STOP, Id::STOPPED}}) {}
 
   void OnEnter(Context& context) override {}
 };
@@ -51,10 +54,11 @@ class PlayingState : public State {
 class StoppedState : public State {
  public:
   StoppedState()
-      : State(Id::STOPPED, TransitionEntry{ActionId::NONE, Id::STOPPED},
-              TransitionEntry{ActionId::ENTER_RECORD_PLAY, Id::PLAYING},
-              TransitionEntry{ActionId::ENTER_STOP, Id::STOPPED},
-              TransitionEntry{ActionId::ENTER_RESET, Id::IDLE}) {}
+      : State(Id::STOPPED,
+              {{ActionId::NONE, Id::STOPPED},
+               {ActionId::ENTER_RECORD_PLAY, Id::PLAYING},
+               {ActionId::ENTER_STOP, Id::STOPPED},
+               {ActionId::ENTER_RESET, Id::IDLE}}) {}
 
   void OnEnter(Context& context) override {}
 };
@@ -62,9 +66,10 @@ class StoppedState : public State {
 class OverdubbingState : public State {
  public:
   OverdubbingState()
-      : State(Id::OVERDUBBING, TransitionEntry{ActionId::NONE, Id::OVERDUBBING},
-              TransitionEntry{ActionId::ENTER_RECORD_PLAY, Id::PLAYING},
-              TransitionEntry{ActionId::ENTER_STOP, Id::STOPPED}) {}
+      : State(Id::OVERDUBBING,
+              {{ActionId::NONE, Id::OVERDUBBING},
+               {ActionId::ENTER_RECORD_PLAY, Id::PLAYING},
+               {ActionId::ENTER_STOP, Id::STOPPED}}) {}
 
   void OnEnter(Context& context) override {}
 };

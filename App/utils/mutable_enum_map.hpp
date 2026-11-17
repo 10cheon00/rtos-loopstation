@@ -2,21 +2,26 @@
 #define MUTABLE_ENUM_MAP_HPP
 
 #include <array>
-#include <optional>
+
+#include "enum_map.hpp"
 
 template <typename Key, typename Value,
           std::size_t MapSize = static_cast<std::size_t>(Key::COUNT)>
 class MutableEnumMap {
  public:
-  template <typename... Entries>
+  constexpr MutableEnumMap() : array{}, assigned{} {}
+
   /**
-   * 내부 array를 초기화하기 위해 가변 템플릿을 사용해 Entry들을 받은 후 하나씩
-   * array에 대입한다.
+   * {key, value} 초기화 목록을 받아 내부 array에 순서대로 대입한다.
    */
-  constexpr explicit MutableEnumMap(Entries... entries) : array{}, assigned{} {
-    ((array[static_cast<std::size_t>(entries.key)] = entries.value,
-      assigned[static_cast<std::size_t>(entries.key)] = true),
-     ...);
+  constexpr MutableEnumMap(
+      std::initializer_list<EnumEntry<Key, Value>> entries)
+      : array{}, assigned{} {
+    for (const auto& entry : entries) {
+      const auto index = static_cast<std::size_t>(entry.key);
+      array[index] = entry.value;
+      assigned[index] = true;
+    }
   }
 
   constexpr Value& Get(Key key) { return array[static_cast<std::size_t>(key)]; }

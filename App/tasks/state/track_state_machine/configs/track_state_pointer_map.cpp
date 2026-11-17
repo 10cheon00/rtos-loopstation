@@ -21,12 +21,12 @@ namespace TrackStatePointerMap {
 using namespace TrackStateClass;
 
 static constexpr EnumMap<Id, TrackStatePointer> track_state_map{
-    EnumEntry{Id::NONE, nullptr},
-    EnumEntry{Id::IDLE, &idle_state},
-    EnumEntry{Id::RECORDING, &recording_state},
-    EnumEntry{Id::STOPPED, &stopped_state},
-    EnumEntry{Id::PLAYING, &playing_state},
-    EnumEntry{Id::OVERDUBBING, &overdubbing_state},
+    {Id::NONE, nullptr},
+    {Id::IDLE, &idle_state},
+    {Id::RECORDING, &recording_state},
+    {Id::STOPPED, &stopped_state},
+    {Id::PLAYING, &playing_state},
+    {Id::OVERDUBBING, &overdubbing_state},
 };
 
 TrackStatePointer Get(Id id) { return track_state_map[id]; }

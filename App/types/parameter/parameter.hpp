@@ -18,7 +18,7 @@ class Parameter {
  public:
   constexpr Parameter() : value_variant() {}
 
-  constexpr Parameter(ValueVariant& value_variant)
+  constexpr Parameter(const ValueVariant& value_variant)
       : value_variant(value_variant) {}
 
   Parameter(RtosParameterCopy& copy) {

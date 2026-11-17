@@ -37,36 +37,36 @@ struct TrackLedColorSet {
 
 static constexpr EnumMap<TrackStateMachine::Id, TrackLedColorSet>
     track_state_led_color_map{
-        EnumEntry{TrackStateMachine::Id::IDLE,
-                  (TrackLedColorSet){
-                      Mcp23017::LedState::OFF,
-                      Mcp23017::LedState::OFF,
-                      Mcp23017::LedState::OFF,
-                  }},
-        EnumEntry{TrackStateMachine::Id::RECORDING,
-                  (TrackLedColorSet){
-                      Mcp23017::LedState::ON,
-                      Mcp23017::LedState::OFF,
-                      Mcp23017::LedState::OFF,
-                  }},
-        EnumEntry{TrackStateMachine::Id::STOPPED,
-                  (TrackLedColorSet){
-                      Mcp23017::LedState::OFF,
-                      Mcp23017::LedState::OFF,
-                      Mcp23017::LedState::ON,
-                  }},
-        EnumEntry{TrackStateMachine::Id::PLAYING,
-                  (TrackLedColorSet){
-                      Mcp23017::LedState::OFF,
-                      Mcp23017::LedState::ON,
-                      Mcp23017::LedState::OFF,
-                  }},
-        EnumEntry{TrackStateMachine::Id::OVERDUBBING,
-                  (TrackLedColorSet){
-                      Mcp23017::LedState::ON,
-                      Mcp23017::LedState::ON,
-                      Mcp23017::LedState::OFF,
-                  }},
+        {TrackStateMachine::Id::IDLE,
+         (TrackLedColorSet){
+             Mcp23017::LedState::OFF,
+             Mcp23017::LedState::OFF,
+             Mcp23017::LedState::OFF,
+         }},
+        {TrackStateMachine::Id::RECORDING,
+         (TrackLedColorSet){
+             Mcp23017::LedState::ON,
+             Mcp23017::LedState::OFF,
+             Mcp23017::LedState::OFF,
+         }},
+        {TrackStateMachine::Id::STOPPED,
+         (TrackLedColorSet){
+             Mcp23017::LedState::OFF,
+             Mcp23017::LedState::OFF,
+             Mcp23017::LedState::ON,
+         }},
+        {TrackStateMachine::Id::PLAYING,
+         (TrackLedColorSet){
+             Mcp23017::LedState::OFF,
+             Mcp23017::LedState::ON,
+             Mcp23017::LedState::OFF,
+         }},
+        {TrackStateMachine::Id::OVERDUBBING,
+         (TrackLedColorSet){
+             Mcp23017::LedState::ON,
+             Mcp23017::LedState::ON,
+             Mcp23017::LedState::OFF,
+         }},
 };
 
 static void Run(void);
