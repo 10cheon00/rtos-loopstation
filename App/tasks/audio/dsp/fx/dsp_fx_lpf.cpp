@@ -21,7 +21,7 @@ void Lpf::Process(Fx::Parameters::Lpf& lpf_parameters, bool is_on,
   const float q = Dsp::Utils::GetResonanceQ(lpf_parameters.resonance.current);
 
   float x = 0, y = 0;
-  for (std::size_t i = 0; i < size; i += FRAME_BUFFER_COUNT) {
+  for (std::size_t i = 0; i < size; i += CHANNEL_COUNT) {
     // 2. 수식에 필요한 변수를 업데이트
     const float cutoff = GetCutoffFrequency(
         lpf_parameters.rate, lpf_parameters.depth, lpf_parameters.cutoff);
@@ -39,14 +39,14 @@ void Lpf::Process(Fx::Parameters::Lpf& lpf_parameters, bool is_on,
     a2 = (1.0f - alpha) * reverse_a0;
 
     // 3. 버퍼에 필터 적용
-    x = static_cast<float>(buffer[i + INMP441_ALIGN_OFFSET]);
+    x = static_cast<float>(buffer[i]);
     y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
     x2 = x1;
     x1 = x;
     y2 = y1;
     y1 = y;
 
-    buffer[i + INMP441_ALIGN_OFFSET] = static_cast<BitDepth_t>(y);
+    buffer[i] = static_cast<BitDepth_t>(y);
   }
 }
 
