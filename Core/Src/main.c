@@ -217,22 +217,22 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM2) {
-        InputEvent_SendEncoderA(input_event_queueHandle,
-                               __HAL_TIM_IS_TIM_COUNTING_DOWN(htim));
-    }
-    
-    if (htim->Instance == TIM3) {
         InputEvent_SendEncoderB(input_event_queueHandle,
                                __HAL_TIM_IS_TIM_COUNTING_DOWN(htim));
     }
     
+    if (htim->Instance == TIM3) {
+        InputEvent_SendEncoderA(input_event_queueHandle,
+                               __HAL_TIM_IS_TIM_COUNTING_DOWN(htim));
+    }
+    
     if (htim->Instance == TIM5) {
-        InputEvent_SendEncoderC(input_event_queueHandle,
+        InputEvent_SendEncoderD(input_event_queueHandle,
                                __HAL_TIM_IS_TIM_COUNTING_DOWN(htim));
     }
     
     if (htim->Instance == TIM8) {
-        InputEvent_SendEncoderD(input_event_queueHandle,
+        InputEvent_SendEncoderC(input_event_queueHandle,
                                __HAL_TIM_IS_TIM_COUNTING_DOWN(htim));
     }
 }
