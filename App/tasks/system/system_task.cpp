@@ -30,6 +30,9 @@ void SystemTask_Init(void* argument) {
 
   if (Init(params) == SystemInitResult::SUCCESS) {
     osEventFlagsSet(params->system_init_event, SystemInitEventFlag::Inited);
+    for (;;) {
+      osDelay(osWaitForever);
+    }
     osThreadExit();
   } else {
     ErrorHandler();

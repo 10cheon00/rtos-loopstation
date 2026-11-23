@@ -126,7 +126,7 @@ static void Run(void) {
     last_wake_ticks = osKernelGetTickCount();
     osMessageQueueGet(display_snapshot_mailbox, &snapshot, NULL, 0);
     HandlePanelRenderPayload(snapshot.panel);
-    HandleLedRenderPayload(snapshot.led);
+    // HandleLedRenderPayload(snapshot.led);
   }
 }
 
@@ -208,52 +208,52 @@ static void UpdateTrackLedStateSnapshotIfChanged(
 // 찾아야 함 현재 핀 상태에 따라 수정된 핀의 값을 Mcp23017 드라이버에게 넘겨
 // 값을 업데이트하라고 함
 static TaskStatus RenderFxLed(bool is_on, Mcp23017::GpioId gpio_id) {
-  Mcp23017::Driver& driver = Mcp23017::Driver::GetInstance();
-  const Mcp23017::PinConfigMap& pin_config_map = Mcp23017::GetPinConfigMap();
-  const Mcp23017::PinConfig& pin_config = pin_config_map.Get(gpio_id);
-  Mcp23017::LedState pin_state =
-      is_on ? Mcp23017::LedState::ON : Mcp23017::LedState::OFF;
+//   Mcp23017::Driver& driver = Mcp23017::Driver::GetInstance();
+//   const Mcp23017::PinConfigMap& pin_config_map = Mcp23017::GetPinConfigMap();
+//   const Mcp23017::PinConfig& pin_config = pin_config_map.Get(gpio_id);
+//   Mcp23017::LedState pin_state =
+//       is_on ? Mcp23017::LedState::ON : Mcp23017::LedState::OFF;
 
-  if (driver.UpdateLedState(pin_config.address, gpio_id, pin_state) !=
-      Mcp23017::Status::OK) {
-    return TASK_STATUS_ERROR;
-  }
+//   if (driver.UpdateLedState(pin_config.address, gpio_id, pin_state) !=
+//       Mcp23017::Status::OK) {
+//     return TASK_STATUS_ERROR;
+//   }
 
   return TASK_STATUS_OK;
 }
 
 static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id,
                                  uint8_t track_index) {
-  const Mcp23017::PinConfig& red_entry =
-      Mcp23017::GetTrackLedEntry(track_index, Mcp23017::TrackLedColor::RED);
-  const Mcp23017::PinConfig& green_entry =
-      Mcp23017::GetTrackLedEntry(track_index, Mcp23017::TrackLedColor::GREEN);
-  const Mcp23017::PinConfig& blue_entry =
-      Mcp23017::GetTrackLedEntry(track_index, Mcp23017::TrackLedColor::BLUE);
+//   const Mcp23017::PinConfig& red_entry =
+//       Mcp23017::GetTrackLedEntry(track_index, Mcp23017::TrackLedColor::RED);
+//   const Mcp23017::PinConfig& green_entry =
+//       Mcp23017::GetTrackLedEntry(track_index, Mcp23017::TrackLedColor::GREEN);
+//   const Mcp23017::PinConfig& blue_entry =
+//       Mcp23017::GetTrackLedEntry(track_index, Mcp23017::TrackLedColor::BLUE);
 
-  Mcp23017::Driver& driver = Mcp23017::Driver::GetInstance();
-  Mcp23017::TrackLedPayload payload[3] = {
-      {
-          .address = red_entry.address,
-          .led_gpio_id = Mcp23017::GetTrackLedGpioId(
-              track_index, Mcp23017::TrackLedColor::RED),
-          .led_state = track_state_led_color_map[state_id].red,
-      },
-      {
-          .address = green_entry.address,
-          .led_gpio_id = Mcp23017::GetTrackLedGpioId(
-              track_index, Mcp23017::TrackLedColor::GREEN),
-          .led_state = track_state_led_color_map[state_id].green,
-      },
-      {
-          .address = blue_entry.address,
-          .led_gpio_id = Mcp23017::GetTrackLedGpioId(
-              track_index, Mcp23017::TrackLedColor::BLUE),
-          .led_state = track_state_led_color_map[state_id].blue,
-      },
-  };
-  if (driver.UpdateTrackLedState(payload) != Mcp23017::Status::OK) {
-    return TASK_STATUS_ERROR;
-  }
+//   Mcp23017::Driver& driver = Mcp23017::Driver::GetInstance();
+//   Mcp23017::TrackLedPayload payload[3] = {
+//       {
+//           .address = red_entry.address,
+//           .led_gpio_id = Mcp23017::GetTrackLedGpioId(
+//               track_index, Mcp23017::TrackLedColor::RED),
+//           .led_state = track_state_led_color_map[state_id].red,
+//       },
+//       {
+//           .address = green_entry.address,
+//           .led_gpio_id = Mcp23017::GetTrackLedGpioId(
+//               track_index, Mcp23017::TrackLedColor::GREEN),
+//           .led_state = track_state_led_color_map[state_id].green,
+//       },
+//       {
+//           .address = blue_entry.address,
+//           .led_gpio_id = Mcp23017::GetTrackLedGpioId(
+//               track_index, Mcp23017::TrackLedColor::BLUE),
+//           .led_state = track_state_led_color_map[state_id].blue,
+//       },
+//   };
+//   if (driver.UpdateTrackLedState(payload) != Mcp23017::Status::OK) {
+//     return TASK_STATUS_ERROR;
+//   }
   return TASK_STATUS_OK;
 }

@@ -46,7 +46,7 @@ static const AddressInterruptPinMap interrupt_pin_map[] = {
     {.address = Address::b001, .gpio_interrupt_pin = GPIO_PIN_11},
     {.address = Address::b011, .gpio_interrupt_pin = GPIO_PIN_0},
     {.address = Address::b101, .gpio_interrupt_pin = GPIO_PIN_4},
-    {.address = Address::b111, .gpio_interrupt_pin = GPIO_PIN_8},
+  // {.address = Address::b111, .gpio_interrupt_pin = GPIO_PIN_8},
 };
 static const size_t interrupt_pin_map_count = ARRAY_COUNT(interrupt_pin_map);
 
