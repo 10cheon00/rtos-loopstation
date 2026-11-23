@@ -33,6 +33,22 @@ static constexpr EnumMap<ParameterModel::Id, ParameterModel::Parameter>
             Id::TRACK_1_VOLUME,
             ValueVariant(UnsignedRangeValue(0, 100, 100)),
         },
+        {
+            Id::TRACK_2_VOLUME,
+            ValueVariant(UnsignedRangeValue(0, 100, 100)),
+        },
+        {
+            Id::TRACK_3_VOLUME,
+            ValueVariant(UnsignedRangeValue(0, 100, 100)),
+        },
+        {
+            Id::TRACK_4_VOLUME,
+            ValueVariant(UnsignedRangeValue(0, 100, 100)),
+        },
+        {
+            Id::TRACK_5_VOLUME,
+            ValueVariant(UnsignedRangeValue(0, 100, 100)),
+        },
 };
 
 void SystemParameterStore::Reset(osMutexId_t mutex) {

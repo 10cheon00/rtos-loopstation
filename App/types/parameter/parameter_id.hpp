@@ -12,6 +12,10 @@ enum class Id : std::uint8_t {
   IFX_KNOB,
   TFX_KNOB,
   TRACK_1_VOLUME,
+  TRACK_2_VOLUME,
+  TRACK_3_VOLUME,
+  TRACK_4_VOLUME,
+  TRACK_5_VOLUME,
   SYSTEM_SETTING_LCD_CONSTRAST,
   COUNT,  // 이 enum은 ParameterModel::Id의 개수를 표시하는 용도임
 };

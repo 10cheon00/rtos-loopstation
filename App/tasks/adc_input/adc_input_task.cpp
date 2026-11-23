@@ -10,7 +10,7 @@
 #include "system_init_event_flag.hpp"
 #include "utils.hpp"
 
-#define ADC_POLLING_FREQEUNCY_HZ (100UL)
+#define ADC_POLLING_FREQEUNCY_HZ (10UL)
 #define ADC_POLLING_DELAY_MS (1000UL / ADC_POLLING_FREQEUNCY_HZ)
 #define ADC_POLLING_DELAY_TICKS (pdMS_TO_TICKS(ADC_POLLING_DELAY_MS))
 
