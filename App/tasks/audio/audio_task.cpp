@@ -19,6 +19,7 @@
 #include "fx_variant.hpp"
 #include "parameter.hpp"
 #include "queue.h"
+#include "track_config.h"
 #include "system_init_event_flag.hpp"
 #include "track_state.hpp"
 #include "utils.hpp"

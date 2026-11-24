@@ -14,6 +14,7 @@
 #include "page.hpp"
 #include "parameter.hpp"
 #include "system_init_event_flag.hpp"
+#include "track_config.h"
 #include "track_state_id.hpp"
 #include "ui_renderer.hpp"
 #include "ui_state_label_map.hpp"
@@ -75,7 +76,7 @@ static TaskStatus HandlePanelRenderPayload(RtosPayload_PanelRender& payload);
 static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender& payload);
 static TaskStatus RenderFxLed(bool is_on, Mcp23017::GpioId gpio_id);
 static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id,
-                                 TrackIndex track_index);
+                                 std::size_t track_index);
 static void UpdateFxLedStateIfChanged(RtosPayload_LedRender& payload);
 static void UpdateTrackLedStateSnapshotIfChanged(
     RtosEnumValue* rtos_enum_value_track_states);
@@ -202,7 +203,7 @@ static void UpdateTrackLedStateSnapshotIfChanged(
         rtos_enum_value_track_states[i]);
     if (track_state_snapshot[i] != id) {
       track_state_snapshot[i] = id;
-      RenderTrackLed(id, static_cast<TrackIndex>(i));
+      RenderTrackLed(id, i);
     }
   }
 }
@@ -226,7 +227,7 @@ static TaskStatus RenderFxLed(bool is_on, Mcp23017::GpioId gpio_id) {
 }
 
 static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id,
-                                 TrackIndex track_index) {
+                                 std::size_t track_index) {
   Xl5050Rgbw::Driver& driver = Xl5050Rgbw::Driver::GetInstance();
   driver.UpdateTrackLedStatus(state_id, track_index);
   return TASK_STATUS_OK;

@@ -5,7 +5,7 @@
 
 #include "singleton.hpp"
 #include "stm32h7xx.h"
-#include "track_index.hpp"
+#include "track_config.h"
 #include "track_state_id.hpp"
 
 namespace Xl5050Rgbw {
@@ -24,13 +24,11 @@ enum class InitState {
 
 using TimerCcr_t = std::uint16_t;
 
-constexpr std::size_t TrackCount =
-    1U;  // static_cast<std::size_t>(TrackIndex::COUNT);
 constexpr std::size_t ColorCount = 3U;
 constexpr std::size_t ColorBitCount = 8U;
 constexpr std::size_t ResetLowCount = 80U;
 constexpr std::size_t TimerCcrCount =
-    TrackCount * ColorCount * ColorBitCount + ResetLowCount;
+    TRACK_COUNT * ColorCount * ColorBitCount + ResetLowCount;
 
 using ColorValue_t = std::uint8_t;
 
@@ -50,12 +48,12 @@ class Driver : public Singleton<Driver> {
  public:
   Status Initialize(TIM_HandleTypeDef* htim);
   Status UpdateTrackLedStatus(TrackStateMachine::Id track_state_id,
-                              TrackIndex track_index);
+                              std::size_t track_index);
 
  private:
   TIM_HandleTypeDef* htim;
   InitState init_state;
-  TrackStateMachine::Id track_state_ids[TrackCount];
+  TrackStateMachine::Id track_state_ids[TRACK_COUNT];
 
   void ConvertTrackStateIdsToTimerCcrs();
   void ConvertColorValueToTimerCcr(ColorValue_t color_value,

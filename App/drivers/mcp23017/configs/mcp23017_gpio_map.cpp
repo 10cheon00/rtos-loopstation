@@ -96,8 +96,6 @@ static constexpr const PinConfigMap pin_config_map{
      PinConfig{.gpio_type = GpioType::INPUT, .address = Address::b111, .port = Port::B, .pin_index = 6}},
 };
 
-// TODO:
-// TRACK_COUNT를 얻기 위해 track_state.h를 인클루드하는게 맞을까?
 static GpioId track_led_gpio_table[TRACK_COUNT][(size_t)TrackLedColor::COUNT] =
     {
         {GpioId::NONE, GpioId::LED_TRACK_1_RED, GpioId::LED_TRACK_1_GREEN,

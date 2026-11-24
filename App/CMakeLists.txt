@@ -64,7 +64,6 @@ target_sources(loopstation_app PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/track_state_machine_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_state_pointer_map.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/configs/track_index.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/track_state_machine/states/track_state.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/ui_state_machine/configs/ui_transition_map.cpp

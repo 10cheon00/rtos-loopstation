@@ -42,14 +42,14 @@ Status Driver::Initialize(TIM_HandleTypeDef* htim) {
 }
 
 Status Driver::UpdateTrackLedStatus(TrackStateMachine::Id track_state_id,
-                                    TrackIndex track_index) {
-  track_state_ids[static_cast<std::size_t>(track_index)] = track_state_id;
+                                    std::size_t track_index) {
+  track_state_ids[track_index] = track_state_id;
   ConvertTrackStateIdsToTimerCcrs();
   return Send();
 }
 
 void Driver::ConvertTrackStateIdsToTimerCcrs() {
-  for (std::size_t i = 0; i < TrackCount; i++) {
+  for (std::size_t i = 0; i < TRACK_COUNT; i++) {
     const Color& color = color_map[track_state_ids[i]];
     ConvertColorValueToTimerCcr(color.green, i * ColorCount * ColorBitCount);
     ConvertColorValueToTimerCcr(color.red, i * ColorCount * ColorBitCount + 8);
