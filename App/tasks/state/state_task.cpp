@@ -135,27 +135,6 @@ void StateTask_Init(void* argument) {
   Run();
 }
 
-static void MakeEmptyDisplaySnapshot(RtosMessage_DisplaySnapshot& snapshot) {
-  snapshot.panel.rtos_enum_value_ui_state =
-      Utils::ToRtosEnumValue(UiStateMachine::Id::NONE);
-  snapshot.panel.rtos_enum_value_page_navigation_bitset =
-      PageNavigationBitset{}.ToRtosEnumValue();
-  for (auto& slot : snapshot.panel.page_slots) {
-    slot.rtos_enum_value_page_slot_type =
-        Utils::ToRtosEnumValue(PageSlotType::NONE);
-    slot.data.parameter.rtos_parameter_copy.rtos_enum_value_parameter_type =
-        Utils::ToRtosEnumValue(ParameterType::NONE);
-    slot.data.parameter.label = "";
-  }
-  snapshot.led.rtos_parameter_copy_ifx_a_state.rtos_enum_value_parameter_type =
-      Utils::ToRtosEnumValue(ParameterType::NONE);
-  snapshot.led.rtos_parameter_copy_tfx_a_state.rtos_enum_value_parameter_type =
-      Utils::ToRtosEnumValue(ParameterType::NONE);
-  for (auto& state : snapshot.led.rtos_enum_value_track_states) {
-    state = Utils::ToRtosEnumValue(TrackStateMachine::Id::NONE);
-  }
-}
-
 void Run(void) {
   RtosMessage_StateEvent state_event;
   osStatus_t os_status;
@@ -433,21 +412,6 @@ static void TryTransitionUiStateMachine(ButtonId id) {
   }
 }
 
-static TaskStatus UpdateDisplaySnapshotMailbox() {
-  RtosMessage_DisplaySnapshot snapshot{};
-  MakeEmptyDisplaySnapshot(snapshot);
-
-  TaskStatus panel_copied = FillPanelRenderPayload(snapshot.panel);
-  TaskStatus led_copied = FillDisplaySnapshotLedRenderPayload(snapshot.led);
-  if (panel_copied == TASK_STATUS_OK && led_copied == TASK_STATUS_OK) {
-    context.last_display_snapshot = snapshot;
-  }
-
-  xQueueOverwrite((QueueHandle_t)context.display_snapshot_mailbox,
-                  &context.last_display_snapshot);
-  return TASK_STATUS_OK;
-}
-
 /**
  * 버튼에 매핑된 전이 이벤트가 있는지 확인 후 전이
  */
@@ -473,26 +437,40 @@ static bool IsButtonHoldEventOrDoubleTapEvent(StateEventVariant& variant) {
          event.state == ButtonState::DOUBLE_TAP;
 }
 
-static void UpdateAudioEventSnapshotMailbox() {
-  RtosMessage_AudioEventSnapshot audio_event_snapshot = {
+static TaskStatus UpdateDisplaySnapshotMailbox() {
+  RtosMessage_DisplaySnapshot snapshot{};
+  MakeEmptyDisplaySnapshot(snapshot);
 
-      // TODO:
-      // IFX, TFX 파라미터값 복사하기
-  };
-
-  for (std::size_t i = 0; i < context.track_entry.size(); i++) {
-    audio_event_snapshot.rtos_enum_value_track_states[i] =
-        Utils::ToRtosEnumValue(
-            context.track_entry[i].state_machine.GetCurrentState()->GetId());
-    ParameterModel::UnsignedRangeValue track_volume =
-        std::get<ParameterModel::UnsignedRangeValue>(
-            Store::SystemParameterStore::GetInstance()
-                .Get(ParameterModel::Id::TRACK_1_VOLUME)
-                .GetValueVariant());
-    audio_event_snapshot.rtos_parameter_track_volumes[i] = track_volume.current;
+  TaskStatus panel_copied = FillPanelRenderPayload(snapshot.panel);
+  TaskStatus led_copied = FillDisplaySnapshotLedRenderPayload(snapshot.led);
+  if (panel_copied == TASK_STATUS_OK && led_copied == TASK_STATUS_OK) {
+    context.last_display_snapshot = snapshot;
   }
 
-  xQueueOverwrite(context.audio_event_snapshot_mailbox, &audio_event_snapshot);
+  xQueueOverwrite((QueueHandle_t)context.display_snapshot_mailbox,
+                  &context.last_display_snapshot);
+  return TASK_STATUS_OK;
+}
+
+static void MakeEmptyDisplaySnapshot(RtosMessage_DisplaySnapshot& snapshot) {
+  snapshot.panel.rtos_enum_value_ui_state =
+      Utils::ToRtosEnumValue(UiStateMachine::Id::NONE);
+  snapshot.panel.rtos_enum_value_page_navigation_bitset =
+      PageNavigationBitset{}.ToRtosEnumValue();
+  for (auto& slot : snapshot.panel.page_slots) {
+    slot.rtos_enum_value_page_slot_type =
+        Utils::ToRtosEnumValue(PageSlotType::NONE);
+    slot.data.parameter.rtos_parameter_copy.rtos_enum_value_parameter_type =
+        Utils::ToRtosEnumValue(ParameterType::NONE);
+    slot.data.parameter.label = "";
+  }
+  snapshot.led.rtos_parameter_copy_ifx_a_state.rtos_enum_value_parameter_type =
+      Utils::ToRtosEnumValue(ParameterType::NONE);
+  snapshot.led.rtos_parameter_copy_tfx_a_state.rtos_enum_value_parameter_type =
+      Utils::ToRtosEnumValue(ParameterType::NONE);
+  for (auto& state : snapshot.led.rtos_enum_value_track_states) {
+    state = Utils::ToRtosEnumValue(TrackStateMachine::Id::NONE);
+  }
 }
 
 static TaskStatus FillPanelRenderPayload(RtosPayload_PanelRender& payload) {
@@ -644,4 +622,22 @@ static TaskStatus FillDisplaySnapshotLedRenderPayload(
     return TASK_STATUS_ERROR;
   }
   return TASK_STATUS_OK;
+}
+
+static void UpdateAudioEventSnapshotMailbox() {
+  RtosMessage_AudioEventSnapshot audio_event_snapshot = {};
+
+  for (std::size_t i = 0; i < context.track_entry.size(); i++) {
+    audio_event_snapshot.rtos_enum_value_track_states[i] =
+        Utils::ToRtosEnumValue(
+            context.track_entry[i].state_machine.GetCurrentState()->GetId());
+    ParameterModel::UnsignedRangeValue track_volume =
+        std::get<ParameterModel::UnsignedRangeValue>(
+            Store::SystemParameterStore::GetInstance()
+                .Get(ParameterModel::Id::TRACK_1_VOLUME)
+                .GetValueVariant());
+    audio_event_snapshot.rtos_parameter_track_volumes[i] = track_volume.current;
+  }
+
+  xQueueOverwrite(context.audio_event_snapshot_mailbox, &audio_event_snapshot);
 }
