@@ -18,6 +18,7 @@
 #include "ui_renderer.hpp"
 #include "ui_state_label_map.hpp"
 #include "utils.hpp"
+#include "xl5050_rgbw.hpp"
 
 #define DISPLAY_RENDER_FREQEUNCY_HZ (100UL)
 #define DISPLAY_RENDER_DELAY_MS (1000UL / DISPLAY_RENDER_FREQEUNCY_HZ)
@@ -74,7 +75,7 @@ static TaskStatus HandlePanelRenderPayload(RtosPayload_PanelRender& payload);
 static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender& payload);
 static TaskStatus RenderFxLed(bool is_on, Mcp23017::GpioId gpio_id);
 static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id,
-                                 uint8_t track_index);
+                                 TrackIndex track_index);
 static void UpdateFxLedStateIfChanged(RtosPayload_LedRender& payload);
 static void UpdateTrackLedStateSnapshotIfChanged(
     RtosEnumValue* rtos_enum_value_track_states);
@@ -126,7 +127,7 @@ static void Run(void) {
     last_wake_ticks = osKernelGetTickCount();
     osMessageQueueGet(display_snapshot_mailbox, &snapshot, NULL, 0);
     HandlePanelRenderPayload(snapshot.panel);
-    // HandleLedRenderPayload(snapshot.led);
+    HandleLedRenderPayload(snapshot.led);
   }
 }
 
@@ -166,30 +167,32 @@ static TaskStatus HandlePanelRenderPayload(
 }
 
 static TaskStatus HandleLedRenderPayload(RtosPayload_LedRender& payload) {
-  UpdateFxLedStateIfChanged(payload);
+  // UpdateFxLedStateIfChanged(payload);
   UpdateTrackLedStateSnapshotIfChanged(payload.rtos_enum_value_track_states);
 
   return TASK_STATUS_OK;
 }
 
 static void UpdateFxLedStateIfChanged(RtosPayload_LedRender& payload) {
-  ParameterModel::Parameter ifx_a_state{
-      payload.rtos_parameter_copy_ifx_a_state};
-  ParameterModel::Parameter tfx_a_state{
-      payload.rtos_parameter_copy_tfx_a_state};
+  // ParameterModel::Parameter ifx_a_state{
+  //     payload.rtos_parameter_copy_ifx_a_state};
+  // ParameterModel::Parameter tfx_a_state{
+  //     payload.rtos_parameter_copy_tfx_a_state};
 
-  if (ifx_state_snapshot[Fx::Slot::A] !=
-      ifx_a_state.GetValue<ParameterModel::ToggleValue>().is_on) {
-    ifx_state_snapshot[Fx::Slot::A] =
-        ifx_a_state.GetValue<ParameterModel::ToggleValue>().is_on;
-    RenderFxLed(ifx_state_snapshot[Fx::Slot::A], Mcp23017::GpioId::LED_IFX_A);
-  }
-  if (tfx_state_snapshot[Fx::Slot::A] !=
-      tfx_a_state.GetValue<ParameterModel::ToggleValue>().is_on) {
-    tfx_state_snapshot[Fx::Slot::A] =
-        tfx_a_state.GetValue<ParameterModel::ToggleValue>().is_on;
-    RenderFxLed(tfx_state_snapshot[Fx::Slot::A], Mcp23017::GpioId::LED_TFX_A);
-  }
+  // if (ifx_state_snapshot[Fx::Slot::A] !=
+  //     ifx_a_state.GetValue<ParameterModel::ToggleValue>().is_on) {
+  //   ifx_state_snapshot[Fx::Slot::A] =
+  //       ifx_a_state.GetValue<ParameterModel::ToggleValue>().is_on;
+  //   RenderFxLed(ifx_state_snapshot[Fx::Slot::A],
+  //   Mcp23017::GpioId::LED_IFX_A);
+  // }
+  // if (tfx_state_snapshot[Fx::Slot::A] !=
+  //     tfx_a_state.GetValue<ParameterModel::ToggleValue>().is_on) {
+  //   tfx_state_snapshot[Fx::Slot::A] =
+  //       tfx_a_state.GetValue<ParameterModel::ToggleValue>().is_on;
+  //   RenderFxLed(tfx_state_snapshot[Fx::Slot::A],
+  //   Mcp23017::GpioId::LED_TFX_A);
+  // }
 }
 
 static void UpdateTrackLedStateSnapshotIfChanged(
@@ -199,7 +202,7 @@ static void UpdateTrackLedStateSnapshotIfChanged(
         rtos_enum_value_track_states[i]);
     if (track_state_snapshot[i] != id) {
       track_state_snapshot[i] = id;
-      RenderTrackLed(id, i);
+      RenderTrackLed(id, static_cast<TrackIndex>(i));
     }
   }
 }
@@ -208,52 +211,23 @@ static void UpdateTrackLedStateSnapshotIfChanged(
 // 찾아야 함 현재 핀 상태에 따라 수정된 핀의 값을 Mcp23017 드라이버에게 넘겨
 // 값을 업데이트하라고 함
 static TaskStatus RenderFxLed(bool is_on, Mcp23017::GpioId gpio_id) {
-//   Mcp23017::Driver& driver = Mcp23017::Driver::GetInstance();
-//   const Mcp23017::PinConfigMap& pin_config_map = Mcp23017::GetPinConfigMap();
-//   const Mcp23017::PinConfig& pin_config = pin_config_map.Get(gpio_id);
-//   Mcp23017::LedState pin_state =
-//       is_on ? Mcp23017::LedState::ON : Mcp23017::LedState::OFF;
+  //   Mcp23017::Driver& driver = Mcp23017::Driver::GetInstance();
+  //   const Mcp23017::PinConfigMap& pin_config_map =
+  //   Mcp23017::GetPinConfigMap(); const Mcp23017::PinConfig& pin_config =
+  //   pin_config_map.Get(gpio_id); Mcp23017::LedState pin_state =
+  //       is_on ? Mcp23017::LedState::ON : Mcp23017::LedState::OFF;
 
-//   if (driver.UpdateLedState(pin_config.address, gpio_id, pin_state) !=
-//       Mcp23017::Status::OK) {
-//     return TASK_STATUS_ERROR;
-//   }
+  //   if (driver.UpdateLedState(pin_config.address, gpio_id, pin_state) !=
+  //       Mcp23017::Status::OK) {
+  //     return TASK_STATUS_ERROR;
+  //   }
 
   return TASK_STATUS_OK;
 }
 
 static TaskStatus RenderTrackLed(TrackStateMachine::Id state_id,
-                                 uint8_t track_index) {
-//   const Mcp23017::PinConfig& red_entry =
-//       Mcp23017::GetTrackLedEntry(track_index, Mcp23017::TrackLedColor::RED);
-//   const Mcp23017::PinConfig& green_entry =
-//       Mcp23017::GetTrackLedEntry(track_index, Mcp23017::TrackLedColor::GREEN);
-//   const Mcp23017::PinConfig& blue_entry =
-//       Mcp23017::GetTrackLedEntry(track_index, Mcp23017::TrackLedColor::BLUE);
-
-//   Mcp23017::Driver& driver = Mcp23017::Driver::GetInstance();
-//   Mcp23017::TrackLedPayload payload[3] = {
-//       {
-//           .address = red_entry.address,
-//           .led_gpio_id = Mcp23017::GetTrackLedGpioId(
-//               track_index, Mcp23017::TrackLedColor::RED),
-//           .led_state = track_state_led_color_map[state_id].red,
-//       },
-//       {
-//           .address = green_entry.address,
-//           .led_gpio_id = Mcp23017::GetTrackLedGpioId(
-//               track_index, Mcp23017::TrackLedColor::GREEN),
-//           .led_state = track_state_led_color_map[state_id].green,
-//       },
-//       {
-//           .address = blue_entry.address,
-//           .led_gpio_id = Mcp23017::GetTrackLedGpioId(
-//               track_index, Mcp23017::TrackLedColor::BLUE),
-//           .led_state = track_state_led_color_map[state_id].blue,
-//       },
-//   };
-//   if (driver.UpdateTrackLedState(payload) != Mcp23017::Status::OK) {
-//     return TASK_STATUS_ERROR;
-//   }
+                                 TrackIndex track_index) {
+  Xl5050Rgbw::Driver& driver = Xl5050Rgbw::Driver::GetInstance();
+  driver.UpdateTrackLedStatus(state_id, track_index);
   return TASK_STATUS_OK;
 }

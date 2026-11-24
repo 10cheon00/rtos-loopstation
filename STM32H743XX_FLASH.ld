@@ -260,6 +260,13 @@ SECTIONS
     . = ALIGN(32);
   } >RAM
   
+  .ram_d2_area (NOLOAD) :
+  {
+    . = ALIGN(32);
+    *(.ram_d2)
+    *(.ram_d2*)
+    . = ALIGN(32);
+  } >RAM_D2
   /* USER CODE 1 END */
 
   /* Remove information from the standard libraries */

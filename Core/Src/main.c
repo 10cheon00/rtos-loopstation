@@ -267,6 +267,7 @@ void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai) {
         AudioDmaEvent_SendSaiError(audio_dma_eventHandle);
     }
 }
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
