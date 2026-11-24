@@ -38,6 +38,13 @@ struct Color {
   ColorValue_t blue;
 };
 
+struct TrackStateLedContext {
+  TrackStateMachine::Id id;
+  uint16_t* red_led_timer_ccr_address;
+  uint16_t* green_led_timer_ccr_address;
+  uint16_t* blue_led_timer_ccr_address;
+};
+
 class Driver : public Singleton<Driver> {
   friend class Singleton<Driver>;
 
@@ -54,10 +61,12 @@ class Driver : public Singleton<Driver> {
   TIM_HandleTypeDef* htim;
   InitState init_state;
   TrackStateMachine::Id track_state_ids[TRACK_COUNT];
+  TrackStateLedContext track_state_led_contexts[TRACK_COUNT];
 
   void ConvertTrackStateIdsToTimerCcrs();
-  void ConvertColorValueToTimerCcr(ColorValue_t color_value,
-                                   std::size_t base_index);
+  void UpdateColorValueToTimerCcr(uint16_t* timer_ccr_address,
+                                  ColorValue_t color_value);
+
   Status Send();
 };
 

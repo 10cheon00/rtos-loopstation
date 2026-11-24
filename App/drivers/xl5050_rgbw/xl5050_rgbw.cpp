@@ -36,6 +36,15 @@ Status Driver::Initialize(TIM_HandleTypeDef* htim) {
   for (std::size_t i = 0; i < TimerCcrCount; i++) {
     timer_ccrs[i] = 0;
   }
+  for (std::size_t i = 0; i < TRACK_COUNT; i++) {
+    track_state_led_contexts[i].id = TrackStateMachine::Id::IDLE;
+    track_state_led_contexts[i].green_led_timer_ccr_address =
+        (uint16_t*)&timer_ccrs[i * ColorCount * ColorBitCount + 0];
+    track_state_led_contexts[i].red_led_timer_ccr_address =
+        (uint16_t*)&timer_ccrs[i * ColorCount * ColorBitCount + 8];
+    track_state_led_contexts[i].blue_led_timer_ccr_address =
+        (uint16_t*)&timer_ccrs[i * ColorCount * ColorBitCount + 16];
+  }
 
   init_state = InitState::INITED;
   return Status::OK;
@@ -43,28 +52,28 @@ Status Driver::Initialize(TIM_HandleTypeDef* htim) {
 
 Status Driver::UpdateTrackLedStatus(TrackStateMachine::Id track_state_id,
                                     std::size_t track_index) {
-  track_state_ids[track_index] = track_state_id;
+  track_state_led_contexts[track_index].id = track_state_id;
   ConvertTrackStateIdsToTimerCcrs();
   return Send();
 }
 
 void Driver::ConvertTrackStateIdsToTimerCcrs() {
-  for (std::size_t i = 0; i < TRACK_COUNT; i++) {
-    const Color& color = color_map[track_state_ids[i]];
-    ConvertColorValueToTimerCcr(color.green, i * ColorCount * ColorBitCount);
-    ConvertColorValueToTimerCcr(color.red, i * ColorCount * ColorBitCount + 8);
-    ConvertColorValueToTimerCcr(color.blue,
-                                i * ColorCount * ColorBitCount + 16);
+  for (auto& context : track_state_led_contexts) {
+    const Color& color = color_map[context.id];
+    UpdateColorValueToTimerCcr(context.red_led_timer_ccr_address, color.red);
+    UpdateColorValueToTimerCcr(context.green_led_timer_ccr_address,
+                               color.green);
+    UpdateColorValueToTimerCcr(context.blue_led_timer_ccr_address, color.blue);
   }
 }
 
-void Driver::ConvertColorValueToTimerCcr(ColorValue_t color_value,
-                                         std::size_t base_index) {
+void Driver::UpdateColorValueToTimerCcr(uint16_t* timer_ccr_address,
+                                        ColorValue_t color_value) {
   for (int8_t i = ColorBitCount - 1, j = 0; i >= 0; i--, j++) {
     if ((color_value & (1 << i)) > 0) {
-      timer_ccrs[base_index + j] = TIMER_CCR_HIGH;
+      timer_ccr_address[j] = TIMER_CCR_HIGH;
     } else {
-      timer_ccrs[base_index + j] = TIMER_CCR_LOW;
+      timer_ccr_address[j] = TIMER_CCR_LOW;
     }
   }
 }
