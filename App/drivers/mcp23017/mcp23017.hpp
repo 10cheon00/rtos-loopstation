@@ -37,12 +37,6 @@ enum class InitStatus {
   INITED,
 };
 
-struct TrackLedPayload {
-  Address address;
-  GpioId led_gpio_id;
-  LedState led_state;
-};
-
 class Driver : public Singleton<Driver> {
   friend class Singleton<Driver>;
 
@@ -57,7 +51,6 @@ class Driver : public Singleton<Driver> {
                                             Address* address);
   Status UpdateLedState(Address address, GpioId led_gpio_id,
                         LedState led_state);
-  Status UpdateTrackLedState(TrackLedPayload payload[3]);
 
  private:
   I2C_HandleTypeDef* hi2c;

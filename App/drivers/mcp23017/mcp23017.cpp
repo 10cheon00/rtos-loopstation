@@ -214,25 +214,6 @@ Status Driver::UpdateLedState(Address address, GpioId led_gpio_id,
   return UpdateLedStateLocked(address, led_gpio_id, led_state);
 }
 
-Status Driver::UpdateTrackLedState(TrackLedPayload payload[3]) {
-  if (this->init_status != InitStatus::INITED) {
-    return Status::NOT_INITED;
-  }
-
-  MutexGuard lock{i2c_mutex, 500UL};
-  if (!lock.is_acquired()) {
-    return Status::BUSY;
-  }
-
-  for (uint8_t i = 0; i < 3; i++) {
-    if (UpdateLedStateLocked(payload[i].address, payload[i].led_gpio_id,
-                             payload[i].led_state) != Status::OK) {
-      return Status::ERROR;
-    }
-  }
-  return Status::OK;
-}
-
 Status Driver::GetMcp23017AddressFromInterruptPin(
     InterruptPin gpio_interrupt_pin, Address* address) {
   for (size_t i = 0; i < interrupt_pin_map_count; i++) {

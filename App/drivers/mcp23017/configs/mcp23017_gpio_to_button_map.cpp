@@ -49,21 +49,6 @@ static constexpr EnumMap<GpioId, ButtonId> gpio_to_button_map{
     {GpioId::BUTTON_TRACK_5_PLAY_RECORD,
      ButtonId::TRACK_5_PLAY_RECORD},
     {GpioId::BUTTON_TRACK_5_STOP, ButtonId::TRACK_5_STOP},
-    {GpioId::LED_TRACK_1_RED, ButtonId::NONE},
-    {GpioId::LED_TRACK_1_GREEN, ButtonId::NONE},
-    {GpioId::LED_TRACK_1_BLUE, ButtonId::NONE},
-    {GpioId::LED_TRACK_2_RED, ButtonId::NONE},
-    {GpioId::LED_TRACK_2_GREEN, ButtonId::NONE},
-    {GpioId::LED_TRACK_2_BLUE, ButtonId::NONE},
-    {GpioId::LED_TRACK_3_RED, ButtonId::NONE},
-    {GpioId::LED_TRACK_3_GREEN, ButtonId::NONE},
-    {GpioId::LED_TRACK_3_BLUE, ButtonId::NONE},
-    {GpioId::LED_TRACK_4_RED, ButtonId::NONE},
-    {GpioId::LED_TRACK_4_GREEN, ButtonId::NONE},
-    {GpioId::LED_TRACK_4_BLUE, ButtonId::NONE},
-    {GpioId::LED_TRACK_5_RED, ButtonId::NONE},
-    {GpioId::LED_TRACK_5_GREEN, ButtonId::NONE},
-    {GpioId::LED_TRACK_5_BLUE, ButtonId::NONE},
 };
 
 ButtonId Get(GpioId gpio_id) { return gpio_to_button_map[gpio_id]; }
