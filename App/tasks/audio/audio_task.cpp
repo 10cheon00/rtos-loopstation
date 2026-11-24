@@ -19,8 +19,8 @@
 #include "fx_variant.hpp"
 #include "parameter.hpp"
 #include "queue.h"
-#include "track_config.h"
 #include "system_init_event_flag.hpp"
+#include "track_config.h"
 #include "track_state.hpp"
 #include "utils.hpp"
 
@@ -343,8 +343,8 @@ static void RecordActiveTracks() {
         for (uint32_t j = 0; j < FRAME_COUNT; j += CHANNEL_COUNT) {
           context.sram_frame_buffer_address[j] =
               audio_input_context.input_frame_buffer[j];
-          context.sram_frame_buffer_address[j + 1] = 
-            audio_input_context.input_frame_buffer[j];
+          context.sram_frame_buffer_address[j + 1] =
+              audio_input_context.input_frame_buffer[j];
         }
       } else if (context.track_state == TrackStateMachine::Id::OVERDUBBING) {
         for (uint32_t j = 0; j < FRAME_COUNT; j += CHANNEL_COUNT) {

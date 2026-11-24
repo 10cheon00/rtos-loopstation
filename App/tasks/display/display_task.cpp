@@ -28,8 +28,7 @@
 static osMessageQueueId_t display_snapshot_mailbox;
 static EnumMap<Fx::Slot, bool> ifx_state_snapshot;
 static EnumMap<Fx::Slot, bool> tfx_state_snapshot;
-static std::array<TrackStateMachine::Id, static_cast<std::size_t>(TRACK_COUNT)>
-    track_state_snapshot;
+static std::array<TrackStateMachine::Id, TRACK_COUNT> track_state_snapshot;
 
 struct TrackLedColorSet {
   Mcp23017::LedState red;

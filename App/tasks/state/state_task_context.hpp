@@ -33,7 +33,7 @@ struct StateTaskContext {
   UiStateMachine::StateMachine ui_state_machine{ui_state_machine_context,
                                                 UiStateMachine::Id::HOME};
 
-  std::array<TrackEntry, static_cast<std::size_t>(TRACK_COUNT)> track_entry;
+  std::array<TrackEntry, TRACK_COUNT> track_entry;
   Fx::Section fx_selected_section;
   Fx::Slot fx_selected_slot;
 };
