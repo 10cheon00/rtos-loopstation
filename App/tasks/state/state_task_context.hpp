@@ -10,6 +10,7 @@
 #include "track_config.h"
 #include "track_state_machine.hpp"
 #include "ui_state_machine.hpp"
+#include "parameter_updater.hpp"
 
 struct TrackButtonIdSet {
   ButtonId play_record_id;
@@ -34,8 +35,7 @@ struct StateTaskContext {
                                                 UiStateMachine::Id::HOME};
 
   std::array<TrackEntry, TRACK_COUNT> track_entry;
-  Fx::Section fx_selected_section;
-  Fx::Slot fx_selected_slot;
+  ParameterUpdater::FxSelection fx_selection;
 };
 
 #endif

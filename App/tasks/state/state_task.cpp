@@ -17,8 +17,10 @@
 #include "mcp23017.hpp"
 #include "page_navigation_bitset.hpp"
 #include "parameter_enum_value.hpp"
+#include "parameter_updater.hpp"
 #include "queue.h"
 #include "state_event_type.hpp"
+#include "state_event_variant.hpp"
 #include "state_initparams.h"
 #include "state_messages.h"
 #include "state_task_context.hpp"
@@ -32,43 +34,12 @@
 #include "ui_transition_map.hpp"
 #include "utils.hpp"
 
-struct ButtonEvent {
-  TickType_t timestamp_ticks;
-  ButtonId id;
-  ButtonState state;
-};
-
-struct EncoderRotationEvent {
-  TickType_t timestamp_ticks;
-  EncoderId id;
-  int32_t delta;
-};
-
-struct AdcConversionEvent {
-  KnobId id;
-  uint16_t adc_value;
-};
-
-using StateEventVariant =
-    std::variant<ButtonEvent, EncoderRotationEvent, AdcConversionEvent>;
-
 static StateTaskContext context;
 
 static void MakeEmptyDisplaySnapshot(RtosMessage_DisplaySnapshot& snapshot);
 static void Run(void);
 static TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
                                   StateEventVariant& state_event_variant);
-static TaskStatus TryUpdateParameter(StateEventVariant& state_event_variant);
-static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event);
-static void ToggleParameterMappedBySlotIndex(SlotIndex index);
-static void ToggleFxStateFromSectionAndSlot();
-template <typename Operation>
-static void UpdateFxParameterFromSectionAndSlotAndParameterId(
-    Fx::ParameterId parameter_id, Operation update_method);
-static TaskStatus TryUpdateParameterFromEncoderRotation(
-    EncoderRotationEvent& event);
-static void AddParameterMappedBySlotIndex(SlotIndex index, int32_t delta);
-static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event);
 static bool IsButtonPressedEvent(StateEventVariant& state_event_variant);
 static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event);
 static void TryUpdateFxEditPanel();
@@ -149,8 +120,21 @@ void Run(void) {
       if (task_status != TASK_STATUS_OK) {
         continue;
       }
-      TryUpdateParameter(state_event_variant);
+      // TODO:
+      // 파라미터 처리 모듈에 넘기기... context와 강하게 결합되어 있으므로,
+      // 필요한 정보 외에는 넘겨주지 않도록 고치기
+      // - 현재 선택한 fx의 섹션, 슬롯.
+      // - 현재 ui 상태 머신이 갖는 상태의 현재 페이지
+      // 이 두 정보만 참조하고 있음
+      Page& current_page = context.ui_state_machine.GetCurrentState()->GetCurrentPage();
+      ParameterUpdater::Update(context.fx_selection, current_page, state_event_variant);
 
+      // TODO:
+      // 버튼을 누른 이벤트라면
+      // 1. 패널에 관련된 버튼이면 버튼 종류에 따른 패널 변경 처리
+      // 2. 상태 머신과 관련된 버튼이면 버튼 종류에 따른 상태 머신 전이 처리
+      // 버튼을 꾹 누른 이벤트거나 더블탭 이벤트라면
+      // 1. 트랙 상태에 관한 버튼인 경우 트랙 상태 머신를 리셋 상태로 전이 처리
       if (IsButtonPressedEvent(state_event_variant)) {
         // UpdateStateMachines
         ButtonEvent& button_event = std::get<ButtonEvent>(state_event_variant);
@@ -170,6 +154,10 @@ void Run(void) {
           }
         }
       }
+
+      // TODO:
+      // 버튼을 누른 이벤트가 아니라면?!
+      // 1. 현재 패널이 FX 패널인 경우 ?FX ? EDIT 이라는 패널명을 수정
       // UpdatePanel
       if (!IsButtonPressedEvent(state_event_variant)) {
         TryUpdateFxEditPanel();
@@ -211,139 +199,6 @@ TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
   return TASK_STATUS_OK;
 }
 
-static TaskStatus TryUpdateParameter(StateEventVariant& variant) {
-  if (std::holds_alternative<ButtonEvent>(variant)) {
-    return TryUpdateParameterFromButton(std::get<ButtonEvent>(variant));
-  } else if (std::holds_alternative<EncoderRotationEvent>(variant)) {
-    return TryUpdateParameterFromEncoderRotation(
-        std::get<EncoderRotationEvent>(variant));
-  } else if (std::holds_alternative<AdcConversionEvent>(variant)) {
-    // TODO:
-    // ADC 입력에 대한 파라미터 값 변경 기능 구현하기
-    return TryUpdateParameterFromAdc(std::get<AdcConversionEvent>(variant));
-  }
-  return TASK_STATUS_ERROR;
-}
-
-/**
- * 버튼 입력은 IFX/TFX 토글, 엔코더 버튼만 파라미터 값을 변경한다.
- * */
-static TaskStatus TryUpdateParameterFromButton(ButtonEvent& event) {
-  if (event.state != ButtonState::PRESSED) {
-    return TASK_STATUS_ERROR;
-  }
-
-  switch (event.id) {
-    case ButtonId::ENCODER_A_PUSH:
-    case ButtonId::ENCODER_B_PUSH:
-    case ButtonId::ENCODER_C_PUSH:
-    case ButtonId::ENCODER_D_PUSH: {
-      SlotIndex index = Utils::ToSlotIndex(event.id);
-      ToggleParameterMappedBySlotIndex(index);
-    } break;
-    case ButtonId::IFX_A_TOGGLE:
-      context.fx_selected_section = Fx::Section::IFX;
-      context.fx_selected_slot = Fx::Slot::A;
-      ToggleFxStateFromSectionAndSlot();
-      break;
-    case ButtonId::TFX_A_TOGGLE:
-      context.fx_selected_section = Fx::Section::TFX;
-      context.fx_selected_slot = Fx::Slot::A;
-      ToggleFxStateFromSectionAndSlot();
-      break;
-    default:
-      return TASK_STATUS_ERROR;
-  }
-  return TASK_STATUS_OK;
-}
-
-static void ToggleParameterMappedBySlotIndex(SlotIndex index) {
-  Page& page = context.ui_state_machine.GetCurrentState()->GetCurrentPage();
-  if (page.IsTypeAt<ParameterSlot>(index)) {
-    ParameterSlot& parameter_slot = std::get<ParameterSlot>(page.GetAt(index));
-    ParameterRef& parameter_ref = parameter_slot.GetParameterRef();
-    if (std::holds_alternative<SystemParameterRef>(parameter_ref)) {
-      SystemParameterRef system_parameter_ref =
-          std::get<SystemParameterRef>(parameter_ref);
-      Store::SystemParameterStore::GetInstance().WithParameterLocked(
-          system_parameter_ref.id, [](auto& parameter) { parameter.Toggle(); });
-    } else if (std::holds_alternative<FxParameterRef>(parameter_ref)) {
-      FxParameterRef& fx_parameter_ref =
-          std::get<FxParameterRef>(parameter_ref);
-      UpdateFxParameterFromSectionAndSlotAndParameterId(
-          fx_parameter_ref.id, [](auto& parameter) { parameter.Toggle(); });
-    }
-  }
-}
-
-static void ToggleFxStateFromSectionAndSlot() {
-  Store::FxParameterStore::GetInstance().WithParameterLocked(
-      context.fx_selected_section, context.fx_selected_slot,
-      Fx::ParameterId::FX_SYSTEM_FX_STATE,
-      [](auto& fx_parameter) { fx_parameter.Toggle(); });
-}
-
-template <typename Operation>
-static void UpdateFxParameterFromSectionAndSlotAndParameterId(
-    Fx::ParameterId fx_parameter_id, Operation update_method) {
-  Store::FxParameterStore::GetInstance().WithParameterLocked(
-      context.fx_selected_section, context.fx_selected_slot, fx_parameter_id,
-      update_method);
-}
-
-/**
- * 엔코더 입력은 패널에 엔코더와 매핑된 파라미터가 있어야 하며 그 파라미터가
- * 토글형이라면 버튼입력과 회전입력으로 토글을 수행하고 노브형이라면
- * 회전입력을 받아 값을 변경한다.
- */
-static TaskStatus TryUpdateParameterFromEncoderRotation(
-    EncoderRotationEvent& event) {
-  SlotIndex index = Utils::ToSlotIndex(event.id);
-  AddParameterMappedBySlotIndex(index, event.delta);
-  return TASK_STATUS_OK;
-}
-
-static void AddParameterMappedBySlotIndex(SlotIndex index, int32_t delta) {
-  Page& page = context.ui_state_machine.GetCurrentState()->GetCurrentPage();
-  if (page.IsTypeAt<ParameterSlot>(index)) {
-    ParameterSlot& parameter_slot = std::get<ParameterSlot>(page.GetAt(index));
-    ParameterRef& parameter_ref = parameter_slot.GetParameterRef();
-    if (std::holds_alternative<SystemParameterRef>(parameter_ref)) {
-      SystemParameterRef system_parameter_ref =
-          std::get<SystemParameterRef>(parameter_ref);
-      Store::SystemParameterStore::GetInstance().WithParameterLocked(
-          system_parameter_ref.id,
-          [delta](auto& parameter) { parameter.Add(delta); });
-    } else if (std::holds_alternative<FxParameterRef>(parameter_ref)) {
-      FxParameterRef& fx_parameter_ref =
-          std::get<FxParameterRef>(parameter_ref);
-      UpdateFxParameterFromSectionAndSlotAndParameterId(
-          fx_parameter_ref.id,
-          [delta](auto& fx_parameter) { fx_parameter.Add(delta); });
-    }
-  }
-}
-
-/**
- * ADC입력은 16비트 해상도의 반환값을 파라미터 자료형에 맞도록 스케일한다.
- * 이 입력을 곧바로 FX 파라미터에 적용하지 않고 별도의 파라미터에 저장한다음,
- * 저장된 값을 FX 파라미터에 적용한다.
- */
-static TaskStatus TryUpdateParameterFromAdc(AdcConversionEvent& event) {
-  Store::SystemParameterStore::GetInstance().WithParameterLocked(
-      KnobToParameterMap::Get(event.id),
-      [adc_value = event.adc_value](ParameterModel::Parameter& parameter) {
-        auto& knob_value =
-            parameter.GetValue<ParameterModel::UnsignedRangeValue>();
-        parameter.Set(Utils::MapRangeLinear(
-            adc_value, std::numeric_limits<std::uint16_t>::min(),
-            std::numeric_limits<std::uint16_t>::max(), knob_value.min,
-            knob_value.max));
-      });
-
-  return TASK_STATUS_OK;
-}
-
 static bool IsButtonPressedEvent(StateEventVariant& state_event_variant) {
   if (!std::holds_alternative<ButtonEvent>(state_event_variant)) {
     return false;
@@ -366,14 +221,14 @@ static void TryUpdateFxEditPanel() {
     return;
   }
   Store::FxParameterStore::GetInstance().WithParameterLocked(
-      context.fx_selected_section, context.fx_selected_slot,
+     context.fx_selection.section, context.fx_selection.slot,
       Fx::ParameterId::FX_SYSTEM_SELECTED_FX, [](auto& fx_parameter) {
         Fx::Type selected_fx = std::get<ParameterModel::FxSelectedFxEnumValue>(
                                    fx_parameter.GetValueVariant())
                                    .value;
 
         context.ui_state_machine.UpdatePanel(
-            context.fx_selected_section, context.fx_selected_slot, selected_fx);
+           context.fx_selection.section, context.fx_selection.slot, selected_fx);
       });
 }
 
@@ -572,7 +427,7 @@ static TaskStatus FillPanelRenderPayloadFxParameter(
       std::get<FxParameterRef>(slot.GetParameterRef());
   Fx::ParameterId fx_parameter_id = fx_parameter_ref.id;
   Store::FxParameterStore::GetInstance().WithParameterLocked(
-      context.fx_selected_section, context.fx_selected_slot, fx_parameter_id,
+      context.fx_selection.section, context.fx_selection.slot, fx_parameter_id,
       [&rtos_parameter_copy = payload.data.parameter.rtos_parameter_copy,
        &copied](auto& fx_parameter) {
         fx_parameter.ToRtosParameterCopy(rtos_parameter_copy);
