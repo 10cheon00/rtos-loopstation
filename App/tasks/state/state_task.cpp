@@ -46,8 +46,6 @@ static void HandleEncoderRotationEvent(
     EncoderRotationEvent& encoder_rotation_event);
 static void HandleAdcConversionEvent(AdcConversionEvent& adc_conversion_event);
 static bool IsButtonPressedEvent(ButtonEvent& button_event);
-static bool IsFxButtonEvent(ButtonEvent& event);
-static void UpdateFxSelection(ButtonId id);
 static void UpdateFxEditPanel();
 static void TryChangePageIndex(ButtonId id);
 static void TryTransitionUiStateMachine(ButtonId id);
@@ -183,14 +181,15 @@ static void HandleStateEvent(StateEventVariant& variant) {
 
 static void HandleButtonEvent(ButtonEvent& event) {
   if (IsButtonPressedEvent(event)) {
-    // TODO: FX 버튼 매핑을 한곳에 모으고 토글 경로의 슬롯 조회를 생략해야 함.
-    if (IsFxButtonEvent(event)) {
-      UpdateFxSelection(event.id);
+    if (auto fx_selection =
+            ParameterUpdater::GetFxSelectionOrNulloptFromButtonEvent(event)) {
+      context.fx_selection = *fx_selection;
       ParameterUpdater::ToggleFxStateFromFxSelection(context.fx_selection);
+    } else {
+      Page& current_page =
+          context.ui_state_machine.GetCurrentState()->GetCurrentPage();
+      ParameterUpdater::Update(context.fx_selection, current_page, event);
     }
-    Page& current_page =
-        context.ui_state_machine.GetCurrentState()->GetCurrentPage();
-    ParameterUpdater::Update(context.fx_selection, current_page, event);
 
     TryChangePageIndex(event.id);
     TryTransitionUiStateMachine(event.id);
@@ -231,46 +230,6 @@ static void HandleAdcConversionEvent(AdcConversionEvent& event) {
 
 static bool IsButtonPressedEvent(ButtonEvent& event) {
   return event.state == ButtonState::PRESSED;
-}
-
-static bool IsFxButtonEvent(ButtonEvent& event) {
-  return event.id == ButtonId::IFX_A_TOGGLE ||
-         event.id == ButtonId::IFX_B_TOGGLE ||
-         event.id == ButtonId::IFX_C_TOGGLE ||
-         event.id == ButtonId::TFX_A_TOGGLE ||
-         event.id == ButtonId::TFX_B_TOGGLE ||
-         event.id == ButtonId::TFX_C_TOGGLE;
-}
-
-static void UpdateFxSelection(ButtonId id) {
-  switch (id) {
-    case ButtonId::IFX_A_TOGGLE:
-      context.fx_selection.section = Fx::Section::IFX;
-      context.fx_selection.slot = Fx::Slot::A;
-      break;
-    case ButtonId::IFX_B_TOGGLE:
-      context.fx_selection.section = Fx::Section::IFX;
-      context.fx_selection.slot = Fx::Slot::B;
-      break;
-    case ButtonId::IFX_C_TOGGLE:
-      context.fx_selection.section = Fx::Section::IFX;
-      context.fx_selection.slot = Fx::Slot::C;
-      break;
-    case ButtonId::TFX_A_TOGGLE:
-      context.fx_selection.section = Fx::Section::TFX;
-      context.fx_selection.slot = Fx::Slot::A;
-      break;
-    case ButtonId::TFX_B_TOGGLE:
-      context.fx_selection.section = Fx::Section::TFX;
-      context.fx_selection.slot = Fx::Slot::B;
-      break;
-    case ButtonId::TFX_C_TOGGLE:
-      context.fx_selection.section = Fx::Section::TFX;
-      context.fx_selection.slot = Fx::Slot::C;
-      break;
-    default:
-      break;
-  }
 }
 
 static void TryChangePageIndex(ButtonId id) {

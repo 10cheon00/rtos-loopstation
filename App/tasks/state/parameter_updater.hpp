@@ -1,6 +1,8 @@
 #ifndef PARAMETER_UPDATER_HPP
 #define PARAMETER_UPDATER_HPP
 
+#include <optional>
+
 #include "page.hpp"
 #include "state_event_variant.hpp"
 
@@ -11,6 +13,7 @@ struct FxSelection {
   Fx::Slot slot;
 };
 
+std::optional<FxSelection> GetFxSelectionOrNulloptFromButtonEvent(ButtonEvent& event);
 void Update(AdcConversionEvent& event);
 void Update(FxSelection& fx_selection, Page& current_page,
             EncoderRotationEvent& event);

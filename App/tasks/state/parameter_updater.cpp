@@ -17,6 +17,26 @@ static void ModifyParameterInPageWithId(FxSelection& fx_selection,
                                         Page& current_page, SlotIndex index,
                                         Handler handler);
 
+std::optional<FxSelection> GetFxSelectionOrNulloptFromButtonEvent(
+    ButtonEvent& event) {
+  switch (event.id) {
+    case ButtonId::IFX_A_TOGGLE:
+      return FxSelection{Fx::Section::IFX, Fx::Slot::A};
+    case ButtonId::IFX_B_TOGGLE:
+      return FxSelection{Fx::Section::IFX, Fx::Slot::B};
+    case ButtonId::IFX_C_TOGGLE:
+      return FxSelection{Fx::Section::IFX, Fx::Slot::C};
+    case ButtonId::TFX_A_TOGGLE:
+      return FxSelection{Fx::Section::TFX, Fx::Slot::A};
+    case ButtonId::TFX_B_TOGGLE:
+      return FxSelection{Fx::Section::TFX, Fx::Slot::B};
+    case ButtonId::TFX_C_TOGGLE:
+      return FxSelection{Fx::Section::TFX, Fx::Slot::C};
+    default:
+      return std::nullopt;
+  }
+}
+
 /**
  * ADC입력은 16비트 해상도의 반환값을 파라미터 자료형에 맞도록 스케일한다.
  * 이 입력을 곧바로 FX 파라미터에 적용하지 않고 별도의 파라미터에 저장한다음,
@@ -56,8 +76,7 @@ static void ModifyParameterInPageWithId(FxSelection& fx_selection,
                                         Handler handler) {
   PageSlotVariant& page_slot_variant = current_page.GetAt(index);
   if (auto* parameter_slot = std::get_if<ParameterSlot>(&page_slot_variant)) {
-    // TODO: ParameterRef를 읽기 전용 참조로 받아야 함.
-    ParameterRef parameter_ref = parameter_slot->GetParameterRef();
+    const ParameterRef parameter_ref = parameter_slot->GetParameterRef();
 
     std::visit(
         [&section = fx_selection.section, &slot = fx_selection.slot,
