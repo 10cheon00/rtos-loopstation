@@ -341,10 +341,10 @@ static void MakeEmptyDisplaySnapshot(RtosMessage_DisplaySnapshot& snapshot) {
         Utils::ToRtosEnumValue(ParameterType::NONE);
     slot.data.parameter.label = "";
   }
-  snapshot.led.rtos_parameter_copy_ifx_a_state.rtos_enum_value_parameter_type =
-      Utils::ToRtosEnumValue(ParameterType::NONE);
-  snapshot.led.rtos_parameter_copy_tfx_a_state.rtos_enum_value_parameter_type =
-      Utils::ToRtosEnumValue(ParameterType::NONE);
+  for (uint8_t i = 0; i < 3; i++) {
+    snapshot.led.ifx_states[i] = false;
+    snapshot.led.tfx_states[i] = false;
+  }
   for (auto& state : snapshot.led.rtos_enum_value_track_states) {
     state = Utils::ToRtosEnumValue(TrackStateMachine::Id::NONE);
   }
@@ -472,30 +472,14 @@ static TaskStatus FillPanelRenderPayloadNoneParameter(
 
 static TaskStatus FillDisplaySnapshotLedRenderPayload(
     RtosPayload_LedRender& led) {
-  bool ifx_copied = false;
-  bool tfx_copied = false;
-  // TODO:
-  // Slot::A에 대해서만 복사를 하고 있음
-  Store::FxParameterStore::GetInstance().WithParameterLocked(
-      Fx::Section::IFX, Fx::Slot::A, Fx::ParameterId::FX_SYSTEM_FX_STATE,
-      [&rtos_parameter_copy = led.rtos_parameter_copy_ifx_a_state,
-       &ifx_copied](auto& fx_parameter) {
-        fx_parameter.ToRtosParameterCopy(rtos_parameter_copy);
-        ifx_copied = true;
-      });
-  Store::FxParameterStore::GetInstance().WithParameterLocked(
-      Fx::Section::TFX, Fx::Slot::A, Fx::ParameterId::FX_SYSTEM_FX_STATE,
-      [&rtos_parameter_copy = led.rtos_parameter_copy_tfx_a_state,
-       &tfx_copied](auto& fx_parameter) {
-        fx_parameter.ToRtosParameterCopy(rtos_parameter_copy);
-        tfx_copied = true;
-      });
+  bool success = Store::FxParameterStore::GetInstance().GetFxStates(
+      led.ifx_states, led.tfx_states);
 
   for (std::size_t i = 0; i < context.track_entry.size(); i++) {
     led.rtos_enum_value_track_states[i] = Utils::ToRtosEnumValue(
         context.track_entry[i].state_machine.GetCurrentState()->GetId());
   }
-  if (!ifx_copied || !tfx_copied) {
+  if (!success) {
     return TASK_STATUS_ERROR;
   }
   return TASK_STATUS_OK;

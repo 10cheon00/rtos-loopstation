@@ -43,6 +43,8 @@ class FxParameterStore : public Singleton<FxParameterStore> {
     }
   }
 
+  bool GetFxStates(bool (&ifx_states)[3], bool (&tfx_states)[3]);
+
  private:
   EnumMap<Fx::Section, EnumMap<Fx::Slot, FxParameterMap>> stores;
   osMutexId_t mutex;

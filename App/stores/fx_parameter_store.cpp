@@ -11,8 +11,8 @@ namespace {
 
 static constexpr FxParameterStore::FxParameterMap INITIAL_FX_PARAMETERS{
     {Fx::ParameterId::FX_SYSTEM_SELECTED_FX,
-     ValueVariant(FxSelectedFxEnumValue{
-         Fx::Type::LPF, (const char**)Fx::TYPE_NAME_TABLE})},
+     ValueVariant(FxSelectedFxEnumValue{Fx::Type::LPF,
+                                        (const char**)Fx::TYPE_NAME_TABLE})},
     {Fx::ParameterId::FX_SYSTEM_FX_STATE, ValueVariant(ToggleValue{false})},
     {Fx::ParameterId::FX_LPF_RATE, ValueVariant{RateValue{0, 100, 100}}},
     {Fx::ParameterId::FX_LPF_DEPTH,
@@ -118,6 +118,22 @@ Fx::Type FxParameterStore::GetSelectedFxType(Fx::Section section,
               .GetValueVariant())
           .value);
 }
+
+bool FxParameterStore::GetFxStates(bool (&ifx_states)[3],
+                                   bool (&tfx_states)[3]) {
+  MutexGuard lock{this->mutex, 500UL};
+  if (lock.is_acquired()) {
+    ifx_states[0] = GetFxState(Fx::Section::IFX, Fx::Slot::A);
+    ifx_states[1] = GetFxState(Fx::Section::IFX, Fx::Slot::B);
+    ifx_states[2] = GetFxState(Fx::Section::IFX, Fx::Slot::C);
+    tfx_states[0] = GetFxState(Fx::Section::TFX, Fx::Slot::A);
+    tfx_states[1] = GetFxState(Fx::Section::TFX, Fx::Slot::B);
+    tfx_states[2] = GetFxState(Fx::Section::TFX, Fx::Slot::C);
+    return true;
+  }
+  return false;
+}
+
 
 bool FxParameterStore::GetFxState(Fx::Section section, Fx::Slot slot) {
   return std::get<ToggleValue>(
