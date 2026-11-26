@@ -26,8 +26,8 @@ class SystemParameterStore : public Singleton<SystemParameterStore> {
 
   ParameterModel::Parameter& Get(ParameterModel::Id id);
 
-  template <typename Operation>
-  void WithParameterLocked(ParameterModel::Id id, Operation operation) {
+  template <typename Handler>
+  void WithParameterLocked(ParameterModel::Id id, Handler operation) {
     MutexGuard lock{mutex, 500UL};
     if (lock.is_acquired()) {
       operation(system_parameters.Get(id));
