@@ -40,16 +40,22 @@ static void MakeEmptyDisplaySnapshot(RtosMessage_DisplaySnapshot& snapshot);
 static void Run(void);
 static TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
                                   StateEventVariant& state_event_variant);
-static bool IsButtonPressedEvent(StateEventVariant& state_event_variant);
-static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event);
-static void TryUpdateFxEditPanel();
+static void HandleStateEvent(StateEventVariant& state_event_variant);
+static void HandleButtonEvent(ButtonEvent& button_event);
+static void HandleEncoderRotationEvent(
+    EncoderRotationEvent& encoder_rotation_event);
+static void HandleAdcConversionEvent(AdcConversionEvent& adc_conversion_event);
+static bool IsButtonPressedEvent(ButtonEvent& button_event);
+static bool IsFxButtonEvent(ButtonEvent& event);
+static void UpdateFxSelection(ButtonId id);
+static void UpdateFxEditPanel();
 static void TryChangePageIndex(ButtonId id);
 static void TryTransitionUiStateMachine(ButtonId id);
 static TaskStatus UpdateDisplaySnapshotMailbox();
 static TaskStatus TryTransitionTrackStateMachine(
     TrackStateMachine::StateMachine& track_state_machine,
     ButtonEvent& button_event);
-static bool IsButtonHoldEventOrDoubleTapEvent(StateEventVariant& variant);
+static bool IsButtonHoldEventOrDoubleTapEvent(ButtonEvent& button_event);
 static void UpdateAudioEventSnapshotMailbox();
 static TaskStatus FillPanelRenderPayload(RtosPayload_PanelRender& payload);
 static void SetUiStateIdInPanelRenderPayload(
@@ -120,48 +126,8 @@ void Run(void) {
       if (task_status != TASK_STATUS_OK) {
         continue;
       }
-      // TODO:
-      // 파라미터 처리 모듈에 넘기기... context와 강하게 결합되어 있으므로,
-      // 필요한 정보 외에는 넘겨주지 않도록 고치기
-      // - 현재 선택한 fx의 섹션, 슬롯.
-      // - 현재 ui 상태 머신이 갖는 상태의 현재 페이지
-      // 이 두 정보만 참조하고 있음
-      Page& current_page = context.ui_state_machine.GetCurrentState()->GetCurrentPage();
-      ParameterUpdater::Update(context.fx_selection, current_page, state_event_variant);
+      HandleStateEvent(state_event_variant);
 
-      // TODO:
-      // 버튼을 누른 이벤트라면
-      // 1. 패널에 관련된 버튼이면 버튼 종류에 따른 패널 변경 처리
-      // 2. 상태 머신과 관련된 버튼이면 버튼 종류에 따른 상태 머신 전이 처리
-      // 버튼을 꾹 누른 이벤트거나 더블탭 이벤트라면
-      // 1. 트랙 상태에 관한 버튼인 경우 트랙 상태 머신를 리셋 상태로 전이 처리
-      if (IsButtonPressedEvent(state_event_variant)) {
-        // UpdateStateMachines
-        ButtonEvent& button_event = std::get<ButtonEvent>(state_event_variant);
-        HandlePanelControlButtonEvent(button_event);
-
-        for (auto& entry : context.track_entry) {
-          TryTransitionTrackStateMachine(entry.state_machine, button_event);
-        }
-      } else if (IsButtonHoldEventOrDoubleTapEvent(state_event_variant)) {
-        ButtonEvent& button_event = std::get<ButtonEvent>(state_event_variant);
-        for (auto& entry : context.track_entry) {
-          if (button_event.id == entry.track_button_id_set.stop_id) {
-            // 정지 버튼을 꾹 눌렀으므로 트랙을 초기화해야함
-            entry.state_machine.TryTransition(
-                TrackStateMachine::ActionId::ENTER_RESET);
-            break;
-          }
-        }
-      }
-
-      // TODO:
-      // 버튼을 누른 이벤트가 아니라면?!
-      // 1. 현재 패널이 FX 패널인 경우 ?FX ? EDIT 이라는 패널명을 수정
-      // UpdatePanel
-      if (!IsButtonPressedEvent(state_event_variant)) {
-        TryUpdateFxEditPanel();
-      }
       UpdateDisplaySnapshotMailbox();
       UpdateAudioEventSnapshotMailbox();
     }
@@ -199,37 +165,109 @@ TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
   return TASK_STATUS_OK;
 }
 
-static bool IsButtonPressedEvent(StateEventVariant& state_event_variant) {
-  if (!std::holds_alternative<ButtonEvent>(state_event_variant)) {
-    return false;
+static void HandleStateEvent(StateEventVariant& variant) {
+  std::visit(
+      [](auto& event) {
+        using Event = std::decay_t<decltype(event)>;
+
+        if constexpr (std::is_same_v<Event, ButtonEvent>) {
+          HandleButtonEvent(event);
+        } else if constexpr (std::is_same_v<Event, EncoderRotationEvent>) {
+          HandleEncoderRotationEvent(event);
+        } else if constexpr (std::is_same_v<Event, AdcConversionEvent>) {
+          HandleAdcConversionEvent(event);
+        }
+      },
+      variant);
+}
+
+static void HandleButtonEvent(ButtonEvent& event) {
+  if (IsButtonPressedEvent(event)) {
+    if (IsFxButtonEvent(event)) {
+      UpdateFxSelection(event.id);
+      ParameterUpdater::ToggleFxStateFromFxSelection(context.fx_selection);
+    }
+    Page& current_page =
+        context.ui_state_machine.GetCurrentState()->GetCurrentPage();
+    ParameterUpdater::Update(context.fx_selection, current_page, event);
+
+    TryChangePageIndex(event.id);
+    TryTransitionUiStateMachine(event.id);
+    if (context.ui_state_machine.GetCurrentState()->GetId() ==
+        UiStateMachine::Id::FX_EDIT) {
+      UpdateFxEditPanel();
+    }
+    for (auto& entry : context.track_entry) {
+      TryTransitionTrackStateMachine(entry.state_machine, event);
+    }
+  } else if (IsButtonHoldEventOrDoubleTapEvent(event)) {
+    for (auto& entry : context.track_entry) {
+      if (event.id == entry.track_button_id_set.stop_id) {
+        // 정지 버튼을 꾹 눌렀으므로 트랙을 초기화해야함
+        entry.state_machine.TryTransition(
+            TrackStateMachine::ActionId::ENTER_RESET);
+        break;
+      }
+    }
   }
-  ButtonEvent& event = std::get<ButtonEvent>(state_event_variant);
+}
+
+static void HandleEncoderRotationEvent(EncoderRotationEvent& event) {
+  Page& current_page =
+      context.ui_state_machine.GetCurrentState()->GetCurrentPage();
+  ParameterUpdater::Update(context.fx_selection, current_page, event);
+  if (context.ui_state_machine.GetCurrentState()->GetId() ==
+      UiStateMachine::Id::FX_EDIT) {
+    UpdateFxEditPanel();
+  }
+}
+
+static void HandleAdcConversionEvent(AdcConversionEvent& event) {
+  ParameterUpdater::Update(event);
+}
+
+static bool IsButtonPressedEvent(ButtonEvent& event) {
   return event.state == ButtonState::PRESSED;
 }
 
-static TaskStatus HandlePanelControlButtonEvent(ButtonEvent& event) {
-  TryChangePageIndex(event.id);
-  TryTransitionUiStateMachine(event.id);
-  TryUpdateFxEditPanel();
-
-  return TASK_STATUS_OK;
+static bool IsFxButtonEvent(ButtonEvent& event) {
+  return event.id == ButtonId::IFX_A_TOGGLE ||
+         event.id == ButtonId::IFX_B_TOGGLE ||
+         event.id == ButtonId::IFX_C_TOGGLE ||
+         event.id == ButtonId::TFX_A_TOGGLE ||
+         event.id == ButtonId::TFX_B_TOGGLE ||
+         event.id == ButtonId::TFX_C_TOGGLE;
 }
 
-static void TryUpdateFxEditPanel() {
-  if (context.ui_state_machine.GetCurrentState()->GetId() !=
-      UiStateMachine::Id::FX_EDIT) {
-    return;
+static void UpdateFxSelection(ButtonId id) {
+  switch (id) {
+    case ButtonId::IFX_A_TOGGLE:
+      context.fx_selection.section = Fx::Section::IFX;
+      context.fx_selection.slot = Fx::Slot::A;
+      break;
+    case ButtonId::IFX_B_TOGGLE:
+      context.fx_selection.section = Fx::Section::IFX;
+      context.fx_selection.slot = Fx::Slot::B;
+      break;
+    case ButtonId::IFX_C_TOGGLE:
+      context.fx_selection.section = Fx::Section::IFX;
+      context.fx_selection.slot = Fx::Slot::C;
+      break;
+    case ButtonId::TFX_A_TOGGLE:
+      context.fx_selection.section = Fx::Section::TFX;
+      context.fx_selection.slot = Fx::Slot::A;
+      break;
+    case ButtonId::TFX_B_TOGGLE:
+      context.fx_selection.section = Fx::Section::TFX;
+      context.fx_selection.slot = Fx::Slot::B;
+      break;
+    case ButtonId::TFX_C_TOGGLE:
+      context.fx_selection.section = Fx::Section::TFX;
+      context.fx_selection.slot = Fx::Slot::C;
+      break;
+    default:
+      break;
   }
-  Store::FxParameterStore::GetInstance().WithParameterLocked(
-     context.fx_selection.section, context.fx_selection.slot,
-      Fx::ParameterId::FX_SYSTEM_SELECTED_FX, [](auto& fx_parameter) {
-        Fx::Type selected_fx = std::get<ParameterModel::FxSelectedFxEnumValue>(
-                                   fx_parameter.GetValueVariant())
-                                   .value;
-
-        context.ui_state_machine.UpdatePanel(
-           context.fx_selection.section, context.fx_selection.slot, selected_fx);
-      });
 }
 
 static void TryChangePageIndex(ButtonId id) {
@@ -283,11 +321,24 @@ static TaskStatus TryTransitionTrackStateMachine(
   return TASK_STATUS_OK;
 }
 
-static bool IsButtonHoldEventOrDoubleTapEvent(StateEventVariant& variant) {
-  if (!std::holds_alternative<ButtonEvent>(variant)) {
-    return false;
-  }
-  ButtonEvent& event = std::get<ButtonEvent>(variant);
+static void UpdateFxEditPanel() {
+  Store::FxParameterStore::GetInstance().WithParameterLocked(
+      context.fx_selection.section, context.fx_selection.slot,
+      Fx::ParameterId::FX_SYSTEM_SELECTED_FX, [](auto& fx_parameter) {
+        Fx::Type selected_fx = std::get<ParameterModel::FxSelectedFxEnumValue>(
+                                   fx_parameter.GetValueVariant())
+                                   .value;
+
+        // 현재 fx_selection에 따라 페이지 그룹, 라벨을 업데이트함
+        // 업데이트된 페이지 그룹과 라벨은 스냅샷에 복사되어 디스플레이 태스크에
+        // 전달됨
+        context.ui_state_machine.UpdatePanel(context.fx_selection.section,
+                                             context.fx_selection.slot,
+                                             selected_fx);
+      });
+}
+
+static bool IsButtonHoldEventOrDoubleTapEvent(ButtonEvent& event) {
   return event.state == ButtonState::HOLD ||
          event.state == ButtonState::DOUBLE_TAP;
 }

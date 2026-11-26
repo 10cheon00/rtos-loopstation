@@ -11,9 +11,11 @@ struct FxSelection {
   Fx::Slot slot;
 };
 
+void Update(AdcConversionEvent& event);
 void Update(FxSelection& fx_selection, Page& current_page,
-            StateEventVariant& variant);
-
+            EncoderRotationEvent& event);
+void Update(FxSelection& fx_selection, Page& current_page, ButtonEvent& event);
+void ToggleFxStateFromFxSelection(FxSelection& fx_selection);
 }  // namespace ParameterUpdater
 
 #endif
