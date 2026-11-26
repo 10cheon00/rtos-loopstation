@@ -100,10 +100,16 @@ void StateTask_Init(void* argument) {
   xQueueOverwrite((QueueHandle_t)context.display_snapshot_mailbox,
                   &context.last_display_snapshot);
 
-  context.track_entry[0].track_button_id_set = {
-      .play_record_id = ButtonId::TRACK_1_PLAY_RECORD,
-      .stop_id = ButtonId::TRACK_1_STOP,
+  const TrackButtonIdSet track_button_id_sets[5] = {
+      {ButtonId::TRACK_1_PLAY_RECORD, ButtonId::TRACK_1_STOP},
+      {ButtonId::TRACK_2_PLAY_RECORD, ButtonId::TRACK_2_STOP},
+      {ButtonId::TRACK_3_PLAY_RECORD, ButtonId::TRACK_3_STOP},
+      {ButtonId::TRACK_4_PLAY_RECORD, ButtonId::TRACK_4_STOP},
+      {ButtonId::TRACK_5_PLAY_RECORD, ButtonId::TRACK_5_STOP},
   };
+  for (uint8_t i = 0; i < TRACK_COUNT; i++) {
+    context.track_entry[i].track_button_id_set = track_button_id_sets[i];
+  }
 
   osEventFlagsWait(params->system_init_event, SystemInitEventFlag::Inited,
                    osFlagsWaitAll | osFlagsNoClear, osWaitForever);
@@ -198,9 +204,12 @@ static void HandleButtonEvent(ButtonEvent& event) {
       UpdateFxEditPanel();
     }
 
-    // TODO: 트랙 제어 이벤트는 버튼에 해당하는 트랙에만 전달해야 함.
     for (auto& entry : context.track_entry) {
-      TryTransitionTrackStateMachine(entry.state_machine, event);
+      if (event.id == entry.track_button_id_set.play_record_id ||
+          event.id == entry.track_button_id_set.stop_id) {
+        TryTransitionTrackStateMachine(entry.state_machine, event);
+        break;
+      }
     }
   } else if (IsButtonHoldEventOrDoubleTapEvent(event)) {
     for (auto& entry : context.track_entry) {
@@ -495,15 +504,18 @@ static TaskStatus FillDisplaySnapshotLedRenderPayload(
 static void UpdateAudioEventSnapshotMailbox() {
   RtosMessage_AudioEventSnapshot audio_event_snapshot = {};
 
+  ParameterModel::Id track_volume_ids[5] = {
+      ParameterModel::Id::TRACK_1_VOLUME, ParameterModel::Id::TRACK_2_VOLUME,
+      ParameterModel::Id::TRACK_3_VOLUME, ParameterModel::Id::TRACK_4_VOLUME,
+      ParameterModel::Id::TRACK_5_VOLUME};
   for (std::size_t i = 0; i < context.track_entry.size(); i++) {
     audio_event_snapshot.rtos_enum_value_track_states[i] =
         Utils::ToRtosEnumValue(
             context.track_entry[i].state_machine.GetCurrentState()->GetId());
-    // TODO: 스냅샷에 각 트랙의 볼륨을 읽어 넣어야 함.
     ParameterModel::UnsignedRangeValue track_volume =
         std::get<ParameterModel::UnsignedRangeValue>(
             Store::SystemParameterStore::GetInstance()
-                .Get(ParameterModel::Id::TRACK_1_VOLUME)
+                .Get(track_volume_ids[i])
                 .GetValueVariant());
     audio_event_snapshot.rtos_parameter_track_volumes[i] = track_volume.current;
   }
