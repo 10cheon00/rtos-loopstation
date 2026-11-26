@@ -148,6 +148,7 @@ TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
     };
   } else if (type == StateEventType::ENCODER_ROTATION) {
     state_event_variant = (EncoderRotationEvent){
+        // TODO: 타임스탬프를 encoder_rotation에서 읽어야 함.
         .timestamp_ticks = state_event.payload.button.timestamp_ticks,
         .id = Utils::FromRtosEnumValue<EncoderId>(
             state_event.payload.encoder_rotation.rtos_enum_value_encoder_id),
@@ -183,6 +184,7 @@ static void HandleStateEvent(StateEventVariant& variant) {
 
 static void HandleButtonEvent(ButtonEvent& event) {
   if (IsButtonPressedEvent(event)) {
+    // TODO: FX 버튼 매핑을 한곳에 모으고 토글 경로의 슬롯 조회를 생략해야 함.
     if (IsFxButtonEvent(event)) {
       UpdateFxSelection(event.id);
       ParameterUpdater::ToggleFxStateFromFxSelection(context.fx_selection);
@@ -197,6 +199,8 @@ static void HandleButtonEvent(ButtonEvent& event) {
         UiStateMachine::Id::FX_EDIT) {
       UpdateFxEditPanel();
     }
+
+    // TODO: 트랙 제어 이벤트는 버튼에 해당하는 트랙에만 전달해야 함.
     for (auto& entry : context.track_entry) {
       TryTransitionTrackStateMachine(entry.state_machine, event);
     }
@@ -537,6 +541,7 @@ static void UpdateAudioEventSnapshotMailbox() {
     audio_event_snapshot.rtos_enum_value_track_states[i] =
         Utils::ToRtosEnumValue(
             context.track_entry[i].state_machine.GetCurrentState()->GetId());
+    // TODO: 스냅샷에 각 트랙의 볼륨을 읽어 넣어야 함.
     ParameterModel::UnsignedRangeValue track_volume =
         std::get<ParameterModel::UnsignedRangeValue>(
             Store::SystemParameterStore::GetInstance()
