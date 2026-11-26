@@ -148,8 +148,7 @@ TaskStatus ParseStateEvent(RtosMessage_StateEvent& state_event,
     };
   } else if (type == StateEventType::ENCODER_ROTATION) {
     state_event_variant = (EncoderRotationEvent){
-        // TODO: 타임스탬프를 encoder_rotation에서 읽어야 함.
-        .timestamp_ticks = state_event.payload.button.timestamp_ticks,
+        .timestamp_ticks = state_event.payload.encoder_rotation.timestamp_ticks,
         .id = Utils::FromRtosEnumValue<EncoderId>(
             state_event.payload.encoder_rotation.rtos_enum_value_encoder_id),
         .delta = state_event.payload.encoder_rotation.delta,
