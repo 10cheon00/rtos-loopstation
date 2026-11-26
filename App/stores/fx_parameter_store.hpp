@@ -34,14 +34,16 @@ class FxParameterStore : public Singleton<FxParameterStore> {
 
   const ParameterModel::Parameter& Get(Fx::Section section, Fx::Slot slot,
                                        Fx::ParameterId parameter_id);
-  template <typename Operation>
+  template <typename Handler>
   void WithParameterLocked(Fx::Section section, Fx::Slot slot,
-                           Fx::ParameterId parameter_id, Operation operation) {
+                           Fx::ParameterId parameter_id, Handler operation) {
     MutexGuard lock{this->mutex, 500UL};
     if (lock.is_acquired()) {
       operation(this->stores[section][slot][parameter_id]);
     }
   }
+
+  bool GetFxStates(bool (&ifx_states)[3], bool (&tfx_states)[3]);
 
  private:
   EnumMap<Fx::Section, EnumMap<Fx::Slot, FxParameterMap>> stores;

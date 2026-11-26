@@ -59,6 +59,7 @@ target_sources(loopstation_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/display/ui_renderers/widgets/toggle_switch_widget.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/state_task.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/parameter_updater.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/knob_to_parameter_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tasks/state/configs/button_to_track_action_map.cpp
 
