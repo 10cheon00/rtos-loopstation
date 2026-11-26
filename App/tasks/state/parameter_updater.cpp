@@ -12,12 +12,10 @@
 
 namespace ParameterUpdater {
 
-static bool IsEncoderButtonEvent(ButtonEvent& event);
-static bool IsParameterSlot(PageSlotVariant& variant);
 template <typename Handler>
-static void ModifyParameterInPageSlotVariant(FxSelection& fx_selection,
-                                             PageSlotVariant& page_slot_variant,
-                                             Handler handler);
+static void ModifyParameterInPageWithId(FxSelection& fx_selection,
+                                        Page& current_page, SlotIndex index,
+                                        Handler handler);
 
 /**
  * ADC입력은 16비트 해상도의 반환값을 파라미터 자료형에 맞도록 스케일한다.
@@ -39,63 +37,46 @@ void Update(AdcConversionEvent& event) {
 
 void Update(FxSelection& fx_selection, Page& current_page,
             EncoderRotationEvent& event) {
-  PageSlotVariant& page_slot_variant =
-      current_page.GetAt(Utils::ToSlotIndex(event.id));
-  if (IsParameterSlot(page_slot_variant)) {
-    ModifyParameterInPageSlotVariant(
-        fx_selection, page_slot_variant,
-        [&event = event](auto& parameter) { parameter.Add(event.delta); });
-  }
+  ModifyParameterInPageWithId(
+      fx_selection, current_page, Utils::ToSlotIndex(event.id),
+      [&event = event](auto& parameter) { parameter.Add(event.delta); });
 }
 
 void Update(FxSelection& fx_selection, Page& current_page, ButtonEvent& event) {
-  // 엔코더 버튼인 경우에 파라미터를 수정
-  if (IsEncoderButtonEvent(event)) {
-    PageSlotVariant& page_slot_variant =
-        current_page.GetAt(Utils::ToSlotIndex(event.id));
-    if (IsParameterSlot(page_slot_variant)) {
-      ModifyParameterInPageSlotVariant(
-          fx_selection, page_slot_variant,
-          [](auto& parameter) { parameter.Toggle(); });
-    }
-  }
-}
-
-static bool IsEncoderButtonEvent(ButtonEvent& event) {
-  return event.id == ButtonId::ENCODER_A_PUSH ||
-         event.id == ButtonId::ENCODER_B_PUSH ||
-         event.id == ButtonId::ENCODER_C_PUSH ||
-         event.id == ButtonId::ENCODER_D_PUSH;
-}
-
-static bool IsParameterSlot(PageSlotVariant& variant) {
-  return std::holds_alternative<ParameterSlot>(variant);
+  // 엔코더 버튼인 경우에 파라미터를 수정... ToSlotIndex에서 엔코더 버튼인지
+  // 판단하므로 추가 코드 없음
+  ModifyParameterInPageWithId(fx_selection, current_page,
+                              Utils::ToSlotIndex(event.id),
+                              [](auto& parameter) { parameter.Toggle(); });
 }
 
 template <typename Handler>
-static void ModifyParameterInPageSlotVariant(FxSelection& fx_selection,
-                                             PageSlotVariant& page_slot_variant,
-                                             Handler handler) {
-  ParameterRef& parameter_ref =
-      std::get<ParameterSlot>(page_slot_variant).GetParameterRef();
+static void ModifyParameterInPageWithId(FxSelection& fx_selection,
+                                        Page& current_page, SlotIndex index,
+                                        Handler handler) {
+  PageSlotVariant& page_slot_variant = current_page.GetAt(index);
+  if (auto* parameter_slot = std::get_if<ParameterSlot>(&page_slot_variant)) {
+    // TODO: ParameterRef를 읽기 전용 참조로 받아야 함.
+    ParameterRef parameter_ref = parameter_slot->GetParameterRef();
 
-  std::visit(
-      [&section = fx_selection.section, &slot = fx_selection.slot,
-       &handler = handler](auto& parameter_ref) {
-        using Ref = std::decay_t<decltype(parameter_ref)>;
-        if constexpr (std::is_same_v<Ref, SystemParameterRef>) {
-          ParameterModel::Id id = parameter_ref.id;
-          Store::SystemParameterStore::GetInstance().WithParameterLocked(
-              id, handler);
+    std::visit(
+        [&section = fx_selection.section, &slot = fx_selection.slot,
+         &handler = handler](auto& parameter_ref) {
+          using Ref = std::decay_t<decltype(parameter_ref)>;
+          if constexpr (std::is_same_v<Ref, SystemParameterRef>) {
+            ParameterModel::Id id = parameter_ref.id;
+            Store::SystemParameterStore::GetInstance().WithParameterLocked(
+                id, handler);
 
-        } else if constexpr (std::is_same_v<Ref, FxParameterRef>) {
-          Fx::ParameterId id = parameter_ref.id;
+          } else if constexpr (std::is_same_v<Ref, FxParameterRef>) {
+            Fx::ParameterId id = parameter_ref.id;
 
-          Store::FxParameterStore::GetInstance().WithParameterLocked(
-              section, slot, id, handler);
-        }
-      },
-      parameter_ref);
+            Store::FxParameterStore::GetInstance().WithParameterLocked(
+                section, slot, id, handler);
+          }
+        },
+        parameter_ref);
+  }
 }
 
 void ToggleFxStateFromFxSelection(FxSelection& fx_selection) {
