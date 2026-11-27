@@ -77,6 +77,10 @@ static InputTaskContext input_task_context;
 
 static constexpr std::array<ButtonId, TRACK_COUNT> stop_button_ids{
     ButtonId::TRACK_1_STOP,
+    ButtonId::TRACK_2_STOP,
+    ButtonId::TRACK_3_STOP,
+    ButtonId::TRACK_4_STOP,
+    ButtonId::TRACK_5_STOP,
 };
 
 static int IsValidInitParams(const InputInitParams* params) {
