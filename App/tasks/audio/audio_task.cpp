@@ -42,10 +42,10 @@ struct SaiDmaState {
 };
 
 struct TrackPlaybackContext {
-  uint32_t* sdram_base_address;
-  uint32_t* sram_frame_buffer_address;
-  uint32_t frame_index;        // 재생할 프레임의 번호
-  uint32_t total_frame_count;  // 트랙의 길이
+  uint32_t* sdram_base_address;         // 트랙 버퍼의 시작 주소
+  uint32_t* sram_frame_buffer_address;  // track_frame_buffer의 주소
+  uint32_t frame_index;                 // 재생할 프레임의 번호
+  uint32_t total_frame_count;           // 트랙의 길이
   std::int16_t volume;
   TrackStateMachine::Id track_state;
 };
@@ -85,7 +85,9 @@ __attribute__((section(".axi_sram"),
     sai_tx_frame_buffer[SAI_FRAME_BUFFER_SIZE];
 __attribute__((section(".axi_sram"),
                aligned(sizeof(BitDepth_t)))) static BitDepth_t
-    track_frame_buffer[TRACK_COUNT][SAI_FRAME_BUFFER_SIZE];
+    track_frame_buffer[TRACK_COUNT]
+                      [SAI_FRAME_BUFFER_SIZE];  // FMC로 읽어온 현재 재생 대상
+                                                // 프레임을 보관하는 버퍼
 
 static bool IsValidParams(AudioInitParams* params);
 static void InitFxContexts();
@@ -208,7 +210,7 @@ static void FetchActiveTrackFrames() {
           track_playback_context.sdram_base_address +
           track_playback_context.frame_index * FRAME_COUNT;
 
-      if (HAL_SDRAM_Read_DMA(hsdram, current_frame_sdram_address,
+      if (HAL_SDRAM_Read_32b(hsdram, current_frame_sdram_address,
                              track_playback_context.sram_frame_buffer_address,
                              FRAME_COUNT) != HAL_OK) {
         error_log.sdram_read_error++;
@@ -350,10 +352,12 @@ static void RecordActiveTracks() {
         for (uint32_t j = 0; j < FRAME_COUNT; j += CHANNEL_COUNT) {
           context.sram_frame_buffer_address[j] +=
               audio_input_context.input_frame_buffer[j];
+          context.sram_frame_buffer_address[j + 1] +=
+              audio_input_context.input_frame_buffer[j];
         }
       }
 
-      if (HAL_SDRAM_Write_DMA(hsdram, current_frame_sdram_address,
+      if (HAL_SDRAM_Write_32b(hsdram, current_frame_sdram_address,
                               context.sram_frame_buffer_address,
                               FRAME_COUNT) != HAL_OK) {
         error_log.sdram_write_error++;
